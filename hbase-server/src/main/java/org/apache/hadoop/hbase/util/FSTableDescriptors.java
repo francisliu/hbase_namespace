@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.exceptions.TableInfoMissingException;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -196,13 +197,37 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-
-        htd = get(d.getName());
+        htd = get(HTableDescriptor.parseTableDir(d).getNameAsString());
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
       }
       if (htd == null) continue;
+      htds.put(htd.getNameAsString(), htd);
+    }
+    return htds;
+  }
+
+  /* (non-Javadoc)
+   * @see org.apache.hadoop.hbase.TableDescriptors#getTableDescriptors(org.apache.hadoop.fs.FileSystem, org.apache.hadoop.fs.Path)
+   */
+  @Override
+  public Map<String, HTableDescriptor> getByNamespace(String name)
+  throws IOException {
+    Map<String, HTableDescriptor> htds = new TreeMap<String, HTableDescriptor>();
+    List<Path> tableDirs =
+        FSUtils.getTableDirs(fs, NamespaceDescriptor.getNamespaceDir(rootdir, name));
+    for (Path d: tableDirs) {
+      HTableDescriptor htd = null;
+      try {
+        htd = get(HTableDescriptor.parseTableDir(d).getNameAsString());
+      } catch (FileNotFoundException fnfe) {
+        // inability of retrieving one HTD shouldn't stop getting the remaining
+        LOG.warn("Trouble retrieving htd", fnfe);
+      }
+      if (htd == null) continue;
+      //TODO this is another workaround to not have to migrate namespace for default and system
+      if (!Bytes.toString(htd.getTableName().getNamespace()).equals(name)) continue;
       htds.put(d.getName(), htd);
     }
     return htds;
@@ -228,7 +253,7 @@ public class FSTableDescriptors implements TableDescriptors {
   public HTableDescriptor remove(final String tablename)
   throws IOException {
     if (!this.fsreadonly) {
-      Path tabledir = FSUtils.getTablePath(this.rootdir, tablename);
+      Path tabledir = HTableDescriptor.getTableDir(this.rootdir, Bytes.toBytes(tablename));
       if (this.fs.exists(tabledir)) {
         if (!this.fs.delete(tabledir, true)) {
           throw new IOException("Failed delete of " + tabledir.toString());
@@ -257,7 +282,7 @@ public class FSTableDescriptors implements TableDescriptors {
   private static FileStatus getTableInfoPath(final FileSystem fs,
       final Path rootdir, final String tableName)
   throws IOException {
-    Path tabledir = FSUtils.getTablePath(rootdir, tableName);
+    Path tabledir = HTableDescriptor.getTableDir(rootdir, Bytes.toBytes(tableName));
     return getTableInfoPath(fs, tabledir);
   }
 
@@ -411,7 +436,8 @@ public class FSTableDescriptors implements TableDescriptors {
         || Bytes.compareTo(Bytes.toBytes(tableName), HConstants.META_TABLE_NAME) == 0) {
       return null;
     }
-    return getTableDescriptorModtime(fs, FSUtils.getTablePath(hbaseRootDir, tableName));
+    return getTableDescriptorModtime(fs,
+        HTableDescriptor.getTableDir(hbaseRootDir, Bytes.toBytes(tableName)));
   }
 
   static TableDescriptorModtime getTableDescriptorModtime(FileSystem fs, Path tableDir)
@@ -460,7 +486,7 @@ public class FSTableDescriptors implements TableDescriptors {
   static Path updateHTableDescriptor(FileSystem fs, Path rootdir,
       HTableDescriptor hTableDescriptor)
   throws IOException {
-    Path tableDir = FSUtils.getTablePath(rootdir, hTableDescriptor.getName());
+    Path tableDir = HTableDescriptor.getTableDir(rootdir, hTableDescriptor.getName());
     Path p = writeTableDescriptor(fs, hTableDescriptor, tableDir,
       getTableInfoPath(fs, tableDir));
     if (p == null) throw new IOException("Failed update");
@@ -607,7 +633,7 @@ public class FSTableDescriptors implements TableDescriptors {
   public static boolean createTableDescriptor(FileSystem fs, Path rootdir,
       HTableDescriptor htableDescriptor, boolean forceCreation)
   throws IOException {
-    Path tabledir = FSUtils.getTablePath(rootdir, htableDescriptor.getNameAsString());
+    Path tabledir = HTableDescriptor.getTableDir(rootdir, htableDescriptor.getName());
     return createTableDescriptorForTableDirectory(fs, tabledir, htableDescriptor, forceCreation);
   }
 

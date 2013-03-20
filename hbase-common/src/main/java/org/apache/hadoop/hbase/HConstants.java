@@ -349,11 +349,28 @@ public final class HConstants {
   // be the first to be reassigned if the server(s) they are being served by
   // should go down.
 
+  /** System namespace name. */
+  public static final byte [] SYSTEM_NAMESPACE_NAME = Bytes.toBytes("-hbase-");
+  public static final String SYSTEM_NAMESPACE_NAME_STR =
+      Bytes.toString(SYSTEM_NAMESPACE_NAME);
+
+  /** Default namespace name. */
+  public static final byte [] DEFAULT_NAMESPACE_NAME = Bytes.toBytes("default");
+  public static final String DEFAULT_NAMESPACE_NAME_STR =
+      Bytes.toString(DEFAULT_NAMESPACE_NAME);
+
   /** The root table's name.*/
   public static final byte [] ROOT_TABLE_NAME = Bytes.toBytes("-ROOT-");
 
   /** The META table's name. */
   public static final byte [] META_TABLE_NAME = Bytes.toBytes(".META.");
+
+  /** The Namespace table's name. */
+  public static final byte [] NAMESPACE_TABLE_NAME = Bytes.toBytes(".NAMESPACE.");
+  public static final String NAMESPACE_TABLE_NAME_STR =
+      Bytes.toString(NAMESPACE_TABLE_NAME);
+
+  public static final String BASE_NAMESPACE_DIR = "data";
 
   /** delimiter used between portions of a region name */
   public static final int META_ROW_DELIMITER = ',';
@@ -802,7 +819,7 @@ public final class HConstants {
     Collections.unmodifiableList(Arrays.asList(new String[] { HREGION_LOGDIR_NAME,
       HREGION_OLDLOGDIR_NAME, CORRUPT_DIR_NAME, SPLIT_LOGDIR_NAME,
       HBCK_SIDELINEDIR_NAME, HFILE_ARCHIVE_DIRECTORY, SNAPSHOT_DIR_NAME, HBASE_TEMP_DIRECTORY,
-      OLD_SNAPSHOT_DIR_NAME }));
+      OLD_SNAPSHOT_DIR_NAME, BASE_NAMESPACE_DIR}));
 
   /** Directories that are not HBase user table directories */
   public static final List<String> HBASE_NON_USER_TABLE_DIRS =

@@ -26,10 +26,12 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -42,6 +44,8 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SmallTests;
@@ -279,6 +283,11 @@ public class TestCatalogJanitor {
         }
 
         @Override
+        public Map<String, HTableDescriptor> getByNamespace(String name) throws IOException {
+          return null;
+        }
+
+        @Override
         public HTableDescriptor get(String tablename)
         throws IOException {
           return createHTableDescriptor();
@@ -300,6 +309,36 @@ public class TestCatalogJanitor {
     @Override
     public boolean registerService(Service instance) {
       return false;
+    }
+
+    @Override
+    public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void deleteNamespace(String name) throws IOException {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public List<HTableDescriptor> getTableDescriptorsByNamespace(String name) throws IOException {
+      return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -790,12 +829,13 @@ public class TestCatalogJanitor {
     addMockStoreFiles(2, services, storedir);
     // get the current store files for comparison
     FileStatus[] storeFiles = fs.listStatus(storedir);
-
+    System.out.println("-->curr"+ Lists.newArrayList(storeFiles));
     // do the cleaning of the parent
     assertTrue(janitor.cleanParent(parent, r));
 
     // and now check to make sure that the files have actually been archived
     FileStatus[] archivedStoreFiles = fs.listStatus(storeArchive);
+    System.out.println("-->arch"+Lists.newArrayList(archivedStoreFiles));
     assertArchiveEqualToOriginal(storeFiles, archivedStoreFiles, fs);
 
     // now add store files with the same names as before to check backup

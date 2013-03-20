@@ -19,11 +19,13 @@
 package org.apache.hadoop.hbase.master;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.TableDescriptors;
 import org.apache.hadoop.hbase.exceptions.TableNotDisabledException;
@@ -186,4 +188,16 @@ public interface MasterServices extends Server {
    */
   public boolean isInitialized();
 
+  //TODO javadoc
+  public void createNamespace(NamespaceDescriptor descriptor) throws IOException;
+
+  public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException;
+
+  public void deleteNamespace(String name) throws IOException;
+
+  public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException;
+
+  public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException;
+
+  public List<HTableDescriptor> getTableDescriptorsByNamespace(String name) throws IOException;
 }

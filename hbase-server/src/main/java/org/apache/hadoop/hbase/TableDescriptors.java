@@ -47,6 +47,15 @@ public interface TableDescriptors {
   throws IOException;
 
   /**
+   * Get Map of all HTableDescriptors for a given namespace. Populates the descriptor cache as a
+   * side effect.
+   * @return Map of all descriptors.
+   * @throws IOException
+   */
+  public Map<String, HTableDescriptor> getByNamespace(String name)
+  throws IOException;
+
+  /**
    * Get Map of all HTableDescriptors. Populates the descriptor cache as a
    * side effect.
    * @return Map of all descriptors.

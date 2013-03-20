@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -772,6 +773,36 @@ public class AccessController extends BaseRegionObserver
   @Override
   public void postDeleteSnapshot(final ObserverContext<MasterCoprocessorEnvironment> ctx,
       final SnapshotDescription snapshot) throws IOException {
+  }
+
+  @Override
+  public void preCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void postCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, String namespace) throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void postDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, String namespace) throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void preModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void postModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   /* ---- RegionObserver implementation ---- */

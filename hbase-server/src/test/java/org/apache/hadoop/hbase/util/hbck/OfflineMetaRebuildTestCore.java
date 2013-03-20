@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -98,7 +99,7 @@ public class OfflineMetaRebuildTestCore {
     tableIdx++;
     htbl = setupTable(table);
     populateTable(htbl);
-    assertEquals(4, scanMeta());
+    assertEquals(5, scanMeta());
     LOG.info("Table " + table + " has " + tableRowCount(conf, table)
         + " entries.");
     assertEquals(16, tableRowCount(conf, table));
@@ -184,7 +185,7 @@ public class OfflineMetaRebuildTestCore {
         LOG.info("deleting hdfs data: " + hri.toString() + hsa.toString());
         Path rootDir = FSUtils.getRootDir(conf);
         FileSystem fs = rootDir.getFileSystem(conf);
-        Path p = new Path(rootDir + "/" + htd.getNameAsString(),
+        Path p = new Path(HTableDescriptor.getTableDir(rootDir,htd.getNameAsString()),
             hri.getEncodedName());
         fs.delete(p, true);
 
@@ -210,7 +211,7 @@ public class OfflineMetaRebuildTestCore {
     LOG.info("manually adding regioninfo and hdfs data: " + hri.toString());
     Path rootDir = FSUtils.getRootDir(conf);
     FileSystem fs = rootDir.getFileSystem(conf);
-    Path p = new Path(rootDir + "/" + htd.getNameAsString(),
+    Path p = new Path(HTableDescriptor.getTableDir(rootDir, htbl.getTableName()),
         hri.getEncodedName());
     fs.mkdirs(p);
     Path riPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);
@@ -232,9 +233,15 @@ public class OfflineMetaRebuildTestCore {
     ResultScanner scanner = meta.getScanner(s);
     List<Delete> dels = new ArrayList<Delete>();
     for (Result r : scanner) {
-      Delete d = new Delete(r.getRow());
-      dels.add(d);
-      admin.unassign(r.getRow(), true);
+      HRegionInfo info =
+          HRegionInfo.getHRegionInfo(r);
+      if(info != null &&
+          !TableName.valueOf(info.getTableNameAsString()).getNamespaceAsString()
+          .equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+        Delete d = new Delete(r.getRow());
+        dels.add(d);
+        admin.unassign(r.getRow(), true);
+      }
     }
     meta.delete(dels);
     meta.flushCommits();

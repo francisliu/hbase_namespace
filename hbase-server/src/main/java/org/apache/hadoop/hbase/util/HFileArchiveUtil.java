@@ -88,16 +88,12 @@ public class HFileArchiveUtil {
    * @param rootdir {@link Path} to the root directory where hbase files are stored (for building
    *          the archive path)
    * @param tabledir the original table directory. Cannot be null.
-   * @param regiondir the path to the region directory. Cannot be null.
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */
-  public static Path getRegionArchiveDir(Path rootdir, Path tabledir, Path regiondir) {
+  public static Path getRegionArchiveDir(Path tabledir, String encodedRegionName) {
     // get the archive directory for a table
-    Path archiveDir = getTableArchivePath(rootdir, tabledir.getName());
-
-    // then add on the region path under the archive
-    String encodedRegionName = regiondir.getName();
+    Path archiveDir = getTableArchivePath(tabledir);
     return HRegion.getRegionDir(archiveDir, encodedRegionName);
   }
 

@@ -190,11 +190,11 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
   /** HRegionInfo for root region */
   public static final HRegionInfo ROOT_REGIONINFO =
-      new HRegionInfo(0L, Bytes.toBytes("-ROOT-"));
+      new HRegionInfo(0L, HConstants.ROOT_TABLE_NAME);
 
   /** HRegionInfo for first meta region */
   public static final HRegionInfo FIRST_META_REGIONINFO =
-      new HRegionInfo(1L, Bytes.toBytes(".META."));
+      new HRegionInfo(1L, HConstants.META_TABLE_NAME);
 
   private void setHashCode() {
     int result = Arrays.hashCode(this.regionName);

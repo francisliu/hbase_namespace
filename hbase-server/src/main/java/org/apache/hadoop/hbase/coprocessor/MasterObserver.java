@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
@@ -610,4 +611,58 @@ public interface MasterObserver extends Coprocessor {
    */
   void postDeleteSnapshot(final ObserverContext<MasterCoprocessorEnvironment> ctx,
       final SnapshotDescription snapshot) throws IOException;
+
+  /**
+   * Called before a new namespace is created by
+   * {@link org.apache.hadoop.hbase.master.HMaster}.
+   * It can't bypass the default action, e.g., ctx.bypass() won't have effect.
+   * @param ctx the environment to interact with the framework and master
+   * @param ns the NamespaceDescriptor for the table
+   * @throws IOException
+   */
+  void preCreateNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      NamespaceDescriptor ns) throws IOException;
+  /**
+   * Called after the createNamespace operation has been requested.
+   * @param ctx the environment to interact with the framework and master
+   * @param ns the NamespaceDescriptor for the table
+   * @throws IOException
+   */
+  void postCreateNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+       NamespaceDescriptor ns) throws IOException;
+
+  /**
+   * Called before {@link org.apache.hadoop.hbase.master.HMaster} deletes a
+   * namespace
+   * It can't bypass the default action, e.g., ctx.bypass() won't have effect.
+   * @param ctx the environment to interact with the framework and master
+   * @param namespace the name of the namespace
+   */
+  void preDeleteNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      String namespace) throws IOException;
+
+  /**
+   * Called after the deleteNamespace operation has been requested.
+   * @param ctx the environment to interact with the framework and master
+   * @param namespace the name of the namespace
+   */
+  void postDeleteNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      String namespace) throws IOException;
+
+  /**
+   * Called prior to modifying a namespace's properties.
+   * It can't bypass the default action, e.g., ctx.bypass() won't have effect.
+   * @param ctx the environment to interact with the framework and master
+   * @param ns the NamespaceDescriptor
+   */
+  void preModifyNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      NamespaceDescriptor ns) throws IOException;
+
+  /**
+   * Called after the modifyNamespace operation has been requested.
+   * @param ctx the environment to interact with the framework and master
+   * @param ns the NamespaceDescriptor
+   */
+  void postModifyNamespace(final ObserverContext<MasterCoprocessorEnvironment> ctx,
+      NamespaceDescriptor ns) throws IOException;
 }

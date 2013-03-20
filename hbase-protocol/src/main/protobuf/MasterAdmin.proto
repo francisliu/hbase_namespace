@@ -28,6 +28,7 @@ option optimize_for = SPEED;
 
 import "hbase.proto";
 import "Client.proto";
+import "Namespace.proto";
 
 /* Column-level protobufs */
 
@@ -137,6 +138,53 @@ message ModifyTableRequest {
 
 message ModifyTableResponse {
 }
+
+/* Namespace-level protobufs */
+
+message CreateNamespaceRequest {
+  required NamespaceDescriptor namespaceDescriptor = 1;
+}
+
+message CreateNamespaceResponse {
+}
+
+message DeleteNamespaceRequest {
+  required string namespaceName = 1;
+}
+
+message DeleteNamespaceResponse {
+}
+
+message ModifyNamespaceRequest {
+  required NamespaceDescriptor namespaceDescriptor = 1;
+}
+
+message GetNamespaceDescriptorRequest {
+  required string namespaceName = 1;
+}
+
+message GetNamespaceDescriptorResponse {
+  required NamespaceDescriptor namespaceDescriptor = 1;
+}
+
+message ModifyNamespaceResponse {
+}
+
+message ListNamespaceDescriptorsRequest {
+}
+
+message ListNamespaceDescriptorsResponse {
+  required NamespaceDescriptorList namespaceList = 1;
+}
+
+message GetTableDescriptorsByNamespaceRequest {
+  required string namespaceName = 1;
+}
+
+message GetTableDescriptorsByNamespaceResponse {
+  repeated TableSchema tableSchema = 1;
+}
+
 
 /* Cluster-level protobufs */
 
@@ -382,6 +430,31 @@ service MasterAdminService {
    */
   rpc isRestoreSnapshotDone(IsRestoreSnapshotDoneRequest) returns(IsRestoreSnapshotDoneResponse);
 
+
   /** return true if master is available */
   rpc isMasterRunning(IsMasterRunningRequest) returns(IsMasterRunningResponse);
+
+  /** Modify a namespace's metadata */
+  rpc modifyNamespace(ModifyNamespaceRequest)
+    returns(ModifyNamespaceResponse);
+
+  /** Creates a new namespace synchronously */
+  rpc createNamespace(CreateNamespaceRequest)
+    returns(CreateNamespaceResponse);
+
+  /** Delete's namespace synchronously */
+  rpc deleteNamespace(DeleteNamespaceRequest)
+    returns(DeleteNamespaceResponse);
+
+  /** Get a namespace descriptor by name */
+  rpc getNamespaceDescriptor(GetNamespaceDescriptorRequest)
+    returns(GetNamespaceDescriptorResponse);
+
+  /** returns a list of namespaces */
+  rpc listNamespaceDescriptors(ListNamespaceDescriptorsRequest)
+    returns(ListNamespaceDescriptorsResponse);
+
+  /** returns a list of tables for a given namespace*/
+  rpc getTableDescriptorsByNamespace(GetTableDescriptorsByNamespaceRequest)
+    returns(GetTableDescriptorsByNamespaceResponse);
 }

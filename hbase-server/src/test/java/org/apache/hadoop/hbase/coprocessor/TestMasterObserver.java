@@ -74,6 +74,12 @@ public class TestMasterObserver {
     private boolean postDeleteTableCalled;
     private boolean preModifyTableCalled;
     private boolean postModifyTableCalled;
+    private boolean preCreateNamespaceCalled;
+    private boolean postCreateNamespaceCalled;
+    private boolean preDeleteNamespaceCalled;
+    private boolean postDeleteNamespaceCalled;
+    private boolean preModifyNamespaceCalled;
+    private boolean postModifyNamespaceCalled;
     private boolean preAddColumnCalled;
     private boolean postAddColumnCalled;
     private boolean preModifyColumnCalled;
@@ -137,6 +143,12 @@ public class TestMasterObserver {
       postDeleteTableCalled = false;
       preModifyTableCalled = false;
       postModifyTableCalled = false;
+      preCreateNamespaceCalled = false;
+      postCreateNamespaceCalled = false;
+      preDeleteNamespaceCalled = false;
+      postDeleteNamespaceCalled = false;
+      preModifyNamespaceCalled = false;
+      postModifyNamespaceCalled = false;
       preAddColumnCalled = false;
       postAddColumnCalled = false;
       preModifyColumnCalled = false;
@@ -254,6 +266,75 @@ public class TestMasterObserver {
 
     public boolean preModifyTableCalledOnly() {
       return preModifyTableCalled && !postModifyTableCalled;
+    }
+
+    @Override
+    public void preCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> env,
+        NamespaceDescriptor ns) throws IOException {
+      if (bypass) {
+        env.bypass();
+      }
+      preCreateNamespaceCalled = true;
+    }
+
+    @Override
+    public void postCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> env,
+        NamespaceDescriptor ns) throws IOException {
+      postCreateNamespaceCalled = true;
+    }
+
+    public boolean wasCreateNamespaceCalled() {
+      return preCreateNamespaceCalled && postCreateNamespaceCalled;
+    }
+
+    public boolean preCreateNamespaceCalledOnly() {
+      return preCreateNamespaceCalled && !postCreateNamespaceCalled;
+    }
+
+    @Override
+    public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> env,
+        String name) throws IOException {
+      if (bypass) {
+        env.bypass();
+      }
+      preDeleteNamespaceCalled = true;
+    }
+
+    @Override
+    public void postDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> env,
+        String name) throws IOException {
+      postDeleteNamespaceCalled = true;
+    }
+
+    public boolean wasDeleteNamespaceCalled() {
+      return preDeleteNamespaceCalled && postDeleteNamespaceCalled;
+    }
+
+    public boolean preDeleteNamespaceCalledOnly() {
+      return preDeleteNamespaceCalled && !postDeleteNamespaceCalled;
+    }
+
+    @Override
+    public void preModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> env,
+        NamespaceDescriptor ns) throws IOException {
+      if (bypass) {
+        env.bypass();
+      }
+      preModifyNamespaceCalled = true;
+    }
+
+    @Override
+    public void postModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> env,
+        NamespaceDescriptor ns) throws IOException {
+      postModifyNamespaceCalled = true;
+    }
+
+    public boolean wasModifyNamespaceCalled() {
+      return preModifyNamespaceCalled && postModifyNamespaceCalled;
+    }
+
+    public boolean preModifyNamespaceCalledOnly() {
+      return preModifyNamespaceCalled && !postModifyNamespaceCalled;
     }
 
     @Override
@@ -1080,6 +1161,58 @@ public class TestMasterObserver {
     } finally {
       admin.deleteTable(TEST_TABLE);
     }
+  }
+
+  @Test
+  public void testNamespaceOperations() throws Exception {
+    MiniHBaseCluster cluster = UTIL.getHBaseCluster();
+    String testNamespace = "observed_ns";
+    HMaster master = cluster.getMaster();
+    MasterCoprocessorHost host = master.getCoprocessorHost();
+    CPMasterObserver cp = (CPMasterObserver)host.findCoprocessor(
+        CPMasterObserver.class.getName());
+
+    cp.enableBypass(false);
+    cp.resetStates();
+
+
+    // create a table
+    HBaseAdmin admin = UTIL.getHBaseAdmin();
+    admin.createNamespace(NamespaceDescriptor.create(testNamespace).build());
+    assertTrue("Test namespace should be created", cp.wasCreateNamespaceCalled());
+
+    assertNotNull(admin.getNamespaceDescriptor(testNamespace));
+
+    // turn off bypass, run the tests again
+    cp.enableBypass(true);
+    cp.resetStates();
+
+    admin.modifyNamespace(NamespaceDescriptor.create(testNamespace).build());
+    assertTrue("Test namespace should not have been modified",
+        cp.preModifyNamespaceCalledOnly());
+
+    assertNotNull(admin.getNamespaceDescriptor(testNamespace));
+
+    admin.deleteNamespace(testNamespace);
+    assertTrue("Test namespace should not have been deleted", cp.preDeleteNamespaceCalledOnly());
+
+    assertNotNull(admin.getNamespaceDescriptor(testNamespace));
+
+    cp.enableBypass(false);
+    cp.resetStates();
+
+    // delete table
+    admin.modifyNamespace(NamespaceDescriptor.create(testNamespace).build());
+    assertTrue("Test namespace should have been modified", cp.wasModifyNamespaceCalled());
+
+    admin.deleteNamespace(testNamespace);
+    assertTrue("Test namespace should have been deleted", cp.wasDeleteNamespaceCalled());
+
+    cp.enableBypass(true);
+    cp.resetStates();
+
+    admin.createNamespace(NamespaceDescriptor.create(testNamespace).build());
+    assertTrue("Test namespace should not be created", cp.preCreateNamespaceCalledOnly());
   }
 
   private void modifyTableSync(HBaseAdmin admin, byte[] tableName, HTableDescriptor htd)
