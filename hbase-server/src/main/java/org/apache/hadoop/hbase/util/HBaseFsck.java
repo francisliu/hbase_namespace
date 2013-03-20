@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -45,6 +46,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -1265,18 +1267,16 @@ public class HBaseFsck extends Configured implements Tool {
     // list all tables from HDFS
     List<FileStatus> tableDirs = Lists.newArrayList();
 
-    boolean foundVersionFile = false;
-    FileStatus[] files = fs.listStatus(rootDir);
-    for (FileStatus file : files) {
-      String dirName = file.getPath().getName();
-      if (dirName.equals(HConstants.VERSION_FILE_NAME)) {
-        foundVersionFile = true;
-      } else {
-        if ((!checkMetaOnly && isTableIncluded(dirName)) ||
-            dirName.equals(".META.")) {
-          tableDirs.add(file);
-        }
-      }
+    boolean foundVersionFile = fs.exists(new Path(rootDir, HConstants.VERSION_FILE_NAME));
+
+    List<Path> paths = FSUtils.getTableDirs(fs, rootDir);
+    for (Path path : paths) {
+      String dirName = path.getName();
+       if ((!checkMetaOnly &&
+           isTableIncluded(HTableDescriptor.parseTableDir(path).getNameAsString())) ||
+           dirName.equals(".META.")) {
+         tableDirs.add(fs.getFileStatus(path));
+       }
     }
 
     // verify that version file exists
@@ -3128,11 +3128,6 @@ public class HBaseFsck extends Configured implements Tool {
     public synchronized Void call() throws IOException {
       try {
         String tableName = tableDir.getPath().getName();
-        // ignore hidden files
-        if (tableName.startsWith(".") &&
-            !tableName.equals( Bytes.toString(HConstants.META_TABLE_NAME))) {
-          return null;
-        }
         // level 2: <HBASE_DIR>/<table>/*
         FileStatus[] regionDirs = fs.listStatus(tableDir.getPath());
         for (FileStatus regionDir : regionDirs) {
@@ -3705,10 +3700,13 @@ public class HBaseFsck extends Configured implements Tool {
       Path rootdir = FSUtils.getRootDir(getConf());
       if (tables.size() > 0) {
         for (String t : tables) {
-          tableDirs.add(FSUtils.getTablePath(rootdir, t));
+          tableDirs.add(HTableDescriptor.getTableDir(rootdir, t));
         }
       } else {
         tableDirs = FSUtils.getTableDirs(FSUtils.getCurrentFileSystem(getConf()), rootdir);
+        for(String tableName : HConstants.HBASE_NON_USER_TABLE_DIRS) {
+          tableDirs.remove(HTableDescriptor.getTableDir(rootdir, Bytes.toBytes(tableName)));
+        }
       }
       hfcc.checkTables(tableDirs);
       hfcc.report(errors);

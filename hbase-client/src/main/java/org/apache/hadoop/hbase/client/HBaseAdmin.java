@@ -44,6 +44,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
@@ -85,6 +86,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanResponse;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableSchema;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AddColumnRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AssignRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.CreateTableRequest;
@@ -115,6 +117,7 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetSchemaA
 import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetSchemaAlterStatusResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetTableDescriptorsRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetTableDescriptorsResponse;
+import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.Addressing;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -126,6 +129,18 @@ import org.apache.zookeeper.KeeperException;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 /**
  * Provides an interface to manage HBase database table metadata + general
@@ -1962,6 +1977,94 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public Configuration getConfiguration() {
     return this.conf;
+  }
+
+  public void createNamespace(final NamespaceDescriptor descriptor) throws IOException {
+    execute(new MasterAdminCallable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        masterAdmin.createNamespace(null,
+            MasterAdminProtos.CreateNamespaceRequest.newBuilder()
+                .setNamespaceDescriptor(ProtobufUtil
+                    .toProtoBuf(descriptor)).build());
+        return null;
+      }
+    });
+  }
+
+  public void modifyNamespace(final NamespaceDescriptor descriptor) throws IOException {
+    execute(new MasterAdminCallable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        masterAdmin.modifyNamespace(null,
+            MasterAdminProtos.ModifyNamespaceRequest.newBuilder()
+                .setNamespaceDescriptor(ProtobufUtil
+                    .toProtoBuf(descriptor)).build());
+        return null;
+      }
+    });
+  }
+
+  public void deleteNamespace(final String name) throws IOException {
+    execute(new MasterAdminCallable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        masterAdmin.deleteNamespace(null,
+            MasterAdminProtos.DeleteNamespaceRequest.newBuilder()
+                .setNamespaceName(name).build());
+        return null;
+      }
+    });
+  }
+
+  public NamespaceDescriptor getNamespaceDescriptor(final String name) throws IOException {
+    return
+        execute(new MasterAdminCallable<NamespaceDescriptor>() {
+          @Override
+          public NamespaceDescriptor call() throws Exception {
+            return ProtobufUtil.toNamespaceDescriptor(
+              masterAdmin.getNamespaceDescriptor(null,
+                  MasterAdminProtos.GetNamespaceDescriptorRequest.newBuilder()
+                    .setNamespaceName(name).build()).getNamespaceDescriptor());
+          }
+        });
+  }
+
+  public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
+    return
+        execute(new MasterAdminCallable<List<NamespaceDescriptor>>() {
+          @Override
+          public List<NamespaceDescriptor> call() throws Exception {
+            List<NamespaceProtos.NamespaceDescriptor> list =
+                masterAdmin.listNamespaceDescriptors(null,
+                    MasterAdminProtos.ListNamespaceDescriptorsRequest.newBuilder().build())
+                    .getNamespaceList().getNamespaceDescriptorList();
+            List<NamespaceDescriptor> res = new ArrayList<NamespaceDescriptor>(list.size());
+            for(NamespaceProtos.NamespaceDescriptor ns: list) {
+              res.add(ProtobufUtil.toNamespaceDescriptor(ns));
+            }
+            return res;
+          }
+        });
+  }
+
+  public List<HTableDescriptor> getTableDescriptorsByNamespace(final String name) throws IOException {
+    return
+        execute(new MasterAdminCallable<List<HTableDescriptor>>() {
+          @Override
+          public List<HTableDescriptor> call() throws Exception {
+            List<TableSchema> list =
+                masterAdmin.getTableDescriptorsByNamespace(null,
+                    MasterAdminProtos.GetTableDescriptorsByNamespaceRequest.newBuilder()
+                        .setNamespaceName(name).build())
+                            .getTableSchemaList();
+            List<HTableDescriptor> res = new ArrayList<HTableDescriptor>(list.size());
+            for(TableSchema ts: list) {
+              res.add(HTableDescriptor.convert(ts));
+            }
+            return res;
+          }
+        });
   }
 
   /**

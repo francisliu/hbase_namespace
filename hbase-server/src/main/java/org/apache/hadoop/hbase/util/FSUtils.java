@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -925,14 +926,12 @@ public abstract class FSUtils {
   public static boolean isMajorCompacted(final FileSystem fs,
       final Path hbaseRootDir)
   throws IOException {
-    // Presumes any directory under hbase.rootdir is a table.
-    FileStatus [] tableDirs = fs.listStatus(hbaseRootDir, new DirFilter(fs));
-    for (FileStatus tableDir : tableDirs) {
+    List<Path> tableDirs = getTableDirs(fs, hbaseRootDir);
+    for (Path d : tableDirs) {
       // Skip the .log directory.  All others should be tables.  Inside a table,
       // there are compaction.dir directories to skip.  Otherwise, all else
       // should be regions.  Then in each region, should only be family
       // directories.  Under each of these, should be one file only.
-      Path d = tableDir.getPath();
       if (d.getName().equals(HConstants.HREGION_LOGDIR_NAME)) {
         continue;
       }
@@ -1010,14 +1009,12 @@ public abstract class FSUtils {
     int cfCountTotal = 0;
     int cfFragTotal = 0;
     DirFilter df = new DirFilter(fs);
-    // presumes any directory under hbase.rootdir is a table
-    FileStatus [] tableDirs = fs.listStatus(hbaseRootDir, df);
-    for (FileStatus tableDir : tableDirs) {
+    List<Path> tableDirs = getTableDirs(fs, hbaseRootDir);
+    for (Path d : tableDirs) {
       // Skip the .log directory.  All others should be tables.  Inside a table,
       // there are compaction.dir directories to skip.  Otherwise, all else
       // should be regions.  Then in each region, should only be family
       // directories.  Under each of these, should be one file only.
-      Path d = tableDir.getPath();
       if (d.getName().equals(HConstants.HREGION_LOGDIR_NAME)) {
         continue;
       }
@@ -1081,13 +1078,12 @@ public abstract class FSUtils {
       final Path hbaseRootDir)
   throws IOException {
     // Presumes any directory under hbase.rootdir is a table.
-    FileStatus [] tableDirs = fs.listStatus(hbaseRootDir, new DirFilter(fs));
-    for (FileStatus tableDir : tableDirs) {
+    List<Path> tableDirs = getTableDirs(fs, hbaseRootDir);
+    for (Path d: tableDirs) {
       // Inside a table, there are compaction.dir directories to skip.
       // Otherwise, all else should be regions.  Then in each region, should
       // only be family directories.  Under each of these, should be a mapfile
       // and info directory and in these only one file.
-      Path d = tableDir.getPath();
       if (d.getName().equals(HConstants.HREGION_LOGDIR_NAME)) {
         continue;
       }
@@ -1208,7 +1204,7 @@ public abstract class FSUtils {
   public static class UserTableDirFilter extends BlackListDirFilter {
 
     public UserTableDirFilter(FileSystem fs) {
-      super(fs, HConstants.HBASE_NON_USER_TABLE_DIRS);
+      super(fs, HConstants.HBASE_NON_TABLE_DIRS);
     }
   }
 
@@ -1267,15 +1263,30 @@ public abstract class FSUtils {
   public abstract void recoverFileLease(final FileSystem fs, final Path p,
       Configuration conf, CancelableProgressable reporter) throws IOException;
 
+  public static List<Path> getTableDirs(final FileSystem fs, final Path rootdir)
+      throws IOException {
+    List<Path> tableDirs = new LinkedList<Path>();
+
+    //TODO nshack need to include root dir tables
+    tableDirs.addAll(FSUtils.getLocalTableDirs(fs, rootdir));
+
+    for(FileStatus status :
+        fs.globStatus(new Path(rootdir,
+            new Path(HConstants.BASE_NAMESPACE_DIR, "*")))) {
+      tableDirs.addAll(FSUtils.getLocalTableDirs(fs, status.getPath()));
+    }
+    return tableDirs;
+  }
+
   /**
    * @param fs
    * @param rootdir
    * @return All the table directories under <code>rootdir</code>. Ignore non table hbase folders such as
-   * .logs, .oldlogs, .corrupt, .META., and -ROOT- folders.
+   * .logs, .oldlogs, .corrupt folders.
    * @throws IOException
    */
-  public static List<Path> getTableDirs(final FileSystem fs, final Path rootdir)
-  throws IOException {
+  public static List<Path> getLocalTableDirs(final FileSystem fs, final Path rootdir)
+      throws IOException {
     // presumes any directory under hbase.rootdir is a table
     FileStatus[] dirs = fs.listStatus(rootdir, new UserTableDirFilter(fs));
     List<Path> tabledirs = new ArrayList<Path>(dirs.length);
@@ -1283,14 +1294,6 @@ public abstract class FSUtils {
       tabledirs.add(dir.getPath());
     }
     return tabledirs;
-  }
-
-  public static Path getTablePath(Path rootdir, byte [] tableName) {
-    return getTablePath(rootdir, Bytes.toString(tableName));
-  }
-
-  public static Path getTablePath(Path rootdir, final String tableName) {
-    return new Path(rootdir, tableName);
   }
 
   /**
@@ -1509,7 +1512,7 @@ public abstract class FSUtils {
       byte[] tablename = Bytes.toBytes(tableDir.getPath().getName());
       getTableStoreFilePathMap(map, fs, hbaseRootDir, tablename);
     }
-      return map;
+    return map;
   }
 
   /**

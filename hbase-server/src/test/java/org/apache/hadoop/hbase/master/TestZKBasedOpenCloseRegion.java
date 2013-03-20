@@ -387,7 +387,9 @@ public class TestZKBasedOpenCloseRegion {
     for (Result r = null; (r = s.next()) != null;) {
       HRegionInfo hri = HRegionInfo.getHRegionInfo(r);
       if (hri == null) break;
-
+      if(!hri.getTableNameAsString().equals(TABLENAME)) {
+        continue;
+      }
       // If start key, add 'aaa'.
       byte [] row = getStartKey(hri);
       Put p = new Put(row);

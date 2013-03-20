@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
@@ -112,6 +113,7 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetTableDe
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerReportRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerStartupRequest;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.CompactionDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.access.TablePermission;
 import org.apache.hadoop.hbase.security.access.UserPermission;
@@ -1987,6 +1989,39 @@ public final class ProtobufUtil {
       cell.getTimestamp(),
       (byte)cell.getCellType().getNumber(),
       cell.getValue().toByteArray());
+  }
+
+  public static NamespaceProtos.NamespaceDescriptor toProtoBuf(NamespaceDescriptor ns) {
+    NamespaceProtos.NamespaceDescriptor.Builder b =
+        NamespaceProtos.NamespaceDescriptor.newBuilder()
+            .setName(ns.getName());
+    for(Map.Entry<byte[], byte[]> entry: ns.getValues().entrySet()) {
+      b.addProps(NamespaceProtos.NamespaceProp.newBuilder()
+          .setKey(ByteString.copyFrom(entry.getKey()))
+          .setValue(ByteString.copyFrom(entry.getValue())));
+    }
+    return b.build();
+  }
+
+//  public static NamespaceDescriptor toNamespaceDescriptor(byte[] data) throws IOException {
+//    NamespaceProtos.NamespaceDescriptor desc =
+//        NamespaceProtos.NamespaceDescriptor.parseFrom(data);
+//    NamespaceDescriptor.Builder b =
+//      NamespaceDescriptor.create(desc.getName());
+//    for(NamespaceProtos.NamespaceProp prop : desc.getPropsList()) {
+//      b.addValue(prop.getKey().toByteArray(), prop.getValue().toByteArray());
+//    }
+//    return b.build();
+//  }
+
+  public static NamespaceDescriptor toNamespaceDescriptor(
+      NamespaceProtos.NamespaceDescriptor desc) throws IOException {
+    NamespaceDescriptor.Builder b =
+      NamespaceDescriptor.create(desc.getName());
+    for(NamespaceProtos.NamespaceProp prop : desc.getPropsList()) {
+      b.addValue(prop.getKey().toByteArray(), prop.getValue().toByteArray());
+    }
+    return b.build();
   }
 
   /**

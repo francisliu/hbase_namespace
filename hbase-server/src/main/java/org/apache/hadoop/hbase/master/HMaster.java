@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.management.ObjectName;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -50,6 +52,11 @@ import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.ServerCallable;
+import org.apache.hadoop.hbase.exceptions.ConstraintException;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -98,6 +105,7 @@ import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.monitoring.MemoryBoundedLogMessageBuffer;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
+import org.apache.hadoop.hbase.namespace.TableNamespaceManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
@@ -169,6 +177,7 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetTableDe
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.IsMasterRunningRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.IsMasterRunningResponse;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos;
+import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdRequest;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.GetLastFlushedSequenceIdResponse;
 import org.apache.hadoop.hbase.protobuf.generated.RegionServerStatusProtos.RegionServerReportRequest;
@@ -267,6 +276,9 @@ MasterServices, Server {
   // Set after we've called HBaseServer#openServer and ready to receive RPCs.
   // Set back to false after we stop rpcServer.  Used by tests.
   private volatile boolean rpcServerOpen = false;
+
+  /** Namespace stuff */
+  private TableNamespaceManager tableNamespaceManager;
 
   /**
    * This servers address.
@@ -836,6 +848,9 @@ MasterServices, Server {
       this.fileSystemManager.splitMetaLog(previouslyFailedMetaRSs);
     }
 
+    status.setStatus("Assigning System tables");
+    assignSystemTables(status);
+
     enableServerShutdownHandler();
 
     status.setStatus("Submitting log splitting work for previously failed region servers");
@@ -986,6 +1001,100 @@ MasterServices, Server {
       this.fileSystemManager.splitMetaLog(currentMetaServer);
     }
   }
+
+  private void splitLogBeforeAssignment(ServerName currentServer) throws IOException {
+    if (this.distributedLogReplay) {
+      this.fileSystemManager.prepareLogReplay(Sets.newHashSet(currentServer));
+    } else {
+      // In recovered.edits mode: create recovered edits file for .META. server
+      this.fileSystemManager.splitLog(currentServer);
+    }
+  }
+
+  void assignSystemTables(MonitoredTask status) throws IOException, InterruptedException, KeeperException {
+    status.setStatus("Assigning system regions");
+    // Skip assignment for regions of tables in DISABLING state also because
+    // during clean cluster startup no RS is alive and regions map also doesn't
+    // have any information about the regions. See HBASE-6281.
+//    //TODO do we allow disabling tables?
+//    Set<String> disablingDisabledAndEnablingTables =
+//        new HashSet<String>(assignmentManager.get);
+//    disablingDisabledAndEnablingTables.addAll(assignmentManager.getZKTable().getDisabledTables());
+//    disablingDisabledAndEnablingTables.addAll(assignmentManager.enablingTables.keySet());
+    // Scan META for all user regions, skipping any disabled tables
+    Map<HRegionInfo, ServerName> allRegions =
+        MetaReader.fullScan(catalogTracker, new HashSet<String>(), true);
+    for(HRegionInfo regionInfo: Sets.newTreeSet(allRegions.keySet())) {
+      if(!TableName.valueOf(regionInfo.getTableName())
+          .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+        allRegions.remove(regionInfo);
+      }
+    }
+
+    int assigned = 0;
+    for(Map.Entry<HRegionInfo, ServerName> entry: allRegions.entrySet()) {
+      HRegionInfo regionInfo = entry.getKey();
+      ServerName currServer = entry.getValue();
+      boolean rit =
+          assignmentManager.processRegionInTransitionAndBlockUntilAssigned(regionInfo);
+      boolean serverValid = false;
+      if(currServer != null) {
+        try {
+          serverValid =
+              ProtobufUtil.getRegionInfo(HConnectionManager.getConnection(conf)
+                  .getAdmin(serverName),
+                  regionInfo.getRegionName()) != null;
+        } catch (IOException e) {
+          LOG.info("Failed to contact server", e);
+        }
+      }
+      if (!rit && !serverValid) {
+        boolean beingExpired = false;
+        if(currServer != null) {
+          beingExpired = expireIfOnline(currServer);
+        }
+        if (beingExpired) {
+          splitLogBeforeAssignment(currServer);
+        }
+        assignmentManager.assign(regionInfo, true);
+        enableSSHandWaitForRegion(regionInfo);
+        assigned++;
+        if (beingExpired && this.distributedLogReplay) {
+          // In Replay WAL Mode, we need the new .META. server online
+          this.fileSystemManager.splitLog(currServer);
+        }
+      } else if (rit && !serverValid) {
+        enableSSHandWaitForRegion(regionInfo);
+        assigned++;
+      } else {
+        // Region already assigned. We didnt' assign it. Add to in-memory state.
+        assignmentManager.regionOnline(regionInfo, currServer);
+      }
+      LOG.info(regionInfo.getRegionNameAsString()+" assigned=" + assigned + ", rit=" + rit + ", location="
+          + currServer);
+    }
+    //create namespace manager
+    tableNamespaceManager = new TableNamespaceManager(this);
+    tableNamespaceManager.start();
+    status.setStatus("Assigning system regions done");
+  }
+
+  private void enableSSHandWaitForRegion(HRegionInfo regionInfo) throws IOException,
+      InterruptedException {
+    enableServerShutdownHandler();
+    this.assignmentManager.waitForAssignment(regionInfo);
+    ServerName serverName =
+        assignmentManager.getRegionStates().getRegionServerOfRegion(regionInfo);
+    boolean serverValid =
+        ProtobufUtil.getRegionInfo(HConnectionManager.getConnection(conf)
+            .getAdmin(serverName),
+            regionInfo.getRegionName()) != null;
+    if(!serverValid) {
+      throw new IOException("Region "+regionInfo.getRegionNameAsString()+
+          " online validation failed on server "+serverName);
+    }
+  }
+
 
   private void enableSSHandWaitForMeta() throws IOException, InterruptedException {
     enableServerShutdownHandler();
@@ -1628,7 +1737,11 @@ MasterServices, Server {
     if (cpHost != null) {
       cpHost.preCreateTable(hTableDescriptor, newRegions);
     }
-
+    String namespace = hTableDescriptor.getTableName()
+            .getNamespaceAsString();
+    if (getNamespaceDescriptor(namespace) == null) {
+      throw new ConstraintException("Namespace "+namespace+" does not exist");
+    }
     this.executorService.submit(new CreateTableHandler(this,
       this.fileSystemManager, hTableDescriptor, conf,
       newRegions, this).prepare());
@@ -2435,6 +2548,14 @@ MasterServices, Server {
         if (descriptorMap != null) {
           descriptors.addAll(descriptorMap.values());
         }
+        try {
+          for(HTableDescriptor desc:
+            getTableDescriptorsByNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+            descriptors.remove(desc.getNameAsString());
+          }
+        } catch (IOException e) {
+          LOG.warn("Failed getting all descriptors", e);
+        }
       } else {
         for (String s: req.getTableNamesList()) {
           try {
@@ -2786,9 +2907,146 @@ MasterServices, Server {
     }
   }
 
+  @Override
+  public MasterAdminProtos.ModifyNamespaceResponse modifyNamespace(RpcController controller,
+      MasterAdminProtos.ModifyNamespaceRequest request) throws ServiceException {
+    try {
+      modifyNamespace(ProtobufUtil.toNamespaceDescriptor(request.getNamespaceDescriptor()));
+      return MasterAdminProtos.ModifyNamespaceResponse.getDefaultInstance();
+    } catch (IOException e) {
+      throw new ServiceException(e);
+    }
+  }
+
+  @Override
+  public MasterAdminProtos.CreateNamespaceResponse createNamespace(RpcController controller,
+     MasterAdminProtos.CreateNamespaceRequest request) throws ServiceException {
+    try {
+      createNamespace(ProtobufUtil.toNamespaceDescriptor(request.getNamespaceDescriptor()));
+      return MasterAdminProtos.CreateNamespaceResponse.getDefaultInstance();
+    } catch (IOException e) {
+      throw new ServiceException(e);
+    }
+  }
+
+  @Override
+  public MasterAdminProtos.DeleteNamespaceResponse deleteNamespace(RpcController controller, MasterAdminProtos.DeleteNamespaceRequest request) throws ServiceException {
+    try {
+      deleteNamespace(request.getNamespaceName());
+      return MasterAdminProtos.DeleteNamespaceResponse.getDefaultInstance();
+    } catch (IOException e) {
+      throw new ServiceException(e);
+    }
+  }
+
+  @Override
+  public MasterAdminProtos.GetNamespaceDescriptorResponse getNamespaceDescriptor(RpcController controller, MasterAdminProtos.GetNamespaceDescriptorRequest request) throws ServiceException {
+    try {
+      return MasterAdminProtos.GetNamespaceDescriptorResponse.newBuilder()
+          .setNamespaceDescriptor(ProtobufUtil.toProtoBuf(getNamespaceDescriptor(request.getNamespaceName())))
+          .build();
+    } catch (IOException e) {
+      throw new ServiceException(e);
+    }
+  }
+
+  @Override
+  public MasterAdminProtos.ListNamespaceDescriptorsResponse listNamespaceDescriptors(RpcController controller, MasterAdminProtos.ListNamespaceDescriptorsRequest request) throws ServiceException {
+    try {
+      MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder b =
+          MasterAdminProtos.ListNamespaceDescriptorsResponse.newBuilder();
+      NamespaceProtos.NamespaceDescriptorList.Builder bList =
+          NamespaceProtos.NamespaceDescriptorList.newBuilder();
+      for(NamespaceDescriptor ns: listNamespaceDescriptors()) {
+        bList.addNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
+      }
+      b.setNamespaceList(bList.build());
+      return b.build();
+    } catch (IOException e) {
+      throw new ServiceException(e);
+    }
+  }
+
+  @Override
+  public MasterAdminProtos.GetTableDescriptorsByNamespaceResponse getTableDescriptorsByNamespace(RpcController controller, MasterAdminProtos.GetTableDescriptorsByNamespaceRequest request) throws ServiceException {
+    try {
+      MasterAdminProtos.GetTableDescriptorsByNamespaceResponse.Builder b =
+          MasterAdminProtos.GetTableDescriptorsByNamespaceResponse.newBuilder();
+      for(HTableDescriptor htd: getTableDescriptorsByNamespace(request.getNamespaceName())) {
+        b.addTableSchema(htd.convert());
+      }
+      return b.build();
+    } catch (IOException e) {
+      throw new ServiceException(e);
+    }
+  }
+
   private boolean isHealthCheckerConfigured() {
     String healthScriptLocation = this.conf.get(HConstants.HEALTH_SCRIPT_LOC);
     return org.apache.commons.lang.StringUtils.isNotBlank(healthScriptLocation);
   }
 
+  public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
+    if (cpHost != null) {
+      if (cpHost.preCreateNamespace(descriptor)) {
+        return;
+      }
+    }
+    synchronized (this) {
+      tableNamespaceManager.create(descriptor);
+    }
+    if (cpHost != null) {
+      cpHost.postCreateNamespace(descriptor);
+    }
+  }
+
+  public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
+    if (cpHost != null) {
+      if (cpHost.preModifyNamespace(descriptor)) {
+        return;
+      }
+    }
+    synchronized (this) {
+      tableNamespaceManager.update(descriptor);
+    }
+    if (cpHost != null) {
+      cpHost.postModifyNamespace(descriptor);
+    }
+  }
+
+  public void deleteNamespace(String name) throws IOException {
+    int size = getTableDescriptorsByNamespace(name).size();
+    if(size > 0) {
+      throw new ConstraintException("Can't remove a non-empty namespace");
+    }
+    if (cpHost != null) {
+      if (cpHost.preDeleteNamespace(name)) {
+        return;
+      }
+    }
+    synchronized (this) {
+      tableNamespaceManager.remove(name);
+    }
+    if (cpHost != null) {
+      cpHost.postDeleteNamespace(name);
+    }
+  }
+
+  public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
+    synchronized (this) {
+      return tableNamespaceManager.get(name);
+    }
+  }
+
+  public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
+    synchronized (this) {
+      return Lists.newArrayList(tableNamespaceManager.list());
+    }
+  }
+
+  public List<HTableDescriptor> getTableDescriptorsByNamespace(String name) throws IOException {
+    synchronized (this) {
+      return Lists.newArrayList(tableDescriptors.getByNamespace(name).values());
+    }
+  }
 }

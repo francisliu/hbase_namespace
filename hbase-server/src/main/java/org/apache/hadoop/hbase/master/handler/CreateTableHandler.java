@@ -26,8 +26,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.ChecksumFileSystem;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RawLocalFileSystem;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
@@ -203,8 +206,8 @@ public class CreateTableHandler extends EventHandler {
 
     // 1. Create Table Descriptor
     FSTableDescriptors.createTableDescriptor(fs, tempdir, this.hTableDescriptor);
-    Path tempTableDir = new Path(tempdir, tableName);
-    Path tableDir = new Path(fileSystemManager.getRootDir(), tableName);
+    Path tempTableDir = HTableDescriptor.getTableDir(tempdir, this.hTableDescriptor.getName());
+    Path tableDir = HTableDescriptor.getTableDir(fileSystemManager.getRootDir(), tableName);
 
     // 2. Create Regions
     List<HRegionInfo> regionInfos = handleCreateHdfsRegions(tempdir, tableName);

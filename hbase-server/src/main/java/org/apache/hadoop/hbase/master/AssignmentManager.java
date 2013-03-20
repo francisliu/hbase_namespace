@@ -39,11 +39,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RegionTransition;
@@ -438,7 +442,9 @@ public class AssignmentManager extends ZooKeeperListener {
       // its a clean cluster startup, else its a failover.
       Map<HRegionInfo, ServerName> regions = regionStates.getRegionAssignments();
       for (Map.Entry<HRegionInfo, ServerName> e: regions.entrySet()) {
-        if (!e.getKey().isMetaTable() && e.getValue() != null) {
+        if (!TableName.valueOf(e.getKey().getTableNameAsString())
+            .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)
+            && e.getValue() != null) {
           LOG.debug("Found " + e + " out on cluster");
           failover = true;
           break;
@@ -2499,6 +2505,13 @@ public class AssignmentManager extends ZooKeeperListener {
     } else {
       allRegions = MetaReader.fullScan(
         catalogTracker, disabledOrDisablingOrEnabling, true);
+    }
+    //remove system tables because they would have been assigned earlier
+    for(HRegionInfo regionInfo: Sets.newTreeSet(allRegions.keySet())) {
+      if(TableName.valueOf(regionInfo.getTableName())
+          .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+        allRegions.remove(regionInfo);
+      }
     }
     if (allRegions == null || allRegions.isEmpty()) return;
 

@@ -285,6 +285,11 @@ class HMerge {
           currentRow = metaScanner.next();
           continue;
         }
+        HRegionInfo region = HRegionInfo.getHRegionInfo(currentRow);
+        if (!Bytes.equals(region.getTableName(), this.tableName)) {
+          currentRow = metaScanner.next();
+          continue;
+        }
         foundResult = true;
         break;
       }

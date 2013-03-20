@@ -2391,7 +2391,7 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
       // Rows look like this: .META.,ROW_FROM_META,RID
       //        LOG.info("ROOT " + Bytes.toString(left, loffset, llength) +
       //          "---" + Bytes.toString(right, roffset, rlength));
-      final int metalength = 7; // '.META.' length
+      final int metalength = TableName.valueOf(HConstants.META_TABLE_NAME).getName().length+1; // '.META.' length
       int lmetaOffsetPlusDelimiter = loffset + metalength;
       int leftFarDelimiter = getDelimiterInReverse(left,
           lmetaOffsetPlusDelimiter,
