@@ -591,28 +591,7 @@ public class MasterFileSystem {
   }
 
   public void deleteTable(byte[] tableName) throws IOException {
-    fs.delete(new Path(rootdir, Bytes.toString(tableName)), true);
-  }
-
-  /**
-   * Move the specified file/directory to the hbase temp directory.
-   * @param path The path of the file/directory to move
-   * @return The temp location of the file/directory moved
-   * @throws IOException in case of file-system failure
-   */
-  public Path moveToTemp(final Path path) throws IOException {
-    Path tempPath = new Path(this.tempdir, path.getName());
-
-    // Ensure temp exists
-    if (!fs.exists(tempdir) && !fs.mkdirs(tempdir)) {
-      throw new IOException("HBase temp directory '" + tempdir + "' creation failure.");
-    }
-
-    if (!fs.rename(path, tempPath)) {
-      throw new IOException("Unable to move '" + path + "' to temp '" + tempPath + "'");
-    }
-
-    return tempPath;
+    fs.delete(HTableDescriptor.getTableDir(rootdir, Bytes.toString(tableName)), true);
   }
 
   /**
@@ -622,7 +601,19 @@ public class MasterFileSystem {
    * @throws IOException in case of file-system failure
    */
   public Path moveTableToTemp(byte[] tableName) throws IOException {
-    return moveToTemp(HTableDescriptor.getTableDir(this.rootdir, tableName));
+    Path srcPath = HTableDescriptor.getTableDir(rootdir, tableName);
+    Path tempPath = HTableDescriptor.getTableDir(this.tempdir, tableName);
+
+    // Ensure temp exists
+    if (!fs.exists(tempdir) && !fs.mkdirs(tempdir)) {
+      throw new IOException("HBase temp directory '" + tempdir + "' creation failure.");
+    }
+
+    if (!fs.rename(srcPath, tempPath)) {
+      throw new IOException("Unable to move '" + srcPath + "' to temp '" + tempPath + "'");
+    }
+
+    return tempPath;
   }
 
   public void updateRegionInfo(HRegionInfo region) {
@@ -634,7 +625,7 @@ public class MasterFileSystem {
   public void deleteFamilyFromFS(HRegionInfo region, byte[] familyName)
       throws IOException {
     // archive family store files
-    Path tableDir = new Path(rootdir, region.getTableNameAsString());
+    Path tableDir = HTableDescriptor.getTableDir(rootdir, region.getTableNameAsString());
     HFileArchiver.archiveFamily(fs, conf, region, tableDir, familyName);
 
     // delete the family folder

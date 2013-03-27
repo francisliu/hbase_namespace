@@ -26,6 +26,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HStore;
 
@@ -54,7 +56,7 @@ public class HFileArchiveUtil {
 
   /**
    * Get the directory to archive a store directory
-   * @param conf {@link Configuration} to read for the archive directory name. Can be null.
+   * @param conf {@link Configuration} to read for the archive directory name.
    * @param region parent region information under which the store currently lives
    * @param tabledir directory for the table under which the store currently lives
    * @param family name of the family in the store
@@ -62,8 +64,10 @@ public class HFileArchiveUtil {
    *         not be archived
    */
   public static Path getStoreArchivePath(Configuration conf, HRegionInfo region, Path tabledir,
-      byte[] family) {
-    Path tableArchiveDir = getTableArchivePath(tabledir);
+      byte[] family) throws IOException {
+    TableName tableName = HTableDescriptor.parseTableDir(tabledir);
+    Path rootDir = FSUtils.getRootDir(conf);
+    Path tableArchiveDir = getTableArchivePath(rootDir, tableName.getNameAsString());
     return HStore.getStoreHomedir(tableArchiveDir, region, family);
   }
 
@@ -74,9 +78,9 @@ public class HFileArchiveUtil {
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */
-  public static Path getRegionArchiveDir(Path tabledir, Path regiondir) {
+  public static Path getRegionArchiveDir(Path rootDir, String tableName, Path regiondir) {
     // get the archive directory for a table
-    Path archiveDir = getTableArchivePath(tabledir);
+    Path archiveDir = getTableArchivePath(rootDir, tableName);
 
     // then add on the region path under the archive
     String encodedRegionName = regiondir.getName();
@@ -91,24 +95,10 @@ public class HFileArchiveUtil {
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */
-  public static Path getRegionArchiveDir(Path tabledir, String encodedRegionName) {
+  public static Path getRegionArchiveDir(Path rootDir, String tablename, String encodedRegionName) {
     // get the archive directory for a table
-    Path archiveDir = getTableArchivePath(tabledir);
+    Path archiveDir = getTableArchivePath(rootDir, tablename);
     return HRegion.getRegionDir(archiveDir, encodedRegionName);
-  }
-
-  /**
-   * Get the path to the table archive directory based on the configured archive directory.
-   * <p>
-   * Get the path to the table's archive directory.
-   * <p>
-   * Generally of the form: /hbase/.archive/[tablename]
-   * @param tabledir directory of the table to be archived. Cannot be null.
-   * @return {@link Path} to the archive directory for the table
-   */
-  public static Path getTableArchivePath(Path tabledir) {
-    Path root = tabledir.getParent();
-    return getTableArchivePath(root, tabledir.getName());
   }
 
   /**
@@ -123,7 +113,7 @@ public class HFileArchiveUtil {
    * @return {@link Path} to the archive directory for the table
    */
   public static Path getTableArchivePath(final Path rootdir, final String tableName) {
-    return new Path(getArchivePath(rootdir), tableName);
+    return HTableDescriptor.getTableDir(getArchivePath(rootdir), tableName);
   }
 
   /**
@@ -136,7 +126,7 @@ public class HFileArchiveUtil {
    */
   public static Path getTableArchivePath(final Configuration conf, final String tableName)
       throws IOException {
-    return new Path(getArchivePath(conf), tableName);
+    return HTableDescriptor.getTableDir(getArchivePath(conf), tableName);
   }
 
   /**

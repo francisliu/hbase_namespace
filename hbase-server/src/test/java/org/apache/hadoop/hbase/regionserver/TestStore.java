@@ -149,6 +149,7 @@ public class TestStore extends TestCase {
       HColumnDescriptor hcd) throws IOException {
     //Setting up a Store
     Path basedir = new Path(DIR+methodName);
+    Path tableDir = HTableDescriptor.getTableDir(basedir, htd.getNameAsString());
     String logName = "logs";
     Path logdir = new Path(basedir, logName);
 
@@ -159,7 +160,7 @@ public class TestStore extends TestCase {
     htd.addFamily(hcd);
     HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
     HLog hlog = HLogFactory.createHLog(fs, basedir, logName, conf);
-    HRegion region = new HRegion(basedir, hlog, fs, conf, info, htd, null);
+    HRegion region = new HRegion(tableDir, hlog, fs, conf, info, htd, null);
 
     store = new HStore(region, hcd, conf);
   }

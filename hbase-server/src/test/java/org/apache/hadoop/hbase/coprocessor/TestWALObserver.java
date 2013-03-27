@@ -229,7 +229,8 @@ public class TestWALObserver {
     // createBasic3FamilyHRegionInfo(Bytes.toString(tableName));
     final HRegionInfo hri = new HRegionInfo(tableName, null, null);
 
-    final Path basedir = new Path(this.hbaseRootDir, Bytes.toString(tableName));
+    final Path basedir =
+        HTableDescriptor.getTableDir(this.hbaseRootDir, Bytes.toString(tableName));
     deleteDir(basedir);
     fs.mkdirs(new Path(basedir, hri.getEncodedName()));
 

@@ -101,13 +101,14 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
     status.setStatus("Creating regions for table: " + tableName);
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
-    Path tableDir = new Path(tableRootDir, tableName);
+    Path tempRootDir = fileSystemManager.getTempDir();
+    Path tableDir = tableRootDir;
 
     try {
       // 1. Execute the on-disk Clone
       Path snapshotDir = SnapshotDescriptionUtils.getCompletedSnapshotDir(snapshot, rootDir);
       RestoreSnapshotHelper restoreHelper = new RestoreSnapshotHelper(conf, fs,
-          snapshot, snapshotDir, hTableDescriptor, tableDir, monitor, status);
+          snapshot, snapshotDir, hTableDescriptor, tempRootDir, tableDir, monitor, status);
       RestoreSnapshotHelper.RestoreMetaChanges metaChanges = restoreHelper.restoreHdfsRegions();
 
       // Clone operation should not have stuff to restore or remove

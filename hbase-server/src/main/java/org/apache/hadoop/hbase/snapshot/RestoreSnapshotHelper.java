@@ -110,21 +110,29 @@ public class RestoreSnapshotHelper {
   private final Path snapshotDir;
 
   private final HTableDescriptor tableDesc;
+  private final Path rootDir;
   private final Path tableDir;
 
   private final Configuration conf;
   private final FileSystem fs;
 
-  public RestoreSnapshotHelper(final Configuration conf, final FileSystem fs,
-      final SnapshotDescription snapshotDescription, final Path snapshotDir,
-      final HTableDescriptor tableDescriptor, final Path tableDir,
-      final ForeignExceptionDispatcher monitor, final MonitoredTask status)
+  //TODO remove tabledir in signature
+  public RestoreSnapshotHelper(final Configuration conf,
+      final FileSystem fs,
+      final SnapshotDescription snapshotDescription,
+      final Path snapshotDir,
+      final HTableDescriptor tableDescriptor,
+      final Path rootDir,
+      final Path tableDir,
+      final ForeignExceptionDispatcher monitor,
+      final MonitoredTask status)
   {
     this.fs = fs;
     this.conf = conf;
     this.snapshotDesc = snapshotDescription;
     this.snapshotDir = snapshotDir;
     this.tableDesc = tableDescriptor;
+    this.rootDir = rootDir;
     this.tableDir = tableDir;
     this.monitor = monitor;
     this.status = status;
@@ -412,7 +420,7 @@ public class RestoreSnapshotHelper {
     }
 
     // create the regions on disk
-    ModifyRegionUtils.createRegions(conf, tableDir.getParent(),
+    ModifyRegionUtils.createRegions(conf, rootDir,
       tableDesc, clonedRegionsInfo, new ModifyRegionUtils.RegionFillTask() {
         public void fillRegion(final HRegion region) throws IOException {
           cloneRegion(region, snapshotRegions.get(region.getRegionInfo().getEncodedName()));

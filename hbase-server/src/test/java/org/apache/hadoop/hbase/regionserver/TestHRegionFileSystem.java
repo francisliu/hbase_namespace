@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.util.Progressable;
@@ -63,7 +64,8 @@ public class TestHRegionFileSystem {
 
     // Create a Region
     HRegionInfo hri = new HRegionInfo(Bytes.toBytes("TestTable"));
-    HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(conf, fs, rootDir, hri);
+    HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(conf, fs,
+        HTableDescriptor.getTableDir(rootDir, hri.getTableNameAsString()), hri);
 
     // Verify if the region is on disk
     Path regionDir = regionFs.getRegionDir();
@@ -74,11 +76,13 @@ public class TestHRegionFileSystem {
     assertEquals(hri, hriVerify);
 
     // Open the region
-    regionFs = HRegionFileSystem.openRegionFromFileSystem(conf, fs, rootDir, hri, false);
+    regionFs = HRegionFileSystem.openRegionFromFileSystem(conf, fs,
+        HTableDescriptor.getTableDir(rootDir, hri.getTableNameAsString()), hri, false);
     assertEquals(regionDir, regionFs.getRegionDir());
 
     // Delete the region
-    HRegionFileSystem.deleteRegionFromFileSystem(conf, fs, rootDir, hri);
+    HRegionFileSystem.deleteRegionFromFileSystem(conf, fs,
+        HTableDescriptor.getTableDir(rootDir, hri.getTableNameAsString()), hri);
     assertFalse("The region folder should be removed", fs.exists(regionDir));
 
     fs.delete(rootDir, true);
