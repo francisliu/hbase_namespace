@@ -121,7 +121,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
       Path snapshotDir = SnapshotDescriptionUtils.getCompletedSnapshotDir(snapshot, rootDir);
       RestoreSnapshotHelper restoreHelper = new RestoreSnapshotHelper(
           masterServices.getConfiguration(), fs,
-          snapshot, snapshotDir, hTableDescriptor, tableDir, monitor, status);
+          snapshot, snapshotDir, hTableDescriptor, rootDir, tableDir, monitor, status);
       RestoreSnapshotHelper.RestoreMetaChanges metaChanges = restoreHelper.restoreHdfsRegions();
 
       // 3. Applies changes to .META.

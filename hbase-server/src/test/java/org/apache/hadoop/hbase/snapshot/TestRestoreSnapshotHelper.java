@@ -148,7 +148,7 @@ public class TestRestoreSnapshotHelper {
       .setName("snapshot").setTable(sourceTableName).build();
 
     return new RestoreSnapshotHelper(conf, fs, sd, snapshotDir,
-      htdClone, HTableDescriptor.getTableDir(rootDir, htdClone.getName()), monitor, status);
+      htdClone, rootDir, HTableDescriptor.getTableDir(rootDir, htdClone.getName()), monitor, status);
   }
 
   private void createSnapshot(final Path rootDir, final Path snapshotDir, final HTableDescriptor htd)
@@ -156,7 +156,7 @@ public class TestRestoreSnapshotHelper {
     // First region, simple with one plain hfile.
     HRegionInfo hri = new HRegionInfo(htd.getName());
     HRegionFileSystem r0fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, new Path(archiveDir, hri.getTableNameAsString()), hri);
+      fs, HTableDescriptor.getTableDir(archiveDir, hri.getTableNameAsString()), hri);
     Path storeFile = new Path(rootDir, TEST_HFILE);
     fs.createNewFile(storeFile);
     r0fs.commitStoreFile(TEST_FAMILY, storeFile);
@@ -165,7 +165,7 @@ public class TestRestoreSnapshotHelper {
     // This region contains a reference to the hfile in the first region.
     hri = new HRegionInfo(htd.getName());
     HRegionFileSystem r1fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, new Path(archiveDir, hri.getTableNameAsString()), hri);
+      fs, HTableDescriptor.getTableDir(archiveDir, hri.getTableNameAsString()), hri);
     storeFile = new Path(rootDir, TEST_HFILE + '.' + r0fs.getRegionInfo().getEncodedName());
     fs.createNewFile(storeFile);
     r1fs.commitStoreFile(TEST_FAMILY, storeFile);

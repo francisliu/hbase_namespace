@@ -283,7 +283,7 @@ public class TestFlushSnapshotFromClient {
     // check the table info
     HTableDescriptor desc = FSTableDescriptors.getTableDescriptor(fs, rootDir, TABLE_NAME);
     HTableDescriptor snapshotDesc = FSTableDescriptors.getTableDescriptor(fs,
-      SnapshotDescriptionUtils.getSnapshotsDir(rootDir), Bytes.toBytes(snapshotName));
+        new Path(SnapshotDescriptionUtils.getSnapshotsDir(rootDir), snapshotName));
     assertEquals(desc, snapshotDesc);
 
     // check the region snapshot for all the regions

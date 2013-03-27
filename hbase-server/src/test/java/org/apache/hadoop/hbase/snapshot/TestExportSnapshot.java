@@ -293,7 +293,8 @@ public class TestExportSnapshot {
         public void storeFile (final String region, final String family, final String hfile)
             throws IOException {
           verifyNonEmptyFile(new Path(exportedArchive,
-            new Path(Bytes.toString(tableName), new Path(region, new Path(family, hfile)))));
+            new Path(HTableDescriptor.getTableDir(new Path("./"),Bytes.toString(tableName)),
+                new Path(region, new Path(family, hfile)))));
         }
 
         public void recoveredEdits (final String region, final String logfile)

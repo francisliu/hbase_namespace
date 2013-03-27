@@ -440,8 +440,8 @@ public class FSTableDescriptors implements TableDescriptors {
         HTableDescriptor.getTableDir(hbaseRootDir, Bytes.toBytes(tableName)));
   }
 
-  static TableDescriptorModtime getTableDescriptorModtime(FileSystem fs, Path tableDir)
-  throws NullPointerException, IOException {
+  public static TableDescriptorModtime getTableDescriptorModtime(FileSystem fs, Path tableDir)
+      throws NullPointerException, IOException {
     if (tableDir == null) throw new NullPointerException();
     FileStatus status = getTableInfoPath(fs, tableDir);
     if (status == null) {

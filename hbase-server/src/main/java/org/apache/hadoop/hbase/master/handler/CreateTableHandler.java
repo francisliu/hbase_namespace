@@ -49,6 +49,7 @@ import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.TableLockManager;
 import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.ModifyRegionUtils;
 import org.apache.zookeeper.KeeperException;
 
@@ -210,7 +211,7 @@ public class CreateTableHandler extends EventHandler {
     Path tableDir = HTableDescriptor.getTableDir(fileSystemManager.getRootDir(), tableName);
 
     // 2. Create Regions
-    List<HRegionInfo> regionInfos = handleCreateHdfsRegions(tempdir, tableName);
+    List<HRegionInfo> regionInfos = handleCreateHdfsRegions(tempTableDir, tableName);
 
     // 3. Move Table temp directory to the hbase root location
     if (!fs.rename(tempTableDir, tableDir)) {

@@ -212,8 +212,10 @@ public class HFileArchiveTestingUtil {
    * @param region region that is being archived
    * @return {@link Path} to the archive directory for the given region
    */
-  public static Path getRegionArchiveDir(Configuration conf, HRegion region) {
-    return HFileArchiveUtil.getRegionArchiveDir(region.getRegionFileSystem().getTableDir(),
+  public static Path getRegionArchiveDir(Configuration conf, HRegion region) throws IOException {
+    return HFileArchiveUtil.getRegionArchiveDir(
+        FSUtils.getRootDir(conf),
+        region.getTableDesc().getNameAsString(),
         region.getRegionFileSystem().getRegionDir());
   }
 

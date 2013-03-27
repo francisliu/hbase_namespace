@@ -29,6 +29,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.master.MasterServices;
@@ -189,7 +190,7 @@ public final class MasterSnapshotVerifier {
     if (columnFamilies == null) return;
 
     // setup the suffixes for the snapshot directories
-    Path tableNameSuffix = new Path(tableName);
+    Path tableNameSuffix = HTableDescriptor.getTableDir(new Path("./"), tableName);
     Path regionNameSuffix = new Path(tableNameSuffix, region.getEncodedName());
 
     // get the potential real paths
