@@ -1269,12 +1269,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     if(tableDir.getParent().getParent()
         .getName().equals(HConstants.BASE_NAMESPACE_DIR)) {
       return TableName.valueOf(tableDir.getParent().getName(), qualifier);
-    //TODO nshack this section onwards is a hack and must be fixed
-    } else if(Bytes.toString(HConstants.ROOT_TABLE_NAME).equals(qualifier) ||
-        Bytes.toString(HConstants.META_TABLE_NAME).equals(qualifier) ||
-        Bytes.toString(HConstants.NAMESPACE_TABLE_NAME).equals(qualifier)){
-      return TableName.valueOf(HConstants.SYSTEM_NAMESPACE_NAME,
-          Bytes.toBytes(qualifier));
     }
     throw new IllegalStateException("This should not happen: "+tableDir);
   }
@@ -1299,8 +1293,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for <core>-ROOT-</code> catalog table */
   public static final HTableDescriptor ROOT_TABLEDESC = new HTableDescriptor(
-      TableName.valueOf(HConstants.SYSTEM_NAMESPACE_NAME,
-          HConstants.ROOT_TABLE_NAME),
+      TableName.valueOf(HConstants.ROOT_TABLE_NAME),
       new HColumnDescriptor[] {
           new HColumnDescriptor(HConstants.CATALOG_FAMILY)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1313,8 +1306,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for <code>.META.</code> catalog table */
   public static final HTableDescriptor META_TABLEDESC = new HTableDescriptor(
-      TableName.valueOf(HConstants.SYSTEM_NAMESPACE_NAME,
-          HConstants.META_TABLE_NAME),
+      TableName.valueOf(HConstants.META_TABLE_NAME),
       new HColumnDescriptor[] {
           new HColumnDescriptor(HConstants.CATALOG_FAMILY)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1340,8 +1332,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for <code>.NAMESPACE.</code> catalog table */
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(
-      TableName.valueOf(HConstants.SYSTEM_NAMESPACE_NAME,
-          HConstants.NAMESPACE_TABLE_NAME),
+      TableName.valueOf(HConstants.NAMESPACE_TABLE_NAME),
       new HColumnDescriptor[] {
           //TODO make this us a constant
           new HColumnDescriptor(Bytes.toBytes("info"))

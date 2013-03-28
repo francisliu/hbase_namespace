@@ -1364,7 +1364,7 @@ public class ThriftServerRunner implements Runnable {
           row, HConstants.CATALOG_FAMILY);
 
         if (startRowResult == null) {
-          throw new IOException("Cannot find row in .META., row="
+          throw new IOException("Cannot find row in "+Bytes.toString(HConstants.META_TABLE_NAME)+", row="
                                 + Bytes.toStringBinary(row));
         }
 

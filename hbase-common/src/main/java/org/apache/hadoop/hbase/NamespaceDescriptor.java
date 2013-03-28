@@ -64,13 +64,8 @@ public class NamespaceDescriptor {
   }
 
   public static Path getNamespaceDir(Path rootdir, final String namespace) {
-    //TODO nshack to avoid migrating existing tables
-    if(namespace.equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
-      return rootdir;
-    } else {
-      return new Path(rootdir, new Path(HConstants.BASE_NAMESPACE_DIR,
-          new Path(namespace)));
-    }
+    return new Path(rootdir, new Path(HConstants.BASE_NAMESPACE_DIR,
+        new Path(namespace)));
   }
 
   @Override

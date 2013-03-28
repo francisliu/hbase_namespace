@@ -500,7 +500,7 @@ public class TestMemStore extends TestCase {
     for (int k = start; k <= end; k++) {
       byte [] kk = Bytes.toBytes(k);
       byte [] row =
-        Bytes.toBytes(".META.,table," + Bytes.toString(kk) + ",1," + k);
+        Bytes.toBytes(Bytes.toString(HConstants.META_TABLE_NAME)+",table," + Bytes.toString(kk) + ",1," + k);
       KeyValue key = new KeyValue(row, CONTENTS, BASIC,
         System.currentTimeMillis(),
         Bytes.toBytes(CONTENTSTR + k));
@@ -517,7 +517,7 @@ public class TestMemStore extends TestCase {
       System.out.println(kv);
       byte [] b = kv.getRow();
       // Hardcoded offsets into String
-      String str = Bytes.toString(b, 13, 4);
+      String str = Bytes.toString(b, HConstants.META_TABLE_NAME.length+7, 4);
       byte [] bb = Bytes.toBytes(index);
       String bbStr = Bytes.toString(bb);
       assertEquals(str, bbStr);

@@ -34,6 +34,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
@@ -1371,8 +1372,8 @@ public class AccessController extends BaseRegionObserver
   private boolean isSpecialTable(HRegionInfo regionInfo) {
     byte[] tableName = regionInfo.getTableName();
     return Arrays.equals(tableName, AccessControlLists.ACL_TABLE_NAME)
-        || Arrays.equals(tableName, Bytes.toBytes("-ROOT-"))
-        || Arrays.equals(tableName, Bytes.toBytes(".META."));
+        || Arrays.equals(tableName, HConstants.META_TABLE_NAME)
+        || Arrays.equals(tableName, HConstants.ROOT_TABLE_NAME);
   }
 
   @Override

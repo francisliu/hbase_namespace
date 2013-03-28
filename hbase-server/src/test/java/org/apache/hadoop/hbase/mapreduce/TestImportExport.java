@@ -28,6 +28,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MediumTests;
@@ -178,7 +179,7 @@ public class TestImportExport {
    */
   @Test
   public void testMetaExport() throws Exception {
-    String EXPORT_TABLE = ".META.";
+    String EXPORT_TABLE = Bytes.toString(HConstants.META_TABLE_NAME);
     String[] args = new String[] { EXPORT_TABLE, FQ_OUTPUT_DIR, "1", "0", "0" };
     assertTrue(runExport(args));
   }

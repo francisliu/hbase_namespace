@@ -52,7 +52,7 @@ public class TokenUtil {
       Configuration conf) throws IOException {
     HTable meta = null;
     try {
-      meta = new HTable(conf, ".META.");
+      meta = new HTable(conf, HConstants.META_TABLE_NAME);
       CoprocessorRpcChannel rpcChannel = meta.coprocessorService(HConstants.EMPTY_START_ROW);
       AuthenticationProtos.AuthenticationService.BlockingInterface service =
           AuthenticationProtos.AuthenticationService.newBlockingStub(rpcChannel);

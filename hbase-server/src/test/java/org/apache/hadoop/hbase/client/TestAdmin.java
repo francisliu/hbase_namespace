@@ -1661,7 +1661,7 @@ public class TestAdmin {
   @Test
   public void testDisableCatalogTable() throws Exception {
     try {
-      this.admin.disableTable(".META.");
+      this.admin.disableTable(HConstants.META_TABLE_NAME);
       fail("Expected to throw IllegalArgumentException");
     } catch (IllegalArgumentException e) {
     }

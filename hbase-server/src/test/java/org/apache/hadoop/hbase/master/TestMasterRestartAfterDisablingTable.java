@@ -83,7 +83,7 @@ public class TestMasterRestartAfterDisablingTable {
     NavigableSet<String> regions = getAllOnlineRegions(cluster);
     assertEquals(
         "The number of regions for the table tableRestart should be 0 and only"
-            + "the catalog tables should be present.", 1, regions.size());
+            + "the catalog and namespace tables should be present.", 2, regions.size());
 
     List<MasterThread> masterThreads = cluster.getMasterThreads();
     MasterThread activeMaster = null;

@@ -65,8 +65,10 @@ public class TestTableDeleteFamilyHandler {
     HTable t = new HTable(TEST_UTIL.getConfiguration(), TABLENAME);
 
     // Create multiple regions in all the three column families
-    TEST_UTIL.createMultiRegions(t, FAMILIES[0]);
-
+    while(TEST_UTIL.getMiniHBaseCluster().getMaster().getAssignmentManager()
+        .getRegionStates().getRegionsInTransition().size() > 0) {
+      Thread.sleep(100);
+    }
     // Load the table with data for all families
     TEST_UTIL.loadTable(t, FAMILIES);
 
@@ -107,8 +109,7 @@ public class TestTableDeleteFamilyHandler {
     }
 
     // 3 - Check if table exists in FS
-    Path tableDir = new Path(TEST_UTIL.getDefaultRootDirPath().toString() + "/"
-        + TABLENAME);
+    Path tableDir = HTableDescriptor.getTableDir(TEST_UTIL.getDefaultRootDirPath(), TABLENAME);
     assertTrue(fs.exists(tableDir));
 
     // 4 - Check if all the 3 column families exist in FS
@@ -120,7 +121,7 @@ public class TestTableDeleteFamilyHandler {
         for (int j = 0; j < cf.length; j++) {
           if (cf[j].isDir() == true
               && cf[j].getPath().getName().startsWith(".") == false) {
-            assertTrue(cf[j].getPath().getName().equals("cf" + k));
+            assertEquals(cf[j].getPath().getName(), "cf" + k);
             k++;
           }
         }
