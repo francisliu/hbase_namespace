@@ -1193,6 +1193,7 @@ public class HBaseFsck extends Configured implements Tool {
     Path tableDir = HTableDescriptor.getTableDir(hbaseDir, tableName);
     if (fs.exists(tableDir)) {
       Path backupTableDir= HTableDescriptor.getTableDir(backupHbaseDir, tableName);
+      fs.mkdirs(backupTableDir.getParent());
       boolean success = fs.rename(tableDir, backupTableDir);
       if (!success) {
         throw new IOException("Failed to move  " + tableName + " from "
@@ -1271,7 +1272,7 @@ public class HBaseFsck extends Configured implements Tool {
 
     List<Path> paths = FSUtils.getTableDirs(fs, rootDir);
     for (Path path : paths) {
-      String tableName = HTableDescriptor.parseTableDir(path).getNameAsString();
+      String tableName = path.getName();
        if ((!checkMetaOnly &&
            isTableIncluded(tableName)) ||
            tableName.equals(Bytes.toString(HConstants.META_TABLE_NAME))) {
@@ -2752,7 +2753,7 @@ public class HBaseFsck extends Configured implements Tool {
         // we are only guaranteed to have a path and not an HRI for hdfsEntry,
         // so we get the name from the Path
         Path tableDir = this.hdfsEntry.hdfsRegionDir.getParent();
-        return HTableDescriptor.parseTableDir(tableDir).getName();
+        return Bytes.toBytes(tableDir.getName());
       } else {
         // Currently no code exercises this path, but we could add one for
         // getting table name from OnlineEntry

@@ -108,7 +108,7 @@ public class HFileArchiver {
     // make sure the regiondir lives under the tabledir
     Preconditions.checkArgument(regionDir.toString().startsWith(tableDir.toString()));
     Path regionArchiveDir = HFileArchiveUtil.getRegionArchiveDir(rootdir,
-        HTableDescriptor.parseTableDir(tableDir).getNameAsString(),
+        tableDir.getName(),
         regionDir.getName());
 
     LOG.debug("Have an archive directory, preparing to move files");

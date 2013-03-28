@@ -1264,15 +1264,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       remove(match);
   }
 
-  public static TableName parseTableDir(Path tableDir) {
-    String qualifier = tableDir.getName();
-    if(tableDir.getParent().getParent()
-        .getName().equals(HConstants.BASE_NAMESPACE_DIR)) {
-      return TableName.valueOf(tableDir.getParent().getName(), qualifier);
-    }
-    throw new IllegalStateException("This should not happen: "+tableDir);
-  }
-
    public static Path getTableDir(Path rootdir, final String tableName) {
      return getTableDir(rootdir, Bytes.toBytes(tableName));
    }
@@ -1288,7 +1279,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   public static Path getTableDir(Path rootdir, final byte [] tableName) {
     TableName name = TableName.valueOf(tableName);
     return new Path(NamespaceDescriptor.getNamespaceDir(rootdir, name.getNamespaceAsString()),
-        name.getQualifierAsString());
+        name.getNameAsString());
   }
 
   /** Table descriptor for <core>-ROOT-</code> catalog table */

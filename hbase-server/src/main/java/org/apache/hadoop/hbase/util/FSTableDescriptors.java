@@ -197,7 +197,7 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-        htd = get(HTableDescriptor.parseTableDir(d).getNameAsString());
+        htd = get(d.getName());
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
@@ -220,7 +220,7 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-        htd = get(HTableDescriptor.parseTableDir(d).getNameAsString());
+        htd = get(d.getName());
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
