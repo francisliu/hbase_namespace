@@ -101,8 +101,8 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
     status.setStatus("Creating regions for table: " + tableName);
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
-    Path tempRootDir = fileSystemManager.getTempDir();
-    Path tableDir = tableRootDir;
+    Path tempRootDir = tableRootDir;
+    Path tableDir = HTableDescriptor.getTableDir(tempRootDir, tableName);
 
     try {
       // 1. Execute the on-disk Clone

@@ -90,18 +90,7 @@ public class TableName implements Comparable<TableName> {
 
   public static TableName valueOf(String name) {
     List<String> list = Lists.newArrayList(Splitter.on('.').limit(2).split(name));
-    //TODO nshack to avoid migrating existing tables
-    if(name.equals(Bytes.toString(HConstants.ROOT_TABLE_NAME))) {
-      return TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE.getName(),
-          Bytes.toString(HConstants.ROOT_TABLE_NAME));
-    }
-    else if(name.equals(Bytes.toString(HConstants.META_TABLE_NAME))) {
-      return TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE.getName(),
-          Bytes.toString(HConstants.META_TABLE_NAME));
-    } else if(name.equals(Bytes.toString(HConstants.NAMESPACE_TABLE_NAME))) {
-        return TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE.getName(),
-            Bytes.toString(HConstants.NAMESPACE_TABLE_NAME));
-    } else if(list.size() == 2) {
+    if(list.size() == 2) {
       return TableName.valueOf(list.get(0),list.get(1));
     } else {
       return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), list.get(0));
@@ -109,11 +98,7 @@ public class TableName implements Comparable<TableName> {
   }
 
   private static String createFullyQualified(String namespace, String tableQualifier) {
-    if(namespace.length() < 1) {
-      return tableQualifier;
-    //TODO nshack to avoid migrating existing tables
-    } else if (namespace.equals(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) ||
-        namespace.equals(NamespaceDescriptor.DEFAULT_NAMESPACE.getName())) {
+    if (namespace.equals(NamespaceDescriptor.DEFAULT_NAMESPACE.getName())) {
       return tableQualifier;
     }
     return namespace+NamespaceDescriptor.NAMESPACE_DELIM+tableQualifier;

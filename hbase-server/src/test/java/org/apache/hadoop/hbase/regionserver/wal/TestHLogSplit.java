@@ -123,7 +123,7 @@ public class TestHLogSplit {
   private static final String HLOG_FILE_PREFIX = "hlog.dat.";
   private static List<String> REGIONS = new ArrayList<String>();
   private static final String HBASE_SKIP_ERRORS = "hbase.hlog.split.skip.errors";
-  private static final Path TABLEDIR = new Path(HBASEDIR, Bytes.toString(TABLE_NAME));
+  private static final Path TABLEDIR = HTableDescriptor.getTableDir(HBASEDIR, Bytes.toString(TABLE_NAME));
   private static String ROBBER;
   private static String ZOMBIE;
   private static String [] GROUP = new String [] {"supergroup"};
@@ -333,7 +333,7 @@ public class TestHLogSplit {
   public void testRecoveredEditsPathForMeta() throws IOException {
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     byte [] encoded = HRegionInfo.FIRST_META_REGIONINFO.getEncodedNameAsBytes();
-    Path tdir = new Path(HBASEDIR, Bytes.toString(HConstants.META_TABLE_NAME));
+    Path tdir = HTableDescriptor.getTableDir(HBASEDIR, Bytes.toString(HConstants.META_TABLE_NAME));
     Path regiondir = new Path(tdir,
         HRegionInfo.FIRST_META_REGIONINFO.getEncodedName());
     fs.mkdirs(regiondir);
@@ -355,7 +355,7 @@ public class TestHLogSplit {
   public void testOldRecoveredEditsFileSidelined() throws IOException {
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     byte [] encoded = HRegionInfo.FIRST_META_REGIONINFO.getEncodedNameAsBytes();
-    Path tdir = new Path(HBASEDIR, Bytes.toString(HConstants.META_TABLE_NAME));
+    Path tdir = HTableDescriptor.getTableDir(HBASEDIR, Bytes.toString(HConstants.META_TABLE_NAME));
     Path regiondir = new Path(tdir,
         HRegionInfo.FIRST_META_REGIONINFO.getEncodedName());
     fs.mkdirs(regiondir);
@@ -380,7 +380,7 @@ public class TestHLogSplit {
     AtomicBoolean stop = new AtomicBoolean(false);
 
     assertFalse("Previous test should clean up table dir",
-      fs.exists(new Path("/hbase/t1")));
+      fs.exists(HTableDescriptor.getTableDir(HBASEDIR, TABLE_NAME)));
 
     generateHLogs(-1);
 
@@ -1205,7 +1205,7 @@ public class TestHLogSplit {
       if (stop.get()) {
         return;
       }
-      Path tableDir = new Path(HBASEDIR, new String(TABLE_NAME));
+      Path tableDir = HTableDescriptor.getTableDir(HBASEDIR, new String(TABLE_NAME));
       Path regionDir = new Path(tableDir, REGIONS.get(0));
       Path recoveredEdits = new Path(regionDir, HConstants.RECOVERED_EDITS_DIR);
       String region = "juliet";

@@ -1128,7 +1128,7 @@ public class HBaseFsck extends Configured implements Tool {
     if (parentDir != null) {
       rootDir = new Path(rootDir, parentDir);
     }
-    Path sidelineTableDir= new Path(rootDir, tableName);
+    Path sidelineTableDir= HTableDescriptor.getTableDir(rootDir, tableName);
     Path sidelineRegionDir = new Path(sidelineTableDir, regionDir.getName());
     fs.mkdirs(sidelineRegionDir);
     boolean success = false;
@@ -1190,9 +1190,9 @@ public class HBaseFsck extends Configured implements Tool {
   void sidelineTable(FileSystem fs, byte[] table, Path hbaseDir,
       Path backupHbaseDir) throws IOException {
     String tableName = Bytes.toString(table);
-    Path tableDir = new Path(hbaseDir, tableName);
+    Path tableDir = HTableDescriptor.getTableDir(hbaseDir, tableName);
     if (fs.exists(tableDir)) {
-      Path backupTableDir= new Path(backupHbaseDir, tableName);
+      Path backupTableDir= HTableDescriptor.getTableDir(backupHbaseDir, tableName);
       boolean success = fs.rename(tableDir, backupTableDir);
       if (!success) {
         throw new IOException("Failed to move  " + tableName + " from "
@@ -1271,10 +1271,10 @@ public class HBaseFsck extends Configured implements Tool {
 
     List<Path> paths = FSUtils.getTableDirs(fs, rootDir);
     for (Path path : paths) {
-      String dirName = path.getName();
+      String tableName = HTableDescriptor.parseTableDir(path).getNameAsString();
        if ((!checkMetaOnly &&
-           isTableIncluded(HTableDescriptor.parseTableDir(path).getNameAsString())) ||
-           dirName.equals(".META.")) {
+           isTableIncluded(tableName)) ||
+           tableName.equals(Bytes.toString(HConstants.META_TABLE_NAME))) {
          tableDirs.add(fs.getFileStatus(path));
        }
     }
@@ -2752,7 +2752,7 @@ public class HBaseFsck extends Configured implements Tool {
         // we are only guaranteed to have a path and not an HRI for hdfsEntry,
         // so we get the name from the Path
         Path tableDir = this.hdfsEntry.hdfsRegionDir.getParent();
-        return Bytes.toBytes(tableDir.getName());
+        return HTableDescriptor.parseTableDir(tableDir).getName();
       } else {
         // Currently no code exercises this path, but we could add one for
         // getting table name from OnlineEntry

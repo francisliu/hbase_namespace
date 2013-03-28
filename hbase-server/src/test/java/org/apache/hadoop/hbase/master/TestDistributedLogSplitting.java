@@ -63,6 +63,7 @@ import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SplitLogCounters;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
@@ -1190,7 +1191,8 @@ public class TestDistributedLogSplitting {
       HRegionServer hrs = rst.getRegionServer();
       List<HRegionInfo> hris = ProtobufUtil.getOnlineRegions(hrs);
       for (HRegionInfo hri : hris) {
-        if (hri.isMetaTable()) {
+        if (TableName.valueOf(hri.getTableName()).getNamespaceAsString().equals(
+            HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
           continue;
         }
         LOG.debug("adding data to rs = " + rst.getName() +

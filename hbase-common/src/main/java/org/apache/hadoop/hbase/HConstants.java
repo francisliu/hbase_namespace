@@ -360,13 +360,13 @@ public final class HConstants {
       Bytes.toString(DEFAULT_NAMESPACE_NAME);
 
   /** The root table's name.*/
-  public static final byte [] ROOT_TABLE_NAME = Bytes.toBytes("-ROOT-");
+  public static final byte [] ROOT_TABLE_NAME = Bytes.toBytes("-hbase-.-ROOT-");
 
   /** The META table's name. */
-  public static final byte [] META_TABLE_NAME = Bytes.toBytes(".META.");
+  public static final byte [] META_TABLE_NAME = Bytes.toBytes("-hbase-.-meta-");
 
   /** The Namespace table's name. */
-  public static final byte [] NAMESPACE_TABLE_NAME = Bytes.toBytes(".NAMESPACE.");
+  public static final byte [] NAMESPACE_TABLE_NAME = Bytes.toBytes("-hbase-.-namespace-");
   public static final String NAMESPACE_TABLE_NAME_STR =
       Bytes.toString(NAMESPACE_TABLE_NAME);
 
