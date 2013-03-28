@@ -718,5 +718,100 @@ module Hbase
         end
     end
 
+    #----------------------------------------------------------------------------------------------
+    # Returns namespace's structure description
+    def describe_namespace(namespace_name)
+      namespace = @admin.getNamespaceDescriptor(namespace_name)
+
+      unless namespace.nil?
+        return namespace.to_s
+      end
+
+      raise(ArgumentError, "Failed to find namespace named #{namespace_name}")
+    end
+
+    #----------------------------------------------------------------------------------------------
+    # Returns a list of namespace in hbase
+    def list_namespace
+      @admin.listNamespaceDescriptors.map { |ns| ns.getName }
+    end
+
+    #----------------------------------------------------------------------------------------------
+    # Returns a list of tables in namespace
+    def list_namespace_tables(namespace_name)
+      unless namespace_name.nil?
+        return @admin.getTableDescriptorsByNamespace(namespace_name).map { |t| t.getNameAsString }
+      end
+
+      raise(ArgumentError, "Failed to find namespace named #{namespace_name}")
+    end
+
+    #----------------------------------------------------------------------------------------------
+    # Creates a namespace
+    def create_namespace(namespace_name, *args)
+      # Fail if table name is not a string
+      raise(ArgumentError, "Namespace name must be of type String") unless namespace_name.kind_of?(String)
+
+      # Flatten params array
+      args = args.flatten.compact
+
+      # Start defining the table
+      nsb = org.apache.hadoop.hbase.NamespaceDescriptor::create(namespace_name)
+      args.each do |arg|
+        unless arg.kind_of?(Hash)
+          raise(ArgumentError, "#{arg.class} of #{arg.inspect} is not of Hash or String type")
+        end
+        for k,v in arg
+          v = v.to_s unless v.nil?
+          nsb.addValue(k, v)
+        end
+      end
+      @admin.createNamespace(nsb.build());
+    end
+
+    #----------------------------------------------------------------------------------------------
+    # Creates a table
+    def alter_namespace(namespace_name, *args)
+      # Fail if table name is not a string
+      raise(ArgumentError, "Namespace name must be of type String") unless namespace_name.kind_of?(String)
+
+      nsd = @admin.getNamespaceDescriptor(namespace_name)
+      nsb = org.apache.hadoop.hbase.NamespaceDescriptor::create(nsd)
+
+      unless nsd
+        raise(ArgumentError, "Namespace does not exist")
+      end
+
+      # Flatten params array
+      args = args.flatten.compact
+
+      # Start defining the table
+      args.each do |arg|
+        unless arg.kind_of?(Hash)
+          raise(ArgumentError, "#{arg.class} of #{arg.inspect} is not of Hash type")
+        end
+        method = arg[METHOD]
+        if method == "unset"
+          nsb.removeValue(arg[NAME])
+        elsif  method == "set"
+          arg.delete(METHOD)
+          for k,v in arg
+            v = v.to_s unless v.nil?
+            nsb.addValue(k, v)
+          end
+        else
+          raise(ArgumentError, "Unknown method #{method}")
+        end
+      end
+      @admin.modifyNamespace(nsb.build());
+    end
+
+
+    #----------------------------------------------------------------------------------------------
+    # Drops a table
+    def drop_namespace(namespace_name)
+      @admin.deleteNamespace(namespace_name)
+    end
+
   end
 end
