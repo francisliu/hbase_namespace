@@ -65,7 +65,7 @@ public class HFileArchiveUtil {
    */
   public static Path getStoreArchivePath(Configuration conf, HRegionInfo region, Path tabledir,
       byte[] family) throws IOException {
-    TableName tableName = HTableDescriptor.parseTableDir(tabledir);
+    TableName tableName = TableName.valueOf(tabledir.getName());
     Path rootDir = FSUtils.getRootDir(conf);
     Path tableArchiveDir = getTableArchivePath(rootDir, tableName.getNameAsString());
     return HStore.getStoreHomedir(tableArchiveDir, region, family);

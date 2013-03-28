@@ -142,7 +142,7 @@ public class TestNamespace {
     TEST_UTIL.waitTableAvailable(desc.getName(), 10000);
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     assertTrue(fs.exists(new Path(master.getMasterFileSystem().getRootDir(),
-        new Path(HConstants.BASE_NAMESPACE_DIR, new Path("bar", "my_table")))));
+        new Path(HConstants.BASE_NAMESPACE_DIR, new Path("bar", "bar.my_table")))));
     assertEquals(1, admin.listTables().length);
 
     //verify non-empty namespace can't be removed
