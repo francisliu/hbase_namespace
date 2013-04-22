@@ -216,7 +216,7 @@ public class FSTableDescriptors implements TableDescriptors {
   throws IOException {
     Map<String, HTableDescriptor> htds = new TreeMap<String, HTableDescriptor>();
     List<Path> tableDirs =
-        FSUtils.getTableDirs(fs, NamespaceDescriptor.getNamespaceDir(rootdir, name));
+        FSUtils.getLocalTableDirs(fs, NamespaceDescriptor.getNamespaceDir(rootdir, name));
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
@@ -226,8 +226,6 @@ public class FSTableDescriptors implements TableDescriptors {
         LOG.warn("Trouble retrieving htd", fnfe);
       }
       if (htd == null) continue;
-      //TODO this is another workaround to not have to migrate namespace for default and system
-      if (!Bytes.toString(htd.getTableName().getNamespace()).equals(name)) continue;
       htds.put(d.getName(), htd);
     }
     return htds;

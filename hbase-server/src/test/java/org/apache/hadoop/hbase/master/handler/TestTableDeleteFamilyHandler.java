@@ -63,7 +63,10 @@ public class TestTableDeleteFamilyHandler {
     // Create a table of three families. This will assign a region.
     TEST_UTIL.createTable(Bytes.toBytes(TABLENAME), FAMILIES);
     HTable t = new HTable(TEST_UTIL.getConfiguration(), TABLENAME);
-
+    while(TEST_UTIL.getMiniHBaseCluster().getMaster().getAssignmentManager()
+        .getRegionStates().getRegionsInTransition().size() > 0) {
+      Thread.sleep(100);
+    }
     // Create multiple regions in all the three column families
     while(TEST_UTIL.getMiniHBaseCluster().getMaster().getAssignmentManager()
         .getRegionStates().getRegionsInTransition().size() > 0) {

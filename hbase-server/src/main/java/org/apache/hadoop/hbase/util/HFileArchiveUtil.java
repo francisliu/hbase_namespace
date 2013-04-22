@@ -19,8 +19,6 @@ package org.apache.hadoop.hbase.util;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -73,7 +71,7 @@ public class HFileArchiveUtil {
 
   /**
    * Get the archive directory for a given region under the specified table
-   * @param tabledir the original table directory. Cannot be null.
+   * @param tableName the table name. Cannot be null.
    * @param regiondir the path to the region directory. Cannot be null.
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
@@ -89,9 +87,9 @@ public class HFileArchiveUtil {
 
   /**
    * Get the archive directory for a given region under the specified table
-   * @param rootdir {@link Path} to the root directory where hbase files are stored (for building
+   * @param rootDir {@link Path} to the root directory where hbase files are stored (for building
    *          the archive path)
-   * @param tabledir the original table directory. Cannot be null.
+   * @param tablename the original table directory. Cannot be null.
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */

@@ -14,6 +14,8 @@ package org.apache.hadoop.hbase;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.List;
@@ -90,10 +92,10 @@ public class TableName implements Comparable<TableName> {
 
   public static TableName valueOf(String name) {
     List<String> list = Lists.newArrayList(Splitter.on('.').limit(2).split(name));
-    if(list.size() == 2) {
-      return TableName.valueOf(list.get(0),list.get(1));
+    if (list.size() == 2) {
+      return TableName.valueOf(list.get(0), list.get(1));
     } else {
-      return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), list.get(0));
+      return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
     }
   }
 

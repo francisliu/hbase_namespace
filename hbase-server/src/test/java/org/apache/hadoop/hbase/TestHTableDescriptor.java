@@ -125,13 +125,16 @@ public class TestHTableDescriptor {
     assertEquals(null, desc.getValue(key));
   }
 
-  String legalTableNames[] = { "foo", "with-dash_under.dot", "_under_start_ok",  };
-  String illegalTableNames[] = { ".dot_start_illegal", "-dash_start_illegal", "spaces not ok" };
+  String legalTableNames[] = { "foo", "with-dash_under.dot", "_under_start_ok",
+      "with-dash.with_underscore", "02-01-2012.my_table_01-02", "xyz._mytable_", "9_9_0.table_02" };
+  String illegalTableNames[] = { ".dot_start_illegal", "-dash_start_illegal", "spaces not ok",
+      "-dash-.start_illegal", "illegal..t2", "new.table with space", "new.-mytable", "01 .table",
+      "with-dash.with.dot" };
 
   @Test
   public void testLegalHTableNames() {
     for (String tn : legalTableNames) {
-      HTableDescriptor.isLegalTableName(Bytes.toBytes(tn));
+      HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(tn));
     }
   }
 
@@ -139,7 +142,7 @@ public class TestHTableDescriptor {
   public void testIllegalHTableNames() {
     for (String tn : illegalTableNames) {
       try {
-        HTableDescriptor.isLegalTableName(Bytes.toBytes(tn));
+        HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(tn));
         fail("invalid tablename " + tn + " should have failed");
       } catch (Exception e) {
         // expected
@@ -151,7 +154,9 @@ public class TestHTableDescriptor {
   public void testLegalHTableNamesRegex() {
     for (String tn : legalTableNames) {
       LOG.info("Testing: '" + tn + "'");
-      assertTrue(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tn));
+      TableName tName = TableName.valueOf(tn);
+      assertTrue(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNamespaceAsString())
+        && Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getQualifierAsString()));
     }
   }
 
@@ -159,7 +164,9 @@ public class TestHTableDescriptor {
   public void testIllegalHTableNamesRegex() {
     for (String tn : illegalTableNames) {
       LOG.info("Testing: '" + tn + "'");
-      assertFalse(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tn));
+      TableName tName = TableName.valueOf(tn);
+      assertFalse(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNamespaceAsString())
+        && Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getQualifierAsString()));
     }
   }
 

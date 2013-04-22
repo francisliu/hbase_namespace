@@ -1267,9 +1267,6 @@ public abstract class FSUtils {
       throws IOException {
     List<Path> tableDirs = new LinkedList<Path>();
 
-    //TODO nshack need to include root dir tables
-    tableDirs.addAll(FSUtils.getLocalTableDirs(fs, rootdir));
-
     for(FileStatus status :
         fs.globStatus(new Path(rootdir,
             new Path(HConstants.BASE_NAMESPACE_DIR, "*")))) {

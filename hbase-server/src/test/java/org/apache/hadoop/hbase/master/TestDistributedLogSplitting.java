@@ -187,7 +187,8 @@ public class TestDistributedLogSplitting {
     Iterator<HRegionInfo> it = regions.iterator();
     while (it.hasNext()) {
       HRegionInfo region = it.next();
-      if (region.isMetaTable()) {
+      if (TableName.valueOf(region.getTableName()).getNamespaceAsString()
+          .equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
         it.remove();
       }
     }
@@ -1165,8 +1166,8 @@ public class TestDistributedLogSplitting {
     LOG.debug("Waiting for no more RIT\n");
     blockUntilNoRIT(zkw, master);
     NavigableSet<String> regions = getAllOnlineRegions(cluster);
-    LOG.debug("Verifying only catalog regions are assigned\n");
-    if (regions.size() != 1) {
+    LOG.debug("Verifying only catalog and namespace regions are assigned\n");
+    if (regions.size() != 2) {
       for (String oregion : regions)
         LOG.debug("Region still online: " + oregion);
     }

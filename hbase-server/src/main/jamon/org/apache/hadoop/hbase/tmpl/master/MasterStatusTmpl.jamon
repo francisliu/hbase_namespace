@@ -293,27 +293,39 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
   </body>
 </html>
 
-
 <%def catalogTables>
+<%java>
+ List<HTableDescriptor> hTableList = admin.getTableDescriptorsByNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+</%java>
 
 <table class="table table-striped">
 <tr>
+    <th>System Tables</th>
     <th>Table Name</th>
     <%if (frags != null) %>
         <th title="Fragmentation - Will be 0% after a major compaction and fluctuate during normal usage.">Frag.</th>
     </%if>
     <th>Description</th>
 </tr>
-  <%if (metaLocation != null) %>
+<%for HTableDescriptor systemTable : hTableList%>
 <tr>
-    <td><a href="table.jsp?name=<% Bytes.toString(HConstants.META_TABLE_NAME) %>"><% Bytes.toString(HConstants.META_TABLE_NAME) %></a></td>
+<%java>String tableName = systemTable.getTableName().getNameAsString();</%java>
+    <td><a href="table.jsp?name=<% tableName %>"><% tableName %></a></td>
     <%if (frags != null)%>
-        <td align="center"><% frags.get(".META.") != null ? frags.get(".META.").intValue() + "%" : "n/a" %></td>
+        <td align="center"><% frags.get(tableName) != null ? frags.get(tableName).intValue() + "%" : "n/a" %></td>
     </%if>
-    <td>The .META. table holds references to all User Table regions</td>
+    <%java>String description = null;
+        if(tableName.equalsIgnoreCase(Bytes.toString(HConstants.ROOT_TABLE_NAME))){
+            description = "The -ROOT- table holds references to all .META. regions.";
+        } else if (tableName.equalsIgnoreCase(Bytes.toString(HConstants.META_TABLE_NAME))){
+            description = "The .META. table holds references to all User Table regions";
+        } else {
+            description = "The .NAMESPACE. table holds information about namespaces.";
+        }
+    </%java>
+    <td><% description %></td>
 </tr>
-
-  </%if>
+</%for>
 </table>
 </%def>
 

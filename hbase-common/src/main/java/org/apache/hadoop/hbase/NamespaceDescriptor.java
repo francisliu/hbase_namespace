@@ -15,6 +15,7 @@ package org.apache.hadoop.hbase;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
@@ -22,23 +23,23 @@ import java.util.TreeMap;
 
 public class NamespaceDescriptor {
 
-  public static NamespaceDescriptor DEFAULT_NAMESPACE
-      = NamespaceDescriptor.create(HConstants.DEFAULT_NAMESPACE_NAME_STR).build();
-  public static NamespaceDescriptor SYSTEM_NAMESPACE
-      = NamespaceDescriptor.create(HConstants.SYSTEM_NAMESPACE_NAME_STR).build();
+  public static NamespaceDescriptor DEFAULT_NAMESPACE = NamespaceDescriptor.create(
+    HConstants.DEFAULT_NAMESPACE_NAME_STR).build();
+  public static NamespaceDescriptor SYSTEM_NAMESPACE = NamespaceDescriptor.create(
+    HConstants.SYSTEM_NAMESPACE_NAME_STR).build();
+
   public static String NAMESPACE_DELIM = ".";
 
   private String name;
   private Map<byte[], byte[]> values;
 
-  public static final Comparator<NamespaceDescriptor>
-      NAMESPACE_DESCRIPTOR_COMPARATOR = new Comparator<NamespaceDescriptor>() {
-          @Override
-          public int compare(NamespaceDescriptor namespaceDescriptor,
-                             NamespaceDescriptor namespaceDescriptor2) {
-            return namespaceDescriptor.getName().compareTo(namespaceDescriptor2.getName());
-          }
-      };
+  public static final Comparator<NamespaceDescriptor> NAMESPACE_DESCRIPTOR_COMPARATOR = new Comparator<NamespaceDescriptor>() {
+    @Override
+    public int compare(NamespaceDescriptor namespaceDescriptor,
+        NamespaceDescriptor namespaceDescriptor2) {
+      return namespaceDescriptor.getName().compareTo(namespaceDescriptor2.getName());
+    }
+  };
 
   private NamespaceDescriptor() {
   }
@@ -65,7 +66,28 @@ public class NamespaceDescriptor {
 
   public static Path getNamespaceDir(Path rootdir, final String namespace) {
     return new Path(rootdir, new Path(HConstants.BASE_NAMESPACE_DIR,
-        new Path(namespace)));
+        new Path(namespace)));    
+  }
+  
+  
+  public static void isLegalNamespaceName(final byte[] namespaceName){
+    if(Arrays.equals(namespaceName, HConstants.SYSTEM_NAMESPACE_NAME)){
+      return;
+    }
+    if (namespaceName[0] == '.' || namespaceName[0] == '-') {
+      throw new IllegalArgumentException("Illegal first character <" + namespaceName[0] +
+          "> at 0. Namespaces can only start with alphanumeric " +
+          "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName));
+    }
+    for (int i = 0; i < namespaceName.length; i++) {
+      if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' || 
+          namespaceName[i] == '-') {
+        continue;
+      }
+      throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +
+        "> at " + i + ". Namespaces can only contain " +
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " + Bytes.toString(namespaceName));
+    }
   }
 
   @Override
@@ -76,8 +98,7 @@ public class NamespaceDescriptor {
     s.append(" => '");
     s.append(name);
     s.append("'");
-    for (Map.Entry<byte[], byte[]> e:
-        values.entrySet()) {
+    for (Map.Entry<byte[], byte[]> e : values.entrySet()) {
       String key = Bytes.toString(e.getKey());
       String value = Bytes.toString(e.getValue());
       if (key == null) {

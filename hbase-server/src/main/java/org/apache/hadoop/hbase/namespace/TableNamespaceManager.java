@@ -18,7 +18,9 @@
 
 package org.apache.hadoop.hbase.namespace;
 
-import com.google.common.collect.Sets;
+import java.io.IOException;
+import java.util.NavigableSet;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -32,11 +34,9 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.handler.CreateTableHandler;
@@ -44,9 +44,7 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.NavigableSet;
+import com.google.common.collect.Sets;
 
 public class TableNamespaceManager {
   private static final Log LOG = LogFactory.getLog(TableNamespaceManager.class);
@@ -54,12 +52,6 @@ public class TableNamespaceManager {
   public static String FAMILY_INFO = "info";
   public static byte[] FAMILY_INFO_BYTES = Bytes.toBytes("info");
   public static byte[] COL_DESCRIPTOR = Bytes.toBytes("descriptor");
-  private static NamespaceDescriptor defaultNS =
-      NamespaceDescriptor.create(NamespaceDescriptor.DEFAULT_NAMESPACE)
-          .build();
-  private static NamespaceDescriptor systemNS =
-      NamespaceDescriptor.create(NamespaceDescriptor.SYSTEM_NAMESPACE)
-          .build();
 
   private Configuration conf;
   private MasterServices masterServices;
@@ -86,9 +78,11 @@ public class TableNamespaceManager {
     table = new HTable(conf, tableName.getName());
     zkNamespaceManager = new ZKNamespaceManager(masterServices.getZooKeeper());
     zkNamespaceManager.start();
-    if (newTable) {
-      create(defaultNS);
-      create(systemNS);
+    if(get(NamespaceDescriptor.DEFAULT_NAMESPACE.getName()) == null) {
+      create(NamespaceDescriptor.DEFAULT_NAMESPACE);
+    }
+    if(get(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) == null) {
+      create(NamespaceDescriptor.SYSTEM_NAMESPACE);
     }
 
     for(Result result: table.getScanner(FAMILY_INFO_BYTES)) {
@@ -103,8 +97,9 @@ public class TableNamespaceManager {
 
   public NamespaceDescriptor get(String name) throws IOException {
     Result res = table.get(new Get(Bytes.toBytes(name)));
-    if(res.isEmpty())
+    if (res.isEmpty()) {
       return null;
+    }
     return
         ProtobufUtil.toNamespaceDescriptor(
             NamespaceProtos.NamespaceDescriptor.parseFrom(

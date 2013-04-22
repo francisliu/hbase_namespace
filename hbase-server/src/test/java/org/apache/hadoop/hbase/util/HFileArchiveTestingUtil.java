@@ -216,7 +216,7 @@ public class HFileArchiveTestingUtil {
     return HFileArchiveUtil.getRegionArchiveDir(
         FSUtils.getRootDir(conf),
         region.getTableDesc().getNameAsString(),
-        region.getRegionFileSystem().getRegionDir());
+        region.getRegionInfo().getEncodedName());
   }
 
   /**
