@@ -255,7 +255,7 @@ public class TestWALReplay {
     // Ensure edits are replayed properly.
     final String tableNameStr = "test2727";
     HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    Path basedir = new Path(hbaseRootDir, tableNameStr);
+    Path basedir = HTableDescriptor.getTableDir(hbaseRootDir, tableNameStr);
     deleteDir(basedir);
 
     HTableDescriptor htd = createBasic3FamilyHTD(tableNameStr);
@@ -492,7 +492,7 @@ public class TestWALReplay {
       NoSuchFieldException, IllegalAccessException, InterruptedException {
     final String tableNameStr = "testReplayEditsWrittenViaHRegion";
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    final Path basedir = new Path(this.hbaseRootDir, tableNameStr);
+    final Path basedir = HTableDescriptor.getTableDir(this.hbaseRootDir, tableNameStr);
     deleteDir(basedir);
     final byte[] rowName = Bytes.toBytes(tableNameStr);
     final int countPerFamily = 10;

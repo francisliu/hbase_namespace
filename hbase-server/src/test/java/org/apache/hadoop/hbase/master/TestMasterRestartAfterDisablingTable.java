@@ -110,8 +110,8 @@ public class TestMasterRestartAfterDisablingTable {
     log("Verifying there are " + numRegions + " assigned on cluster\n");
     regions = getAllOnlineRegions(cluster);
     assertEquals(
-        "The assigned regions were not onlined after master switch except for the catalog tables.",
-        5, regions.size());
+        "The assigned regions were not onlined after master switch except for the catalog and namespace tables.",
+        6, regions.size());
     assertTrue("The table should be in enabled state", cluster.getMaster()
         .getAssignmentManager().getZKTable().isEnabledTable("tableRestart"));
     ht.close();

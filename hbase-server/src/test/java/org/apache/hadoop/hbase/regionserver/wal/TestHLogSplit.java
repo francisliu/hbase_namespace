@@ -376,7 +376,7 @@ public class TestHLogSplit {
 
   @Test(expected = OrphanHLogAfterSplitException.class)
   public void testSplitFailsIfNewHLogGetsCreatedAfterSplitStarted()
-  throws IOException {
+      throws IOException, InterruptedException {
     AtomicBoolean stop = new AtomicBoolean(false);
 
     assertFalse("Previous test should clean up table dir",
@@ -748,7 +748,7 @@ public class TestHLogSplit {
 
   @Test
   public void testSplitWillNotTouchLogsIfNewHLogGetsCreatedAfterSplitStarted()
-  throws IOException {
+      throws IOException, InterruptedException {
     AtomicBoolean stop = new AtomicBoolean(false);
     generateHLogs(-1);
     fs.initialize(fs.getUri(), conf);

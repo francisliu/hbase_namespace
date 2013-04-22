@@ -1,4 +1,4 @@
-/*
+/**
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -66,7 +66,7 @@ public class TestMasterReplication {
   private MiniZooKeeperCluster miniZK; 
 
   private static final long SLEEP_TIME = 500;
-  private static final int NB_RETRIES = 10;
+  private static final int NB_RETRIES = 100;
 
   private static final byte[] tableName = Bytes.toBytes("test");
   private static final byte[] famName = Bytes.toBytes("f");

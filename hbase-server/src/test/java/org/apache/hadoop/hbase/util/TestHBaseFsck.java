@@ -283,7 +283,8 @@ public class TestHBaseFsck {
           LOG.info("deleting hdfs .regioninfo data: " + hri.toString() + hsa.toString());
           Path rootDir = FSUtils.getRootDir(conf);
           FileSystem fs = rootDir.getFileSystem(conf);
-          Path p = new Path(HTableDescriptor.getTableDir(rootDir, hri.getTableName()), hri.getEncodedName());
+          Path p = new Path(HTableDescriptor.getTableDir(rootDir, htd.getNameAsString()),
+              hri.getEncodedName());
           Path hriPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);
           fs.delete(hriPath, true);
         }
@@ -292,7 +293,8 @@ public class TestHBaseFsck {
           LOG.info("deleting hdfs data: " + hri.toString() + hsa.toString());
           Path rootDir = FSUtils.getRootDir(conf);
           FileSystem fs = rootDir.getFileSystem(conf);
-          Path p = new Path(HTableDescriptor.getTableDir(rootDir, hri.getTableName()), hri.getEncodedName());
+          Path p = new Path(HTableDescriptor.getTableDir(rootDir, htd.getNameAsString()),
+              hri.getEncodedName());
           HBaseFsck.debugLsr(conf, p);
           boolean success = fs.delete(p, true);
           LOG.info("Deleted " + p + " sucessfully? " + success);

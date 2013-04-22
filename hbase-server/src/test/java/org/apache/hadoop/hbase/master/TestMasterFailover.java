@@ -214,9 +214,9 @@ public class TestMasterFailover {
     List<HRegionInfo> disabledRegions = TEST_UTIL.createMultiRegionsInMeta(
         TEST_UTIL.getConfiguration(), htdDisabled, SPLIT_KEYS);
 
-    log("Regions in META have been created");
+    log("Regions in META and namespace have been created");
 
-    // at this point we only expect 2 regions to be assigned out (catalogs)
+    // at this point we only expect 3 regions to be assigned out (catalogs and namespace)
     assertEquals(2, cluster.countServedRegions());
 
     // Let's just assign everything to first RS
@@ -517,9 +517,9 @@ public class TestMasterFailover {
     List<HRegionInfo> disabledRegions = TEST_UTIL.createMultiRegionsInMeta(
         TEST_UTIL.getConfiguration(), htdDisabled, SPLIT_KEYS);
 
-    log("Regions in META have been created");
+    log("Regions in META and Namespace have been created");
 
-    // at this point we only expect 2 regions to be assigned out (catalogs)
+    // at this point we only expect 2 regions to be assigned out (catalogs and namespace  )
     assertEquals(2, cluster.countServedRegions());
 
     // The first RS will stay online

@@ -391,7 +391,7 @@ public class HBaseAdmin implements Abortable, Closeable {
   public void createTable(HTableDescriptor desc, byte [] startKey,
       byte [] endKey, int numRegions)
   throws IOException {
-    HTableDescriptor.isLegalTableName(desc.getName());
+    HTableDescriptor.isLegalFullyQualifiedTableName(desc.getName());
     if(numRegions < 3) {
       throw new IllegalArgumentException("Must create at least three regions");
     } else if(Bytes.compareTo(startKey, endKey) >= 0) {
@@ -427,7 +427,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void createTable(final HTableDescriptor desc, byte [][] splitKeys)
   throws IOException {
-    HTableDescriptor.isLegalTableName(desc.getName());
+    HTableDescriptor.isLegalFullyQualifiedTableName(desc.getName());
     try {
       createTableAsync(desc, splitKeys);
     } catch (SocketTimeoutException ste) {
@@ -517,7 +517,7 @@ public class HBaseAdmin implements Abortable, Closeable {
   public void createTableAsync(
     final HTableDescriptor desc, final byte [][] splitKeys)
   throws IOException {
-    HTableDescriptor.isLegalTableName(desc.getName());
+    HTableDescriptor.isLegalFullyQualifiedTableName(desc.getName());
     if(splitKeys != null && splitKeys.length > 0) {
       Arrays.sort(splitKeys, Bytes.BYTES_COMPARATOR);
       // Verify there are no duplicate split keys
@@ -565,7 +565,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IOException if a remote or network exception occurs
    */
   public void deleteTable(final byte [] tableName) throws IOException {
-    HTableDescriptor.isLegalTableName(tableName);
+    HTableDescriptor.isLegalFullyQualifiedTableName(tableName);
     HRegionLocation firstMetaServer = getFirstMetaServerForTable(tableName);
     boolean tableExists = true;
 
@@ -771,7 +771,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void enableTableAsync(final byte [] tableName)
   throws IOException {
-    HTableDescriptor.isLegalTableName(tableName);
+    HTableDescriptor.isLegalFullyQualifiedTableName(tableName);
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
@@ -842,7 +842,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @since 0.90.0
    */
   public void disableTableAsync(final byte [] tableName) throws IOException {
-    HTableDescriptor.isLegalTableName(tableName);
+    HTableDescriptor.isLegalFullyQualifiedTableName(tableName);
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
@@ -958,8 +958,8 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IOException if a remote or network exception occurs
    */
   public boolean isTableEnabled(byte[] tableName) throws IOException {
-    if (!HTableDescriptor.isMetaTable(tableName)) {
-      HTableDescriptor.isLegalTableName(tableName);
+    if (!HTableDescriptor.isSystemTable(tableName)) {
+      HTableDescriptor.isLegalFullyQualifiedTableName(tableName);
     }
     return connection.isTableEnabled(tableName);
   }
@@ -979,8 +979,8 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IOException if a remote or network exception occurs
    */
   public boolean isTableDisabled(byte[] tableName) throws IOException {
-    if (!HTableDescriptor.isMetaTable(tableName)) {
-      HTableDescriptor.isLegalTableName(tableName);
+    if (!HTableDescriptor.isSystemTable(tableName)) {
+      HTableDescriptor.isLegalFullyQualifiedTableName(tableName);
     }
     return connection.isTableDisabled(tableName);
   }
@@ -1049,7 +1049,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public Pair<Integer, Integer> getAlterStatus(final byte[] tableName)
   throws IOException {
-    HTableDescriptor.isLegalTableName(tableName);
+    HTableDescriptor.isLegalFullyQualifiedTableName(tableName);
     return execute(new MasterMonitorCallable<Pair<Integer, Integer>>() {
       @Override
       public Pair<Integer, Integer> call() throws ServiceException {
@@ -1073,6 +1073,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void addColumn(final String tableName, HColumnDescriptor column)
   throws IOException {
+    HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(tableName));
     addColumn(Bytes.toBytes(tableName), column);
   }
 
@@ -2298,7 +2299,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link HTableDescriptor#isLegalTableName(byte[])}.
+   * {@link HTableDescriptor#isLegalFullyQualifiedTableName(byte[])}.
    * @param snapshotName name of the snapshot to be created
    * @param tableName name of the table for which snapshot is created
    * @throws IOException if a remote or network exception occurs
@@ -2318,7 +2319,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link HTableDescriptor#isLegalTableName(byte[])}.
+   * {@link HTableDescriptor#isLegalFullyQualifiedTableName(byte[])}.
    * @param snapshotName name of the snapshot to be created
    * @param tableName name of the table for which snapshot is created
    * @throws IOException if a remote or network exception occurs
@@ -2338,7 +2339,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link HTableDescriptor#isLegalTableName(byte[])}.
+   * {@link HTableDescriptor#isLegalFullyQualifiedTableName(byte[])}.
    * <p>
    * @param snapshotName name to give the snapshot on the filesystem. Must be unique from all other
    *          snapshots stored on the cluster
@@ -2370,7 +2371,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link HTableDescriptor#isLegalTableName(byte[])}.
+   * {@link HTableDescriptor#isLegalFullyQualifiedTableName(byte[])}.
    * <p>
    * You should probably use {@link #snapshot(String, String)} or {@link #snapshot(byte[], byte[])}
    * unless you are sure about the type of snapshot that you want to take.
@@ -2708,7 +2709,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void deleteSnapshot(final String snapshotName) throws IOException {
     // make sure the snapshot is possibly valid
-    HTableDescriptor.isLegalTableName(Bytes.toBytes(snapshotName));
+    HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshotName));
     // do the delete
     execute(new MasterAdminCallable<Void>() {
       @Override

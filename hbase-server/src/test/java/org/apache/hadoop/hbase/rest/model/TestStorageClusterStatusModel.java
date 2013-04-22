@@ -44,7 +44,7 @@ public class TestStorageClusterStatusModel extends TestCase {
     "<DeadNodes/>" + 
     "<LiveNodes><Node startCode=\"1245219839331\" requests=\"0\"" + 
       " name=\"test1\" maxHeapSizeMB=\"1024\" heapSizeMB=\"128\">" + 
-        "<Region stores=\"1\" storefiles=\"1\" storefileSizeMB=\"0\"" + 
+        "<Region stores=\"1\" storefiles=\"1\" storefileSizeMB=\"0\"" +
         " storefileIndexSizeMB=\"0\" name=\"LWhiYXNlLS4tUk9PVC0sLDA=\"" +
         " memstoreSizeMB=\"0\" readRequestsCount=\"1\"" +
         " writeRequestsCount=\"2\" rootIndexSizeKB=\"1\"" +

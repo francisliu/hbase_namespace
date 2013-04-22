@@ -21,6 +21,7 @@ import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -40,6 +41,7 @@ public class TestNamespace {
   protected static HBaseAdmin admin;
   protected static HBaseCluster cluster;
   private static ZKNamespaceManager zkNamespaceManager;
+  private String prefix = "TestNamespace";
 
 
   @BeforeClass
@@ -58,6 +60,19 @@ public class TestNamespace {
   @AfterClass
   public static void tearDown() throws Exception {
     TEST_UTIL.shutdownMiniCluster();
+  }
+
+  @Before
+  public void beforeMethod() throws IOException {
+    for(HTableDescriptor desc: admin.listTables(prefix+".*")) {
+      admin.disableTable(desc.getName());
+      admin.deleteTable(desc.getName());
+    }
+    for(NamespaceDescriptor ns: admin.listNamespaceDescriptors()) {
+      if(ns.getName().startsWith(prefix)) {
+        admin.deleteNamespace(ns.getName());
+      }
+    }
   }
 
   @Test
@@ -88,30 +103,79 @@ public class TestNamespace {
     }
     //verify system tables aren't listed
     assertEquals(0, admin.listTables().length);
+    
+    //Try creating default and system namespaces. 
+    boolean exceptionCaught = false;
+    try {
+    admin.createNamespace(NamespaceDescriptor.DEFAULT_NAMESPACE);
+    } catch (IOException exp){
+      LOG.warn(exp);
+      exceptionCaught = true;
+    }finally {
+      assertTrue(exceptionCaught);
+    }
+    exceptionCaught = false;
+    try {
+    admin.createNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE);
+    } catch (IOException exp){
+      LOG.warn(exp);
+      exceptionCaught = true;
+    }finally {
+      assertTrue(exceptionCaught);
+    }
+  }
+  
+  @Test
+  public void testDeleteReservedNS() throws Exception {
+    boolean exceptionCaught = false;
+    try {
+      admin.deleteNamespace(HConstants.DEFAULT_NAMESPACE_NAME_STR);
+    } catch (IOException exp) {
+      LOG.warn(exp);
+      exceptionCaught = true;
+    } finally {
+      assertTrue(exceptionCaught);
+    }
+    try {
+      admin.deleteNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+    } catch (IOException exp) {
+      LOG.warn(exp);
+      exceptionCaught = true;
+    } finally {
+      assertTrue(exceptionCaught);
+    }
   }
 
   @Test
   public void createRemoveTest() throws IOException, InterruptedException {
+    String testName = "createRemoveTest";
+    String nsName = prefix+"_"+testName;
+    LOG.info(testName);
+
     //create namespace and verify
-    admin.createNamespace(NamespaceDescriptor.create("foo").build());
+    admin.createNamespace(NamespaceDescriptor.create(nsName).build());
     assertEquals(3, admin.listNamespaceDescriptors().size());
     assertEquals(3, zkNamespaceManager.list().size());
-    assertNotNull(zkNamespaceManager.get("foo"));
+    assertNotNull(zkNamespaceManager.get(nsName));
     //remove namespace and verify
-    admin.deleteNamespace("foo");
+    admin.deleteNamespace(nsName);
     assertEquals(2, admin.listNamespaceDescriptors().size());
     assertEquals(2, zkNamespaceManager.list().size());
-    assertNull(zkNamespaceManager.get("foo"));
+    assertNull(zkNamespaceManager.get(nsName));
   }
 
   @Test
   public void createDoubleTest() throws IOException, InterruptedException {
+    String testName = "createDoubleTest";
+    String nsName = prefix+"_"+testName;
+    LOG.info(testName);
+
     byte[] tableName = Bytes.toBytes("my_table");
-    byte[] tableNameFoo = Bytes.toBytes("foo.my_table");
+    byte[] tableNameFoo = Bytes.toBytes(nsName+".my_table");
     //create namespace and verify
-    admin.createNamespace(NamespaceDescriptor.create("foo").build());
-    TEST_UTIL.createTable(tableName,Bytes.toBytes("f"));
-    TEST_UTIL.createTable(tableNameFoo,Bytes.toBytes("f"));
+    admin.createNamespace(NamespaceDescriptor.create(nsName).build());
+    TEST_UTIL.createTable(tableName,Bytes.toBytes(nsName));
+    TEST_UTIL.createTable(tableNameFoo,Bytes.toBytes(nsName));
     assertEquals(2, admin.listTables().length);
     assertNotNull(admin
         .getTableDescriptor(tableName));
@@ -121,14 +185,15 @@ public class TestNamespace {
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
     assertEquals(1, admin.listTables().length);
-    admin.disableTable(tableNameFoo);
-    admin.deleteTable(tableNameFoo);
-    admin.deleteNamespace("foo");
   }
 
   @Test
   public void createTableTest() throws IOException, InterruptedException {
-    HTableDescriptor desc = new HTableDescriptor("bar.my_table");
+    String testName = "createTableTest";
+    String nsName = prefix+"_"+testName;
+    LOG.info(testName);
+
+    HTableDescriptor desc = new HTableDescriptor(nsName+".my_table");
     HColumnDescriptor colDesc = new HColumnDescriptor("my_cf");
     desc.addFamily(colDesc);
     try {
@@ -137,17 +202,17 @@ public class TestNamespace {
     } catch (ConstraintException ex) {
     }
     //create table and in new namespace
-    admin.createNamespace(NamespaceDescriptor.create("bar").build());
+    admin.createNamespace(NamespaceDescriptor.create(nsName).build());
     admin.createTable(desc);
     TEST_UTIL.waitTableAvailable(desc.getName(), 10000);
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     assertTrue(fs.exists(new Path(master.getMasterFileSystem().getRootDir(),
-        new Path(HConstants.BASE_NAMESPACE_DIR, new Path("bar", "bar.my_table")))));
+        new Path(HConstants.BASE_NAMESPACE_DIR, new Path(nsName, desc.getNameAsString())))));
     assertEquals(1, admin.listTables().length);
 
     //verify non-empty namespace can't be removed
     try {
-      admin.deleteNamespace("bar");
+      admin.deleteNamespace(nsName);
       fail("Expected non-empty namespace constraint exception");
     } catch (Exception ex) {
     }
@@ -164,8 +229,31 @@ public class TestNamespace {
 
     //normal case of removing namespace
     TEST_UTIL.deleteTable(desc.getName());
-    admin.deleteNamespace("bar");
+    admin.deleteNamespace(nsName);
   }
 
+  @Test
+  public void createTableInDefaultNamespace() throws Exception {
+    HTableDescriptor desc = new HTableDescriptor("default_table");
+    HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
+    desc.addFamily(colDesc);
+    admin.createTable(desc);
+    assertTrue(admin.listTables().length == 1);  
+    admin.disableTable(desc.getName());
+    admin.deleteTable(desc.getName());    
+  }
+
+  @Test
+  public void createTableInSystemNamespace() throws Exception {
+    String tableName = "-hbase-.createTableInSystemNamespace";
+    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
+    desc.addFamily(colDesc);
+    admin.createTable(desc);
+    assertEquals(0, admin.listTables().length);
+    assertTrue(admin.tableExists(Bytes.toBytes(tableName)));
+    admin.disableTable(desc.getName());
+    admin.deleteTable(desc.getName());
+  }
 
 }

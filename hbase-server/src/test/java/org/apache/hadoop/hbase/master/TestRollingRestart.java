@@ -88,7 +88,7 @@ public class  TestRollingRestart {
     blockUntilNoRIT(zkw, master);
     NavigableSet<String> regions = getAllOnlineRegions(cluster);
     log("Verifying only catalog and namespace regions are assigned\n");
-    if (regions.size() != 1) {
+    if (regions.size() != 2) {
       for (String oregion : regions) log("Region still online: " + oregion);
     }
     assertEquals(2, regions.size());

@@ -493,6 +493,9 @@ public class TestMasterTransitions {
       }
 
       // If start key, add 'aaa'.
+      if(!hri.getTableNameAsString().equals(TABLENAME)) {
+        continue;
+      }
       byte [] row = getStartKey(hri);
       Put p = new Put(row);
       p.setDurability(Durability.SKIP_WAL);

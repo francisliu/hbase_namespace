@@ -1693,17 +1693,18 @@ MasterServices, Server {
       throw new MasterNotRunningException();
     }
 
-    HRegionInfo [] newRegions = getHRegionInfos(hTableDescriptor, splitKeys);
+    String namespace = hTableDescriptor.getTableName().getNamespaceAsString();
+    if (getNamespaceDescriptor(namespace) == null) {
+      throw new ConstraintException("Namespace " + namespace + " does not exist");
+    }
+    
+    HRegionInfo[] newRegions = getHRegionInfos(hTableDescriptor, splitKeys);
     checkInitialized();
     checkCompression(hTableDescriptor);
     if (cpHost != null) {
       cpHost.preCreateTable(hTableDescriptor, newRegions);
     }
-    String namespace = hTableDescriptor.getTableName()
-            .getNamespaceAsString();
-    if (getNamespaceDescriptor(namespace) == null) {
-      throw new ConstraintException("Namespace "+namespace+" does not exist");
-    }
+    
     this.executorService.submit(new CreateTableHandler(this,
       this.fileSystemManager, hTableDescriptor, conf,
       newRegions, this).prepare());
@@ -2924,6 +2925,7 @@ MasterServices, Server {
   }
 
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
+    NamespaceDescriptor.isLegalNamespaceName(Bytes.toBytes(descriptor.getName()));   
     if (cpHost != null) {
       if (cpHost.preCreateNamespace(descriptor)) {
         return;
@@ -2938,6 +2940,7 @@ MasterServices, Server {
   }
 
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
+    NamespaceDescriptor.isLegalNamespaceName(Bytes.toBytes(descriptor.getName()));  
     if (cpHost != null) {
       if (cpHost.preModifyNamespace(descriptor)) {
         return;

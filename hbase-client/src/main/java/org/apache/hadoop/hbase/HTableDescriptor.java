@@ -22,6 +22,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -292,7 +293,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   public HTableDescriptor(final byte [] name) {
     super();
     setMetaFlags(this.name);
-    setName(this.isMetaRegion()? name: isLegalTableName(name));
+    setName(this.isMetaRegion()? name: isLegalFullyQualifiedTableName(name));
   }
 
   /**
@@ -412,13 +413,14 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @return true if a tablesName is either <code> -ROOT- </code>
    * or <code> .META. </code>
    */
-  public static boolean isMetaTable(final byte [] tableName) {
-    return Bytes.equals(tableName, HConstants.ROOT_TABLE_NAME) ||
-      Bytes.equals(tableName, HConstants.META_TABLE_NAME);
+  public static boolean isSystemTable(final byte [] tableName) {
+    return Bytes.toString(tableName)
+        .startsWith(HConstants.SYSTEM_NAMESPACE_NAME_STR +
+            NamespaceDescriptor.NAMESPACE_DELIM);
   }
 
   // A non-capture group so that this can be embedded.
-  public static final String VALID_USER_TABLE_REGEX = "(?:[a-zA-Z_0-9][a-zA-Z_0-9.-]*)";
+  public static final String VALID_USER_TABLE_REGEX = "(?:[a-zA-Z_0-9][a-zA-Z_0-9-.]*)";
 
   /**
    * Check passed byte buffer, "tableName", is legal user-space table name.
@@ -428,34 +430,47 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * that is made of other than 'word' characters or underscores: i.e.
    * <code>[a-zA-Z_0-9].
    */
-  public static byte [] isLegalTableName(final byte [] tableName) {
+  public static byte [] isLegalFullyQualifiedTableName(final byte [] tableName) {
     if (tableName == null || tableName.length <= 0) {
       throw new IllegalArgumentException("Name is null or empty");
     }
-    if (tableName[0] == '.' || tableName[0] == '-') {
-      throw new IllegalArgumentException("Illegal first character <" + tableName[0] +
-          "> at 0. User-space table names can only start with 'word " +
-          "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(tableName));
-    }
-    if (HConstants.CLUSTER_ID_FILE_NAME.equalsIgnoreCase(Bytes
-        .toString(tableName))
-        || HConstants.SPLIT_LOGDIR_NAME.equalsIgnoreCase(Bytes
-            .toString(tableName))
-        || HConstants.VERSION_FILE_NAME.equalsIgnoreCase(Bytes
-            .toString(tableName))) {
-      throw new IllegalArgumentException(Bytes.toString(tableName)
-          + " conflicted with system reserved words");
-    }
-    for (int i = 0; i < tableName.length; i++) {
-      if (Character.isLetterOrDigit(tableName[i]) || tableName[i] == '_' ||
-    		  tableName[i] == '-' || tableName[i] == '.') {
-        continue;
-      }
-      throw new IllegalArgumentException("Illegal character <" + tableName[i] +
-        "> at " + i + ". User-space table names can only contain " +
-        "'word characters': i.e. [a-zA-Z_0-9-.]: " + Bytes.toString(tableName));
+    int namespaceDelimIndex = com.google.common.primitives.Bytes.indexOf(tableName,
+      Bytes.toBytes(NamespaceDescriptor.NAMESPACE_DELIM));
+    if(namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
+      isLegalTableQualifierName(tableName);
+    }else {
+      byte[] namespace = Arrays.copyOfRange(tableName, 0, namespaceDelimIndex);
+      byte[] table =  Arrays.copyOfRange(tableName, namespaceDelimIndex + 1, tableName.length);
+      NamespaceDescriptor.isLegalNamespaceName(namespace);
+      isLegalTableQualifierName(table);
     }
     return tableName;
+  }
+  
+  private static void isLegalTableQualifierName(final byte[] qualifierName){
+    if (qualifierName[0] == '.' || qualifierName[0] == '-') {
+      throw new IllegalArgumentException("Illegal first character <" + qualifierName[0] +
+          "> at 0. User-space table qualifiers can only start with 'alphanumeric " +
+          "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(qualifierName));
+    }
+    if (HConstants.CLUSTER_ID_FILE_NAME.equalsIgnoreCase(Bytes
+        .toString(qualifierName))
+        || HConstants.SPLIT_LOGDIR_NAME.equalsIgnoreCase(Bytes
+            .toString(qualifierName))
+        || HConstants.VERSION_FILE_NAME.equalsIgnoreCase(Bytes
+            .toString(qualifierName))) {
+      throw new IllegalArgumentException(Bytes.toString(qualifierName)
+          + " conflicted with system reserved words");
+    }
+    for (int i = 0; i < qualifierName.length; i++) {
+      if (Character.isLetterOrDigit(qualifierName[i]) || qualifierName[i] == '_' ||
+          qualifierName[i] == '-') {
+        continue;
+      }
+      throw new IllegalArgumentException("Illegal character <" + qualifierName[i] +
+        "> at " + i + ". User-space table qualifiers can only contain " +
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " + Bytes.toString(qualifierName));
+    }
   }
 
   /**
