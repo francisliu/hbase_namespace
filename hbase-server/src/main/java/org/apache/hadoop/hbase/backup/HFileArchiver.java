@@ -32,7 +32,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -73,7 +72,7 @@ public class HFileArchiver {
   public static void archiveRegion(Configuration conf, FileSystem fs, HRegionInfo info)
       throws IOException {
     Path rootDir = FSUtils.getRootDir(conf);
-    archiveRegion(fs, rootDir, HTableDescriptor.getTableDir(rootDir, info.getTableName()),
+    archiveRegion(fs, rootDir, FSUtils.getTableDir(rootDir, info.getTableName()),
       HRegion.getRegionDir(rootDir, info));
   }
 

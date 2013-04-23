@@ -84,6 +84,7 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.StopServerRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ClientService;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanResponse;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableSchema;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos;
@@ -117,7 +118,6 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetSchemaA
 import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetSchemaAlterStatusResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetTableDescriptorsRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.GetTableDescriptorsResponse;
-import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.Addressing;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -2036,12 +2036,12 @@ public class HBaseAdmin implements Abortable, Closeable {
         execute(new MasterAdminCallable<List<NamespaceDescriptor>>() {
           @Override
           public List<NamespaceDescriptor> call() throws Exception {
-            List<NamespaceProtos.NamespaceDescriptor> list =
+            List<HBaseProtos.NamespaceDescriptor> list =
                 masterAdmin.listNamespaceDescriptors(null,
                     MasterAdminProtos.ListNamespaceDescriptorsRequest.newBuilder().build())
                     .getNamespaceList().getNamespaceDescriptorList();
             List<NamespaceDescriptor> res = new ArrayList<NamespaceDescriptor>(list.size());
-            for(NamespaceProtos.NamespaceDescriptor ns: list) {
+            for(HBaseProtos.NamespaceDescriptor ns: list) {
               res.add(ProtobufUtil.toNamespaceDescriptor(ns));
             }
             return res;

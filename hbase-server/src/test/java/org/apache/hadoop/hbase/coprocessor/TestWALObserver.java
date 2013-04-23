@@ -230,7 +230,7 @@ public class TestWALObserver {
     final HRegionInfo hri = new HRegionInfo(tableName, null, null);
 
     final Path basedir =
-        HTableDescriptor.getTableDir(this.hbaseRootDir, Bytes.toString(tableName));
+        FSUtils.getTableDir(this.hbaseRootDir, Bytes.toString(tableName));
     deleteDir(basedir);
     fs.mkdirs(new Path(basedir, hri.getEncodedName()));
 

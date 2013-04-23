@@ -26,8 +26,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Set;
 
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -37,6 +35,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -143,7 +142,7 @@ public class TestTableDescriptorModification {
 
     // Verify descriptor from HDFS
     MasterFileSystem mfs = TEST_UTIL.getMiniHBaseCluster().getMaster().getMasterFileSystem();
-    Path tableDir = HTableDescriptor.getTableDir(mfs.getRootDir(), tableName);
+    Path tableDir = FSUtils.getTableDir(mfs.getRootDir(), tableName);
     htd = FSTableDescriptors.getTableDescriptor(mfs.getFileSystem(), tableDir);
     verifyTableDescriptor(htd, tableName, families);
   }

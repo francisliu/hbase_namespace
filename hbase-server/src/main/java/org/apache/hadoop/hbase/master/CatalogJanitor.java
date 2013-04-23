@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.PairOfSameType;
 import org.apache.hadoop.hbase.util.Triple;
@@ -182,7 +183,7 @@ public class CatalogJanitor extends Chore {
       final HRegionInfo regionA, final HRegionInfo regionB) throws IOException {
     FileSystem fs = this.services.getMasterFileSystem().getFileSystem();
     Path rootdir = this.services.getMasterFileSystem().getRootDir();
-    Path tabledir = HTableDescriptor.getTableDir(rootdir,
+    Path tabledir = FSUtils.getTableDir(rootdir,
         mergedRegion.getTableName());
     HTableDescriptor htd = getTableDescriptor(mergedRegion
         .getTableNameAsString());
@@ -374,7 +375,7 @@ public class CatalogJanitor extends Chore {
 
     FileSystem fs = this.services.getMasterFileSystem().getFileSystem();
     Path rootdir = this.services.getMasterFileSystem().getRootDir();
-    Path tabledir = HTableDescriptor.getTableDir(rootdir, daughter.getTableName());
+    Path tabledir = FSUtils.getTableDir(rootdir, daughter.getTableName());
 
     HRegionFileSystem regionFs = null;
     try {

@@ -423,7 +423,7 @@ public class TestAssignmentManagerOnCluster {
       MetaEditor.addRegionToMeta(meta, hri);
 
       FileSystem fs = FileSystem.get(conf);
-      Path tableDir= FSUtils.getTablePath(FSUtils.getRootDir(conf), table);
+      Path tableDir= FSUtils.getTableDir(FSUtils.getRootDir(conf), table);
       Path regionDir = new Path(tableDir, hri.getEncodedName());
       // create a file named the same as the region dir to
       // mess up with region opening

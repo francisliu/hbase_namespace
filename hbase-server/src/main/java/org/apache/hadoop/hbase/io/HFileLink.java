@@ -163,7 +163,7 @@ public class HFileLink extends FileLink {
     String regionName = m.group(2);
     String hfileName = m.group(3);
     String familyName = path.getParent().getName();
-    Path tableDir = HTableDescriptor.getTableDir(new Path("./"),tableName);
+    Path tableDir = FSUtils.getTableDir(new Path("./"), tableName);
     return new Path(tableDir, new Path(regionName, new Path(familyName,
         hfileName)));
   }
@@ -353,7 +353,7 @@ public class HFileLink extends FileLink {
     Path tablePath = regionPath.getParent();
 
     String linkName = createHFileLinkName(tablePath.getName(), regionPath.getName(), hfileName);
-    Path linkTableDir = HTableDescriptor.getTableDir(rootDir, linkTableName);
+    Path linkTableDir = FSUtils.getTableDir(rootDir, linkTableName);
     Path regionDir = HRegion.getRegionDir(linkTableDir, linkRegionName);
     return new Path(new Path(regionDir, familyPath.getName()), linkName);
   }

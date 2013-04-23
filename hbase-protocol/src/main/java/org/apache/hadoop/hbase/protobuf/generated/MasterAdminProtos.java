@@ -10581,8 +10581,8 @@ public final class MasterAdminProtos {
     
     // required .NamespaceDescriptor namespaceDescriptor = 1;
     boolean hasNamespaceDescriptor();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
   }
   public static final class CreateNamespaceRequest extends
       com.google.protobuf.GeneratedMessage
@@ -10615,19 +10615,19 @@ public final class MasterAdminProtos {
     private int bitField0_;
     // required .NamespaceDescriptor namespaceDescriptor = 1;
     public static final int NAMESPACEDESCRIPTOR_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor namespaceDescriptor_;
+    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_;
     public boolean hasNamespaceDescriptor() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor() {
       return namespaceDescriptor_;
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
       return namespaceDescriptor_;
     }
     
     private void initFields() {
-      namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+      namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -10824,7 +10824,7 @@ public final class MasterAdminProtos {
       public Builder clear() {
         super.clear();
         if (namespaceDescriptorBuilder_ == null) {
-          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
         } else {
           namespaceDescriptorBuilder_.clear();
         }
@@ -10934,7 +10934,7 @@ public final class MasterAdminProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.newBuilder();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder();
               if (hasNamespaceDescriptor()) {
                 subBuilder.mergeFrom(getNamespaceDescriptor());
               }
@@ -10949,20 +10949,20 @@ public final class MasterAdminProtos {
       private int bitField0_;
       
       // required .NamespaceDescriptor namespaceDescriptor = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
       public boolean hasNamespaceDescriptor() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor() {
         if (namespaceDescriptorBuilder_ == null) {
           return namespaceDescriptor_;
         } else {
           return namespaceDescriptorBuilder_.getMessage();
         }
       }
-      public Builder setNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor value) {
+      public Builder setNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
         if (namespaceDescriptorBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -10976,7 +10976,7 @@ public final class MasterAdminProtos {
         return this;
       }
       public Builder setNamespaceDescriptor(
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder builderForValue) {
         if (namespaceDescriptorBuilder_ == null) {
           namespaceDescriptor_ = builderForValue.build();
           onChanged();
@@ -10986,12 +10986,12 @@ public final class MasterAdminProtos {
         bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder mergeNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor value) {
+      public Builder mergeNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
         if (namespaceDescriptorBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              namespaceDescriptor_ != org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance()) {
+              namespaceDescriptor_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance()) {
             namespaceDescriptor_ =
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.newBuilder(namespaceDescriptor_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder(namespaceDescriptor_).mergeFrom(value).buildPartial();
           } else {
             namespaceDescriptor_ = value;
           }
@@ -11004,7 +11004,7 @@ public final class MasterAdminProtos {
       }
       public Builder clearNamespaceDescriptor() {
         if (namespaceDescriptorBuilder_ == null) {
-          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
           onChanged();
         } else {
           namespaceDescriptorBuilder_.clear();
@@ -11012,12 +11012,12 @@ public final class MasterAdminProtos {
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getNamespaceDescriptorFieldBuilder().getBuilder();
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
         if (namespaceDescriptorBuilder_ != null) {
           return namespaceDescriptorBuilder_.getMessageOrBuilder();
         } else {
@@ -11025,11 +11025,11 @@ public final class MasterAdminProtos {
         }
       }
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
           getNamespaceDescriptorFieldBuilder() {
         if (namespaceDescriptorBuilder_ == null) {
           namespaceDescriptorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder>(
                   namespaceDescriptor_,
                   getParentForChildren(),
                   isClean());
@@ -12070,8 +12070,8 @@ public final class MasterAdminProtos {
     
     // required .NamespaceDescriptor namespaceDescriptor = 1;
     boolean hasNamespaceDescriptor();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
   }
   public static final class ModifyNamespaceRequest extends
       com.google.protobuf.GeneratedMessage
@@ -12104,19 +12104,19 @@ public final class MasterAdminProtos {
     private int bitField0_;
     // required .NamespaceDescriptor namespaceDescriptor = 1;
     public static final int NAMESPACEDESCRIPTOR_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor namespaceDescriptor_;
+    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_;
     public boolean hasNamespaceDescriptor() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor() {
       return namespaceDescriptor_;
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
       return namespaceDescriptor_;
     }
     
     private void initFields() {
-      namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+      namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -12313,7 +12313,7 @@ public final class MasterAdminProtos {
       public Builder clear() {
         super.clear();
         if (namespaceDescriptorBuilder_ == null) {
-          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
         } else {
           namespaceDescriptorBuilder_.clear();
         }
@@ -12423,7 +12423,7 @@ public final class MasterAdminProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.newBuilder();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder();
               if (hasNamespaceDescriptor()) {
                 subBuilder.mergeFrom(getNamespaceDescriptor());
               }
@@ -12438,20 +12438,20 @@ public final class MasterAdminProtos {
       private int bitField0_;
       
       // required .NamespaceDescriptor namespaceDescriptor = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
       public boolean hasNamespaceDescriptor() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor() {
         if (namespaceDescriptorBuilder_ == null) {
           return namespaceDescriptor_;
         } else {
           return namespaceDescriptorBuilder_.getMessage();
         }
       }
-      public Builder setNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor value) {
+      public Builder setNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
         if (namespaceDescriptorBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -12465,7 +12465,7 @@ public final class MasterAdminProtos {
         return this;
       }
       public Builder setNamespaceDescriptor(
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder builderForValue) {
         if (namespaceDescriptorBuilder_ == null) {
           namespaceDescriptor_ = builderForValue.build();
           onChanged();
@@ -12475,12 +12475,12 @@ public final class MasterAdminProtos {
         bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder mergeNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor value) {
+      public Builder mergeNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
         if (namespaceDescriptorBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              namespaceDescriptor_ != org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance()) {
+              namespaceDescriptor_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance()) {
             namespaceDescriptor_ =
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.newBuilder(namespaceDescriptor_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder(namespaceDescriptor_).mergeFrom(value).buildPartial();
           } else {
             namespaceDescriptor_ = value;
           }
@@ -12493,7 +12493,7 @@ public final class MasterAdminProtos {
       }
       public Builder clearNamespaceDescriptor() {
         if (namespaceDescriptorBuilder_ == null) {
-          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
           onChanged();
         } else {
           namespaceDescriptorBuilder_.clear();
@@ -12501,12 +12501,12 @@ public final class MasterAdminProtos {
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getNamespaceDescriptorFieldBuilder().getBuilder();
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
         if (namespaceDescriptorBuilder_ != null) {
           return namespaceDescriptorBuilder_.getMessageOrBuilder();
         } else {
@@ -12514,11 +12514,11 @@ public final class MasterAdminProtos {
         }
       }
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
           getNamespaceDescriptorFieldBuilder() {
         if (namespaceDescriptorBuilder_ == null) {
           namespaceDescriptorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder>(
                   namespaceDescriptor_,
                   getParentForChildren(),
                   isClean());
@@ -12959,8 +12959,8 @@ public final class MasterAdminProtos {
     
     // required .NamespaceDescriptor namespaceDescriptor = 1;
     boolean hasNamespaceDescriptor();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
   }
   public static final class GetNamespaceDescriptorResponse extends
       com.google.protobuf.GeneratedMessage
@@ -12993,19 +12993,19 @@ public final class MasterAdminProtos {
     private int bitField0_;
     // required .NamespaceDescriptor namespaceDescriptor = 1;
     public static final int NAMESPACEDESCRIPTOR_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor namespaceDescriptor_;
+    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_;
     public boolean hasNamespaceDescriptor() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor() {
       return namespaceDescriptor_;
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
       return namespaceDescriptor_;
     }
     
     private void initFields() {
-      namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+      namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -13202,7 +13202,7 @@ public final class MasterAdminProtos {
       public Builder clear() {
         super.clear();
         if (namespaceDescriptorBuilder_ == null) {
-          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
         } else {
           namespaceDescriptorBuilder_.clear();
         }
@@ -13312,7 +13312,7 @@ public final class MasterAdminProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.newBuilder();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder();
               if (hasNamespaceDescriptor()) {
                 subBuilder.mergeFrom(getNamespaceDescriptor());
               }
@@ -13327,20 +13327,20 @@ public final class MasterAdminProtos {
       private int bitField0_;
       
       // required .NamespaceDescriptor namespaceDescriptor = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
       public boolean hasNamespaceDescriptor() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor getNamespaceDescriptor() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor() {
         if (namespaceDescriptorBuilder_ == null) {
           return namespaceDescriptor_;
         } else {
           return namespaceDescriptorBuilder_.getMessage();
         }
       }
-      public Builder setNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor value) {
+      public Builder setNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
         if (namespaceDescriptorBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -13354,7 +13354,7 @@ public final class MasterAdminProtos {
         return this;
       }
       public Builder setNamespaceDescriptor(
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder builderForValue) {
         if (namespaceDescriptorBuilder_ == null) {
           namespaceDescriptor_ = builderForValue.build();
           onChanged();
@@ -13364,12 +13364,12 @@ public final class MasterAdminProtos {
         bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder mergeNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor value) {
+      public Builder mergeNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
         if (namespaceDescriptorBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              namespaceDescriptor_ != org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance()) {
+              namespaceDescriptor_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance()) {
             namespaceDescriptor_ =
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.newBuilder(namespaceDescriptor_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder(namespaceDescriptor_).mergeFrom(value).buildPartial();
           } else {
             namespaceDescriptor_ = value;
           }
@@ -13382,7 +13382,7 @@ public final class MasterAdminProtos {
       }
       public Builder clearNamespaceDescriptor() {
         if (namespaceDescriptorBuilder_ == null) {
-          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.getDefaultInstance();
+          namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
           onChanged();
         } else {
           namespaceDescriptorBuilder_.clear();
@@ -13390,12 +13390,12 @@ public final class MasterAdminProtos {
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getNamespaceDescriptorFieldBuilder().getBuilder();
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder() {
         if (namespaceDescriptorBuilder_ != null) {
           return namespaceDescriptorBuilder_.getMessageOrBuilder();
         } else {
@@ -13403,11 +13403,11 @@ public final class MasterAdminProtos {
         }
       }
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
           getNamespaceDescriptorFieldBuilder() {
         if (namespaceDescriptorBuilder_ == null) {
           namespaceDescriptorBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder>(
                   namespaceDescriptor_,
                   getParentForChildren(),
                   isClean());
@@ -14032,8 +14032,8 @@ public final class MasterAdminProtos {
     
     // required .NamespaceDescriptorList namespaceList = 1;
     boolean hasNamespaceList();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList getNamespaceList();
-    org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList getNamespaceList();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder();
   }
   public static final class ListNamespaceDescriptorsResponse extends
       com.google.protobuf.GeneratedMessage
@@ -14066,19 +14066,19 @@ public final class MasterAdminProtos {
     private int bitField0_;
     // required .NamespaceDescriptorList namespaceList = 1;
     public static final int NAMESPACELIST_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList namespaceList_;
+    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList namespaceList_;
     public boolean hasNamespaceList() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList getNamespaceList() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList getNamespaceList() {
       return namespaceList_;
     }
-    public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder() {
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder() {
       return namespaceList_;
     }
     
     private void initFields() {
-      namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.getDefaultInstance();
+      namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -14275,7 +14275,7 @@ public final class MasterAdminProtos {
       public Builder clear() {
         super.clear();
         if (namespaceListBuilder_ == null) {
-          namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.getDefaultInstance();
+          namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
         } else {
           namespaceListBuilder_.clear();
         }
@@ -14385,7 +14385,7 @@ public final class MasterAdminProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.newBuilder();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.newBuilder();
               if (hasNamespaceList()) {
                 subBuilder.mergeFrom(getNamespaceList());
               }
@@ -14400,20 +14400,20 @@ public final class MasterAdminProtos {
       private int bitField0_;
       
       // required .NamespaceDescriptorList namespaceList = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.getDefaultInstance();
+      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorListOrBuilder> namespaceListBuilder_;
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder> namespaceListBuilder_;
       public boolean hasNamespaceList() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList getNamespaceList() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList getNamespaceList() {
         if (namespaceListBuilder_ == null) {
           return namespaceList_;
         } else {
           return namespaceListBuilder_.getMessage();
         }
       }
-      public Builder setNamespaceList(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList value) {
+      public Builder setNamespaceList(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList value) {
         if (namespaceListBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
@@ -14427,7 +14427,7 @@ public final class MasterAdminProtos {
         return this;
       }
       public Builder setNamespaceList(
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.Builder builderForValue) {
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder builderForValue) {
         if (namespaceListBuilder_ == null) {
           namespaceList_ = builderForValue.build();
           onChanged();
@@ -14437,12 +14437,12 @@ public final class MasterAdminProtos {
         bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder mergeNamespaceList(org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList value) {
+      public Builder mergeNamespaceList(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList value) {
         if (namespaceListBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              namespaceList_ != org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.getDefaultInstance()) {
+              namespaceList_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance()) {
             namespaceList_ =
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.newBuilder(namespaceList_).mergeFrom(value).buildPartial();
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.newBuilder(namespaceList_).mergeFrom(value).buildPartial();
           } else {
             namespaceList_ = value;
           }
@@ -14455,7 +14455,7 @@ public final class MasterAdminProtos {
       }
       public Builder clearNamespaceList() {
         if (namespaceListBuilder_ == null) {
-          namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.getDefaultInstance();
+          namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
           onChanged();
         } else {
           namespaceListBuilder_.clear();
@@ -14463,12 +14463,12 @@ public final class MasterAdminProtos {
         bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.Builder getNamespaceListBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder getNamespaceListBuilder() {
         bitField0_ |= 0x00000001;
         onChanged();
         return getNamespaceListFieldBuilder().getBuilder();
       }
-      public org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder() {
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder() {
         if (namespaceListBuilder_ != null) {
           return namespaceListBuilder_.getMessageOrBuilder();
         } else {
@@ -14476,11 +14476,11 @@ public final class MasterAdminProtos {
         }
       }
       private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorListOrBuilder> 
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder> 
           getNamespaceListFieldBuilder() {
         if (namespaceListBuilder_ == null) {
           namespaceListBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.NamespaceDescriptorListOrBuilder>(
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder>(
                   namespaceList_,
                   getParentForChildren(),
                   isClean());
@@ -28134,6 +28134,7 @@ public final class MasterAdminProtos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
+<<<<<<< HEAD
       "\n\021MasterAdmin.proto\032\014Master.proto\032\013hbase" +
       ".proto\032\014Client.proto\032\017Namespace.proto\"R\n" +
       "\020AddColumnRequest\022\021\n\ttableName\030\001 \002(\014\022+\n\016" +
@@ -28275,6 +28276,146 @@ public final class MasterAdminProtos {
       "criptorsByNamespaceResponseBG\n*org.apach" +
       "e.hadoop.hbase.protobuf.generatedB\021Maste",
       "rAdminProtosH\001\210\001\001\240\001\001"
+=======
+      "\n\021MasterAdmin.proto\032\013hbase.proto\032\014Client" +
+      ".proto\"R\n\020AddColumnRequest\022\021\n\ttableName\030" +
+      "\001 \002(\014\022+\n\016columnFamilies\030\002 \002(\0132\023.ColumnFa" +
+      "milySchema\"\023\n\021AddColumnResponse\"<\n\023Delet" +
+      "eColumnRequest\022\021\n\ttableName\030\001 \002(\014\022\022\n\ncol" +
+      "umnName\030\002 \002(\014\"\026\n\024DeleteColumnResponse\"U\n" +
+      "\023ModifyColumnRequest\022\021\n\ttableName\030\001 \002(\014\022" +
+      "+\n\016columnFamilies\030\002 \002(\0132\023.ColumnFamilySc" +
+      "hema\"\026\n\024ModifyColumnResponse\"Z\n\021MoveRegi" +
+      "onRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpecif",
+      "ier\022#\n\016destServerName\030\002 \001(\0132\013.ServerName" +
+      "\"\024\n\022MoveRegionResponse\"~\n\035DispatchMergin" +
+      "gRegionsRequest\022!\n\007regionA\030\001 \002(\0132\020.Regio" +
+      "nSpecifier\022!\n\007regionB\030\002 \002(\0132\020.RegionSpec" +
+      "ifier\022\027\n\010forcible\030\003 \001(\010:\005false\" \n\036Dispat" +
+      "chMergingRegionsResponse\"7\n\023AssignRegion" +
+      "Request\022 \n\006region\030\001 \002(\0132\020.RegionSpecifie" +
+      "r\"\026\n\024AssignRegionResponse\"O\n\025UnassignReg" +
+      "ionRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpeci" +
+      "fier\022\024\n\005force\030\002 \001(\010:\005false\"\030\n\026UnassignRe",
+      "gionResponse\"8\n\024OfflineRegionRequest\022 \n\006" +
+      "region\030\001 \002(\0132\020.RegionSpecifier\"\027\n\025Offlin" +
+      "eRegionResponse\"J\n\022CreateTableRequest\022!\n" +
+      "\013tableSchema\030\001 \002(\0132\014.TableSchema\022\021\n\tspli" +
+      "tKeys\030\002 \003(\014\"\025\n\023CreateTableResponse\"\'\n\022De" +
+      "leteTableRequest\022\021\n\ttableName\030\001 \002(\014\"\025\n\023D" +
+      "eleteTableResponse\"\'\n\022EnableTableRequest" +
+      "\022\021\n\ttableName\030\001 \002(\014\"\025\n\023EnableTableRespon" +
+      "se\"(\n\023DisableTableRequest\022\021\n\ttableName\030\001" +
+      " \002(\014\"\026\n\024DisableTableResponse\"J\n\022ModifyTa",
+      "bleRequest\022\021\n\ttableName\030\001 \002(\014\022!\n\013tableSc" +
+      "hema\030\002 \002(\0132\014.TableSchema\"\025\n\023ModifyTableR" +
+      "esponse\"K\n\026CreateNamespaceRequest\0221\n\023nam" +
+      "espaceDescriptor\030\001 \002(\0132\024.NamespaceDescri" +
+      "ptor\"\031\n\027CreateNamespaceResponse\"/\n\026Delet" +
+      "eNamespaceRequest\022\025\n\rnamespaceName\030\001 \002(\t" +
+      "\"\031\n\027DeleteNamespaceResponse\"K\n\026ModifyNam" +
+      "espaceRequest\0221\n\023namespaceDescriptor\030\001 \002" +
+      "(\0132\024.NamespaceDescriptor\"6\n\035GetNamespace" +
+      "DescriptorRequest\022\025\n\rnamespaceName\030\001 \002(\t",
+      "\"S\n\036GetNamespaceDescriptorResponse\0221\n\023na" +
+      "mespaceDescriptor\030\001 \002(\0132\024.NamespaceDescr" +
+      "iptor\"\031\n\027ModifyNamespaceResponse\"!\n\037List" +
+      "NamespaceDescriptorsRequest\"S\n ListNames" +
+      "paceDescriptorsResponse\022/\n\rnamespaceList" +
+      "\030\001 \002(\0132\030.NamespaceDescriptorList\">\n%GetT" +
+      "ableDescriptorsByNamespaceRequest\022\025\n\rnam" +
+      "espaceName\030\001 \002(\t\"K\n&GetTableDescriptorsB" +
+      "yNamespaceResponse\022!\n\013tableSchema\030\001 \003(\0132" +
+      "\014.TableSchema\"\021\n\017ShutdownRequest\"\022\n\020Shut",
+      "downResponse\"\023\n\021StopMasterRequest\"\024\n\022Sto" +
+      "pMasterResponse\"\020\n\016BalanceRequest\"&\n\017Bal" +
+      "anceResponse\022\023\n\013balancerRan\030\001 \002(\010\"<\n\031Set" +
+      "BalancerRunningRequest\022\n\n\002on\030\001 \002(\010\022\023\n\013sy" +
+      "nchronous\030\002 \001(\010\"6\n\032SetBalancerRunningRes" +
+      "ponse\022\030\n\020prevBalanceValue\030\001 \001(\010\"\024\n\022Catal" +
+      "ogScanRequest\")\n\023CatalogScanResponse\022\022\n\n" +
+      "scanResult\030\001 \001(\005\"-\n\033EnableCatalogJanitor" +
+      "Request\022\016\n\006enable\030\001 \002(\010\"1\n\034EnableCatalog" +
+      "JanitorResponse\022\021\n\tprevValue\030\001 \001(\010\" \n\036Is",
+      "CatalogJanitorEnabledRequest\"0\n\037IsCatalo" +
+      "gJanitorEnabledResponse\022\r\n\005value\030\001 \002(\010\"=" +
+      "\n\023TakeSnapshotRequest\022&\n\010snapshot\030\001 \002(\0132" +
+      "\024.SnapshotDescription\"/\n\024TakeSnapshotRes" +
+      "ponse\022\027\n\017expectedTimeout\030\001 \002(\003\"\025\n\023ListSn" +
+      "apshotRequest\"?\n\024ListSnapshotResponse\022\'\n" +
+      "\tsnapshots\030\001 \003(\0132\024.SnapshotDescription\"?" +
+      "\n\025DeleteSnapshotRequest\022&\n\010snapshot\030\001 \002(" +
+      "\0132\024.SnapshotDescription\"\030\n\026DeleteSnapsho" +
+      "tResponse\"@\n\026RestoreSnapshotRequest\022&\n\010s",
+      "napshot\030\001 \002(\0132\024.SnapshotDescription\"\031\n\027R" +
+      "estoreSnapshotResponse\"?\n\025IsSnapshotDone" +
+      "Request\022&\n\010snapshot\030\001 \001(\0132\024.SnapshotDesc" +
+      "ription\"U\n\026IsSnapshotDoneResponse\022\023\n\004don" +
+      "e\030\001 \001(\010:\005false\022&\n\010snapshot\030\002 \001(\0132\024.Snaps" +
+      "hotDescription\"F\n\034IsRestoreSnapshotDoneR" +
+      "equest\022&\n\010snapshot\030\001 \001(\0132\024.SnapshotDescr" +
+      "iption\"3\n\035IsRestoreSnapshotDoneResponse\022" +
+      "\022\n\004done\030\001 \001(\010:\004true2\200\022\n\022MasterAdminServi" +
+      "ce\0222\n\taddColumn\022\021.AddColumnRequest\032\022.Add",
+      "ColumnResponse\022;\n\014deleteColumn\022\024.DeleteC" +
+      "olumnRequest\032\025.DeleteColumnResponse\022;\n\014m" +
+      "odifyColumn\022\024.ModifyColumnRequest\032\025.Modi" +
+      "fyColumnResponse\0225\n\nmoveRegion\022\022.MoveReg" +
+      "ionRequest\032\023.MoveRegionResponse\022Y\n\026dispa" +
+      "tchMergingRegions\022\036.DispatchMergingRegio" +
+      "nsRequest\032\037.DispatchMergingRegionsRespon" +
+      "se\022;\n\014assignRegion\022\024.AssignRegionRequest" +
+      "\032\025.AssignRegionResponse\022A\n\016unassignRegio" +
+      "n\022\026.UnassignRegionRequest\032\027.UnassignRegi",
+      "onResponse\022>\n\rofflineRegion\022\025.OfflineReg" +
+      "ionRequest\032\026.OfflineRegionResponse\0228\n\013de" +
+      "leteTable\022\023.DeleteTableRequest\032\024.DeleteT" +
+      "ableResponse\0228\n\013enableTable\022\023.EnableTabl" +
+      "eRequest\032\024.EnableTableResponse\022;\n\014disabl" +
+      "eTable\022\024.DisableTableRequest\032\025.DisableTa" +
+      "bleResponse\0228\n\013modifyTable\022\023.ModifyTable" +
+      "Request\032\024.ModifyTableResponse\0228\n\013createT" +
+      "able\022\023.CreateTableRequest\032\024.CreateTableR" +
+      "esponse\022/\n\010shutdown\022\020.ShutdownRequest\032\021.",
+      "ShutdownResponse\0225\n\nstopMaster\022\022.StopMas" +
+      "terRequest\032\023.StopMasterResponse\022,\n\007balan" +
+      "ce\022\017.BalanceRequest\032\020.BalanceResponse\022M\n" +
+      "\022setBalancerRunning\022\032.SetBalancerRunning" +
+      "Request\032\033.SetBalancerRunningResponse\022;\n\016" +
+      "runCatalogScan\022\023.CatalogScanRequest\032\024.Ca" +
+      "talogScanResponse\022S\n\024enableCatalogJanito" +
+      "r\022\034.EnableCatalogJanitorRequest\032\035.Enable" +
+      "CatalogJanitorResponse\022\\\n\027isCatalogJanit" +
+      "orEnabled\022\037.IsCatalogJanitorEnabledReque",
+      "st\032 .IsCatalogJanitorEnabledResponse\022L\n\021" +
+      "execMasterService\022\032.CoprocessorServiceRe" +
+      "quest\032\033.CoprocessorServiceResponse\0227\n\010sn" +
+      "apshot\022\024.TakeSnapshotRequest\032\025.TakeSnaps" +
+      "hotResponse\022D\n\025getCompletedSnapshots\022\024.L" +
+      "istSnapshotRequest\032\025.ListSnapshotRespons" +
+      "e\022A\n\016deleteSnapshot\022\026.DeleteSnapshotRequ" +
+      "est\032\027.DeleteSnapshotResponse\022A\n\016isSnapsh" +
+      "otDone\022\026.IsSnapshotDoneRequest\032\027.IsSnaps" +
+      "hotDoneResponse\022D\n\017restoreSnapshot\022\027.Res",
+      "toreSnapshotRequest\032\030.RestoreSnapshotRes" +
+      "ponse\022V\n\025isRestoreSnapshotDone\022\035.IsResto" +
+      "reSnapshotDoneRequest\032\036.IsRestoreSnapsho" +
+      "tDoneResponse\022D\n\017modifyNamespace\022\027.Modif" +
+      "yNamespaceRequest\032\030.ModifyNamespaceRespo" +
+      "nse\022D\n\017createNamespace\022\027.CreateNamespace" +
+      "Request\032\030.CreateNamespaceResponse\022D\n\017del" +
+      "eteNamespace\022\027.DeleteNamespaceRequest\032\030." +
+      "DeleteNamespaceResponse\022Y\n\026getNamespaceD" +
+      "escriptor\022\036.GetNamespaceDescriptorReques",
+      "t\032\037.GetNamespaceDescriptorResponse\022_\n\030li" +
+      "stNamespaceDescriptors\022 .ListNamespaceDe" +
+      "scriptorsRequest\032!.ListNamespaceDescript" +
+      "orsResponse\022q\n\036getTableDescriptorsByName" +
+      "space\022&.GetTableDescriptorsByNamespaceRe" +
+      "quest\032\'.GetTableDescriptorsByNamespaceRe" +
+      "sponseBG\n*org.apache.hadoop.hbase.protob" +
+      "uf.generatedB\021MasterAdminProtosH\001\210\001\001\240\001\001"
+>>>>>>> addressed first batch of open source comments and fixed a tabledir issue with getStoreFileMap
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -28802,7 +28943,6 @@ public final class MasterAdminProtos {
           org.apache.hadoop.hbase.protobuf.generated.MasterProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.getDescriptor(),
           org.apache.hadoop.hbase.protobuf.generated.ClientProtos.getDescriptor(),
-          org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos.getDescriptor(),
         }, assigner);
   }
   

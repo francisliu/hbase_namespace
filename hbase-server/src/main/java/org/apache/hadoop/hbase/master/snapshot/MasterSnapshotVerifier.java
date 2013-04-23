@@ -23,18 +23,15 @@ import java.util.Set;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.exceptions.CorruptedSnapshotException;
@@ -190,7 +187,7 @@ public final class MasterSnapshotVerifier {
     if (columnFamilies == null) return;
 
     // setup the suffixes for the snapshot directories
-    Path tableNameSuffix = HTableDescriptor.getTableDir(new Path("./"), tableName);
+    Path tableNameSuffix = FSUtils.getTableDir(new Path("./"), tableName);
     Path regionNameSuffix = new Path(tableNameSuffix, region.getEncodedName());
 
     // get the potential real paths

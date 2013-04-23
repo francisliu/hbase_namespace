@@ -28,11 +28,9 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.Random;
 import java.util.concurrent.Callable;
 
@@ -83,8 +81,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mockito;
-
-import com.google.common.collect.Lists;
 
 /**
  * Simple test for {@link KeyValueSortReducer} and {@link HFileOutputFormat}.
@@ -667,7 +663,7 @@ public class TestHFileOutputFormat  {
 
       // deep inspection: get the StoreFile dir
       final Path storePath = HStore.getStoreHomedir(
-          HTableDescriptor.getTableDir(FSUtils.getRootDir(conf), TABLE_NAME),
+          FSUtils.getTableDir(FSUtils.getRootDir(conf), TABLE_NAME),
           admin.getTableRegions(TABLE_NAME).get(0),
           FAMILIES[0]);
       assertEquals(0, fs.listStatus(storePath).length);
@@ -735,7 +731,7 @@ public class TestHFileOutputFormat  {
 
       // deep inspection: get the StoreFile dir
       final Path storePath = HStore.getStoreHomedir(
-          HTableDescriptor.getTableDir(FSUtils.getRootDir(conf), TABLE_NAME),
+          FSUtils.getTableDir(FSUtils.getRootDir(conf), TABLE_NAME),
           admin.getTableRegions(TABLE_NAME).get(0),
           FAMILIES[0]);
       assertEquals(0, fs.listStatus(storePath).length);

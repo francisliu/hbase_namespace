@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -112,7 +113,7 @@ public class TestTableDeleteFamilyHandler {
     }
 
     // 3 - Check if table exists in FS
-    Path tableDir = HTableDescriptor.getTableDir(TEST_UTIL.getDefaultRootDirPath(), TABLENAME);
+    Path tableDir = FSUtils.getTableDir(TEST_UTIL.getDefaultRootDirPath(), TABLENAME);
     assertTrue(fs.exists(tableDir));
 
     // 4 - Check if all the 3 column families exist in FS

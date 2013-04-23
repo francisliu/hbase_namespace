@@ -716,7 +716,7 @@ public class HLogSplitter {
   static Path getRegionSplitEditsPath(final FileSystem fs,
       final Entry logEntry, final Path rootDir, boolean isCreate)
   throws IOException {
-    Path tableDir = HTableDescriptor.getTableDir(rootDir, logEntry.getKey().getTablename());
+    Path tableDir = FSUtils.getTableDir(rootDir, logEntry.getKey().getTablename());
     String encodedRegionName = Bytes.toString(logEntry.getKey().getEncodedRegionName());
     Path regiondir = HRegion.getRegionDir(tableDir, encodedRegionName);
     Path dir = HLogUtil.getRegionDirRecoveredEditsDir(regiondir);

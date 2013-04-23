@@ -64,7 +64,6 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.MetaScanner;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -119,7 +118,7 @@ public class TestHBaseFsck {
     Bytes.toBytes("B"), Bytes.toBytes("C") };
   // one row per region.
   private final static byte[][] ROWKEYS= new byte[][] {
-    Bytes.toBytes("00"), Bytes.toBytes("50"), Bytes.toBytes("A0"), Bytes.toBytes("A5"),
+    Bytes.toBytes("00"), Bytes.toBytes("50"), Bytes.toBytes("jA0"), Bytes.toBytes("A5"),
     Bytes.toBytes("B0"), Bytes.toBytes("B5"), Bytes.toBytes("C0"), Bytes.toBytes("C5") };
 
   @BeforeClass
@@ -283,7 +282,7 @@ public class TestHBaseFsck {
           LOG.info("deleting hdfs .regioninfo data: " + hri.toString() + hsa.toString());
           Path rootDir = FSUtils.getRootDir(conf);
           FileSystem fs = rootDir.getFileSystem(conf);
-          Path p = new Path(HTableDescriptor.getTableDir(rootDir, htd.getNameAsString()),
+          Path p = new Path(FSUtils.getTableDir(rootDir, htd.getNameAsString()),
               hri.getEncodedName());
           Path hriPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);
           fs.delete(hriPath, true);
@@ -293,7 +292,7 @@ public class TestHBaseFsck {
           LOG.info("deleting hdfs data: " + hri.toString() + hsa.toString());
           Path rootDir = FSUtils.getRootDir(conf);
           FileSystem fs = rootDir.getFileSystem(conf);
-          Path p = new Path(HTableDescriptor.getTableDir(rootDir, htd.getNameAsString()),
+          Path p = new Path(FSUtils.getTableDir(rootDir, htd.getNameAsString()),
               hri.getEncodedName());
           HBaseFsck.debugLsr(conf, p);
           boolean success = fs.delete(p, true);
@@ -436,8 +435,8 @@ public class TestHBaseFsck {
       setupTable(table);
       HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
 
-      Path hbaseTableDir = HTableDescriptor.getTableDir(
-        FSUtils.getRootDir(conf), Bytes.toBytes(table));
+      Path hbaseTableDir = FSUtils.getTableDir(
+          FSUtils.getRootDir(conf), Bytes.toBytes(table));
       fs = hbaseTableDir.getFileSystem(conf);
       FileStatus status = FSTableDescriptors.getTableInfoPath(fs, hbaseTableDir);
       tableinfo = status.getPath();
@@ -1608,7 +1607,7 @@ public class TestHBaseFsck {
    * @throws IOException
    */
   Path getFlushedHFile(FileSystem fs, String table) throws IOException {
-    Path tableDir= HTableDescriptor.getTableDir(FSUtils.getRootDir(conf), table);
+    Path tableDir= FSUtils.getTableDir(FSUtils.getRootDir(conf), table);
     Path regionDir = FSUtils.getRegionDirs(fs, tableDir).get(0);
     Path famDir = new Path(regionDir, FAM_STR);
 
@@ -1801,7 +1800,7 @@ public class TestHBaseFsck {
 
       // Mess it up by creating a fake reference file
       FileSystem fs = FileSystem.get(conf);
-      Path tableDir= HTableDescriptor.getTableDir(FSUtils.getRootDir(conf), table);
+      Path tableDir= FSUtils.getTableDir(FSUtils.getRootDir(conf), table);
       Path regionDir = FSUtils.getRegionDirs(fs, tableDir).get(0);
       Path famDir = new Path(regionDir, FAM_STR);
       Path fakeReferenceFile = new Path(famDir, "fbce357483ceea.12144538");

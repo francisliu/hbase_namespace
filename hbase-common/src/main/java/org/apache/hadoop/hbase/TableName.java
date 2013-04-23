@@ -1,13 +1,19 @@
 /**
- * Copyright The Apache Software Foundation Licensed to the Apache Software Foundation (ASF) under
- * one or more contributor license agreements. See the NOTICE file distributed with this work for
- * additional information regarding copyright ownership. The ASF licenses this file to you under the
- * Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.apache.hadoop.hbase;
@@ -15,12 +21,23 @@ package org.apache.hadoop.hbase;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.List;
 
+/**
+ * POJO class for representing a fully-qualified table name.
+ * Which is of the form:
+ * &lt;table namespace&gt;.&lt;table qualifier&gt;
+ */
+@InterfaceAudience.Public
+@InterfaceStability.Evolving
 public class TableName implements Comparable<TableName> {
+
+  /** Namespace delimiter */
+  public static String NAMESPACE_DELIM = ".";
 
   private byte[] name;
   private String nameAsString;
@@ -91,19 +108,18 @@ public class TableName implements Comparable<TableName> {
   }
 
   public static TableName valueOf(String name) {
-    List<String> list = Lists.newArrayList(Splitter.on('.').limit(2).split(name));
+    List<String> list = Lists.newArrayList(Splitter.on(NAMESPACE_DELIM).limit(2).split(name));
     if (list.size() == 2) {
       return TableName.valueOf(list.get(0), list.get(1));
-    } else {
-      return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
     }
+    return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
   }
 
   private static String createFullyQualified(String namespace, String tableQualifier) {
     if (namespace.equals(NamespaceDescriptor.DEFAULT_NAMESPACE.getName())) {
       return tableQualifier;
     }
-    return namespace+NamespaceDescriptor.NAMESPACE_DELIM+tableQualifier;
+    return namespace+ NAMESPACE_DELIM+tableQualifier;
   }
 
   @Override

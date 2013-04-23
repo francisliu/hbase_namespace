@@ -327,7 +327,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @param name
    */
   private void setMetaFlags(final TableName name) {
-    setRootRegion(Bytes.equals(name.getName(), HConstants.ROOT_TABLE_NAME));
     setMetaRegion(isRootRegion() ||
       Bytes.equals(name.getName(), HConstants.META_TABLE_NAME));
   }
@@ -416,7 +415,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   public static boolean isSystemTable(final byte [] tableName) {
     return Bytes.toString(tableName)
         .startsWith(HConstants.SYSTEM_NAMESPACE_NAME_STR +
-            NamespaceDescriptor.NAMESPACE_DELIM);
+            TableName.NAMESPACE_DELIM);
   }
 
   // A non-capture group so that this can be embedded.
@@ -435,7 +434,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       throw new IllegalArgumentException("Name is null or empty");
     }
     int namespaceDelimIndex = com.google.common.primitives.Bytes.indexOf(tableName,
-      Bytes.toBytes(NamespaceDescriptor.NAMESPACE_DELIM));
+      Bytes.toBytes(TableName.NAMESPACE_DELIM));
     if(namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
       isLegalTableQualifierName(tableName);
     }else {
@@ -1281,24 +1280,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       remove(match);
   }
 
-   public static Path getTableDir(Path rootdir, final String tableName) {
-     return getTableDir(rootdir, Bytes.toBytes(tableName));
-   }
-
-  /**
-   * Returns the {@link Path} object representing the table directory under
-   * path rootdir
-   *
-   * @param rootdir qualified path of HBase root directory
-   * @param tableName name of table
-   * @return {@link Path} for table
-   */
-  public static Path getTableDir(Path rootdir, final byte [] tableName) {
-    TableName name = TableName.valueOf(tableName);
-    return new Path(NamespaceDescriptor.getNamespaceDir(rootdir, name.getNamespaceAsString()),
-        name.getNameAsString());
-  }
-
   /** Table descriptor for <core>-ROOT-</code> catalog table */
   public static final HTableDescriptor ROOT_TABLEDESC = new HTableDescriptor(
       TableName.valueOf(HConstants.ROOT_TABLE_NAME),
@@ -1337,13 +1318,16 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     }
   }
 
+  public static String NAMESPACE_FAMILY_INFO = "info";
+  public static byte[] NAMESPACE_FAMILY_INFO_BYTES = Bytes.toBytes(NAMESPACE_FAMILY_INFO);
+  public static byte[] NAMESPACE_COL_DESC_BYTES = Bytes.toBytes("descriptor");
 
-  /** Table descriptor for <code>.NAMESPACE.</code> catalog table */
+  /** Table descriptor for namespace table */
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(
       TableName.valueOf(HConstants.NAMESPACE_TABLE_NAME),
       new HColumnDescriptor[] {
           //TODO make this us a constant
-          new HColumnDescriptor(Bytes.toBytes("info"))
+          new HColumnDescriptor(NAMESPACE_FAMILY_INFO)
               // Ten is arbitrary number.  Keep versions to help debugging.
               .setMaxVersions(10)
               .setInMemory(true)

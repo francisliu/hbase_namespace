@@ -47,6 +47,7 @@ import org.apache.hadoop.hbase.snapshot.RestoreSnapshotHelper;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 
 import com.google.common.base.Preconditions;
+import org.apache.hadoop.hbase.util.FSUtils;
 
 /**
  * Handler to Clone a snapshot.
@@ -102,7 +103,7 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
     Path tempRootDir = tableRootDir;
-    Path tableDir = HTableDescriptor.getTableDir(tempRootDir, tableName);
+    Path tableDir = FSUtils.getTableDir(tempRootDir, tableName);
 
     try {
       // 1. Execute the on-disk Clone

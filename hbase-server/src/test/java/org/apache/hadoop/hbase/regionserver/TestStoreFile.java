@@ -37,7 +37,6 @@ import org.apache.hadoop.hbase.HBaseTestCase;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.client.Scan;
@@ -185,7 +184,7 @@ public class TestStoreFile extends HBaseTestCase {
     Configuration testConf = new Configuration(this.conf);
     FSUtils.setRootDir(testConf, this.testDir);
     HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(
-      testConf, fs, HTableDescriptor.getTableDir(this.testDir, hri.getTableNameAsString()), hri);
+      testConf, fs, FSUtils.getTableDir(this.testDir, hri.getTableNameAsString()), hri);
 
     // Make a store file and write data to it.
     StoreFile.Writer writer = new StoreFile.WriterBuilder(testConf, cacheConf, this.fs, 8 * 1024)
@@ -227,7 +226,7 @@ public class TestStoreFile extends HBaseTestCase {
     // adding legal table name chars to verify regex handles it.
     HRegionInfo hri = new HRegionInfo(Bytes.toBytes("_original-evil-name"));
     HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(
-      testConf, fs, HTableDescriptor.getTableDir(this.testDir, hri.getTableNameAsString()), hri);
+      testConf, fs, FSUtils.getTableDir(this.testDir, hri.getTableNameAsString()), hri);
 
     // Make a store file and write data to it. <root>/<tablename>/<rgn>/<cf>/<file>
     StoreFile.Writer writer = new StoreFile.WriterBuilder(testConf, cacheConf, this.fs, 8 * 1024)

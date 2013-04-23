@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -174,8 +175,11 @@ public class TestNamespace {
     byte[] tableNameFoo = Bytes.toBytes(nsName+".my_table");
     //create namespace and verify
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
-    TEST_UTIL.createTable(tableName,Bytes.toBytes(nsName));
+    TEST_UTIL.createTable(tableName, Bytes.toBytes(nsName));
     TEST_UTIL.createTable(tableNameFoo,Bytes.toBytes(nsName));
+    for (HTableDescriptor desc: admin.listTables()) {
+      System.out.println("-->"+desc.getNameAsString());
+    }
     assertEquals(2, admin.listTables().length);
     assertNotNull(admin
         .getTableDescriptor(tableName));
@@ -245,7 +249,7 @@ public class TestNamespace {
 
   @Test
   public void createTableInSystemNamespace() throws Exception {
-    String tableName = "-hbase-.createTableInSystemNamespace";
+    String tableName = "system.createTableInSystemNamespace";
     HTableDescriptor desc = new HTableDescriptor(tableName);
     HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
     desc.addFamily(colDesc);
