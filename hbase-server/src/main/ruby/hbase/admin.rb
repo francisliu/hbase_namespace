@@ -771,7 +771,7 @@ module Hbase
         end
         for k,v in arg
           v = v.to_s unless v.nil?
-          nsb.addValue(k, v)
+          nsb.addProperty(k, v)
         end
       end
       @admin.createNamespace(nsb.build());
@@ -805,7 +805,7 @@ module Hbase
           arg.delete(METHOD)
           for k,v in arg
             v = v.to_s unless v.nil?
-            nsb.addValue(k, v)
+            nsb.addProperty(k, v)
           end
         else
           raise(ArgumentError, "Unknown method #{method}")

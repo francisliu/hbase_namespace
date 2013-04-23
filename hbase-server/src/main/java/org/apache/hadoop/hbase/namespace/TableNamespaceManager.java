@@ -19,10 +19,13 @@
 package org.apache.hadoop.hbase.namespace;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.NavigableSet;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -41,18 +44,27 @@ import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.handler.CreateTableHandler;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.collect.Sets;
+import org.apache.hadoop.hbase.util.FSUtils;
 
+/**
+ * This is a helper class used to manage the namespace
+ * metadata that is stored in {@link HConstants.NAMESPACE_TABLE_NAME}
+ * It also mirrors updates to the ZK store by forwarding updated to
+ * {@link ZKNamespaceManager}
+ */
+@InterfaceAudience.Private
 public class TableNamespaceManager {
   private static final Log LOG = LogFactory.getLog(TableNamespaceManager.class);
 
-  public static String FAMILY_INFO = "info";
-  public static byte[] FAMILY_INFO_BYTES = Bytes.toBytes("info");
-  public static byte[] COL_DESCRIPTOR = Bytes.toBytes("descriptor");
-
+  private static Set<String> RESERVED_NAMESPACES = new HashSet<String>();
+  static {
+    RESERVED_NAMESPACES.add(HConstants.DEFAULT_NAMESPACE_NAME_STR);
+    RESERVED_NAMESPACES.add(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+  }
   private Configuration conf;
   private MasterServices masterServices;
   private HTable table;
@@ -85,11 +97,12 @@ public class TableNamespaceManager {
       create(NamespaceDescriptor.SYSTEM_NAMESPACE);
     }
 
-    for(Result result: table.getScanner(FAMILY_INFO_BYTES)) {
+    for(Result result: table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {
       NamespaceDescriptor ns =
           ProtobufUtil.toNamespaceDescriptor(
-              NamespaceProtos.NamespaceDescriptor.parseFrom(
-                  result.getColumnLatest(FAMILY_INFO_BYTES, COL_DESCRIPTOR).getValue()));
+              HBaseProtos.NamespaceDescriptor.parseFrom(
+                  result.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
+                      HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue()));
       zkNamespaceManager.update(ns);
     }
   }
@@ -102,8 +115,9 @@ public class TableNamespaceManager {
     }
     return
         ProtobufUtil.toNamespaceDescriptor(
-            NamespaceProtos.NamespaceDescriptor.parseFrom(
-                res.getColumnLatest(FAMILY_INFO_BYTES, COL_DESCRIPTOR).getValue()));
+            HBaseProtos.NamespaceDescriptor.parseFrom(
+                res.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
+                    HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue()));
   }
 
   public void create(NamespaceDescriptor ns) throws IOException {
@@ -111,7 +125,7 @@ public class TableNamespaceManager {
       throw new ConstraintException("Namespace "+ns.getName()+" already exists");
     }
     FileSystem fs = masterServices.getMasterFileSystem().getFileSystem();
-    fs.mkdirs(NamespaceDescriptor.getNamespaceDir(
+    fs.mkdirs(FSUtils.getNamespaceDir(
         masterServices.getMasterFileSystem().getRootDir(), ns.getName()));
     upsert(ns);
   }
@@ -125,39 +139,48 @@ public class TableNamespaceManager {
 
   private void upsert(NamespaceDescriptor ns) throws IOException {
     Put p = new Put(Bytes.toBytes(ns.getName()));
-    p.add(FAMILY_INFO_BYTES, COL_DESCRIPTOR,
+    p.add(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
+        HTableDescriptor.NAMESPACE_COL_DESC_BYTES,
         ProtobufUtil.toProtoBuf(ns).toByteArray());
     table.put(p);
-    zkNamespaceManager.update(ns);
+    try {
+      zkNamespaceManager.update(ns);
+    } catch(IOException ex) {
+      String msg = "Failed to update namespace information in ZK. Aborting.";
+      LOG.fatal(msg, ex);
+      masterServices.abort(msg, ex);
+    }
   }
 
   public void remove(String name) throws IOException {
-    if(name.equals(HConstants.DEFAULT_NAMESPACE_NAME_STR) ||
-       name.equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+    if(RESERVED_NAMESPACES.contains(name)) {
       throw new ConstraintException("Reserved namespace "+name+" cannot be removed.");
     }
     Delete d = new Delete(Bytes.toBytes(name));
     table.delete(d);
+    //don't abort if cleanup isn't complete
+    //it will be replaced on new namespace creation
     zkNamespaceManager.remove(name);
     FileSystem fs = masterServices.getMasterFileSystem().getFileSystem();
     for(FileStatus status :
-            fs.listStatus(NamespaceDescriptor.getNamespaceDir(
+            fs.listStatus(FSUtils.getNamespaceDir(
                 masterServices.getMasterFileSystem().getRootDir(), name))) {
       if(!HConstants.HBASE_NON_TABLE_DIRS.contains(status.getPath().getName())) {
         throw new IOException("Namespace directory contains table dir: "+status.getPath());
       }
     }
-    fs.delete(NamespaceDescriptor.getNamespaceDir(
+    fs.delete(FSUtils.getNamespaceDir(
         masterServices.getMasterFileSystem().getRootDir(), name), true);
   }
 
   public NavigableSet<NamespaceDescriptor> list() throws IOException {
     NavigableSet<NamespaceDescriptor> ret =
         Sets.newTreeSet(NamespaceDescriptor.NAMESPACE_DESCRIPTOR_COMPARATOR);
-    for(Result r: table.getScanner(FAMILY_INFO_BYTES)) {
+    for(Result r: table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {
         ret.add(ProtobufUtil.toNamespaceDescriptor(
-            NamespaceProtos.NamespaceDescriptor.parseFrom(
-              r.getColumnLatest(FAMILY_INFO_BYTES, COL_DESCRIPTOR).getValue())));
+            HBaseProtos.NamespaceDescriptor.parseFrom(
+              r.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
+                  HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue())));
     }
     return ret;
   }

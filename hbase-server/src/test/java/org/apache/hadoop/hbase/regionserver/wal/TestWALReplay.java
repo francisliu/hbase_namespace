@@ -21,13 +21,11 @@ package org.apache.hadoop.hbase.regionserver.wal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -255,7 +253,7 @@ public class TestWALReplay {
     // Ensure edits are replayed properly.
     final String tableNameStr = "test2727";
     HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    Path basedir = HTableDescriptor.getTableDir(hbaseRootDir, tableNameStr);
+    Path basedir = FSUtils.getTableDir(hbaseRootDir, tableNameStr);
     deleteDir(basedir);
 
     HTableDescriptor htd = createBasic3FamilyHTD(tableNameStr);
@@ -375,7 +373,7 @@ public class TestWALReplay {
       NoSuchFieldException, IllegalAccessException, InterruptedException {
     final String tableNameStr = "testReplayEditsWrittenViaHRegion";
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    final Path basedir = HTableDescriptor.getTableDir(this.hbaseRootDir, tableNameStr);
+    final Path basedir = FSUtils.getTableDir(this.hbaseRootDir, tableNameStr);
     deleteDir(basedir);
     final byte[] rowName = Bytes.toBytes(tableNameStr);
     final int countPerFamily = 10;
@@ -492,7 +490,7 @@ public class TestWALReplay {
       NoSuchFieldException, IllegalAccessException, InterruptedException {
     final String tableNameStr = "testReplayEditsWrittenViaHRegion";
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    final Path basedir = HTableDescriptor.getTableDir(this.hbaseRootDir, tableNameStr);
+    final Path basedir = FSUtils.getTableDir(this.hbaseRootDir, tableNameStr);
     deleteDir(basedir);
     final byte[] rowName = Bytes.toBytes(tableNameStr);
     final int countPerFamily = 10;
@@ -582,7 +580,7 @@ public class TestWALReplay {
   public void testReplayEditsAfterAbortingFlush() throws IOException {
     final String tableNameStr = "testReplayEditsAfterAbortingFlush";
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    final Path basedir = HTableDescriptor.getTableDir(this.hbaseRootDir, tableNameStr);
+    final Path basedir = FSUtils.getTableDir(this.hbaseRootDir, tableNameStr);
     deleteDir(basedir);
     final HTableDescriptor htd = createBasic3FamilyHTD(tableNameStr);
     HRegion region3 = HRegion.createHRegion(hri, hbaseRootDir, this.conf, htd);
@@ -687,7 +685,7 @@ public class TestWALReplay {
   public void testReplayEditsWrittenIntoWAL() throws Exception {
     final String tableNameStr = "testReplayEditsWrittenIntoWAL";
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
-    final Path basedir = HTableDescriptor.getTableDir(hbaseRootDir, tableNameStr);
+    final Path basedir = FSUtils.getTableDir(hbaseRootDir, tableNameStr);
     deleteDir(basedir);
 
     final HTableDescriptor htd = createBasic3FamilyHTD(tableNameStr);
@@ -781,7 +779,7 @@ public class TestWALReplay {
     final String tableNameStr = "testSequentialEditLogSeqNum";
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableNameStr);
     final Path basedir =
-        HTableDescriptor.getTableDir(this.hbaseRootDir, tableNameStr);
+        FSUtils.getTableDir(this.hbaseRootDir, tableNameStr);
     deleteDir(basedir);
     final byte[] rowName = Bytes.toBytes(tableNameStr);
     final int countPerFamily = 10;
@@ -818,7 +816,7 @@ public class TestWALReplay {
     HLogSplitter.splitLogFile(hbaseRootDir, listStatus[0], this.fs, this.conf,
         null);
     FileStatus[] listStatus1 = this.fs.listStatus(
-        new Path(HTableDescriptor.getTableDir(hbaseRootDir, tableNameStr),
+        new Path(FSUtils.getTableDir(hbaseRootDir, tableNameStr),
             new Path(hri.getEncodedName(), "recovered.edits")));
     int editCount = 0;
     for (FileStatus fileStatus : listStatus1) {

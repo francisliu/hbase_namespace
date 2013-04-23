@@ -162,7 +162,7 @@ public class TestHLog  {
         HConstants.HREGION_LOGDIR_NAME, conf);
     final int howmany = 3;
     HRegionInfo[] infos = new HRegionInfo[3];
-    Path tabledir = HTableDescriptor.getTableDir(hbaseDir, getName());
+    Path tabledir = FSUtils.getTableDir(hbaseDir, getName());
     fs.mkdirs(tabledir);
     for(int i = 0; i < howmany; i++) {
       infos[i] = new HRegionInfo(tableName,

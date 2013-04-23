@@ -48,6 +48,7 @@ import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotHelper;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 
 /**
  * Handler to Restore a snapshot.
@@ -110,7 +111,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
     byte[] tableName = hTableDescriptor.getName();
-    Path tableDir = HTableDescriptor.getTableDir(rootDir, tableName);
+    Path tableDir = FSUtils.getTableDir(rootDir, tableName);
 
     try {
       // 1. Update descriptor

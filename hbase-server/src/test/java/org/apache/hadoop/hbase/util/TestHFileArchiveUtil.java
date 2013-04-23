@@ -21,15 +21,10 @@ import static org.junit.Assert.*;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.SmallTests;
-import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 
@@ -60,7 +55,7 @@ public class TestHFileArchiveUtil {
   @Test
   public void testGetStoreArchivePath() throws IOException {
       byte[] family = Bytes.toBytes("Family");
-    Path tabledir = HTableDescriptor.getTableDir(rootDir, "table");
+    Path tabledir = FSUtils.getTableDir(rootDir, "table");
     HRegionInfo region = new HRegionInfo(Bytes.toBytes("table"));
     Configuration conf = new Configuration();
     FSUtils.setRootDir(conf, new Path("root"));

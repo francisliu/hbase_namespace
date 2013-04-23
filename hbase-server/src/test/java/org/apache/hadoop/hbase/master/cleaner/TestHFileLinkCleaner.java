@@ -28,12 +28,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SmallTests;
-import org.apache.hadoop.hbase.backup.HFileArchiver;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.io.HFileLink;
@@ -104,7 +101,7 @@ public class TestHFileLinkCleaner {
     assertTrue(fs.exists(hfilePath));
 
     // Link backref can be removed
-    fs.rename(HTableDescriptor.getTableDir(rootDir, tableLinkName), new Path(archiveDir, tableLinkName));
+    fs.rename(FSUtils.getTableDir(rootDir, tableLinkName), new Path(archiveDir, tableLinkName));
     cleaner.chore();
     assertFalse("Link should be deleted", fs.exists(linkBackRef));
 
@@ -126,7 +123,7 @@ public class TestHFileLinkCleaner {
 
   private static Path getFamilyDirPath (final Path rootDir, final String table,
     final String region, final String family) {
-    return new Path(new Path(HTableDescriptor.getTableDir(rootDir, table), region), family);
+    return new Path(new Path(FSUtils.getTableDir(rootDir, table), region), family);
   }
 
   static class DummyServer implements Server {

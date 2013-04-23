@@ -41,7 +41,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.exceptions.ExportSnapshotException;
 import org.apache.hadoop.hbase.io.HFileLink;
 import org.apache.hadoop.hbase.io.HLogLink;
@@ -154,7 +153,7 @@ public final class ExportSnapshot extends Configured implements Tool {
         String table = HFileLink.getReferencedTableName(inputPath.getName());
         String region = HFileLink.getReferencedRegionName(inputPath.getName());
         String hfile = HFileLink.getReferencedHFileName(inputPath.getName());
-        path = new Path(HTableDescriptor.getTableDir(new Path("./"),table),
+        path = new Path(FSUtils.getTableDir(new Path("./"), table),
             new Path(region, new Path(family, hfile)));
       } else if (isHLogLinkPath(inputPath)) {
         String logName = inputPath.getName();

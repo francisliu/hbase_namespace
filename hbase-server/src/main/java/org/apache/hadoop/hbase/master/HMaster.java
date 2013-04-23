@@ -2893,8 +2893,8 @@ MasterServices, Server {
     try {
       MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder b =
           MasterAdminProtos.ListNamespaceDescriptorsResponse.newBuilder();
-      NamespaceProtos.NamespaceDescriptorList.Builder bList =
-          NamespaceProtos.NamespaceDescriptorList.newBuilder();
+      HBaseProtos.NamespaceDescriptorList.Builder bList =
+          HBaseProtos.NamespaceDescriptorList.newBuilder();
       for(NamespaceDescriptor ns: listNamespaceDescriptors()) {
         bList.addNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
       }

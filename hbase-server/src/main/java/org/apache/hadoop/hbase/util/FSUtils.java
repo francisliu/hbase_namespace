@@ -57,6 +57,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HDFSBlocksDistribution;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.exceptions.FileSystemVersionException;
 import org.apache.hadoop.hbase.fs.HFileSystem;
@@ -1129,6 +1130,45 @@ public abstract class FSUtils {
   }
 
   /**
+   * Returns the {@link org.apache.hadoop.fs.Path} object representing the table directory under
+   * path rootdir
+   *
+   * @param rootdir qualified path of HBase root directory
+   * @param tableName name of table
+   * @return {@link org.apache.hadoop.fs.Path} for table
+   */
+   public static Path getTableDir(Path rootdir, final String tableName) {
+     return getTableDir(rootdir, Bytes.toBytes(tableName));
+   }
+
+  /**
+   * Returns the {@link org.apache.hadoop.fs.Path} object representing the table directory under
+   * path rootdir
+   *
+   * @param rootdir qualified path of HBase root directory
+   * @param tableName name of table
+   * @return {@link org.apache.hadoop.fs.Path} for table
+   */
+  public static Path getTableDir(Path rootdir, final byte [] tableName) {
+    TableName name = TableName.valueOf(tableName);
+    return new Path(getNamespaceDir(rootdir, name.getNamespaceAsString()),
+        name.getNameAsString());
+  }
+
+  /**
+   * Returns the {@link org.apache.hadoop.fs.Path} object representing
+   * the namespace directory under path rootdir
+   *
+   * @param rootdir qualified path of HBase root directory
+   * @param namespace namespace name
+   * @return {@link org.apache.hadoop.fs.Path} for table
+   */
+  public static Path getNamespaceDir(Path rootdir, final String namespace) {
+    return new Path(rootdir, new Path(HConstants.BASE_NAMESPACE_DIR,
+        new Path(namespace)));
+  }
+
+  /**
    * A {@link PathFilter} that returns only regular files.
    */
   static class FileFilter implements PathFilter {
@@ -1454,7 +1494,7 @@ public abstract class FSUtils {
     }
 
     // only include the directory paths to tables
-    Path tableDir = new Path(hbaseRootDir, Bytes.toString(tablename));
+    Path tableDir = FSUtils.getTableDir(hbaseRootDir, tablename);
     // Inside a table, there are compaction.dir directories to skip.  Otherwise, all else
     // should be regions. 
     PathFilter df = new BlackListDirFilter(fs, HConstants.HBASE_NON_TABLE_DIRS);
@@ -1503,10 +1543,8 @@ public abstract class FSUtils {
     // it was borrowed from it.
     
     // only include the directory paths to tables
-    PathFilter df = new BlackListDirFilter(fs, HConstants.HBASE_NON_TABLE_DIRS);
-    FileStatus [] tableDirs = fs.listStatus(hbaseRootDir, df);
-    for (FileStatus tableDir : tableDirs) {
-      byte[] tablename = Bytes.toBytes(tableDir.getPath().getName());
+    for (Path tableDir : FSUtils.getTableDirs(fs, hbaseRootDir)) {
+      byte[] tablename = Bytes.toBytes(tableDir.getName());
       getTableStoreFilePathMap(map, fs, hbaseRootDir, tablename);
     }
     return map;

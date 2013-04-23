@@ -570,7 +570,7 @@ public class MasterFileSystem {
   }
 
   public void deleteTable(byte[] tableName) throws IOException {
-    fs.delete(HTableDescriptor.getTableDir(rootdir, Bytes.toString(tableName)), true);
+    fs.delete(FSUtils.getTableDir(rootdir, Bytes.toString(tableName)), true);
   }
 
   /**
@@ -580,8 +580,8 @@ public class MasterFileSystem {
    * @throws IOException in case of file-system failure
    */
   public Path moveTableToTemp(byte[] tableName) throws IOException {
-    Path srcPath = HTableDescriptor.getTableDir(rootdir, tableName);
-    Path tempPath = HTableDescriptor.getTableDir(this.tempdir, tableName);
+    Path srcPath = FSUtils.getTableDir(rootdir, tableName);
+    Path tempPath = FSUtils.getTableDir(this.tempdir, tableName);
 
     // Ensure temp exists
     if (!fs.exists(tempdir) && !fs.mkdirs(tempdir)) {
@@ -604,7 +604,7 @@ public class MasterFileSystem {
   public void deleteFamilyFromFS(HRegionInfo region, byte[] familyName)
       throws IOException {
     // archive family store files
-    Path tableDir = HTableDescriptor.getTableDir(rootdir, region.getTableNameAsString());
+    Path tableDir = FSUtils.getTableDir(rootdir, region.getTableNameAsString());
     HFileArchiver.archiveFamily(fs, conf, region, tableDir, familyName);
 
     // delete the family folder

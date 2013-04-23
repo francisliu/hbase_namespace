@@ -77,7 +77,7 @@ public class TestFSTableDescriptors {
     }
     statuses = fs.listStatus(testdir);
     assertTrue(statuses.length == 1);
-    Path tmpTableDir = new Path(HTableDescriptor.getTableDir(testdir, htd.getName()), ".tmp");
+    Path tmpTableDir = new Path(FSUtils.getTableDir(testdir, htd.getName()), ".tmp");
     statuses = fs.listStatus(tmpTableDir);
     assertTrue(statuses.length == 0);
   }
@@ -286,7 +286,7 @@ public class TestFSTableDescriptors {
     assertFalse(FSTableDescriptors.createTableDescriptor(fs, testdir, htd));
     htd.setValue(Bytes.toBytes("mykey"), Bytes.toBytes("myValue"));
     assertTrue(FSTableDescriptors.createTableDescriptor(fs, testdir, htd)); //this will re-create
-    Path tableDir = HTableDescriptor.getTableDir(testdir, htd.getName());
+    Path tableDir = FSUtils.getTableDir(testdir, htd.getName());
     Path tmpTableDir = new Path(tableDir, ".tmp");
     FileStatus[] statuses = fs.listStatus(tmpTableDir);
     assertTrue(statuses.length == 0);

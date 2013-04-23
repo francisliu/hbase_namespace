@@ -314,3 +314,17 @@ message UUID {
   required uint64 leastSigBits = 1;
   required uint64 mostSigBits = 2;
 }
+
+message NamespaceDescriptorList {
+  repeated NamespaceDescriptor namespaceDescriptor = 1;
+}
+
+message NamespaceDescriptor {
+  required string name = 1;
+  repeated NamespaceProp props = 2;
+}
+
+message NamespaceProp {
+  required bytes key = 1;
+  required bytes value = 2;
+}

@@ -722,7 +722,7 @@ public class HRegion implements HeapSize { // , Writable{
   public static HDFSBlocksDistribution computeHDFSBlocksDistribution(final Configuration conf,
       final HTableDescriptor tableDescriptor, final HRegionInfo regionInfo) throws IOException {
     HDFSBlocksDistribution hdfsBlocksDistribution = new HDFSBlocksDistribution();
-    Path tablePath = HTableDescriptor.getTableDir(FSUtils.getRootDir(conf), tableDescriptor.getName());
+    Path tablePath = FSUtils.getTableDir(FSUtils.getRootDir(conf), tableDescriptor.getName());
     FileSystem fs = tablePath.getFileSystem(conf);
 
     HRegionFileSystem regionFs = new HRegionFileSystem(conf, fs, tablePath, regionInfo);
@@ -3979,7 +3979,7 @@ public class HRegion implements HeapSize { // , Writable{
         + " HTD == " + hTableDescriptor + " RootDir = " + rootDir +
         " Table name == " + info.getTableNameAsString());
 
-    Path tableDir = HTableDescriptor.getTableDir(rootDir, info.getTableName());
+    Path tableDir = FSUtils.getTableDir(rootDir, info.getTableName());
     FileSystem fs = FileSystem.get(conf);
     HRegionFileSystem rfs = HRegionFileSystem.createRegionOnFileSystem(conf, fs, tableDir, info);
     HLog effectiveHLog = hlog;
@@ -4140,7 +4140,7 @@ public class HRegion implements HeapSize { // , Writable{
     if (LOG.isDebugEnabled()) {
       LOG.debug("Opening region: " + info);
     }
-    Path dir = HTableDescriptor.getTableDir(rootDir, info.getTableName());
+    Path dir = FSUtils.getTableDir(rootDir, info.getTableName());
     HRegion r = HRegion.newHRegion(dir, wal, fs, conf, info, htd, rsServices);
     return r.openHRegion(reporter);
   }
@@ -4269,7 +4269,7 @@ public class HRegion implements HeapSize { // , Writable{
   @Deprecated
   public static Path getRegionDir(final Path rootdir, final HRegionInfo info) {
     return new Path(
-      HTableDescriptor.getTableDir(rootdir, info.getTableName()),
+      FSUtils.getTableDir(rootdir, info.getTableName()),
                                    info.getEncodedName());
   }
 

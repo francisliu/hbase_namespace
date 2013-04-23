@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collection;
 
-import javax.management.RuntimeErrorException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -40,16 +38,13 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.util.Progressable;
 
 import org.junit.Test;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
-import junit.framework.TestCase;
 
 @Category(SmallTests.class)
 public class TestHRegionFileSystem {
@@ -65,7 +60,7 @@ public class TestHRegionFileSystem {
     // Create a Region
     HRegionInfo hri = new HRegionInfo(Bytes.toBytes("TestTable"));
     HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(conf, fs,
-        HTableDescriptor.getTableDir(rootDir, hri.getTableNameAsString()), hri);
+        FSUtils.getTableDir(rootDir, hri.getTableNameAsString()), hri);
 
     // Verify if the region is on disk
     Path regionDir = regionFs.getRegionDir();
@@ -77,12 +72,12 @@ public class TestHRegionFileSystem {
 
     // Open the region
     regionFs = HRegionFileSystem.openRegionFromFileSystem(conf, fs,
-        HTableDescriptor.getTableDir(rootDir, hri.getTableNameAsString()), hri, false);
+        FSUtils.getTableDir(rootDir, hri.getTableNameAsString()), hri, false);
     assertEquals(regionDir, regionFs.getRegionDir());
 
     // Delete the region
     HRegionFileSystem.deleteRegionFromFileSystem(conf, fs,
-        HTableDescriptor.getTableDir(rootDir, hri.getTableNameAsString()), hri);
+        FSUtils.getTableDir(rootDir, hri.getTableNameAsString()), hri);
     assertFalse("The region folder should be removed", fs.exists(regionDir));
 
     fs.delete(rootDir, true);

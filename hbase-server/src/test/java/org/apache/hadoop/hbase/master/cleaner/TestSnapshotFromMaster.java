@@ -35,7 +35,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -377,7 +376,7 @@ public class TestSnapshotFromMaster {
    */
   private final Collection<String> getArchivedHFiles(Path archiveDir, Path rootDir,
       FileSystem fs, String tableName) throws IOException {
-    Path tableArchive = HTableDescriptor.getTableDir(archiveDir, tableName);
+    Path tableArchive = FSUtils.getTableDir(archiveDir, tableName);
     FileStatus[] archivedHFiles = SnapshotTestingUtils.listHFiles(fs, tableArchive);
     List<String> files = new ArrayList<String>(archivedHFiles.length);
     LOG.debug("Have archived hfiles: " + tableArchive);

@@ -185,7 +185,7 @@ public class OfflineMetaRebuildTestCore {
         LOG.info("deleting hdfs data: " + hri.toString() + hsa.toString());
         Path rootDir = FSUtils.getRootDir(conf);
         FileSystem fs = rootDir.getFileSystem(conf);
-        Path p = new Path(HTableDescriptor.getTableDir(rootDir,htd.getNameAsString()),
+        Path p = new Path(FSUtils.getTableDir(rootDir, htd.getNameAsString()),
             hri.getEncodedName());
         fs.delete(p, true);
 
@@ -211,7 +211,7 @@ public class OfflineMetaRebuildTestCore {
     LOG.info("manually adding regioninfo and hdfs data: " + hri.toString());
     Path rootDir = FSUtils.getRootDir(conf);
     FileSystem fs = rootDir.getFileSystem(conf);
-    Path p = new Path(HTableDescriptor.getTableDir(rootDir, htbl.getTableName()),
+    Path p = new Path(FSUtils.getTableDir(rootDir, htbl.getTableName()),
         hri.getEncodedName());
     fs.mkdirs(p);
     Path riPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);

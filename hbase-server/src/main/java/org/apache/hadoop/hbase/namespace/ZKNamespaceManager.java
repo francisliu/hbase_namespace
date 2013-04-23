@@ -18,17 +18,13 @@
 
 package org.apache.hadoop.hbase.namespace;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.MapMaker;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.NamespaceProtos;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperListener;
@@ -41,6 +37,14 @@ import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+
+/**
+ * Class used to manage namespace descriptor information
+ * stored in zookeeper. This information will be consumed
+ * by regionservers to act on namespace related
+ * parameters (ie enforcing quota).
+ */
+@InterfaceAudience.Private
 class ZKNamespaceManager extends ZooKeeperListener {
   private static Log LOG = LogFactory.getLog(ZKNamespaceManager.class);
   private static String namespaceZNode = "namespace";
@@ -101,11 +105,13 @@ class ZKNamespaceManager extends ZooKeeperListener {
             ZKUtil.getChildDataAndWatchForNewChildren(watcher, nsZNode);
         refreshNodes(nodes);
       } catch (KeeperException ke) {
-        LOG.error("Error reading data from zookeeper", ke);
-        watcher.abort("Zookeeper error obtaining namespace node children", ke);
+        String msg = "Error reading data from zookeeper";
+        LOG.error(msg, ke);
+        watcher.abort(msg, ke);
       } catch (IOException e) {
-        LOG.error("Error reading data from zookeeper", e);
-        watcher.abort("Zookeeper error obtaining namespace node children", e);
+        String msg = "Error parsing data from zookeeper";
+        LOG.error(msg, e);
+        watcher.abort(msg, e);
       }
     }
   }
@@ -121,21 +127,21 @@ class ZKNamespaceManager extends ZooKeeperListener {
   @Override
   public void nodeDataChanged(String path) {
     if (nsZNode.equals(ZKUtil.getParent(path))) {
-      // update cache on an existing table node
-      String table = ZKUtil.getNodeName(path);
       try {
         byte[] data = ZKUtil.getDataAndWatch(watcher, path);
         NamespaceDescriptor ns =
             ProtobufUtil.toNamespaceDescriptor(
-                NamespaceProtos.NamespaceDescriptor.parseFrom(data));
+                HBaseProtos.NamespaceDescriptor.parseFrom(data));
         cache.put(ns.getName(), ns);
       } catch (KeeperException ke) {
-        LOG.error("Error reading data from zookeeper for node "+table, ke);
+        String msg = "Error reading data from zookeeper for node "+path;
+        LOG.error(msg, ke);
         // only option is to abort
-        watcher.abort("Zookeeper error getting data for node " + table, ke);
+        watcher.abort(msg, ke);
       } catch (IOException ioe) {
-        LOG.error("Error deserializing namespace: "+path, ioe);
-        watcher.abort("Error deserializing namespace: "+path, ioe);
+        String msg = "Error deserializing namespace: "+path;
+        LOG.error(msg, ioe);
+        watcher.abort(msg, ioe);
       }
     }
   }
@@ -192,7 +198,7 @@ class ZKNamespaceManager extends ZooKeeperListener {
       }
       NamespaceDescriptor ns =
           ProtobufUtil.toNamespaceDescriptor(
-              NamespaceProtos.NamespaceDescriptor.parseFrom(nodeData));
+              HBaseProtos.NamespaceDescriptor.parseFrom(nodeData));
       cache.put(ns.getName(), ns);
     }
   }

@@ -17,7 +17,6 @@
  */
 package org.apache.hadoop.hbase.util;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -46,7 +45,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -1128,7 +1126,7 @@ public class HBaseFsck extends Configured implements Tool {
     if (parentDir != null) {
       rootDir = new Path(rootDir, parentDir);
     }
-    Path sidelineTableDir= HTableDescriptor.getTableDir(rootDir, tableName);
+    Path sidelineTableDir= FSUtils.getTableDir(rootDir, tableName);
     Path sidelineRegionDir = new Path(sidelineTableDir, regionDir.getName());
     fs.mkdirs(sidelineRegionDir);
     boolean success = false;
@@ -1190,9 +1188,9 @@ public class HBaseFsck extends Configured implements Tool {
   void sidelineTable(FileSystem fs, byte[] table, Path hbaseDir,
       Path backupHbaseDir) throws IOException {
     String tableName = Bytes.toString(table);
-    Path tableDir = HTableDescriptor.getTableDir(hbaseDir, tableName);
+    Path tableDir = FSUtils.getTableDir(hbaseDir, tableName);
     if (fs.exists(tableDir)) {
-      Path backupTableDir= HTableDescriptor.getTableDir(backupHbaseDir, tableName);
+      Path backupTableDir= FSUtils.getTableDir(backupHbaseDir, tableName);
       fs.mkdirs(backupTableDir.getParent());
       boolean success = fs.rename(tableDir, backupTableDir);
       if (!success) {
@@ -3701,12 +3699,12 @@ public class HBaseFsck extends Configured implements Tool {
       Path rootdir = FSUtils.getRootDir(getConf());
       if (tables.size() > 0) {
         for (String t : tables) {
-          tableDirs.add(HTableDescriptor.getTableDir(rootdir, t));
+          tableDirs.add(FSUtils.getTableDir(rootdir, t));
         }
       } else {
         tableDirs = FSUtils.getTableDirs(FSUtils.getCurrentFileSystem(getConf()), rootdir);
         for(String tableName : HConstants.HBASE_NON_USER_TABLE_DIRS) {
-          tableDirs.remove(HTableDescriptor.getTableDir(rootdir, Bytes.toBytes(tableName)));
+          tableDirs.remove(FSUtils.getTableDir(rootdir, Bytes.toBytes(tableName)));
         }
       }
       hfcc.checkTables(tableDirs);

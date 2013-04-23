@@ -28,7 +28,6 @@ option optimize_for = SPEED;
 
 import "hbase.proto";
 import "Client.proto";
-import "Namespace.proto";
 
 /* Column-level protobufs */
 

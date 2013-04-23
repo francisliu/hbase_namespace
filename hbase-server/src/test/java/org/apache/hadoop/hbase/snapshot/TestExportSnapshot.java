@@ -42,11 +42,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MediumTests;
-import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -293,7 +290,7 @@ public class TestExportSnapshot {
         public void storeFile (final String region, final String family, final String hfile)
             throws IOException {
           verifyNonEmptyFile(new Path(exportedArchive,
-            new Path(HTableDescriptor.getTableDir(new Path("./"),Bytes.toString(tableName)),
+            new Path(FSUtils.getTableDir(new Path("./"), Bytes.toString(tableName)),
                 new Path(region, new Path(family, hfile)))));
         }
 
