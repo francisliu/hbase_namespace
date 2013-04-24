@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import junit.framework.TestCase;
 import org.junit.experimental.categories.Category;
 
-//TODO change to new .META. name
 @Category(SmallTests.class)
 public class TestStorageClusterStatusModel extends TestCase {
 
@@ -45,7 +44,7 @@ public class TestStorageClusterStatusModel extends TestCase {
     "<LiveNodes><Node startCode=\"1245219839331\" requests=\"0\"" + 
       " name=\"test1\" maxHeapSizeMB=\"1024\" heapSizeMB=\"128\">" + 
         "<Region stores=\"1\" storefiles=\"1\" storefileSizeMB=\"0\"" +
-        " storefileIndexSizeMB=\"0\" name=\"LWhiYXNlLS4tUk9PVC0sLDA=\"" +
+        " storefileIndexSizeMB=\"0\" name=\"c3lzdGVtLnJvb3QsLDA=\"" +
         " memstoreSizeMB=\"0\" readRequestsCount=\"1\"" +
         " writeRequestsCount=\"2\" rootIndexSizeKB=\"1\"" +
         " totalStaticIndexSizeKB=\"1\" totalStaticBloomSizeKB=\"1\"" +
@@ -53,7 +52,7 @@ public class TestStorageClusterStatusModel extends TestCase {
       "<Node startCode=\"1245239331198\" requests=\"0\" name=\"test2\"" + 
         " maxHeapSizeMB=\"1024\" heapSizeMB=\"512\">" + 
         "<Region stores=\"1\" storefiles=\"1\" storefileSizeMB=\"0\"" +
-        " storefileIndexSizeMB=\"0\" name=\"LWhiYXNlLS4tbWV0YS0sLDEyNDYwMDAwNDM3MjQ=\"" +
+        " storefileIndexSizeMB=\"0\" name=\"c3lzdGVtLm1ldGEsLDEyNDYwMDAwNDM3MjQ=\"" +
         " memstoreSizeMB=\"0\" readRequestsCount=\"1\"" +
         " writeRequestsCount=\"2\" rootIndexSizeKB=\"1\"" +
         " totalStaticIndexSizeKB=\"1\" totalStaticBloomSizeKB=\"1\"" +
@@ -61,9 +60,9 @@ public class TestStorageClusterStatusModel extends TestCase {
     "</LiveNodes></ClusterStatus>";
 
   private static final String AS_PB =
-  "CkMKBXRlc3QxEOO6i+eeJBgAIIABKIAIMisKES1oYmFzZS0uLVJPT1QtLCwwEAEYASAAKAAwADgB"+
-  "QAJIAVABWAFgAWgBCk8KBXRlc3QyEP6SsfCeJBgAIIAEKIAIMjcKHS1oYmFzZS0uLW1ldGEtLCwx"+
-  "MjQ2MDAwMDQzNzI0EAEYASAAKAAwADgBQAJIAVABWAFgAWgBGAIgACkAAAAAAADwPw==";
+      "CkAKBXRlc3QxEOO6i+eeJBgAIIABKIAIMigKDnN5c3RlbS5yb290LCwwEAEYASAAKAAwADgBQAJI"+
+      "AVABWAFgAWgBCkwKBXRlc3QyEP6SsfCeJBgAIIAEKIAIMjQKGnN5c3RlbS5tZXRhLCwxMjQ2MDAw"+
+      "MDQzNzI0EAEYASAAKAAwADgBQAJIAVABWAFgAWgBGAIgACkAAAAAAADwPw==";
   
   private JAXBContext context;
 
