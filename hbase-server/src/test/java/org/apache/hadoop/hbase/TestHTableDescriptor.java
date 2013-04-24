@@ -155,8 +155,7 @@ public class TestHTableDescriptor {
     for (String tn : legalTableNames) {
       LOG.info("Testing: '" + tn + "'");
       TableName tName = TableName.valueOf(tn);
-      assertTrue(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNamespaceAsString())
-        && Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getQualifierAsString()));
+      assertTrue(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNameAsString()));
     }
   }
 
@@ -165,8 +164,7 @@ public class TestHTableDescriptor {
     for (String tn : illegalTableNames) {
       LOG.info("Testing: '" + tn + "'");
       TableName tName = TableName.valueOf(tn);
-      assertFalse(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNamespaceAsString())
-        && Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getQualifierAsString()));
+      assertFalse(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNameAsString()));
     }
   }
 

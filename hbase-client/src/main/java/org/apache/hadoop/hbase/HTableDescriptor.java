@@ -419,7 +419,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   // A non-capture group so that this can be embedded.
-  public static final String VALID_USER_TABLE_REGEX = "(?:[a-zA-Z_0-9][a-zA-Z_0-9-.]*)";
+  // regex is a bit more complicated to support nuance of tables
+  // in default namespace
+  public static final String VALID_USER_TABLE_REGEX =
+      "(?:([a-zA-Z_0-9][a-zA-Z_0-9-]*\\.)?([a-zA-Z_0-9][a-zA-Z_0-9-]*))";
 
   /**
    * Check passed byte buffer, "tableName", is legal user-space table name.
