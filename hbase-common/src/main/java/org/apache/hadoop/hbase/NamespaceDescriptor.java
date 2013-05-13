@@ -86,12 +86,12 @@ public class NamespaceDescriptor {
     }
     for (int i = 0; i < namespaceName.length; i++) {
       if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' || 
-          namespaceName[i] == '-') {
+          namespaceName[i] == '-' || namespaceName[i] == '.') {
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +
         "> at " + i + ". Namespaces can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " + Bytes.toString(namespaceName));
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " + Bytes.toString(namespaceName));
     }
   }
 

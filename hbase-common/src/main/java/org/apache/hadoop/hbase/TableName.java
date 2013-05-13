@@ -37,6 +37,7 @@ import java.util.List;
 public class TableName implements Comparable<TableName> {
 
   /** Namespace delimiter */
+  //this should always be only 1 byte long
   public static String NAMESPACE_DELIM = ".";
 
   private byte[] name;
@@ -108,9 +109,9 @@ public class TableName implements Comparable<TableName> {
   }
 
   public static TableName valueOf(String name) {
-    List<String> list = Lists.newArrayList(Splitter.on(NAMESPACE_DELIM).limit(2).split(name));
-    if (list.size() == 2) {
-      return TableName.valueOf(list.get(0), list.get(1));
+    int index = name.lastIndexOf(NAMESPACE_DELIM);
+    if (index != -1) {
+      return TableName.valueOf(name.substring(0,index), name.substring(index+1));
     }
     return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
   }

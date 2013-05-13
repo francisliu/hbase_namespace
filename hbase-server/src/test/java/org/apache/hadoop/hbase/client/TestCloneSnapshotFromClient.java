@@ -29,6 +29,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.exceptions.SnapshotDoesNotExistException;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
@@ -166,6 +167,16 @@ public class TestCloneSnapshotFromClient {
 
     admin.disableTable(tableName);
     admin.deleteTable(tableName);
+  }
+
+  @Test
+  public void testCloneSnapshotCrossNamespace() throws IOException, InterruptedException {
+    String nsName = "testCloneSnapshotCrossNamespace";
+    admin.createNamespace(NamespaceDescriptor.create(nsName).build());
+    byte[] clonedTableName = Bytes.toBytes(nsName+".clonedtb-" + System.currentTimeMillis());
+    testCloneSnapshot(clonedTableName, snapshotName0, snapshot0Rows);
+    testCloneSnapshot(clonedTableName, snapshotName1, snapshot1Rows);
+    testCloneSnapshot(clonedTableName, emptySnapshot, 0);
   }
 
   /**

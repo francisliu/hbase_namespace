@@ -140,7 +140,7 @@ public class HFilePrettyPrinter {
       byte[] rn = Bytes.toBytes(regionName);
       byte[][] hri = HRegionInfo.parseRegionName(rn);
       Path rootDir = FSUtils.getRootDir(conf);
-      Path tableDir = new Path(rootDir, Bytes.toString(hri[0]));
+      Path tableDir = FSUtils.getTableDir(rootDir, Bytes.toString(hri[0]));
       String enc = HRegionInfo.encodeRegionName(rn);
       Path regionDir = new Path(tableDir, enc);
       if (verbose)

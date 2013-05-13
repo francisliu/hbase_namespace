@@ -584,8 +584,8 @@ public class MasterFileSystem {
     Path tempPath = FSUtils.getTableDir(this.tempdir, tableName);
 
     // Ensure temp exists
-    if (!fs.exists(tempdir) && !fs.mkdirs(tempdir)) {
-      throw new IOException("HBase temp directory '" + tempdir + "' creation failure.");
+    if (!fs.exists(tempPath.getParent()) && !fs.mkdirs(tempPath.getParent())) {
+      throw new IOException("HBase temp directory '" + tempPath.getParent() + "' creation failure.");
     }
 
     if (!fs.rename(srcPath, tempPath)) {

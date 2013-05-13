@@ -134,8 +134,9 @@ public class MetaScanner {
         byte[] searchRow = HRegionInfo.createRegionName(tableName, row, HConstants.NINES, false);
         Result startRowResult = metaTable.getRowOrBefore(searchRow, HConstants.CATALOG_FAMILY);
         if (startRowResult == null) {
-          throw new TableNotFoundException("Cannot find row in .META. for table: " +
-            Bytes.toString(tableName) + ", row=" + Bytes.toStringBinary(searchRow));
+          throw new TableNotFoundException("Cannot find row in "+Bytes.toString(HConstants
+              .META_TABLE_NAME)+" for table: "
+              + Bytes.toString(tableName) + ", row=" + Bytes.toStringBinary(searchRow));
         }
         HRegionInfo regionInfo = getHRegionInfo(startRowResult);
         if (regionInfo == null) {

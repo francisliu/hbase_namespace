@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SplitLogTask;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.zookeeper.ZKSplitLog;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
@@ -79,6 +80,7 @@ public class TestMasterFileSystem {
   }
 
   @Test
+<<<<<<< HEAD
   public void testRemoveStaleRecoveringRegionsDuringMasterInitialization() throws Exception {
     // this test is for when distributed log replay is enabled
     if (!UTIL.getConfiguration().getBoolean(HConstants.DISTRIBUTED_LOG_REPLAY_KEY, false)) return;
@@ -116,5 +118,23 @@ public class TestMasterFileSystem {
     ZKUtil.deleteChildrenRecursively(zkw, zkw.splitLogZNode);
     zkw.close();
   }
+=======
+  public void testMoveTableToTemp() throws Exception {
+    String table = "testMoveTableToTemp";
+    Path tableDir = FSUtils.getTableDir(new Path("./"), table);
+    Path subDir = new Path(tableDir, "subdir");
+    HMaster master = UTIL.getMiniHBaseCluster().getMaster();
+    MasterFileSystem mfs = master.getMasterFileSystem();
+    FileSystem fs = mfs.getFileSystem();
+    //verify that tabledir including subdir was created
+    assertTrue(fs.mkdirs(new Path(mfs.getRootDir(), subDir)));
+    //verify that returned tmp dir is the same as tableDir with base as temp
+    assertEquals(new Path(mfs.getTempDir(), tableDir), mfs.moveTableToTemp(Bytes.toBytes(table)));
+    //verify that subdir still exists after move to temp
+    assertTrue(fs.exists(new Path(mfs.getTempDir(), subDir)));
+  }
+
+
+>>>>>>> added namespace upgrade auto-generate approach, fixed HFile too -r option and fixed move table to temp issue
 
 }
