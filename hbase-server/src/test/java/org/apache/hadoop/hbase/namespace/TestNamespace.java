@@ -166,6 +166,24 @@ public class TestNamespace {
   }
 
   @Test
+  public void createDottedNS() throws IOException, InterruptedException {
+    String testName = "createDottedNS";
+    String nsName = prefix+"_"+testName+".dot2.dot3";
+    LOG.info(testName);
+
+    //create namespace and verify
+    admin.createNamespace(NamespaceDescriptor.create(nsName).build());
+    assertEquals(3, admin.listNamespaceDescriptors().size());
+    assertEquals(3, zkNamespaceManager.list().size());
+    assertNotNull(zkNamespaceManager.get(nsName));
+    //remove namespace and verify
+    admin.deleteNamespace(nsName);
+    assertEquals(2, admin.listNamespaceDescriptors().size());
+    assertEquals(2, zkNamespaceManager.list().size());
+    assertNull(zkNamespaceManager.get(nsName));
+  }
+
+  @Test
   public void createDoubleTest() throws IOException, InterruptedException {
     String testName = "createDoubleTest";
     String nsName = prefix+"_"+testName;
@@ -177,9 +195,6 @@ public class TestNamespace {
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
     TEST_UTIL.createTable(tableName, Bytes.toBytes(nsName));
     TEST_UTIL.createTable(tableNameFoo,Bytes.toBytes(nsName));
-    for (HTableDescriptor desc: admin.listTables()) {
-      System.out.println("-->"+desc.getNameAsString());
-    }
     assertEquals(2, admin.listTables().length);
     assertNotNull(admin
         .getTableDescriptor(tableName));

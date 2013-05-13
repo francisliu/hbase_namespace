@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.namespace;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.NavigableSet;
 import java.util.Set;
 
@@ -29,6 +30,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -41,6 +43,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.exceptions.ConstraintException;
+import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.handler.CreateTableHandler;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -90,11 +93,29 @@ public class TableNamespaceManager {
     table = new HTable(conf, tableName.getName());
     zkNamespaceManager = new ZKNamespaceManager(masterServices.getZooKeeper());
     zkNamespaceManager.start();
+
+    boolean first = false;
     if(get(NamespaceDescriptor.DEFAULT_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.DEFAULT_NAMESPACE);
+      first = true;
     }
     if(get(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.SYSTEM_NAMESPACE);
+      first = true;
+    }
+    //this part is for migrating to namespace aware hbase
+    //we create namespaces for all the tables which have dots
+    if(first) {
+      MasterFileSystem mfs = masterServices.getMasterFileSystem();
+      List<Path> dirs = FSUtils.getTableDirs(mfs.getFileSystem(), mfs.getRootDir());
+      for(Path p: dirs) {
+        NamespaceDescriptor ns =
+            NamespaceDescriptor.create(TableName.valueOf(p.getName()).getNamespaceAsString())
+                        .build();
+        if(get(ns.getName()) == null) {
+          create(ns);
+        }
+      }
     }
 
     for(Result result: table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {

@@ -422,7 +422,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   // regex is a bit more complicated to support nuance of tables
   // in default namespace
   public static final String VALID_USER_TABLE_REGEX =
-      "(?:([a-zA-Z_0-9][a-zA-Z_0-9-]*\\.)?([a-zA-Z_0-9][a-zA-Z_0-9-]*))";
+      "(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.)*(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*))";
 
   /**
    * Check passed byte buffer, "tableName", is legal user-space table name.
@@ -436,8 +436,8 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     if (tableName == null || tableName.length <= 0) {
       throw new IllegalArgumentException("Name is null or empty");
     }
-    int namespaceDelimIndex = com.google.common.primitives.Bytes.indexOf(tableName,
-      Bytes.toBytes(TableName.NAMESPACE_DELIM));
+    int namespaceDelimIndex = com.google.common.primitives.Bytes.lastIndexOf(tableName,
+      Bytes.toBytes(TableName.NAMESPACE_DELIM)[0]);
     if(namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
       isLegalTableQualifierName(tableName);
     }else {
