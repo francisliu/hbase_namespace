@@ -75,6 +75,7 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ClientService;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.CoprocessorServiceRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.CoprocessorServiceResponse;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableSchema;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AddColumnRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AddColumnResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AssignRegionRequest;
@@ -1860,6 +1861,36 @@ public class HConnectionManager {
             RpcController controller, IsMasterRunningRequest request)
             throws ServiceException {
           return stub.isMasterRunning(controller, request);
+        }
+
+        @Override
+        public MasterAdminProtos.ModifyNamespaceResponse modifyNamespace(RpcController controller, MasterAdminProtos.ModifyNamespaceRequest request) throws ServiceException {
+          return stub.modifyNamespace(controller, request);
+        }
+
+        @Override
+        public MasterAdminProtos.CreateNamespaceResponse createNamespace(RpcController controller, MasterAdminProtos.CreateNamespaceRequest request) throws ServiceException {
+          return stub.createNamespace(controller, request);
+        }
+
+        @Override
+        public MasterAdminProtos.DeleteNamespaceResponse deleteNamespace(RpcController controller, MasterAdminProtos.DeleteNamespaceRequest request) throws ServiceException {
+          return stub.deleteNamespace(controller, request);
+        }
+
+        @Override
+        public MasterAdminProtos.GetNamespaceDescriptorResponse getNamespaceDescriptor(RpcController controller, MasterAdminProtos.GetNamespaceDescriptorRequest request) throws ServiceException {
+          return stub.getNamespaceDescriptor(controller, request);
+        }
+
+        @Override
+        public MasterAdminProtos.ListNamespaceDescriptorsResponse listNamespaceDescriptors(RpcController controller, MasterAdminProtos.ListNamespaceDescriptorsRequest request) throws ServiceException {
+          return stub.listNamespaceDescriptors(controller, request);
+        }
+
+        @Override
+        public MasterAdminProtos.GetTableDescriptorsByNamespaceResponse getTableDescriptorsByNamespace(RpcController controller, MasterAdminProtos.GetTableDescriptorsByNamespaceRequest request) throws ServiceException {
+          return stub.getTableDescriptorsByNamespace(controller, request);
         }
 
         @Override

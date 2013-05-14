@@ -28134,288 +28134,147 @@ public final class MasterAdminProtos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-<<<<<<< HEAD
       "\n\021MasterAdmin.proto\032\014Master.proto\032\013hbase" +
-      ".proto\032\014Client.proto\032\017Namespace.proto\"R\n" +
-      "\020AddColumnRequest\022\021\n\ttableName\030\001 \002(\014\022+\n\016" +
-      "columnFamilies\030\002 \002(\0132\023.ColumnFamilySchem" +
-      "a\"\023\n\021AddColumnResponse\"<\n\023DeleteColumnRe" +
-      "quest\022\021\n\ttableName\030\001 \002(\014\022\022\n\ncolumnName\030\002" +
-      " \002(\014\"\026\n\024DeleteColumnResponse\"U\n\023ModifyCo" +
-      "lumnRequest\022\021\n\ttableName\030\001 \002(\014\022+\n\016column" +
-      "Families\030\002 \002(\0132\023.ColumnFamilySchema\"\026\n\024M" +
-      "odifyColumnResponse\"Z\n\021MoveRegionRequest",
-      "\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\022#\n\016de" +
-      "stServerName\030\002 \001(\0132\013.ServerName\"\024\n\022MoveR" +
-      "egionResponse\"~\n\035DispatchMergingRegionsR" +
-      "equest\022!\n\007regionA\030\001 \002(\0132\020.RegionSpecifie" +
-      "r\022!\n\007regionB\030\002 \002(\0132\020.RegionSpecifier\022\027\n\010" +
-      "forcible\030\003 \001(\010:\005false\" \n\036DispatchMerging" +
-      "RegionsResponse\"7\n\023AssignRegionRequest\022 " +
-      "\n\006region\030\001 \002(\0132\020.RegionSpecifier\"\026\n\024Assi" +
-      "gnRegionResponse\"O\n\025UnassignRegionReques" +
-      "t\022 \n\006region\030\001 \002(\0132\020.RegionSpecifier\022\024\n\005f",
-      "orce\030\002 \001(\010:\005false\"\030\n\026UnassignRegionRespo" +
-      "nse\"8\n\024OfflineRegionRequest\022 \n\006region\030\001 " +
-      "\002(\0132\020.RegionSpecifier\"\027\n\025OfflineRegionRe" +
-      "sponse\"J\n\022CreateTableRequest\022!\n\013tableSch" +
-      "ema\030\001 \002(\0132\014.TableSchema\022\021\n\tsplitKeys\030\002 \003" +
-      "(\014\"\025\n\023CreateTableResponse\"\'\n\022DeleteTable" +
-      "Request\022\021\n\ttableName\030\001 \002(\014\"\025\n\023DeleteTabl" +
-      "eResponse\"\'\n\022EnableTableRequest\022\021\n\ttable" +
-      "Name\030\001 \002(\014\"\025\n\023EnableTableResponse\"(\n\023Dis" +
-      "ableTableRequest\022\021\n\ttableName\030\001 \002(\014\"\026\n\024D",
-      "isableTableResponse\"J\n\022ModifyTableReques" +
-      "t\022\021\n\ttableName\030\001 \002(\014\022!\n\013tableSchema\030\002 \002(" +
-      "\0132\014.TableSchema\"\025\n\023ModifyTableResponse\"K" +
-      "\n\026CreateNamespaceRequest\0221\n\023namespaceDes" +
-      "criptor\030\001 \002(\0132\024.NamespaceDescriptor\"\031\n\027C" +
-      "reateNamespaceResponse\"/\n\026DeleteNamespac" +
-      "eRequest\022\025\n\rnamespaceName\030\001 \002(\t\"\031\n\027Delet" +
-      "eNamespaceResponse\"K\n\026ModifyNamespaceReq" +
-      "uest\0221\n\023namespaceDescriptor\030\001 \002(\0132\024.Name" +
-      "spaceDescriptor\"6\n\035GetNamespaceDescripto",
-      "rRequest\022\025\n\rnamespaceName\030\001 \002(\t\"S\n\036GetNa" +
-      "mespaceDescriptorResponse\0221\n\023namespaceDe" +
-      "scriptor\030\001 \002(\0132\024.NamespaceDescriptor\"\031\n\027" +
-      "ModifyNamespaceResponse\"!\n\037ListNamespace" +
-      "DescriptorsRequest\"S\n ListNamespaceDescr" +
-      "iptorsResponse\022/\n\rnamespaceList\030\001 \002(\0132\030." +
-      "NamespaceDescriptorList\">\n%GetTableDescr" +
-      "iptorsByNamespaceRequest\022\025\n\rnamespaceNam" +
-      "e\030\001 \002(\t\"K\n&GetTableDescriptorsByNamespac" +
-      "eResponse\022!\n\013tableSchema\030\001 \003(\0132\014.TableSc",
-      "hema\"\021\n\017ShutdownRequest\"\022\n\020ShutdownRespo" +
-      "nse\"\023\n\021StopMasterRequest\"\024\n\022StopMasterRe" +
-      "sponse\"\020\n\016BalanceRequest\"&\n\017BalanceRespo" +
-      "nse\022\023\n\013balancerRan\030\001 \002(\010\"<\n\031SetBalancerR" +
-      "unningRequest\022\n\n\002on\030\001 \002(\010\022\023\n\013synchronous" +
-      "\030\002 \001(\010\"6\n\032SetBalancerRunningResponse\022\030\n\020" +
-      "prevBalanceValue\030\001 \001(\010\"\024\n\022CatalogScanReq" +
-      "uest\")\n\023CatalogScanResponse\022\022\n\nscanResul" +
-      "t\030\001 \001(\005\"-\n\033EnableCatalogJanitorRequest\022\016" +
-      "\n\006enable\030\001 \002(\010\"1\n\034EnableCatalogJanitorRe",
-      "sponse\022\021\n\tprevValue\030\001 \001(\010\" \n\036IsCatalogJa" +
-      "nitorEnabledRequest\"0\n\037IsCatalogJanitorE" +
-      "nabledResponse\022\r\n\005value\030\001 \002(\010\"=\n\023TakeSna" +
-      "pshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Snapsho" +
-      "tDescription\"/\n\024TakeSnapshotResponse\022\027\n\017" +
-      "expectedTimeout\030\001 \002(\003\"\025\n\023ListSnapshotReq" +
-      "uest\"?\n\024ListSnapshotResponse\022\'\n\tsnapshot" +
-      "s\030\001 \003(\0132\024.SnapshotDescription\"?\n\025DeleteS" +
-      "napshotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Snaps" +
-      "hotDescription\"\030\n\026DeleteSnapshotResponse",
-      "\"@\n\026RestoreSnapshotRequest\022&\n\010snapshot\030\001" +
-      " \002(\0132\024.SnapshotDescription\"\031\n\027RestoreSna" +
-      "pshotResponse\"?\n\025IsSnapshotDoneRequest\022&" +
-      "\n\010snapshot\030\001 \001(\0132\024.SnapshotDescription\"U" +
-      "\n\026IsSnapshotDoneResponse\022\023\n\004done\030\001 \001(\010:\005" +
-      "false\022&\n\010snapshot\030\002 \001(\0132\024.SnapshotDescri" +
-      "ption\"F\n\034IsRestoreSnapshotDoneRequest\022&\n" +
-      "\010snapshot\030\001 \001(\0132\024.SnapshotDescription\"3\n" +
-      "\035IsRestoreSnapshotDoneResponse\022\022\n\004done\030\001" +
-      " \001(\010:\004true2\306\022\n\022MasterAdminService\0222\n\tadd",
-      "Column\022\021.AddColumnRequest\032\022.AddColumnRes" +
-      "ponse\022;\n\014deleteColumn\022\024.DeleteColumnRequ" +
-      "est\032\025.DeleteColumnResponse\022;\n\014modifyColu" +
-      "mn\022\024.ModifyColumnRequest\032\025.ModifyColumnR" +
-      "esponse\0225\n\nmoveRegion\022\022.MoveRegionReques" +
-      "t\032\023.MoveRegionResponse\022Y\n\026dispatchMergin" +
-      "gRegions\022\036.DispatchMergingRegionsRequest" +
-      "\032\037.DispatchMergingRegionsResponse\022;\n\014ass" +
-      "ignRegion\022\024.AssignRegionRequest\032\025.Assign" +
-      "RegionResponse\022A\n\016unassignRegion\022\026.Unass",
-      "ignRegionRequest\032\027.UnassignRegionRespons" +
-      "e\022>\n\rofflineRegion\022\025.OfflineRegionReques" +
-      "t\032\026.OfflineRegionResponse\0228\n\013deleteTable" +
-      "\022\023.DeleteTableRequest\032\024.DeleteTableRespo" +
-      "nse\0228\n\013enableTable\022\023.EnableTableRequest\032" +
-      "\024.EnableTableResponse\022;\n\014disableTable\022\024." +
-      "DisableTableRequest\032\025.DisableTableRespon" +
-      "se\0228\n\013modifyTable\022\023.ModifyTableRequest\032\024" +
-      ".ModifyTableResponse\0228\n\013createTable\022\023.Cr" +
-      "eateTableRequest\032\024.CreateTableResponse\022/",
-      "\n\010shutdown\022\020.ShutdownRequest\032\021.ShutdownR" +
-      "esponse\0225\n\nstopMaster\022\022.StopMasterReques" +
-      "t\032\023.StopMasterResponse\022,\n\007balance\022\017.Bala" +
-      "nceRequest\032\020.BalanceResponse\022M\n\022setBalan" +
-      "cerRunning\022\032.SetBalancerRunningRequest\032\033" +
-      ".SetBalancerRunningResponse\022;\n\016runCatalo" +
-      "gScan\022\023.CatalogScanRequest\032\024.CatalogScan" +
-      "Response\022S\n\024enableCatalogJanitor\022\034.Enabl" +
-      "eCatalogJanitorRequest\032\035.EnableCatalogJa" +
-      "nitorResponse\022\\\n\027isCatalogJanitorEnabled",
-      "\022\037.IsCatalogJanitorEnabledRequest\032 .IsCa" +
-      "talogJanitorEnabledResponse\022L\n\021execMaste" +
-      "rService\022\032.CoprocessorServiceRequest\032\033.C" +
-      "oprocessorServiceResponse\0227\n\010snapshot\022\024." +
-      "TakeSnapshotRequest\032\025.TakeSnapshotRespon" +
-      "se\022D\n\025getCompletedSnapshots\022\024.ListSnapsh" +
-      "otRequest\032\025.ListSnapshotResponse\022A\n\016dele" +
-      "teSnapshot\022\026.DeleteSnapshotRequest\032\027.Del" +
-      "eteSnapshotResponse\022A\n\016isSnapshotDone\022\026." +
-      "IsSnapshotDoneRequest\032\027.IsSnapshotDoneRe",
-      "sponse\022D\n\017restoreSnapshot\022\027.RestoreSnaps" +
-      "hotRequest\032\030.RestoreSnapshotResponse\022V\n\025" +
-      "isRestoreSnapshotDone\022\035.IsRestoreSnapsho" +
-      "tDoneRequest\032\036.IsRestoreSnapshotDoneResp" +
-      "onse\022D\n\017isMasterRunning\022\027.IsMasterRunnin" +
-      "gRequest\032\030.IsMasterRunningResponse\022D\n\017mo" +
-      "difyNamespace\022\027.ModifyNamespaceRequest\032\030" +
-      ".ModifyNamespaceResponse\022D\n\017createNamesp" +
-      "ace\022\027.CreateNamespaceRequest\032\030.CreateNam" +
-      "espaceResponse\022D\n\017deleteNamespace\022\027.Dele",
-      "teNamespaceRequest\032\030.DeleteNamespaceResp" +
-      "onse\022Y\n\026getNamespaceDescriptor\022\036.GetName" +
-      "spaceDescriptorRequest\032\037.GetNamespaceDes" +
-      "criptorResponse\022_\n\030listNamespaceDescript" +
-      "ors\022 .ListNamespaceDescriptorsRequest\032!." +
-      "ListNamespaceDescriptorsResponse\022q\n\036getT" +
-      "ableDescriptorsByNamespace\022&.GetTableDes" +
-      "criptorsByNamespaceRequest\032\'.GetTableDes" +
-      "criptorsByNamespaceResponseBG\n*org.apach" +
-      "e.hadoop.hbase.protobuf.generatedB\021Maste",
-      "rAdminProtosH\001\210\001\001\240\001\001"
-=======
-      "\n\021MasterAdmin.proto\032\013hbase.proto\032\014Client" +
-      ".proto\"R\n\020AddColumnRequest\022\021\n\ttableName\030" +
-      "\001 \002(\014\022+\n\016columnFamilies\030\002 \002(\0132\023.ColumnFa" +
-      "milySchema\"\023\n\021AddColumnResponse\"<\n\023Delet" +
-      "eColumnRequest\022\021\n\ttableName\030\001 \002(\014\022\022\n\ncol" +
-      "umnName\030\002 \002(\014\"\026\n\024DeleteColumnResponse\"U\n" +
-      "\023ModifyColumnRequest\022\021\n\ttableName\030\001 \002(\014\022" +
-      "+\n\016columnFamilies\030\002 \002(\0132\023.ColumnFamilySc" +
-      "hema\"\026\n\024ModifyColumnResponse\"Z\n\021MoveRegi" +
-      "onRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpecif",
-      "ier\022#\n\016destServerName\030\002 \001(\0132\013.ServerName" +
-      "\"\024\n\022MoveRegionResponse\"~\n\035DispatchMergin" +
-      "gRegionsRequest\022!\n\007regionA\030\001 \002(\0132\020.Regio" +
-      "nSpecifier\022!\n\007regionB\030\002 \002(\0132\020.RegionSpec" +
-      "ifier\022\027\n\010forcible\030\003 \001(\010:\005false\" \n\036Dispat" +
-      "chMergingRegionsResponse\"7\n\023AssignRegion" +
-      "Request\022 \n\006region\030\001 \002(\0132\020.RegionSpecifie" +
-      "r\"\026\n\024AssignRegionResponse\"O\n\025UnassignReg" +
+      ".proto\032\014Client.proto\"R\n\020AddColumnRequest" +
+      "\022\021\n\ttableName\030\001 \002(\014\022+\n\016columnFamilies\030\002 " +
+      "\002(\0132\023.ColumnFamilySchema\"\023\n\021AddColumnRes" +
+      "ponse\"<\n\023DeleteColumnRequest\022\021\n\ttableNam" +
+      "e\030\001 \002(\014\022\022\n\ncolumnName\030\002 \002(\014\"\026\n\024DeleteCol" +
+      "umnResponse\"U\n\023ModifyColumnRequest\022\021\n\tta" +
+      "bleName\030\001 \002(\014\022+\n\016columnFamilies\030\002 \002(\0132\023." +
+      "ColumnFamilySchema\"\026\n\024ModifyColumnRespon" +
+      "se\"Z\n\021MoveRegionRequest\022 \n\006region\030\001 \002(\0132",
+      "\020.RegionSpecifier\022#\n\016destServerName\030\002 \001(" +
+      "\0132\013.ServerName\"\024\n\022MoveRegionResponse\"~\n\035" +
+      "DispatchMergingRegionsRequest\022!\n\007regionA" +
+      "\030\001 \002(\0132\020.RegionSpecifier\022!\n\007regionB\030\002 \002(" +
+      "\0132\020.RegionSpecifier\022\027\n\010forcible\030\003 \001(\010:\005f" +
+      "alse\" \n\036DispatchMergingRegionsResponse\"7" +
+      "\n\023AssignRegionRequest\022 \n\006region\030\001 \002(\0132\020." +
+      "RegionSpecifier\"\026\n\024AssignRegionResponse\"" +
+      "O\n\025UnassignRegionRequest\022 \n\006region\030\001 \002(\013" +
+      "2\020.RegionSpecifier\022\024\n\005force\030\002 \001(\010:\005false",
+      "\"\030\n\026UnassignRegionResponse\"8\n\024OfflineReg" +
       "ionRequest\022 \n\006region\030\001 \002(\0132\020.RegionSpeci" +
-      "fier\022\024\n\005force\030\002 \001(\010:\005false\"\030\n\026UnassignRe",
-      "gionResponse\"8\n\024OfflineRegionRequest\022 \n\006" +
-      "region\030\001 \002(\0132\020.RegionSpecifier\"\027\n\025Offlin" +
-      "eRegionResponse\"J\n\022CreateTableRequest\022!\n" +
-      "\013tableSchema\030\001 \002(\0132\014.TableSchema\022\021\n\tspli" +
-      "tKeys\030\002 \003(\014\"\025\n\023CreateTableResponse\"\'\n\022De" +
-      "leteTableRequest\022\021\n\ttableName\030\001 \002(\014\"\025\n\023D" +
-      "eleteTableResponse\"\'\n\022EnableTableRequest" +
-      "\022\021\n\ttableName\030\001 \002(\014\"\025\n\023EnableTableRespon" +
-      "se\"(\n\023DisableTableRequest\022\021\n\ttableName\030\001" +
-      " \002(\014\"\026\n\024DisableTableResponse\"J\n\022ModifyTa",
-      "bleRequest\022\021\n\ttableName\030\001 \002(\014\022!\n\013tableSc" +
-      "hema\030\002 \002(\0132\014.TableSchema\"\025\n\023ModifyTableR" +
-      "esponse\"K\n\026CreateNamespaceRequest\0221\n\023nam" +
-      "espaceDescriptor\030\001 \002(\0132\024.NamespaceDescri" +
-      "ptor\"\031\n\027CreateNamespaceResponse\"/\n\026Delet" +
-      "eNamespaceRequest\022\025\n\rnamespaceName\030\001 \002(\t" +
-      "\"\031\n\027DeleteNamespaceResponse\"K\n\026ModifyNam" +
-      "espaceRequest\0221\n\023namespaceDescriptor\030\001 \002" +
-      "(\0132\024.NamespaceDescriptor\"6\n\035GetNamespace" +
-      "DescriptorRequest\022\025\n\rnamespaceName\030\001 \002(\t",
-      "\"S\n\036GetNamespaceDescriptorResponse\0221\n\023na" +
-      "mespaceDescriptor\030\001 \002(\0132\024.NamespaceDescr" +
-      "iptor\"\031\n\027ModifyNamespaceResponse\"!\n\037List" +
-      "NamespaceDescriptorsRequest\"S\n ListNames" +
-      "paceDescriptorsResponse\022/\n\rnamespaceList" +
-      "\030\001 \002(\0132\030.NamespaceDescriptorList\">\n%GetT" +
-      "ableDescriptorsByNamespaceRequest\022\025\n\rnam" +
-      "espaceName\030\001 \002(\t\"K\n&GetTableDescriptorsB" +
-      "yNamespaceResponse\022!\n\013tableSchema\030\001 \003(\0132" +
-      "\014.TableSchema\"\021\n\017ShutdownRequest\"\022\n\020Shut",
-      "downResponse\"\023\n\021StopMasterRequest\"\024\n\022Sto" +
-      "pMasterResponse\"\020\n\016BalanceRequest\"&\n\017Bal" +
-      "anceResponse\022\023\n\013balancerRan\030\001 \002(\010\"<\n\031Set" +
-      "BalancerRunningRequest\022\n\n\002on\030\001 \002(\010\022\023\n\013sy" +
-      "nchronous\030\002 \001(\010\"6\n\032SetBalancerRunningRes" +
-      "ponse\022\030\n\020prevBalanceValue\030\001 \001(\010\"\024\n\022Catal" +
-      "ogScanRequest\")\n\023CatalogScanResponse\022\022\n\n" +
-      "scanResult\030\001 \001(\005\"-\n\033EnableCatalogJanitor" +
-      "Request\022\016\n\006enable\030\001 \002(\010\"1\n\034EnableCatalog" +
-      "JanitorResponse\022\021\n\tprevValue\030\001 \001(\010\" \n\036Is",
-      "CatalogJanitorEnabledRequest\"0\n\037IsCatalo" +
-      "gJanitorEnabledResponse\022\r\n\005value\030\001 \002(\010\"=" +
-      "\n\023TakeSnapshotRequest\022&\n\010snapshot\030\001 \002(\0132" +
-      "\024.SnapshotDescription\"/\n\024TakeSnapshotRes" +
-      "ponse\022\027\n\017expectedTimeout\030\001 \002(\003\"\025\n\023ListSn" +
-      "apshotRequest\"?\n\024ListSnapshotResponse\022\'\n" +
-      "\tsnapshots\030\001 \003(\0132\024.SnapshotDescription\"?" +
-      "\n\025DeleteSnapshotRequest\022&\n\010snapshot\030\001 \002(" +
-      "\0132\024.SnapshotDescription\"\030\n\026DeleteSnapsho" +
-      "tResponse\"@\n\026RestoreSnapshotRequest\022&\n\010s",
-      "napshot\030\001 \002(\0132\024.SnapshotDescription\"\031\n\027R" +
-      "estoreSnapshotResponse\"?\n\025IsSnapshotDone" +
-      "Request\022&\n\010snapshot\030\001 \001(\0132\024.SnapshotDesc" +
-      "ription\"U\n\026IsSnapshotDoneResponse\022\023\n\004don" +
-      "e\030\001 \001(\010:\005false\022&\n\010snapshot\030\002 \001(\0132\024.Snaps" +
-      "hotDescription\"F\n\034IsRestoreSnapshotDoneR" +
-      "equest\022&\n\010snapshot\030\001 \001(\0132\024.SnapshotDescr" +
-      "iption\"3\n\035IsRestoreSnapshotDoneResponse\022" +
-      "\022\n\004done\030\001 \001(\010:\004true2\200\022\n\022MasterAdminServi" +
-      "ce\0222\n\taddColumn\022\021.AddColumnRequest\032\022.Add",
-      "ColumnResponse\022;\n\014deleteColumn\022\024.DeleteC" +
-      "olumnRequest\032\025.DeleteColumnResponse\022;\n\014m" +
-      "odifyColumn\022\024.ModifyColumnRequest\032\025.Modi" +
-      "fyColumnResponse\0225\n\nmoveRegion\022\022.MoveReg" +
-      "ionRequest\032\023.MoveRegionResponse\022Y\n\026dispa" +
-      "tchMergingRegions\022\036.DispatchMergingRegio" +
-      "nsRequest\032\037.DispatchMergingRegionsRespon" +
-      "se\022;\n\014assignRegion\022\024.AssignRegionRequest" +
-      "\032\025.AssignRegionResponse\022A\n\016unassignRegio" +
-      "n\022\026.UnassignRegionRequest\032\027.UnassignRegi",
-      "onResponse\022>\n\rofflineRegion\022\025.OfflineReg" +
-      "ionRequest\032\026.OfflineRegionResponse\0228\n\013de" +
-      "leteTable\022\023.DeleteTableRequest\032\024.DeleteT" +
-      "ableResponse\0228\n\013enableTable\022\023.EnableTabl" +
-      "eRequest\032\024.EnableTableResponse\022;\n\014disabl" +
-      "eTable\022\024.DisableTableRequest\032\025.DisableTa" +
-      "bleResponse\0228\n\013modifyTable\022\023.ModifyTable" +
-      "Request\032\024.ModifyTableResponse\0228\n\013createT" +
-      "able\022\023.CreateTableRequest\032\024.CreateTableR" +
-      "esponse\022/\n\010shutdown\022\020.ShutdownRequest\032\021.",
-      "ShutdownResponse\0225\n\nstopMaster\022\022.StopMas" +
-      "terRequest\032\023.StopMasterResponse\022,\n\007balan" +
-      "ce\022\017.BalanceRequest\032\020.BalanceResponse\022M\n" +
-      "\022setBalancerRunning\022\032.SetBalancerRunning" +
-      "Request\032\033.SetBalancerRunningResponse\022;\n\016" +
-      "runCatalogScan\022\023.CatalogScanRequest\032\024.Ca" +
-      "talogScanResponse\022S\n\024enableCatalogJanito" +
-      "r\022\034.EnableCatalogJanitorRequest\032\035.Enable" +
-      "CatalogJanitorResponse\022\\\n\027isCatalogJanit" +
-      "orEnabled\022\037.IsCatalogJanitorEnabledReque",
-      "st\032 .IsCatalogJanitorEnabledResponse\022L\n\021" +
-      "execMasterService\022\032.CoprocessorServiceRe" +
-      "quest\032\033.CoprocessorServiceResponse\0227\n\010sn" +
-      "apshot\022\024.TakeSnapshotRequest\032\025.TakeSnaps" +
-      "hotResponse\022D\n\025getCompletedSnapshots\022\024.L" +
-      "istSnapshotRequest\032\025.ListSnapshotRespons" +
-      "e\022A\n\016deleteSnapshot\022\026.DeleteSnapshotRequ" +
-      "est\032\027.DeleteSnapshotResponse\022A\n\016isSnapsh" +
-      "otDone\022\026.IsSnapshotDoneRequest\032\027.IsSnaps" +
-      "hotDoneResponse\022D\n\017restoreSnapshot\022\027.Res",
-      "toreSnapshotRequest\032\030.RestoreSnapshotRes" +
-      "ponse\022V\n\025isRestoreSnapshotDone\022\035.IsResto" +
-      "reSnapshotDoneRequest\032\036.IsRestoreSnapsho" +
-      "tDoneResponse\022D\n\017modifyNamespace\022\027.Modif" +
-      "yNamespaceRequest\032\030.ModifyNamespaceRespo" +
-      "nse\022D\n\017createNamespace\022\027.CreateNamespace" +
-      "Request\032\030.CreateNamespaceResponse\022D\n\017del" +
-      "eteNamespace\022\027.DeleteNamespaceRequest\032\030." +
-      "DeleteNamespaceResponse\022Y\n\026getNamespaceD" +
-      "escriptor\022\036.GetNamespaceDescriptorReques",
-      "t\032\037.GetNamespaceDescriptorResponse\022_\n\030li" +
-      "stNamespaceDescriptors\022 .ListNamespaceDe" +
-      "scriptorsRequest\032!.ListNamespaceDescript" +
-      "orsResponse\022q\n\036getTableDescriptorsByName" +
-      "space\022&.GetTableDescriptorsByNamespaceRe" +
-      "quest\032\'.GetTableDescriptorsByNamespaceRe" +
-      "sponseBG\n*org.apache.hadoop.hbase.protob" +
-      "uf.generatedB\021MasterAdminProtosH\001\210\001\001\240\001\001"
->>>>>>> addressed first batch of open source comments and fixed a tabledir issue with getStoreFileMap
+      "fier\"\027\n\025OfflineRegionResponse\"J\n\022CreateT" +
+      "ableRequest\022!\n\013tableSchema\030\001 \002(\0132\014.Table" +
+      "Schema\022\021\n\tsplitKeys\030\002 \003(\014\"\025\n\023CreateTable" +
+      "Response\"\'\n\022DeleteTableRequest\022\021\n\ttableN" +
+      "ame\030\001 \002(\014\"\025\n\023DeleteTableResponse\"\'\n\022Enab" +
+      "leTableRequest\022\021\n\ttableName\030\001 \002(\014\"\025\n\023Ena" +
+      "bleTableResponse\"(\n\023DisableTableRequest\022" +
+      "\021\n\ttableName\030\001 \002(\014\"\026\n\024DisableTableRespon",
+      "se\"J\n\022ModifyTableRequest\022\021\n\ttableName\030\001 " +
+      "\002(\014\022!\n\013tableSchema\030\002 \002(\0132\014.TableSchema\"\025" +
+      "\n\023ModifyTableResponse\"K\n\026CreateNamespace" +
+      "Request\0221\n\023namespaceDescriptor\030\001 \002(\0132\024.N" +
+      "amespaceDescriptor\"\031\n\027CreateNamespaceRes" +
+      "ponse\"/\n\026DeleteNamespaceRequest\022\025\n\rnames" +
+      "paceName\030\001 \002(\t\"\031\n\027DeleteNamespaceRespons" +
+      "e\"K\n\026ModifyNamespaceRequest\0221\n\023namespace" +
+      "Descriptor\030\001 \002(\0132\024.NamespaceDescriptor\"6" +
+      "\n\035GetNamespaceDescriptorRequest\022\025\n\rnames",
+      "paceName\030\001 \002(\t\"S\n\036GetNamespaceDescriptor" +
+      "Response\0221\n\023namespaceDescriptor\030\001 \002(\0132\024." +
+      "NamespaceDescriptor\"\031\n\027ModifyNamespaceRe" +
+      "sponse\"!\n\037ListNamespaceDescriptorsReques" +
+      "t\"S\n ListNamespaceDescriptorsResponse\022/\n" +
+      "\rnamespaceList\030\001 \002(\0132\030.NamespaceDescript" +
+      "orList\">\n%GetTableDescriptorsByNamespace" +
+      "Request\022\025\n\rnamespaceName\030\001 \002(\t\"K\n&GetTab" +
+      "leDescriptorsByNamespaceResponse\022!\n\013tabl" +
+      "eSchema\030\001 \003(\0132\014.TableSchema\"\021\n\017ShutdownR",
+      "equest\"\022\n\020ShutdownResponse\"\023\n\021StopMaster" +
+      "Request\"\024\n\022StopMasterResponse\"\020\n\016Balance" +
+      "Request\"&\n\017BalanceResponse\022\023\n\013balancerRa" +
+      "n\030\001 \002(\010\"<\n\031SetBalancerRunningRequest\022\n\n\002" +
+      "on\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\"6\n\032SetBala" +
+      "ncerRunningResponse\022\030\n\020prevBalanceValue\030" +
+      "\001 \001(\010\"\024\n\022CatalogScanRequest\")\n\023CatalogSc" +
+      "anResponse\022\022\n\nscanResult\030\001 \001(\005\"-\n\033Enable" +
+      "CatalogJanitorRequest\022\016\n\006enable\030\001 \002(\010\"1\n" +
+      "\034EnableCatalogJanitorResponse\022\021\n\tprevVal",
+      "ue\030\001 \001(\010\" \n\036IsCatalogJanitorEnabledReque" +
+      "st\"0\n\037IsCatalogJanitorEnabledResponse\022\r\n" +
+      "\005value\030\001 \002(\010\"=\n\023TakeSnapshotRequest\022&\n\010s" +
+      "napshot\030\001 \002(\0132\024.SnapshotDescription\"/\n\024T" +
+      "akeSnapshotResponse\022\027\n\017expectedTimeout\030\001" +
+      " \002(\003\"\025\n\023ListSnapshotRequest\"?\n\024ListSnaps" +
+      "hotResponse\022\'\n\tsnapshots\030\001 \003(\0132\024.Snapsho" +
+      "tDescription\"?\n\025DeleteSnapshotRequest\022&\n" +
+      "\010snapshot\030\001 \002(\0132\024.SnapshotDescription\"\030\n" +
+      "\026DeleteSnapshotResponse\"@\n\026RestoreSnapsh",
+      "otRequest\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDe" +
+      "scription\"\031\n\027RestoreSnapshotResponse\"?\n\025" +
+      "IsSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132" +
+      "\024.SnapshotDescription\"U\n\026IsSnapshotDoneR" +
+      "esponse\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapshot" +
+      "\030\002 \001(\0132\024.SnapshotDescription\"F\n\034IsRestor" +
+      "eSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024" +
+      ".SnapshotDescription\"3\n\035IsRestoreSnapsho" +
+      "tDoneResponse\022\022\n\004done\030\001 \001(\010:\004true2\306\022\n\022Ma" +
+      "sterAdminService\0222\n\taddColumn\022\021.AddColum",
+      "nRequest\032\022.AddColumnResponse\022;\n\014deleteCo" +
+      "lumn\022\024.DeleteColumnRequest\032\025.DeleteColum" +
+      "nResponse\022;\n\014modifyColumn\022\024.ModifyColumn" +
+      "Request\032\025.ModifyColumnResponse\0225\n\nmoveRe" +
+      "gion\022\022.MoveRegionRequest\032\023.MoveRegionRes" +
+      "ponse\022Y\n\026dispatchMergingRegions\022\036.Dispat" +
+      "chMergingRegionsRequest\032\037.DispatchMergin" +
+      "gRegionsResponse\022;\n\014assignRegion\022\024.Assig" +
+      "nRegionRequest\032\025.AssignRegionResponse\022A\n" +
+      "\016unassignRegion\022\026.UnassignRegionRequest\032",
+      "\027.UnassignRegionResponse\022>\n\rofflineRegio" +
+      "n\022\025.OfflineRegionRequest\032\026.OfflineRegion" +
+      "Response\0228\n\013deleteTable\022\023.DeleteTableReq" +
+      "uest\032\024.DeleteTableResponse\0228\n\013enableTabl" +
+      "e\022\023.EnableTableRequest\032\024.EnableTableResp" +
+      "onse\022;\n\014disableTable\022\024.DisableTableReque" +
+      "st\032\025.DisableTableResponse\0228\n\013modifyTable" +
+      "\022\023.ModifyTableRequest\032\024.ModifyTableRespo" +
+      "nse\0228\n\013createTable\022\023.CreateTableRequest\032" +
+      "\024.CreateTableResponse\022/\n\010shutdown\022\020.Shut",
+      "downRequest\032\021.ShutdownResponse\0225\n\nstopMa" +
+      "ster\022\022.StopMasterRequest\032\023.StopMasterRes" +
+      "ponse\022,\n\007balance\022\017.BalanceRequest\032\020.Bala" +
+      "nceResponse\022M\n\022setBalancerRunning\022\032.SetB" +
+      "alancerRunningRequest\032\033.SetBalancerRunni" +
+      "ngResponse\022;\n\016runCatalogScan\022\023.CatalogSc" +
+      "anRequest\032\024.CatalogScanResponse\022S\n\024enabl" +
+      "eCatalogJanitor\022\034.EnableCatalogJanitorRe" +
+      "quest\032\035.EnableCatalogJanitorResponse\022\\\n\027" +
+      "isCatalogJanitorEnabled\022\037.IsCatalogJanit",
+      "orEnabledRequest\032 .IsCatalogJanitorEnabl" +
+      "edResponse\022L\n\021execMasterService\022\032.Coproc" +
+      "essorServiceRequest\032\033.CoprocessorService" +
+      "Response\0227\n\010snapshot\022\024.TakeSnapshotReque" +
+      "st\032\025.TakeSnapshotResponse\022D\n\025getComplete" +
+      "dSnapshots\022\024.ListSnapshotRequest\032\025.ListS" +
+      "napshotResponse\022A\n\016deleteSnapshot\022\026.Dele" +
+      "teSnapshotRequest\032\027.DeleteSnapshotRespon" +
+      "se\022A\n\016isSnapshotDone\022\026.IsSnapshotDoneReq" +
+      "uest\032\027.IsSnapshotDoneResponse\022D\n\017restore",
+      "Snapshot\022\027.RestoreSnapshotRequest\032\030.Rest" +
+      "oreSnapshotResponse\022V\n\025isRestoreSnapshot" +
+      "Done\022\035.IsRestoreSnapshotDoneRequest\032\036.Is" +
+      "RestoreSnapshotDoneResponse\022D\n\017isMasterR" +
+      "unning\022\027.IsMasterRunningRequest\032\030.IsMast" +
+      "erRunningResponse\022D\n\017modifyNamespace\022\027.M" +
+      "odifyNamespaceRequest\032\030.ModifyNamespaceR" +
+      "esponse\022D\n\017createNamespace\022\027.CreateNames" +
+      "paceRequest\032\030.CreateNamespaceResponse\022D\n" +
+      "\017deleteNamespace\022\027.DeleteNamespaceReques",
+      "t\032\030.DeleteNamespaceResponse\022Y\n\026getNamesp" +
+      "aceDescriptor\022\036.GetNamespaceDescriptorRe" +
+      "quest\032\037.GetNamespaceDescriptorResponse\022_" +
+      "\n\030listNamespaceDescriptors\022 .ListNamespa" +
+      "ceDescriptorsRequest\032!.ListNamespaceDesc" +
+      "riptorsResponse\022q\n\036getTableDescriptorsBy" +
+      "Namespace\022&.GetTableDescriptorsByNamespa" +
+      "ceRequest\032\'.GetTableDescriptorsByNamespa" +
+      "ceResponseBG\n*org.apache.hadoop.hbase.pr" +
+      "otobuf.generatedB\021MasterAdminProtosH\001\210\001\001",
+      "\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
