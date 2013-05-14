@@ -79,14 +79,16 @@ public class NamespaceDescriptor {
     if(Arrays.equals(namespaceName, HConstants.SYSTEM_NAMESPACE_NAME)){
       return;
     }
-    if (namespaceName[0] == '.' || namespaceName[0] == '-') {
+    if (namespaceName[0] == '.' || namespaceName[0] == '-'
+        || namespaceName[namespaceName.length-1] == '.') {
       throw new IllegalArgumentException("Illegal first character <" + namespaceName[0] +
           "> at 0. Namespaces can only start with alphanumeric " +
           "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName));
     }
     for (int i = 0; i < namespaceName.length; i++) {
       if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' || 
-          namespaceName[i] == '-' || namespaceName[i] == '.') {
+          namespaceName[i] == '-' ||
+          namespaceName[i] == '.' && namespaceName[i-1] != '.') {
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +

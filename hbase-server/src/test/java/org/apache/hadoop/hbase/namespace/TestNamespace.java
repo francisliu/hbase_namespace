@@ -13,6 +13,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -27,7 +28,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -53,7 +53,7 @@ public class TestNamespace {
     cluster = TEST_UTIL.getHBaseCluster();
     master = ((MiniHBaseCluster)cluster).getMaster();
     zkNamespaceManager =
-        new ZKNamespaceManager(admin.getConnection().getZooKeeperWatcher());
+        new ZKNamespaceManager(master.getZooKeeperWatcher());
     zkNamespaceManager.start();
     LOG.info("Done initializing cluster");
   }
@@ -148,7 +148,7 @@ public class TestNamespace {
   }
 
   @Test
-  public void createRemoveTest() throws IOException, InterruptedException {
+  public void createRemoveTest() throws Exception {
     String testName = "createRemoveTest";
     String nsName = prefix+"_"+testName;
     LOG.info(testName);
@@ -156,7 +156,12 @@ public class TestNamespace {
     //create namespace and verify
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
     assertEquals(3, admin.listNamespaceDescriptors().size());
-    assertEquals(3, zkNamespaceManager.list().size());
+    TEST_UTIL.waitFor(60000, new Waiter.Predicate<Exception>() {
+      @Override
+      public boolean evaluate() throws Exception {
+        return zkNamespaceManager.list().size() == 3;
+      }
+    });
     assertNotNull(zkNamespaceManager.get(nsName));
     //remove namespace and verify
     admin.deleteNamespace(nsName);
@@ -166,7 +171,7 @@ public class TestNamespace {
   }
 
   @Test
-  public void createDottedNS() throws IOException, InterruptedException {
+  public void createDottedNS() throws Exception {
     String testName = "createDottedNS";
     String nsName = prefix+"_"+testName+".dot2.dot3";
     LOG.info(testName);
@@ -174,7 +179,12 @@ public class TestNamespace {
     //create namespace and verify
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
     assertEquals(3, admin.listNamespaceDescriptors().size());
-    assertEquals(3, zkNamespaceManager.list().size());
+    TEST_UTIL.waitFor(60000, new Waiter.Predicate<Exception>() {
+      @Override
+      public boolean evaluate() throws Exception {
+        return zkNamespaceManager.list().size() == 3;
+      }
+    });
     assertNotNull(zkNamespaceManager.get(nsName));
     //remove namespace and verify
     admin.deleteNamespace(nsName);

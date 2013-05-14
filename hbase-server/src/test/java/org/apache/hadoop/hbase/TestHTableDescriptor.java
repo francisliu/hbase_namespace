@@ -126,10 +126,11 @@ public class TestHTableDescriptor {
   }
 
   String legalTableNames[] = { "foo", "with-dash_under.dot", "_under_start_ok",
-      "with-dash.with_underscore", "02-01-2012.my_table_01-02", "xyz._mytable_", "9_9_0.table_02" };
+      "with-dash.with_underscore", "02-01-2012.my_table_01-02", "xyz._mytable_", "9_9_0.table_02"
+      , "dot1.dot2.table", "with-dash.with.dot"};
   String illegalTableNames[] = { ".dot_start_illegal", "-dash_start_illegal", "spaces not ok",
-      "-dash-.start_illegal", "illegal..t2", "new.table with space", "new.-mytable", "01 .table",
-      "with-dash.with.dot" };
+      "-dash-.start_illegal", "illegal..t2", "illegal..illegal.t2", "new.table with space",
+      "new.-mytable", "01 .table"};
 
   @Test
   public void testLegalHTableNames() {

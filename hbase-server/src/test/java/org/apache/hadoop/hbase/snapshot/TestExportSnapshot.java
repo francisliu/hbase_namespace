@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
@@ -221,7 +222,7 @@ public class TestExportSnapshot {
     out.close();
     r1fs.commitStoreFile(TEST_FAMILY, storeFile);
 
-    Path tableDir = HTableDescriptor.getTableDir(archiveDir, tableWithRefsName);
+    Path tableDir = FSUtils.getTableDir(archiveDir, tableWithRefsName);
     Path snapshotDir = SnapshotDescriptionUtils.getCompletedSnapshotDir(snapshotName, rootDir);
     FileUtil.copy(fs, tableDir, fs, snapshotDir, false, conf);
     SnapshotDescriptionUtils.writeSnapshotInfo(sd, snapshotDir, fs);
