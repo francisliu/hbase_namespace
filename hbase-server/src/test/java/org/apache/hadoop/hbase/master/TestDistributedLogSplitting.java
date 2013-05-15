@@ -188,7 +188,7 @@ public class TestDistributedLogSplitting {
     while (it.hasNext()) {
       HRegionInfo region = it.next();
       if (TableName.valueOf(region.getTableName()).getNamespaceAsString()
-          .equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+          .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         it.remove();
       }
     }
@@ -1193,7 +1193,7 @@ public class TestDistributedLogSplitting {
       List<HRegionInfo> hris = ProtobufUtil.getOnlineRegions(hrs);
       for (HRegionInfo hri : hris) {
         if (TableName.valueOf(hri.getTableName()).getNamespaceAsString().equals(
-            HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+            NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
           continue;
         }
         LOG.debug("adding data to rs = " + rst.getName() +

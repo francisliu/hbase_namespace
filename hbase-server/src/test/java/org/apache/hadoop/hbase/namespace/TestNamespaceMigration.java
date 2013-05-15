@@ -1,5 +1,5 @@
 /**
- * Copyright 2010 The Apache Software Foundation
+ * Copyright The Apache Software Foundation
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -110,9 +110,9 @@ public class TestNamespaceMigration {
   private static File untar(final File testdir) throws IOException {
     // Find the src data under src/test/data
     final String datafile = "TestNamespaceMigration";
-    String srcTarFile =
-      System.getProperty("project.build.testSourceDirectory", "hbase-server/src/test") +
-      File.separator + "data" + File.separator + datafile + ".tgz";
+    File srcTarFile = new File(
+      System.getProperty("project.build.testSourceDirectory", "src/test") +
+      File.separator + "data" + File.separator + datafile + ".tgz");
     File homedir = new File(testdir.toString());
     File tgtUntarDir = new File(homedir, "hbase");
     if (tgtUntarDir.exists()) {
@@ -120,8 +120,11 @@ public class TestNamespaceMigration {
         throw new IOException("Failed delete of " + tgtUntarDir.toString());
       }
     }
+    if(!srcTarFile.exists()) {
+      throw new IOException(srcTarFile+" does not exist");
+    }
     LOG.info("Untarring " + srcTarFile + " into " + homedir.toString());
-    FileUtil.unTar(new File(srcTarFile), homedir);
+    FileUtil.unTar(srcTarFile, homedir);
     Assert.assertTrue(tgtUntarDir.exists());
     return tgtUntarDir;
   }

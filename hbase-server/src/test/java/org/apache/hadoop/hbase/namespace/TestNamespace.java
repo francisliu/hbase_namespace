@@ -83,12 +83,12 @@ public class TestNamespace {
         admin.getNamespaceDescriptor(NamespaceDescriptor.DEFAULT_NAMESPACE.getName());
     assertNotNull(ns);
     assertEquals(ns.getName(), NamespaceDescriptor.DEFAULT_NAMESPACE.getName());
-    assertNotNull(zkNamespaceManager.get(HConstants.DEFAULT_NAMESPACE_NAME_STR));
+    assertNotNull(zkNamespaceManager.get(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR));
 
     ns = admin.getNamespaceDescriptor(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
     assertNotNull(ns);
     assertEquals(ns.getName(), NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
-    assertNotNull(zkNamespaceManager.get(HConstants.SYSTEM_NAMESPACE_NAME_STR));
+    assertNotNull(zkNamespaceManager.get(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR));
 
     assertEquals(2, admin.listNamespaceDescriptors().size());
 
@@ -130,7 +130,7 @@ public class TestNamespace {
   public void testDeleteReservedNS() throws Exception {
     boolean exceptionCaught = false;
     try {
-      admin.deleteNamespace(HConstants.DEFAULT_NAMESPACE_NAME_STR);
+      admin.deleteNamespace(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
     } catch (IOException exp) {
       LOG.warn(exp);
       exceptionCaught = true;
@@ -138,7 +138,7 @@ public class TestNamespace {
       assertTrue(exceptionCaught);
     }
     try {
-      admin.deleteNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+      admin.deleteNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
     } catch (IOException exp) {
       LOG.warn(exp);
       exceptionCaught = true;
@@ -244,6 +244,7 @@ public class TestNamespace {
       admin.deleteNamespace(nsName);
       fail("Expected non-empty namespace constraint exception");
     } catch (Exception ex) {
+      LOG.info("Caught expected exception: "+ex);
     }
 
     //sanity check try to write and read from table
@@ -274,7 +275,7 @@ public class TestNamespace {
 
   @Test
   public void createTableInSystemNamespace() throws Exception {
-    String tableName = "system.createTableInSystemNamespace";
+    String tableName = "hbase.createTableInSystemNamespace";
     HTableDescriptor desc = new HTableDescriptor(tableName);
     HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
     desc.addFamily(colDesc);

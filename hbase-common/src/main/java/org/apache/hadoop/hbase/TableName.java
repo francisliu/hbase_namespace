@@ -38,7 +38,7 @@ public class TableName implements Comparable<TableName> {
 
   /** Namespace delimiter */
   //this should always be only 1 byte long
-  public static String NAMESPACE_DELIM = ".";
+  public static char NAMESPACE_DELIM = '.';
 
   private byte[] name;
   private String nameAsString;
@@ -109,7 +109,16 @@ public class TableName implements Comparable<TableName> {
   }
 
   public static TableName valueOf(String name) {
-    int index = name.lastIndexOf(NAMESPACE_DELIM);
+    int index = -1;
+    for(int i=1;i<name.length();i++) {
+      if(name.charAt(i) == NAMESPACE_DELIM && index == -1) {
+        index = i;
+      }
+      if(name.charAt(i) != NAMESPACE_DELIM &&
+         name.charAt(i-1) == NAMESPACE_DELIM) {
+        index = i-1;
+      }
+    }
     if (index != -1) {
       return TableName.valueOf(name.substring(0,index), name.substring(index+1));
     }

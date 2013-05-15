@@ -414,7 +414,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   public static boolean isSystemTable(final byte [] tableName) {
     return Bytes.toString(tableName)
-        .startsWith(HConstants.SYSTEM_NAMESPACE_NAME_STR +
+        .startsWith(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
             TableName.NAMESPACE_DELIM);
   }
 
@@ -422,7 +422,8 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   // regex is a bit more complicated to support nuance of tables
   // in default namespace
   public static final String VALID_USER_TABLE_REGEX =
-      "(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.)*(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*))";
+      "(?:(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.+)+(?:[a-zA-Z_0-9-]+\\.*))|" +
+         "(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.*)))";
 
   /**
    * Check passed byte buffer, "tableName", is legal user-space table name.
@@ -430,15 +431,22 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @throws NullPointerException If passed <code>tableName</code> is null
    * @throws IllegalArgumentException if passed a tableName
    * that is made of other than 'word' characters or underscores: i.e.
-   * <code>[a-zA-Z_0-9].
+   * <code>[a-zA-Z_0-9.]</code>. '.' are used to delimit the namespace
+   * from the table name. A namespace name can contain '.' though it is
+   * not recommended and left valid for backwards compatibility.
+   *
+   * Valid fully qualified table names:
+   * foo.bar, namespace=>foo, table=>bar
+   * org.foo.bar, namespace=org.foo, table=>bar
    */
   public static byte [] isLegalFullyQualifiedTableName(final byte [] tableName) {
     if (tableName == null || tableName.length <= 0) {
       throw new IllegalArgumentException("Name is null or empty");
     }
     int namespaceDelimIndex = com.google.common.primitives.Bytes.lastIndexOf(tableName,
-      Bytes.toBytes(TableName.NAMESPACE_DELIM)[0]);
+        (byte)TableName.NAMESPACE_DELIM);
     if(namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
+      NamespaceDescriptor.isLegalNamespaceName(tableName);
       isLegalTableQualifierName(tableName);
     }else {
       byte[] namespace = Arrays.copyOfRange(tableName, 0, namespaceDelimIndex);
@@ -450,11 +458,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
   
   private static void isLegalTableQualifierName(final byte[] qualifierName){
-    if (qualifierName[0] == '.' || qualifierName[0] == '-') {
-      throw new IllegalArgumentException("Illegal first character <" + qualifierName[0] +
-          "> at 0. User-space table qualifiers can only start with 'alphanumeric " +
-          "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(qualifierName));
-    }
     if (HConstants.CLUSTER_ID_FILE_NAME.equalsIgnoreCase(Bytes
         .toString(qualifierName))
         || HConstants.SPLIT_LOGDIR_NAME.equalsIgnoreCase(Bytes
@@ -464,9 +467,14 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       throw new IllegalArgumentException(Bytes.toString(qualifierName)
           + " conflicted with system reserved words");
     }
+    boolean foundDot = false;
     for (int i = 0; i < qualifierName.length; i++) {
-      if (Character.isLetterOrDigit(qualifierName[i]) || qualifierName[i] == '_' ||
-          qualifierName[i] == '-') {
+      if ((Character.isLetterOrDigit(qualifierName[i]) || qualifierName[i] == '_' ||
+           qualifierName[i] == '-') && !foundDot) {
+        continue;
+      }
+      if(qualifierName[i] == '.') {
+        foundDot = true;
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + qualifierName[i] +
@@ -1329,7 +1337,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(
       TableName.valueOf(HConstants.NAMESPACE_TABLE_NAME),
       new HColumnDescriptor[] {
-          //TODO make this us a constant
           new HColumnDescriptor(NAMESPACE_FAMILY_INFO)
               // Ten is arbitrary number.  Keep versions to help debugging.
               .setMaxVersions(10)

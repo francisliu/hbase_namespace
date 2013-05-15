@@ -1980,6 +1980,11 @@ public class HBaseAdmin implements Abortable, Closeable {
     return this.conf;
   }
 
+  /**
+   * Create a new namespace
+   * @param descriptor descriptor which describes the new namespace
+   * @throws IOException
+   */
   public void createNamespace(final NamespaceDescriptor descriptor) throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
@@ -1993,6 +1998,11 @@ public class HBaseAdmin implements Abortable, Closeable {
     });
   }
 
+  /**
+   * Modify an existing namespace
+   * @param descriptor descriptor which describes the new namespace
+   * @throws IOException
+   */
   public void modifyNamespace(final NamespaceDescriptor descriptor) throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
@@ -2006,6 +2016,11 @@ public class HBaseAdmin implements Abortable, Closeable {
     });
   }
 
+  /**
+   * Delete an existing namespace
+   * @param name namespace name
+   * @throws IOException
+   */
   public void deleteNamespace(final String name) throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
@@ -2018,6 +2033,12 @@ public class HBaseAdmin implements Abortable, Closeable {
     });
   }
 
+  /**
+   * Get a namespace descriptor by name
+   * @param name name of namespace descriptor
+   * @return
+   * @throws IOException
+   */
   public NamespaceDescriptor getNamespaceDescriptor(final String name) throws IOException {
     return
         execute(new MasterAdminCallable<NamespaceDescriptor>() {
@@ -2031,6 +2052,11 @@ public class HBaseAdmin implements Abortable, Closeable {
         });
   }
 
+  /**
+   * List available namespace descriptors
+   * @return
+   * @throws IOException
+   */
   public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
     return
         execute(new MasterAdminCallable<List<NamespaceDescriptor>>() {
@@ -2049,6 +2075,12 @@ public class HBaseAdmin implements Abortable, Closeable {
         });
   }
 
+  /**
+   * Get list of table descriptors by namespace
+   * @param name namespace name
+   * @return
+   * @throws IOException
+   */
   public List<HTableDescriptor> getTableDescriptorsByNamespace(final String name) throws IOException {
     return
         execute(new MasterAdminCallable<List<HTableDescriptor>>() {

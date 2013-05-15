@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
@@ -237,7 +238,7 @@ public class OfflineMetaRebuildTestCore {
           HRegionInfo.getHRegionInfo(r);
       if(info != null &&
           !TableName.valueOf(info.getTableNameAsString()).getNamespaceAsString()
-          .equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+          .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         Delete d = new Delete(r.getRow());
         dels.add(d);
         admin.unassign(r.getRow(), true);

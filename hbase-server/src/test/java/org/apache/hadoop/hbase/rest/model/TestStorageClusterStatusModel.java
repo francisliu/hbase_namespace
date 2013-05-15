@@ -44,7 +44,7 @@ public class TestStorageClusterStatusModel extends TestCase {
     "<LiveNodes><Node startCode=\"1245219839331\" requests=\"0\"" + 
       " name=\"test1\" maxHeapSizeMB=\"1024\" heapSizeMB=\"128\">" + 
         "<Region stores=\"1\" storefiles=\"1\" storefileSizeMB=\"0\"" +
-        " storefileIndexSizeMB=\"0\" name=\"c3lzdGVtLnJvb3QsLDA=\"" +
+        " storefileIndexSizeMB=\"0\" name=\"aGJhc2Uucm9vdCwsMA==\"" +
         " memstoreSizeMB=\"0\" readRequestsCount=\"1\"" +
         " writeRequestsCount=\"2\" rootIndexSizeKB=\"1\"" +
         " totalStaticIndexSizeKB=\"1\" totalStaticBloomSizeKB=\"1\"" +
@@ -52,7 +52,7 @@ public class TestStorageClusterStatusModel extends TestCase {
       "<Node startCode=\"1245239331198\" requests=\"0\" name=\"test2\"" + 
         " maxHeapSizeMB=\"1024\" heapSizeMB=\"512\">" + 
         "<Region stores=\"1\" storefiles=\"1\" storefileSizeMB=\"0\"" +
-        " storefileIndexSizeMB=\"0\" name=\"c3lzdGVtLm1ldGEsLDEyNDYwMDAwNDM3MjQ=\"" +
+        " storefileIndexSizeMB=\"0\" name=\"aGJhc2UubWV0YSwsMTI0NjAwMDA0MzcyNA==\"" +
         " memstoreSizeMB=\"0\" readRequestsCount=\"1\"" +
         " writeRequestsCount=\"2\" rootIndexSizeKB=\"1\"" +
         " totalStaticIndexSizeKB=\"1\" totalStaticBloomSizeKB=\"1\"" +
@@ -60,9 +60,10 @@ public class TestStorageClusterStatusModel extends TestCase {
     "</LiveNodes></ClusterStatus>";
 
   private static final String AS_PB =
-      "CkAKBXRlc3QxEOO6i+eeJBgAIIABKIAIMigKDnN5c3RlbS5yb290LCwwEAEYASAAKAAwADgBQAJI"+
-      "AVABWAFgAWgBCkwKBXRlc3QyEP6SsfCeJBgAIIAEKIAIMjQKGnN5c3RlbS5tZXRhLCwxMjQ2MDAw"+
-      "MDQzNzI0EAEYASAAKAAwADgBQAJIAVABWAFgAWgBGAIgACkAAAAAAADwPw==";
+      "Cj8KBXRlc3QxEOO6i+eeJBgAIIABKIAIMicKDWhiYXNlLnJvb3QsLDAQARgBIAAoADAAOAFAAkgB"+
+      "UAFYAWABaAEKSwoFdGVzdDIQ/pKx8J4kGAAggAQogAgyMwoZaGJhc2UubWV0YSwsMTI0NjAwMDA0"+
+      "MzcyNBABGAEgACgAMAA4AUACSAFQAVgBYAFoARgCIAApAAAAAAAA8D8=";
+
   
   private JAXBContext context;
 

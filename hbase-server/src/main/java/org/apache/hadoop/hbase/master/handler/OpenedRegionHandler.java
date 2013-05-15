@@ -22,8 +22,8 @@ package org.apache.hadoop.hbase.master.handler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -71,7 +71,7 @@ public class OpenedRegionHandler extends EventHandler implements TotesHRegionInf
     if(regionInfo.isMetaRegion()) {
       priority = OpenedPriority.META;
     } else if(TableName.valueOf(regionInfo.getTableNameAsString())
-        .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+        .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
       priority = OpenedPriority.SYSTEM;
     } else {
       priority = OpenedPriority.USER;
