@@ -55,8 +55,8 @@ import org.apache.hadoop.hbase.util.FSUtils;
 
 /**
  * This is a helper class used to manage the namespace
- * metadata that is stored in {@link HConstants.NAMESPACE_TABLE_NAME}
- * It also mirrors updates to the ZK store by forwarding updated to
+ * metadata that is stored in {@see HConstants.NAMESPACE_TABLE_NAME}
+ * It also mirrors updates to the ZK store by forwarding updates to
  * {@link ZKNamespaceManager}
  */
 @InterfaceAudience.Private
@@ -65,8 +65,8 @@ public class TableNamespaceManager {
 
   private static Set<String> RESERVED_NAMESPACES = new HashSet<String>();
   static {
-    RESERVED_NAMESPACES.add(HConstants.DEFAULT_NAMESPACE_NAME_STR);
-    RESERVED_NAMESPACES.add(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+    RESERVED_NAMESPACES.add(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
+    RESERVED_NAMESPACES.add(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
   }
   private Configuration conf;
   private MasterServices masterServices;
@@ -94,18 +94,18 @@ public class TableNamespaceManager {
     zkNamespaceManager = new ZKNamespaceManager(masterServices.getZooKeeper());
     zkNamespaceManager.start();
 
-    boolean first = false;
+    boolean fullyInitialized = true;
     if(get(NamespaceDescriptor.DEFAULT_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.DEFAULT_NAMESPACE);
-      first = true;
+      fullyInitialized = false;
     }
     if(get(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.SYSTEM_NAMESPACE);
-      first = true;
+      fullyInitialized = false;
     }
     //this part is for migrating to namespace aware hbase
     //we create namespaces for all the tables which have dots
-    if(first) {
+    if(!fullyInitialized) {
       MasterFileSystem mfs = masterServices.getMasterFileSystem();
       List<Path> dirs = FSUtils.getTableDirs(mfs.getFileSystem(), mfs.getRootDir());
       for(Path p: dirs) {
@@ -177,6 +177,11 @@ public class TableNamespaceManager {
     if(RESERVED_NAMESPACES.contains(name)) {
       throw new ConstraintException("Reserved namespace "+name+" cannot be removed.");
     }
+    int tableCount = masterServices.getTableDescriptorsByNamespace(name).size();
+    if(tableCount > 0) {
+      throw new ConstraintException("Only empty namespaces can be removed. " +
+          "Namespace "+name+" has "+tableCount+" tables");
+    }
     Delete d = new Delete(Bytes.toBytes(name));
     table.delete(d);
     //don't abort if cleanup isn't complete
@@ -190,8 +195,10 @@ public class TableNamespaceManager {
         throw new IOException("Namespace directory contains table dir: "+status.getPath());
       }
     }
-    fs.delete(FSUtils.getNamespaceDir(
-        masterServices.getMasterFileSystem().getRootDir(), name), true);
+    if(!fs.delete(FSUtils.getNamespaceDir(
+        masterServices.getMasterFileSystem().getRootDir(), name), true)) {
+      throw new IOException("Failed to remove namespace: "+name);
+    }
   }
 
   public NavigableSet<NamespaceDescriptor> list() throws IOException {

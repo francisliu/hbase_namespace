@@ -20,7 +20,6 @@ package org.apache.hadoop.hbase;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Arrays;
@@ -36,15 +35,25 @@ import java.util.TreeMap;
 @InterfaceStability.Evolving
 public class NamespaceDescriptor {
 
-  public static NamespaceDescriptor DEFAULT_NAMESPACE = NamespaceDescriptor.create(
-    HConstants.DEFAULT_NAMESPACE_NAME_STR).build();
-  public static NamespaceDescriptor SYSTEM_NAMESPACE = NamespaceDescriptor.create(
-    HConstants.SYSTEM_NAMESPACE_NAME_STR).build();
+  /** System namespace name. */
+  public static final byte [] SYSTEM_NAMESPACE_NAME = Bytes.toBytes("hbase");
+  public static final String SYSTEM_NAMESPACE_NAME_STR =
+      Bytes.toString(SYSTEM_NAMESPACE_NAME);
+  /** Default namespace name. */
+  public static final byte [] DEFAULT_NAMESPACE_NAME = Bytes.toBytes("default");
+  public static final String DEFAULT_NAMESPACE_NAME_STR =
+      Bytes.toString(DEFAULT_NAMESPACE_NAME);
+
+  public static final NamespaceDescriptor DEFAULT_NAMESPACE = NamespaceDescriptor.create(
+    DEFAULT_NAMESPACE_NAME_STR).build();
+  public static final NamespaceDescriptor SYSTEM_NAMESPACE = NamespaceDescriptor.create(
+    SYSTEM_NAMESPACE_NAME_STR).build();
 
   private String name;
   private Map<byte[], byte[]> properties;
 
-  public static final Comparator<NamespaceDescriptor> NAMESPACE_DESCRIPTOR_COMPARATOR = new Comparator<NamespaceDescriptor>() {
+  public static final Comparator<NamespaceDescriptor> NAMESPACE_DESCRIPTOR_COMPARATOR =
+      new Comparator<NamespaceDescriptor>() {
     @Override
     public int compare(NamespaceDescriptor namespaceDescriptor,
         NamespaceDescriptor namespaceDescriptor2) {
@@ -76,11 +85,10 @@ public class NamespaceDescriptor {
   }
 
   public static void isLegalNamespaceName(final byte[] namespaceName){
-    if(Arrays.equals(namespaceName, HConstants.SYSTEM_NAMESPACE_NAME)){
+    if(Arrays.equals(namespaceName, SYSTEM_NAMESPACE_NAME)){
       return;
     }
-    if (namespaceName[0] == '.' || namespaceName[0] == '-'
-        || namespaceName[namespaceName.length-1] == '.') {
+    if (namespaceName[0] == '.' || namespaceName[0] == '-') {
       throw new IllegalArgumentException("Illegal first character <" + namespaceName[0] +
           "> at 0. Namespaces can only start with alphanumeric " +
           "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName));
@@ -88,7 +96,7 @@ public class NamespaceDescriptor {
     for (int i = 0; i < namespaceName.length; i++) {
       if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' || 
           namespaceName[i] == '-' ||
-          namespaceName[i] == '.' && namespaceName[i-1] != '.') {
+          namespaceName[i] == '.') {
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +

@@ -27,7 +27,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +45,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.Chore;
@@ -55,7 +53,6 @@ import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.ServerCallable;
 import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -75,7 +72,6 @@ import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
-import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
 import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.exceptions.PleaseHoldException;
@@ -210,6 +206,7 @@ import org.apache.hadoop.hbase.zookeeper.DrainingServerTracker;
 import org.apache.hadoop.hbase.zookeeper.LoadBalancerTracker;
 import org.apache.hadoop.hbase.zookeeper.RegionServerTracker;
 import org.apache.hadoop.hbase.zookeeper.ZKClusterId;
+import org.apache.hadoop.hbase.zookeeper.ZKTable;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperListener;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -995,22 +992,20 @@ MasterServices, Server {
     }
   }
 
-  void assignSystemTables(MonitoredTask status) throws IOException, InterruptedException, KeeperException {
+  void assignSystemTables(MonitoredTask status)
+      throws IOException, InterruptedException, KeeperException {
     status.setStatus("Assigning system regions");
-    // Skip assignment for regions of tables in DISABLING state also because
-    // during clean cluster startup no RS is alive and regions map also doesn't
-    // have any information about the regions. See HBASE-6281.
-//    //TODO do we allow disabling tables?
-//    Set<String> disablingDisabledAndEnablingTables =
-//        new HashSet<String>(assignmentManager.get);
-//    disablingDisabledAndEnablingTables.addAll(assignmentManager.getZKTable().getDisabledTables());
-//    disablingDisabledAndEnablingTables.addAll(assignmentManager.enablingTables.keySet());
-    // Scan META for all user regions, skipping any disabled tables
+    // Skip assignment for regions of tables in DISABLING state because during clean cluster startup
+    // no RS is alive and regions map also doesn't have any information about the regions.
+    // See HBASE-6281.
+    Set<String> disabledOrDisablingOrEnabling = ZKTable.getDisabledOrDisablingTables(zooKeeper);
+    disabledOrDisablingOrEnabling.addAll(ZKTable.getEnablingTables(zooKeeper));
+    // Scan META for all system regions, skipping any disabled tables
     Map<HRegionInfo, ServerName> allRegions =
-        MetaReader.fullScan(catalogTracker, new HashSet<String>(), true);
+        MetaReader.fullScan(catalogTracker, disabledOrDisablingOrEnabling, true);
     for(HRegionInfo regionInfo: Sets.newTreeSet(allRegions.keySet())) {
       if(!TableName.valueOf(regionInfo.getTableName())
-          .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+          .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         allRegions.remove(regionInfo);
       }
     }
@@ -2499,7 +2494,7 @@ MasterServices, Server {
         descriptors = this.tableDescriptors.getAll();
         //filter out system tables
         for(HTableDescriptor desc:
-          getTableDescriptorsByNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+          getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
           descriptors.remove(desc.getNameAsString());
         }
       } catch (IOException e) {
@@ -2881,10 +2876,13 @@ MasterServices, Server {
   }
 
   @Override
-  public MasterAdminProtos.GetNamespaceDescriptorResponse getNamespaceDescriptor(RpcController controller, MasterAdminProtos.GetNamespaceDescriptorRequest request) throws ServiceException {
+  public MasterAdminProtos.GetNamespaceDescriptorResponse getNamespaceDescriptor(
+      RpcController controller, MasterAdminProtos.GetNamespaceDescriptorRequest request)
+      throws ServiceException {
     try {
       return MasterAdminProtos.GetNamespaceDescriptorResponse.newBuilder()
-          .setNamespaceDescriptor(ProtobufUtil.toProtoBuf(getNamespaceDescriptor(request.getNamespaceName())))
+          .setNamespaceDescriptor(
+              ProtobufUtil.toProtoBuf(getNamespaceDescriptor(request.getNamespaceName())))
           .build();
     } catch (IOException e) {
       throw new ServiceException(e);
@@ -2892,24 +2890,28 @@ MasterServices, Server {
   }
 
   @Override
-  public MasterAdminProtos.ListNamespaceDescriptorsResponse listNamespaceDescriptors(RpcController controller, MasterAdminProtos.ListNamespaceDescriptorsRequest request) throws ServiceException {
+  public MasterAdminProtos.ListNamespaceDescriptorsResponse listNamespaceDescriptors(
+      RpcController controller, MasterAdminProtos.ListNamespaceDescriptorsRequest request)
+      throws ServiceException {
     try {
-      MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder b =
+      MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder response =
           MasterAdminProtos.ListNamespaceDescriptorsResponse.newBuilder();
       HBaseProtos.NamespaceDescriptorList.Builder bList =
           HBaseProtos.NamespaceDescriptorList.newBuilder();
       for(NamespaceDescriptor ns: listNamespaceDescriptors()) {
         bList.addNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
       }
-      b.setNamespaceList(bList.build());
-      return b.build();
+      response.setNamespaceList(bList.build());
+      return response.build();
     } catch (IOException e) {
       throw new ServiceException(e);
     }
   }
 
   @Override
-  public MasterAdminProtos.GetTableDescriptorsByNamespaceResponse getTableDescriptorsByNamespace(RpcController controller, MasterAdminProtos.GetTableDescriptorsByNamespaceRequest request) throws ServiceException {
+  public MasterAdminProtos.GetTableDescriptorsByNamespaceResponse getTableDescriptorsByNamespace(
+      RpcController controller, MasterAdminProtos.GetTableDescriptorsByNamespaceRequest request)
+      throws ServiceException {
     try {
       MasterAdminProtos.GetTableDescriptorsByNamespaceResponse.Builder b =
           MasterAdminProtos.GetTableDescriptorsByNamespaceResponse.newBuilder();
@@ -2958,10 +2960,6 @@ MasterServices, Server {
   }
 
   public void deleteNamespace(String name) throws IOException {
-    int size = getTableDescriptorsByNamespace(name).size();
-    if(size > 0) {
-      throw new ConstraintException("Can't remove a non-empty namespace");
-    }
     if (cpHost != null) {
       if (cpHost.preDeleteNamespace(name)) {
         return;

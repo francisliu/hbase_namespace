@@ -777,33 +777,33 @@ public class AccessController extends BaseRegionObserver
   }
 
   @Override
-  public void preCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void preCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+                                 NamespaceDescriptor ns) throws IOException {
   }
 
   @Override
-  public void postCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void postCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+                                  NamespaceDescriptor ns) throws IOException {
   }
 
   @Override
-  public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, String namespace) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+                                 String namespace) throws IOException {
   }
 
   @Override
-  public void postDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, String namespace) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void postDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+                                  String namespace) throws IOException {
   }
 
   @Override
-  public void preModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void preModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+                                 NamespaceDescriptor ns) throws IOException {
   }
 
   @Override
-  public void postModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, NamespaceDescriptor ns) throws IOException {
-    //To change body of implemented methods use File | Settings | File Templates.
+  public void postModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
+                                  NamespaceDescriptor ns) throws IOException {
   }
 
   /* ---- RegionObserver implementation ---- */
@@ -1372,8 +1372,7 @@ public class AccessController extends BaseRegionObserver
   private boolean isSpecialTable(HRegionInfo regionInfo) {
     byte[] tableName = regionInfo.getTableName();
     return Arrays.equals(tableName, AccessControlLists.ACL_TABLE_NAME)
-        || Arrays.equals(tableName, HConstants.META_TABLE_NAME)
-        || Arrays.equals(tableName, HConstants.ROOT_TABLE_NAME);
+        || Arrays.equals(tableName, HConstants.META_TABLE_NAME);
   }
 
   @Override

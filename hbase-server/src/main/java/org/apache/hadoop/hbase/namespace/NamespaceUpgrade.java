@@ -25,7 +25,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -36,6 +35,19 @@ import org.apache.hadoop.hbase.util.FSUtils;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Upgrades old 0.94 filesystem layout to namespace layout
+ * Does the following:
+ *
+ * - creates system namespace directory and move META table there
+ * renaming META table to hbase.meta,
+ * this in turn would require to re-encode the region directory name
+ * - creates default namespace directory, all tables without '.' in them will be moved here
+ * - For each table that contains a '.', parse it as a fully-qualified table name
+ * and automatically create the appropriate namespace and move the respective table
+ * - During startup TableNamespaceManager, will populate the namespace table
+ * with the appropriate namespace descriptors
+ */
 public class NamespaceUpgrade {
   private static final Log LOG = LogFactory.getLog(NamespaceUpgrade.class);
 
@@ -44,10 +56,18 @@ public class NamespaceUpgrade {
     Path newMetaRegionDir = HRegion.getRegionDir(rootDir, HRegionInfo.FIRST_META_REGIONINFO);
     //if new meta region exists then migration was completed successfully
     if(!fs.exists(newMetaRegionDir) && fs.exists(rootDir)) {
-      Path sysNsDir = FSUtils.getNamespaceDir(rootDir, HConstants.SYSTEM_NAMESPACE_NAME_STR);
-      Path defNsDir = FSUtils.getNamespaceDir(rootDir, HConstants.DEFAULT_NAMESPACE_NAME_STR);
-      fs.mkdirs(sysNsDir);
-      fs.mkdirs(defNsDir);
+      Path sysNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
+      Path defNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
+      if(!fs.exists(sysNsDir)) {
+        if(!fs.mkdirs(sysNsDir)) {
+          throw new IOException("Failed to create system namespace dir: "+sysNsDir);
+        }
+      }
+      if(!fs.exists(defNsDir)) {
+        if(!fs.mkdirs(defNsDir)) {
+          throw new IOException("Failed to create default namespace dir: "+defNsDir);
+        }
+      }
 
       List<String> sysTables = Lists.newArrayList("-ROOT-",".META.");
 
@@ -81,7 +101,8 @@ public class NamespaceUpgrade {
       if(fs.exists(oldSnapshotDir)) {
         LOG.info("Migrating snapshot dir");
         if (!fs.rename(oldSnapshotDir, newSnapshotDir)) {
-          throw new IOException("Failed to move old snapshot dir to new");
+          throw new IOException("Failed to move old snapshot dir "+
+              oldSnapshotDir+" to new "+newSnapshotDir);
         }
       }
 
@@ -95,7 +116,8 @@ public class NamespaceUpgrade {
         }
       }
 
-
+      //since meta table name has changed
+      //rename meta region dir from it's old encoding to new one
       Path oldMetaRegionDir = HRegion.getRegionDir(rootDir,
           new Path(newMetaDir, "1028785192").toString());
       if(fs.exists(oldMetaRegionDir)) {

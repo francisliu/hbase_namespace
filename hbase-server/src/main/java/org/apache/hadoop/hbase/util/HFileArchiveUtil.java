@@ -88,7 +88,7 @@ public class HFileArchiveUtil {
    * Get the archive directory for a given region under the specified table
    * @param rootDir {@link Path} to the root directory where hbase files are stored (for building
    *          the archive path)
-   * @param tablename the original table directory. Cannot be null.
+   * @param tablename name of the table to archive. Cannot be null.
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */

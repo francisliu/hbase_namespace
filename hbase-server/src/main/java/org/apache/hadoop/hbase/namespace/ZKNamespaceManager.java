@@ -43,6 +43,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * stored in zookeeper. This information will be consumed
  * by regionservers to act on namespace related
  * parameters (ie enforcing quota).
+ * Information in ZK is reconstructed from namespace
+ * table whenever {@link TableNamespaceManager} is started.
  */
 @InterfaceAudience.Private
 class ZKNamespaceManager extends ZooKeeperListener {

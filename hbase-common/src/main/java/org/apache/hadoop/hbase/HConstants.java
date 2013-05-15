@@ -349,27 +349,17 @@ public final class HConstants {
   // be the first to be reassigned if the server(s) they are being served by
   // should go down.
 
-  /** System namespace name. */
-  public static final byte [] SYSTEM_NAMESPACE_NAME = Bytes.toBytes("system");
-  public static final String SYSTEM_NAMESPACE_NAME_STR =
-      Bytes.toString(SYSTEM_NAMESPACE_NAME);
-
-  /** Default namespace name. */
-  public static final byte [] DEFAULT_NAMESPACE_NAME = Bytes.toBytes("default");
-  public static final String DEFAULT_NAMESPACE_NAME_STR =
-      Bytes.toString(DEFAULT_NAMESPACE_NAME);
-
   /** The root table's name.*/
   public static final byte [] ROOT_TABLE_NAME =
-      Bytes.toBytes(SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"root");
+      Bytes.toBytes(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"root");
 
   /** The META table's name. */
   public static final byte [] META_TABLE_NAME =
-      Bytes.toBytes(SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"meta");
+      Bytes.toBytes(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"meta");
 
   /** The Namespace table's name. */
   public static final byte [] NAMESPACE_TABLE_NAME =
-      Bytes.toBytes(SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"namespace");
+      Bytes.toBytes(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"namespace");
   public static final String NAMESPACE_TABLE_NAME_STR =
       Bytes.toString(NAMESPACE_TABLE_NAME);
 

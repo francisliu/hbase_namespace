@@ -71,6 +71,10 @@ import com.google.common.primitives.Longs;
 @InterfaceStability.Evolving
 public class KeyValue implements Cell, HeapSize, Cloneable {
   static final Log LOG = LogFactory.getLog(KeyValue.class);
+
+  private static final int metalength =
+      TableName.valueOf(HConstants.META_TABLE_NAME).getName().length+1; // '.META.' length
+
   // TODO: Group Key-only comparators and operations into a Key class, just
   // for neatness sake, if can figure what to call it.
 
@@ -2394,7 +2398,6 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
       // Rows look like this: .META.,ROW_FROM_META,RID
       //        LOG.info("ROOT " + Bytes.toString(left, loffset, llength) +
       //          "---" + Bytes.toString(right, roffset, rlength));
-      final int metalength = TableName.valueOf(HConstants.META_TABLE_NAME).getName().length+1; // '.META.' length
       int lmetaOffsetPlusDelimiter = loffset + metalength;
       int leftFarDelimiter = getDelimiterInReverse(left,
           lmetaOffsetPlusDelimiter,

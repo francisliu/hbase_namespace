@@ -46,6 +46,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HConstants;
@@ -57,7 +58,6 @@ import org.apache.hadoop.hbase.Stoppable;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
 import org.apache.hadoop.hbase.exceptions.RegionAlreadyInTransitionException;
 import org.apache.hadoop.hbase.exceptions.RegionServerStoppedException;
@@ -92,7 +92,6 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.KeeperException.NodeExistsException;
 import org.apache.zookeeper.data.Stat;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
 
 /**
@@ -435,7 +434,7 @@ public class AssignmentManager extends ZooKeeperListener {
       Map<HRegionInfo, ServerName> regions = regionStates.getRegionAssignments();
       for (Map.Entry<HRegionInfo, ServerName> e: regions.entrySet()) {
         if (!TableName.valueOf(e.getKey().getTableNameAsString())
-            .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)
+            .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)
             && e.getValue() != null) {
           LOG.debug("Found " + e + " out on cluster");
           failover = true;
@@ -2467,7 +2466,7 @@ public class AssignmentManager extends ZooKeeperListener {
     //remove system tables because they would have been assigned earlier
     for(HRegionInfo regionInfo: Sets.newTreeSet(allRegions.keySet())) {
       if(TableName.valueOf(regionInfo.getTableName())
-          .getNamespaceAsString().equals(HConstants.SYSTEM_NAMESPACE_NAME_STR)) {
+          .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         allRegions.remove(regionInfo);
       }
     }

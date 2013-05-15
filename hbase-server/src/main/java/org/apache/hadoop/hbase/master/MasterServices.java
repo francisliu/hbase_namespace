@@ -188,16 +188,47 @@ public interface MasterServices extends Server {
    */
   public boolean isInitialized();
 
-  //TODO javadoc
+  /**
+   * Create a new namespace
+   * @param descriptor descriptor which describes the new namespace
+   * @throws IOException
+   */
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException;
 
+  /**
+   * Modify an existing namespace
+   * @param descriptor descriptor which updates the existing namespace
+   * @throws IOException
+   */
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException;
 
+  /**
+   * Delete an existing namespace
+   * @param name namespace name
+   * @throws IOException
+   */
   public void deleteNamespace(String name) throws IOException;
 
+  /**
+   * Get a namespace descriptor by name
+   * @param name name of namespace descriptor
+   * @return
+   * @throws IOException
+   */
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException;
 
+  /**
+   * List available namespace descriptors
+   * @return
+   * @throws IOException
+   */
   public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException;
 
+  /**
+   * Get list of table descriptors by namespace
+   * @param name namespace name
+   * @return
+   * @throws IOException
+   */
   public List<HTableDescriptor> getTableDescriptorsByNamespace(String name) throws IOException;
 }
