@@ -47,8 +47,7 @@ public interface TableDescriptors {
   throws IOException;
 
   /**
-   * Get Map of all HTableDescriptors for a given namespace. Populates the descriptor cache as a
-   * side effect.
+   * Get Map of all NamespaceDescriptors for a given namespace.
    * @return Map of all descriptors.
    * @throws IOException
    */
