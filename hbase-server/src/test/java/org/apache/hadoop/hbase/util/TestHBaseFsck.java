@@ -153,35 +153,35 @@ public class TestHBaseFsck {
     // Now let's mess it up and change the assignment in .META. to
     // point to a different region server
     HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName(), executorService);
-    ResultScanner scanner = meta.getScanner(new Scan());
+    Scan scan = new Scan();
+    scan.setStartRow(Bytes.toBytes(table+",,"));
+    ResultScanner scanner = meta.getScanner(scan);
     HRegionInfo hri = null;
 
-    resforloop:
-    for (Result res : scanner) {
-      ServerName currServer =
-        ServerName.parseFrom(res.getValue(HConstants.CATALOG_FAMILY,
-            HConstants.SERVER_QUALIFIER));
-      long startCode = Bytes.toLong(res.getValue(HConstants.CATALOG_FAMILY,
-          HConstants.STARTCODE_QUALIFIER));
+    Result res = scanner.next();
+    ServerName currServer =
+      ServerName.parseFrom(res.getValue(HConstants.CATALOG_FAMILY,
+          HConstants.SERVER_QUALIFIER));
+    long startCode = Bytes.toLong(res.getValue(HConstants.CATALOG_FAMILY,
+        HConstants.STARTCODE_QUALIFIER));
 
-      for (JVMClusterUtil.RegionServerThread rs :
-          TEST_UTIL.getHBaseCluster().getRegionServerThreads()) {
+    for (JVMClusterUtil.RegionServerThread rs :
+        TEST_UTIL.getHBaseCluster().getRegionServerThreads()) {
 
-        ServerName sn = rs.getRegionServer().getServerName();
+      ServerName sn = rs.getRegionServer().getServerName();
 
-        // When we find a diff RS, change the assignment and break
-        if (!currServer.getHostAndPort().equals(sn.getHostAndPort()) ||
-            startCode != sn.getStartcode()) {
-          Put put = new Put(res.getRow());
-          put.setDurability(Durability.SKIP_WAL);
-          put.add(HConstants.CATALOG_FAMILY, HConstants.SERVER_QUALIFIER,
-            Bytes.toBytes(sn.getHostAndPort()));
-          put.add(HConstants.CATALOG_FAMILY, HConstants.STARTCODE_QUALIFIER,
-            Bytes.toBytes(sn.getStartcode()));
-          meta.put(put);
-          hri = HRegionInfo.getHRegionInfo(res);
-          break resforloop;
-        }
+      // When we find a diff RS, change the assignment and break
+      if (!currServer.getHostAndPort().equals(sn.getHostAndPort()) ||
+          startCode != sn.getStartcode()) {
+        Put put = new Put(res.getRow());
+        put.setDurability(Durability.SKIP_WAL);
+        put.add(HConstants.CATALOG_FAMILY, HConstants.SERVER_QUALIFIER,
+          Bytes.toBytes(sn.getHostAndPort()));
+        put.add(HConstants.CATALOG_FAMILY, HConstants.STARTCODE_QUALIFIER,
+          Bytes.toBytes(sn.getStartcode()));
+        meta.put(put);
+        hri = HRegionInfo.getHRegionInfo(res);
+        break;
       }
     }
 
