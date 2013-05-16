@@ -204,7 +204,7 @@ public class TestExportSnapshot {
     // First region, simple with one plain hfile.
     HRegionInfo hri = new HRegionInfo(tableWithRefsName);
     HRegionFileSystem r0fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, new Path(archiveDir, hri.getTableNameAsString()), hri);
+      fs, FSUtils.getTableDir(archiveDir, hri.getTableNameAsString()), hri);
     Path storeFile = new Path(rootDir, TEST_HFILE);
     FSDataOutputStream out = fs.create(storeFile);
     out.write(Bytes.toBytes("Test Data"));

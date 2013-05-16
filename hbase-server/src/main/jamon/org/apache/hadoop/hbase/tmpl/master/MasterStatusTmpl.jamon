@@ -39,6 +39,7 @@ org.apache.hadoop.hbase.master.HMaster;
 org.apache.hadoop.hbase.master.AssignmentManager;
 org.apache.hadoop.hbase.master.ServerManager;
 org.apache.hadoop.hbase.HConstants;
+org.apache.hadoop.hbase.NamespaceDescriptor;
 org.apache.hadoop.hbase.ServerLoad;
 org.apache.hadoop.hbase.ServerName;
 org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -295,7 +296,8 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
 
 <%def catalogTables>
 <%java>
- List<HTableDescriptor> hTableList = admin.getTableDescriptorsByNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+ List<HTableDescriptor> hTableList = admin.getTableDescriptorsByNamespace(NamespaceDescriptor
+ .SYSTEM_NAMESPACE_NAME_STR);
 </%java>
 
 <table class="table table-striped">

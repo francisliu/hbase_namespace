@@ -455,7 +455,9 @@ public class TestHRegion extends HBaseTestCase {
       HTableDescriptor htd = region.getTableDesc();
       HRegionInfo info = region.getRegionInfo();
       region.close();
-      region = HRegion.openHRegion(conf, fs, regiondir.getParent().getParent(), info, htd, null);
+      LOG.info("-->"+DIR);
+      LOG.info("-->"+regiondir);
+      region = HRegion.openHRegion(conf, fs, new Path(DIR+method),info, htd, null);
 
       //now check whether we have only one store file, the compacted one
       Collection<StoreFile> sfs = region.getStore(family).getStorefiles();

@@ -42,7 +42,9 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.MetaScanner;
@@ -310,6 +312,10 @@ public class TestRegionPlacement {
       public boolean processRow(Result result) throws IOException {
         try {
           HRegionInfo info = MetaScanner.getHRegionInfo(result);
+          if(TableName.valueOf(info.getTableName()).getNamespaceAsString()
+              .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
+            return true;
+          }
           byte[] server = result.getValue(HConstants.CATALOG_FAMILY,
               HConstants.SERVER_QUALIFIER);
           byte[] favoredNodes = result.getValue(HConstants.CATALOG_FAMILY,
