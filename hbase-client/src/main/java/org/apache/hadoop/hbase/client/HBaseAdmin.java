@@ -868,6 +868,9 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void disableTable(final byte [] tableName)
   throws IOException {
+    if(Bytes.equals(tableName, HConstants.META_TABLE_NAME)) {
+      throw new IllegalArgumentException("Cannot disable catalog table");
+    }
     disableTableAsync(tableName);
     // Wait until table is disabled
     boolean disabled = false;

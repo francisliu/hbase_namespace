@@ -158,6 +158,9 @@ public class TestHBaseFsck {
 
     resforloop:
     for (Result res : scanner) {
+      ServerName currServer =
+        ServerName.parseFrom(res.getValue(HConstants.CATALOG_FAMILY,
+            HConstants.SERVER_QUALIFIER));
       long startCode = Bytes.toLong(res.getValue(HConstants.CATALOG_FAMILY,
           HConstants.STARTCODE_QUALIFIER));
 
@@ -167,7 +170,8 @@ public class TestHBaseFsck {
         ServerName sn = rs.getRegionServer().getServerName();
 
         // When we find a diff RS, change the assignment and break
-        if (startCode != sn.getStartcode()) {
+        if (!currServer.getHostAndPort().equals(sn.getHostAndPort()) ||
+            startCode != sn.getStartcode()) {
           Put put = new Put(res.getRow());
           put.setDurability(Durability.SKIP_WAL);
           put.add(HConstants.CATALOG_FAMILY, HConstants.SERVER_QUALIFIER,

@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -152,7 +153,7 @@ public class TestRegionMergeTransactionOnCluster {
       FileSystem fs = master.getMasterFileSystem().getFileSystem();
       Path rootDir = master.getMasterFileSystem().getRootDir();
 
-      Path tabledir = new Path(rootDir, mergedRegionInfo.getTableNameAsString());
+      Path tabledir = FSUtils.getTableDir(rootDir, mergedRegionInfo.getTableNameAsString());
       Path regionAdir = new Path(tabledir, regionA.getEncodedName());
       Path regionBdir = new Path(tabledir, regionB.getEncodedName());
       assertTrue(fs.exists(regionAdir));

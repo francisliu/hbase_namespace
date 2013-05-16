@@ -1094,21 +1094,12 @@ public class TestAdmin {
   public void testCreateBadTables() throws IOException {
     String msg = null;
     try {
-      this.admin.createTable(HTableDescriptor.ROOT_TABLEDESC);
-    } catch (IllegalArgumentException e) {
-      msg = e.toString();
-    }
-    assertTrue("Unexcepted exception message " + msg, msg != null &&
-      msg.startsWith(IllegalArgumentException.class.getName()) &&
-      msg.contains(HTableDescriptor.ROOT_TABLEDESC.getNameAsString()));
-    msg = null;
-    try {
       this.admin.createTable(HTableDescriptor.META_TABLEDESC);
-    } catch(IllegalArgumentException e) {
+    } catch(TableExistsException e) {
       msg = e.toString();
     }
     assertTrue("Unexcepted exception message " + msg, msg != null &&
-      msg.startsWith(IllegalArgumentException.class.getName()) &&
+      msg.startsWith(TableExistsException.class.getName()) &&
       msg.contains(HTableDescriptor.META_TABLEDESC.getNameAsString()));
 
     // Now try and do concurrent creation with a bunch of threads.
@@ -1218,9 +1209,7 @@ public class TestAdmin {
   public void testTableNames() throws IOException {
     byte[][] illegalNames = new byte[][] {
         Bytes.toBytes("-bad"),
-        Bytes.toBytes(".bad"),
-        HConstants.ROOT_TABLE_NAME,
-        HConstants.META_TABLE_NAME
+        Bytes.toBytes(".bad")
     };
     for (byte[] illegalName : illegalNames) {
       try {

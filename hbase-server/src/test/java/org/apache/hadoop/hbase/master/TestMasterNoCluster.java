@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.catalog.MetaMockingUtil;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionTestingUtility;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.regionserver.RegionOpeningState;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -209,6 +210,12 @@ public class TestMasterNoCluster {
             rs0, rs0, rs0.getServerName(), HRegionInfo.ROOT_REGIONINFO);
         return new CatalogTracker(zk, conf, connection, abortable);
       }
+
+      @Override
+      boolean assignSystemTables(MonitoredTask status)
+          throws IOException, InterruptedException, KeeperException {
+        return true;
+      }
     };
     master.start();
 
@@ -243,9 +250,9 @@ public class TestMasterNoCluster {
    * @throws DeserializationException 
    * @throws ServiceException
    */
-  @Test (timeout=30000)
+  @Test (timeout=60000)
   public void testCatalogDeploys()
-  throws IOException, KeeperException, InterruptedException, DeserializationException, ServiceException {
+      throws Exception {
     final Configuration conf = TESTUTIL.getConfiguration();
     conf.setInt(ServerManager.WAIT_ON_REGIONSERVERS_MINTOSTART, 1);
     conf.setInt(ServerManager.WAIT_ON_REGIONSERVERS_MAXTOSTART, 1);
@@ -294,6 +301,12 @@ public class TestMasterNoCluster {
           HConnectionTestingUtility.getMockedConnectionAndDecorate(TESTUTIL.getConfiguration(),
             rs0, rs0, rs0.getServerName(), HRegionInfo.FIRST_META_REGIONINFO);
         return new CatalogTracker(zk, conf, connection, abortable);
+      }
+
+      @Override
+      boolean assignSystemTables(MonitoredTask status)
+          throws IOException, InterruptedException, KeeperException {
+        return true;
       }
     };
     master.start();

@@ -40,7 +40,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -2506,7 +2505,7 @@ public class AssignmentManager extends ZooKeeperListener {
         catalogTracker, disabledOrDisablingOrEnabling, true);
     }
     //remove system tables because they would have been assigned earlier
-    for(HRegionInfo regionInfo: Sets.newTreeSet(allRegions.keySet())) {
+    for(HRegionInfo regionInfo: allRegions.keySet()) {
       if(TableName.valueOf(regionInfo.getTableName())
           .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         allRegions.remove(regionInfo);

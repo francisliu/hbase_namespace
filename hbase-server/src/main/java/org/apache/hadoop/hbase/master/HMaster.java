@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.management.ObjectName;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -851,7 +850,8 @@ MasterServices, Server {
     }
 
     status.setStatus("Assigning System tables");
-    assignSystemTables(status);
+    // Make sure system tables are assigned before proceeding.
+    if(!assignSystemTables(status)) return;
 
     enableServerShutdownHandler();
 
@@ -1013,7 +1013,7 @@ MasterServices, Server {
     }
   }
 
-  void assignSystemTables(MonitoredTask status)
+  boolean assignSystemTables(MonitoredTask status)
       throws IOException, InterruptedException, KeeperException {
     status.setStatus("Assigning system regions");
     // Skip assignment for regions of tables in DISABLING state because during clean cluster startup
@@ -1024,7 +1024,7 @@ MasterServices, Server {
     // Scan META for all system regions, skipping any disabled tables
     Map<HRegionInfo, ServerName> allRegions =
         MetaReader.fullScan(catalogTracker, disabledOrDisablingOrEnabling, true);
-    for(HRegionInfo regionInfo: Sets.newTreeSet(allRegions.keySet())) {
+    for(HRegionInfo regionInfo: allRegions.keySet()) {
       if(!TableName.valueOf(regionInfo.getTableName())
           .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         allRegions.remove(regionInfo);
@@ -1039,14 +1039,7 @@ MasterServices, Server {
           assignmentManager.processRegionInTransitionAndBlockUntilAssigned(regionInfo);
       boolean serverValid = false;
       if(currServer != null) {
-        try {
-          serverValid =
-              ProtobufUtil.getRegionInfo(HConnectionManager.getConnection(conf)
-                  .getAdmin(serverName),
-                  regionInfo.getRegionName()) != null;
-        } catch (IOException e) {
-          LOG.info("Failed to contact server", e);
-        }
+        serverValid = verifyRegionLocation(currServer, regionInfo);
       }
       if (!rit && !serverValid) {
         boolean beingExpired = false;
@@ -1058,13 +1051,20 @@ MasterServices, Server {
         }
         assignmentManager.assign(regionInfo, true);
         enableSSHandWaitForRegion(regionInfo);
+        // Make sure a region location is set correctly
+        if (!waitVerifiedRegionLocation(regionInfo)) return false;
+        // This guarantees that the transition assigning .META. has completed
+        this.assignmentManager.waitForAssignment(regionInfo);
         assigned++;
         if (beingExpired && this.distributedLogReplay) {
           // In Replay WAL Mode, we need the new .META. server online
           this.fileSystemManager.splitLog(currServer);
         }
       } else if (rit && !serverValid) {
-        enableSSHandWaitForRegion(regionInfo);
+        // Make sure a region location is set correctly
+        if (!waitVerifiedRegionLocation(regionInfo)) return false;
+        // This guarantees that the transition assigning .META. has completed
+        this.assignmentManager.waitForAssignment(regionInfo);
         assigned++;
       } else {
         // Region already assigned. We didnt' assign it. Add to in-memory state.
@@ -1077,6 +1077,7 @@ MasterServices, Server {
     tableNamespaceManager = new TableNamespaceManager(this);
     tableNamespaceManager.start();
     status.setStatus("Assigning system regions done");
+    return true;
   }
 
   private void enableSSHandWaitForRegion(HRegionInfo regionInfo) throws IOException,
@@ -1102,6 +1103,46 @@ MasterServices, Server {
     // Above check waits for general meta availability but this does not
     // guarantee that the transition has completed
     this.assignmentManager.waitForAssignment(HRegionInfo.FIRST_META_REGIONINFO);
+  }
+
+  /**
+   * @return True if there a meta available
+   * @throws InterruptedException
+   */
+  private boolean isMetaLocation() throws InterruptedException {
+    // Cycle up here in master rather than down in catalogtracker so we can
+    // check the master stopped flag every so often.
+    while (!this.stopped) {
+      try {
+        if (this.catalogTracker.waitForMeta(100) != null) break;
+      } catch (NotAllMetaRegionsOnlineException e) {
+        // Ignore.  I know .META. is not online yet.
+      }
+    }
+    // We got here because we came of above loop.
+    return !this.stopped;
+  }
+
+  private boolean waitVerifiedRegionLocation(HRegionInfo regionInfo) throws IOException {
+    while (!this.stopped) {
+      Pair<HRegionInfo, ServerName> p = MetaReader.getRegion(catalogTracker,
+          regionInfo.getRegionName());
+      if (verifyRegionLocation(p.getSecond(), p.getFirst())) break;
+    }
+    // We got here because we came of above loop.
+    return !this.stopped;
+  }
+
+  private boolean verifyRegionLocation(ServerName currServer, HRegionInfo regionInfo) {
+    try {
+      return
+          ProtobufUtil.getRegionInfo(HConnectionManager.getConnection(conf)
+              .getAdmin(currServer),
+              regionInfo.getRegionName()) != null;
+    } catch (IOException e) {
+      LOG.info("Failed to contact server: "+currServer, e);
+    }
+    return false;
   }
 
   private void enableCatalogTables(String catalogTableName) {
