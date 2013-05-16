@@ -35,6 +35,7 @@ org.apache.hadoop.hbase.util.JvmVersion;
 org.apache.hadoop.hbase.util.FSUtils;
 org.apache.hadoop.hbase.master.HMaster;
 org.apache.hadoop.hbase.HConstants;
+org.apache.hadoop.hbase.NamespaceDescriptor;
 org.apache.hadoop.hbase.ServerLoad;
 org.apache.hadoop.hbase.ServerName;
 org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -248,7 +249,8 @@ org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 
 <%def catalogTables>
 <%java>
- List<HTableDescriptor> hTableList = admin.getTableDescriptorsByNamespace(HConstants.SYSTEM_NAMESPACE_NAME_STR);
+ List<HTableDescriptor> hTableList = admin.getTableDescriptorsByNamespace(NamespaceDescriptor
+ .SYSTEM_NAMESPACE_NAME_STR);
 </%java>
 
 <table class="table table-striped">
