@@ -203,7 +203,7 @@ public interface MasterServices extends Server {
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException;
 
   /**
-   * Delete an existing namespace
+   * Delete an existing namespace. Only empty namespaces (no tables) can be removed.
    * @param name namespace name
    * @throws IOException
    */

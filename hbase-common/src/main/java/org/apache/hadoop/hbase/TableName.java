@@ -111,10 +111,10 @@ public class TableName implements Comparable<TableName> {
   public static TableName valueOf(String name) {
     int index = -1;
     for(int i=1;i<name.length();i++) {
-      if(name.charAt(i) == NAMESPACE_DELIM && index == -1) {
+      if (name.charAt(i) == NAMESPACE_DELIM && index == -1) {
         index = i;
       }
-      if(name.charAt(i) != NAMESPACE_DELIM &&
+      if (name.charAt(i) != NAMESPACE_DELIM &&
          name.charAt(i-1) == NAMESPACE_DELIM) {
         index = i-1;
       }

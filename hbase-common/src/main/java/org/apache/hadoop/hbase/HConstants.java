@@ -351,11 +351,17 @@ public final class HConstants {
 
   /** The root table's name.*/
   public static final byte [] ROOT_TABLE_NAME =
-      Bytes.toBytes(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"root");
+      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root").getName();
+
+  public static final String ROOT_TABLE_NAME_STR =
+      Bytes.toString(ROOT_TABLE_NAME);
 
   /** The META table's name. */
   public static final byte [] META_TABLE_NAME =
-      Bytes.toBytes(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"meta");
+      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta").getName();
+
+  public static final String META_TABLE_NAME_STR =
+      Bytes.toString(META_TABLE_NAME);
 
   /** The Namespace table's name. */
   public static final byte [] NAMESPACE_TABLE_NAME =

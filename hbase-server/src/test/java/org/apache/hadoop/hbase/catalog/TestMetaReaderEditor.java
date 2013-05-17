@@ -221,7 +221,7 @@ public class TestMetaReaderEditor {
       MetaReader.getTableRegions(CT, HConstants.META_TABLE_NAME);
     assertTrue(regions.size() >= 1);
     assertTrue(MetaReader.getTableRegionsAndLocations(CT,
-      Bytes.toString(HConstants.META_TABLE_NAME)).size() >= 1);
+      HConstants.META_TABLE_NAME_STR).size() >= 1);
   }
 
   @Test public void testTableExists() throws IOException {
@@ -235,7 +235,7 @@ public class TestMetaReaderEditor {
     admin.deleteTable(name);
     assertFalse(MetaReader.tableExists(CT, name));
     assertTrue(MetaReader.tableExists(CT,
-      Bytes.toString(HConstants.META_TABLE_NAME)));
+      HConstants.META_TABLE_NAME_STR));
   }
 
   @Test public void testGetRegion() throws IOException, InterruptedException {

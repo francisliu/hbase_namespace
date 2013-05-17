@@ -55,16 +55,16 @@ public class NamespaceUpgrade {
     FileSystem fs = FileSystem.get(conf);
     Path newMetaRegionDir = HRegion.getRegionDir(rootDir, HRegionInfo.FIRST_META_REGIONINFO);
     //if new meta region exists then migration was completed successfully
-    if(!fs.exists(newMetaRegionDir) && fs.exists(rootDir)) {
+    if (!fs.exists(newMetaRegionDir) && fs.exists(rootDir)) {
       Path sysNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
       Path defNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
-      if(!fs.exists(sysNsDir)) {
-        if(!fs.mkdirs(sysNsDir)) {
+      if (!fs.exists(sysNsDir)) {
+        if (!fs.mkdirs(sysNsDir)) {
           throw new IOException("Failed to create system namespace dir: "+sysNsDir);
         }
       }
-      if(!fs.exists(defNsDir)) {
-        if(!fs.mkdirs(defNsDir)) {
+      if (!fs.exists(defNsDir)) {
+        if (!fs.mkdirs(defNsDir)) {
           throw new IOException("Failed to create default namespace dir: "+defNsDir);
         }
       }
@@ -78,16 +78,16 @@ public class NamespaceUpgrade {
       for(Path baseDir: baseDirs) {
         List<Path> oldTableDirs = FSUtils.getLocalTableDirs(fs, baseDir);
         for(Path oldTableDir: oldTableDirs) {
-          if(!sysTables.contains(oldTableDir.getName())) {
+          if (!sysTables.contains(oldTableDir.getName())) {
             Path nsDir = FSUtils.getTableDir(baseDir, oldTableDir.getName());
             if(!fs.exists(nsDir.getParent())) {
               if(!fs.mkdirs(nsDir.getParent())) {
                 throw new IOException("Failed to create namespace dir "+nsDir.getParent());
               }
             }
-            if(sysTables.indexOf(oldTableDir.getName()) < 0) {
+            if (sysTables.indexOf(oldTableDir.getName()) < 0) {
               LOG.info("Migrating table " + oldTableDir.getName() + " to " + nsDir);
-              if(!fs.rename(oldTableDir, nsDir)) {
+              if (!fs.rename(oldTableDir, nsDir)) {
                 throw new IOException("Failed to move "+oldTableDir+" to namespace dir "+nsDir);
               }
             }
@@ -98,7 +98,7 @@ public class NamespaceUpgrade {
       //migrate snapshot dir
       Path oldSnapshotDir = new Path(rootDir, HConstants.OLD_SNAPSHOT_DIR_NAME);
       Path newSnapshotDir = new Path(rootDir, HConstants.SNAPSHOT_DIR_NAME);
-      if(fs.exists(oldSnapshotDir)) {
+      if (fs.exists(oldSnapshotDir)) {
         LOG.info("Migrating snapshot dir");
         if (!fs.rename(oldSnapshotDir, newSnapshotDir)) {
           throw new IOException("Failed to move old snapshot dir "+
@@ -106,11 +106,11 @@ public class NamespaceUpgrade {
         }
       }
 
-      Path newMetaDir = FSUtils.getTableDir(rootDir, Bytes.toString(HConstants.META_TABLE_NAME));
+      Path newMetaDir = FSUtils.getTableDir(rootDir, HConstants.META_TABLE_NAME_STR);
       Path oldMetaDir = new Path(rootDir, ".META.");
-      if(fs.exists(oldMetaDir)) {
+      if (fs.exists(oldMetaDir)) {
         LOG.info("Migrating meta table " + oldMetaDir.getName() + " to " + newMetaDir);
-        if(!fs.rename(oldMetaDir, newMetaDir)) {
+        if (!fs.rename(oldMetaDir, newMetaDir)) {
           throw new IOException("Failed to migrate meta table "
               + oldMetaDir.getName() + " to " + newMetaDir);
         }
@@ -120,9 +120,9 @@ public class NamespaceUpgrade {
       //rename meta region dir from it's old encoding to new one
       Path oldMetaRegionDir = HRegion.getRegionDir(rootDir,
           new Path(newMetaDir, "1028785192").toString());
-      if(fs.exists(oldMetaRegionDir)) {
+      if (fs.exists(oldMetaRegionDir)) {
         LOG.info("Migrating meta region " + oldMetaRegionDir + " to " + newMetaRegionDir);
-        if(!fs.rename(oldMetaRegionDir, newMetaRegionDir)) {
+        if (!fs.rename(oldMetaRegionDir, newMetaRegionDir)) {
           throw new IOException("Failed to migrate meta region "
               + oldMetaRegionDir + " to " + newMetaRegionDir);
         }

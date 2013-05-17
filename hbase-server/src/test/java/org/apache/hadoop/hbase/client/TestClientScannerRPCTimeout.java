@@ -159,7 +159,7 @@ public class TestClientScannerRPCTimeout {
         ScanResponse scanRes = super.scan(controller, request);
         String regionName = Bytes.toString(request.getRegion().getValue().toByteArray());
         if (!regionName.contains(Bytes.toString(HConstants.ROOT_TABLE_NAME)) &&
-            !regionName.contains(Bytes.toString(HConstants.META_TABLE_NAME))) {
+            !regionName.contains(HConstants.META_TABLE_NAME_STR)) {
           tableScannerId = scanRes.getScannerId();
         }
         return scanRes;

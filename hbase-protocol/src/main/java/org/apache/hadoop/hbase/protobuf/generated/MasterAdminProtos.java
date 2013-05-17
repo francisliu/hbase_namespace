@@ -14030,10 +14030,15 @@ public final class MasterAdminProtos {
   public interface ListNamespaceDescriptorsResponseOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
     
-    // required .NamespaceDescriptorList namespaceList = 1;
-    boolean hasNamespaceList();
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList getNamespaceList();
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder();
+    // repeated .NamespaceDescriptor namespaceDescriptor = 1;
+    java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor> 
+        getNamespaceDescriptorList();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor(int index);
+    int getNamespaceDescriptorCount();
+    java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
+        getNamespaceDescriptorOrBuilderList();
+    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder(
+        int index);
   }
   public static final class ListNamespaceDescriptorsResponse extends
       com.google.protobuf.GeneratedMessage
@@ -14063,35 +14068,40 @@ public final class MasterAdminProtos {
       return org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.internal_static_ListNamespaceDescriptorsResponse_fieldAccessorTable;
     }
     
-    private int bitField0_;
-    // required .NamespaceDescriptorList namespaceList = 1;
-    public static final int NAMESPACELIST_FIELD_NUMBER = 1;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList namespaceList_;
-    public boolean hasNamespaceList() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
+    // repeated .NamespaceDescriptor namespaceDescriptor = 1;
+    public static final int NAMESPACEDESCRIPTOR_FIELD_NUMBER = 1;
+    private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor> namespaceDescriptor_;
+    public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor> getNamespaceDescriptorList() {
+      return namespaceDescriptor_;
     }
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList getNamespaceList() {
-      return namespaceList_;
+    public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
+        getNamespaceDescriptorOrBuilderList() {
+      return namespaceDescriptor_;
     }
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder() {
-      return namespaceList_;
+    public int getNamespaceDescriptorCount() {
+      return namespaceDescriptor_.size();
+    }
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor(int index) {
+      return namespaceDescriptor_.get(index);
+    }
+    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder(
+        int index) {
+      return namespaceDescriptor_.get(index);
     }
     
     private void initFields() {
-      namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
+      namespaceDescriptor_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
       
-      if (!hasNamespaceList()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getNamespaceList().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
+      for (int i = 0; i < getNamespaceDescriptorCount(); i++) {
+        if (!getNamespaceDescriptor(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
       }
       memoizedIsInitialized = 1;
       return true;
@@ -14100,8 +14110,8 @@ public final class MasterAdminProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeMessage(1, namespaceList_);
+      for (int i = 0; i < namespaceDescriptor_.size(); i++) {
+        output.writeMessage(1, namespaceDescriptor_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -14112,9 +14122,9 @@ public final class MasterAdminProtos {
       if (size != -1) return size;
     
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+      for (int i = 0; i < namespaceDescriptor_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, namespaceList_);
+          .computeMessageSize(1, namespaceDescriptor_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -14139,11 +14149,8 @@ public final class MasterAdminProtos {
       org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse other = (org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse) obj;
       
       boolean result = true;
-      result = result && (hasNamespaceList() == other.hasNamespaceList());
-      if (hasNamespaceList()) {
-        result = result && getNamespaceList()
-            .equals(other.getNamespaceList());
-      }
+      result = result && getNamespaceDescriptorList()
+          .equals(other.getNamespaceDescriptorList());
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
       return result;
@@ -14153,9 +14160,9 @@ public final class MasterAdminProtos {
     public int hashCode() {
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
-      if (hasNamespaceList()) {
-        hash = (37 * hash) + NAMESPACELIST_FIELD_NUMBER;
-        hash = (53 * hash) + getNamespaceList().hashCode();
+      if (getNamespaceDescriptorCount() > 0) {
+        hash = (37 * hash) + NAMESPACEDESCRIPTOR_FIELD_NUMBER;
+        hash = (53 * hash) + getNamespaceDescriptorList().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       return hash;
@@ -14265,7 +14272,7 @@ public final class MasterAdminProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getNamespaceListFieldBuilder();
+          getNamespaceDescriptorFieldBuilder();
         }
       }
       private static Builder create() {
@@ -14274,12 +14281,12 @@ public final class MasterAdminProtos {
       
       public Builder clear() {
         super.clear();
-        if (namespaceListBuilder_ == null) {
-          namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
+        if (namespaceDescriptorBuilder_ == null) {
+          namespaceDescriptor_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          namespaceListBuilder_.clear();
+          namespaceDescriptorBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
       
@@ -14317,16 +14324,15 @@ public final class MasterAdminProtos {
       public org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse buildPartial() {
         org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse result = new org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse(this);
         int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        if (namespaceListBuilder_ == null) {
-          result.namespaceList_ = namespaceList_;
+        if (namespaceDescriptorBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            namespaceDescriptor_ = java.util.Collections.unmodifiableList(namespaceDescriptor_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.namespaceDescriptor_ = namespaceDescriptor_;
         } else {
-          result.namespaceList_ = namespaceListBuilder_.build();
+          result.namespaceDescriptor_ = namespaceDescriptorBuilder_.build();
         }
-        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -14342,21 +14348,42 @@ public final class MasterAdminProtos {
       
       public Builder mergeFrom(org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse other) {
         if (other == org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse.getDefaultInstance()) return this;
-        if (other.hasNamespaceList()) {
-          mergeNamespaceList(other.getNamespaceList());
+        if (namespaceDescriptorBuilder_ == null) {
+          if (!other.namespaceDescriptor_.isEmpty()) {
+            if (namespaceDescriptor_.isEmpty()) {
+              namespaceDescriptor_ = other.namespaceDescriptor_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureNamespaceDescriptorIsMutable();
+              namespaceDescriptor_.addAll(other.namespaceDescriptor_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.namespaceDescriptor_.isEmpty()) {
+            if (namespaceDescriptorBuilder_.isEmpty()) {
+              namespaceDescriptorBuilder_.dispose();
+              namespaceDescriptorBuilder_ = null;
+              namespaceDescriptor_ = other.namespaceDescriptor_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              namespaceDescriptorBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getNamespaceDescriptorFieldBuilder() : null;
+            } else {
+              namespaceDescriptorBuilder_.addAllMessages(other.namespaceDescriptor_);
+            }
+          }
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
       
       public final boolean isInitialized() {
-        if (!hasNamespaceList()) {
-          
-          return false;
-        }
-        if (!getNamespaceList().isInitialized()) {
-          
-          return false;
+        for (int i = 0; i < getNamespaceDescriptorCount(); i++) {
+          if (!getNamespaceDescriptor(i).isInitialized()) {
+            
+            return false;
+          }
         }
         return true;
       }
@@ -14385,12 +14412,9 @@ public final class MasterAdminProtos {
               break;
             }
             case 10: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.newBuilder();
-              if (hasNamespaceList()) {
-                subBuilder.mergeFrom(getNamespaceList());
-              }
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.newBuilder();
               input.readMessage(subBuilder, extensionRegistry);
-              setNamespaceList(subBuilder.buildPartial());
+              addNamespaceDescriptor(subBuilder.buildPartial());
               break;
             }
           }
@@ -14399,94 +14423,190 @@ public final class MasterAdminProtos {
       
       private int bitField0_;
       
-      // required .NamespaceDescriptorList namespaceList = 1;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder> namespaceListBuilder_;
-      public boolean hasNamespaceList() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+      // repeated .NamespaceDescriptor namespaceDescriptor = 1;
+      private java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor> namespaceDescriptor_ =
+        java.util.Collections.emptyList();
+      private void ensureNamespaceDescriptorIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          namespaceDescriptor_ = new java.util.ArrayList<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor>(namespaceDescriptor_);
+          bitField0_ |= 0x00000001;
+         }
       }
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList getNamespaceList() {
-        if (namespaceListBuilder_ == null) {
-          return namespaceList_;
+      
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
+      
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor> getNamespaceDescriptorList() {
+        if (namespaceDescriptorBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(namespaceDescriptor_);
         } else {
-          return namespaceListBuilder_.getMessage();
+          return namespaceDescriptorBuilder_.getMessageList();
         }
       }
-      public Builder setNamespaceList(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList value) {
-        if (namespaceListBuilder_ == null) {
+      public int getNamespaceDescriptorCount() {
+        if (namespaceDescriptorBuilder_ == null) {
+          return namespaceDescriptor_.size();
+        } else {
+          return namespaceDescriptorBuilder_.getCount();
+        }
+      }
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor(int index) {
+        if (namespaceDescriptorBuilder_ == null) {
+          return namespaceDescriptor_.get(index);
+        } else {
+          return namespaceDescriptorBuilder_.getMessage(index);
+        }
+      }
+      public Builder setNamespaceDescriptor(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
+        if (namespaceDescriptorBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          namespaceList_ = value;
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.set(index, value);
           onChanged();
         } else {
-          namespaceListBuilder_.setMessage(value);
+          namespaceDescriptorBuilder_.setMessage(index, value);
         }
-        bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder setNamespaceList(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder builderForValue) {
-        if (namespaceListBuilder_ == null) {
-          namespaceList_ = builderForValue.build();
+      public Builder setNamespaceDescriptor(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder builderForValue) {
+        if (namespaceDescriptorBuilder_ == null) {
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.set(index, builderForValue.build());
           onChanged();
         } else {
-          namespaceListBuilder_.setMessage(builderForValue.build());
+          namespaceDescriptorBuilder_.setMessage(index, builderForValue.build());
         }
-        bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder mergeNamespaceList(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList value) {
-        if (namespaceListBuilder_ == null) {
-          if (((bitField0_ & 0x00000001) == 0x00000001) &&
-              namespaceList_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance()) {
-            namespaceList_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.newBuilder(namespaceList_).mergeFrom(value).buildPartial();
-          } else {
-            namespaceList_ = value;
+      public Builder addNamespaceDescriptor(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
+        if (namespaceDescriptorBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
           }
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.add(value);
           onChanged();
         } else {
-          namespaceListBuilder_.mergeFrom(value);
+          namespaceDescriptorBuilder_.addMessage(value);
         }
-        bitField0_ |= 0x00000001;
         return this;
       }
-      public Builder clearNamespaceList() {
-        if (namespaceListBuilder_ == null) {
-          namespaceList_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.getDefaultInstance();
+      public Builder addNamespaceDescriptor(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor value) {
+        if (namespaceDescriptorBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.add(index, value);
           onChanged();
         } else {
-          namespaceListBuilder_.clear();
+          namespaceDescriptorBuilder_.addMessage(index, value);
         }
-        bitField0_ = (bitField0_ & ~0x00000001);
         return this;
       }
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder getNamespaceListBuilder() {
-        bitField0_ |= 0x00000001;
-        onChanged();
-        return getNamespaceListFieldBuilder().getBuilder();
-      }
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder getNamespaceListOrBuilder() {
-        if (namespaceListBuilder_ != null) {
-          return namespaceListBuilder_.getMessageOrBuilder();
+      public Builder addNamespaceDescriptor(
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder builderForValue) {
+        if (namespaceDescriptorBuilder_ == null) {
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.add(builderForValue.build());
+          onChanged();
         } else {
-          return namespaceList_;
+          namespaceDescriptorBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      public Builder addNamespaceDescriptor(
+          int index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder builderForValue) {
+        if (namespaceDescriptorBuilder_ == null) {
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          namespaceDescriptorBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      public Builder addAllNamespaceDescriptor(
+          java.lang.Iterable<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor> values) {
+        if (namespaceDescriptorBuilder_ == null) {
+          ensureNamespaceDescriptorIsMutable();
+          super.addAll(values, namespaceDescriptor_);
+          onChanged();
+        } else {
+          namespaceDescriptorBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      public Builder clearNamespaceDescriptor() {
+        if (namespaceDescriptorBuilder_ == null) {
+          namespaceDescriptor_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          namespaceDescriptorBuilder_.clear();
+        }
+        return this;
+      }
+      public Builder removeNamespaceDescriptor(int index) {
+        if (namespaceDescriptorBuilder_ == null) {
+          ensureNamespaceDescriptorIsMutable();
+          namespaceDescriptor_.remove(index);
+          onChanged();
+        } else {
+          namespaceDescriptorBuilder_.remove(index);
+        }
+        return this;
+      }
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder getNamespaceDescriptorBuilder(
+          int index) {
+        return getNamespaceDescriptorFieldBuilder().getBuilder(index);
+      }
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder(
+          int index) {
+        if (namespaceDescriptorBuilder_ == null) {
+          return namespaceDescriptor_.get(index);  } else {
+          return namespaceDescriptorBuilder_.getMessageOrBuilder(index);
         }
       }
-      private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder> 
-          getNamespaceListFieldBuilder() {
-        if (namespaceListBuilder_ == null) {
-          namespaceListBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorList.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorListOrBuilder>(
-                  namespaceList_,
+      public java.util.List<? extends org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
+           getNamespaceDescriptorOrBuilderList() {
+        if (namespaceDescriptorBuilder_ != null) {
+          return namespaceDescriptorBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(namespaceDescriptor_);
+        }
+      }
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder addNamespaceDescriptorBuilder() {
+        return getNamespaceDescriptorFieldBuilder().addBuilder(
+            org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance());
+      }
+      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder addNamespaceDescriptorBuilder(
+          int index) {
+        return getNamespaceDescriptorFieldBuilder().addBuilder(
+            index, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance());
+      }
+      public java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder> 
+           getNamespaceDescriptorBuilderList() {
+        return getNamespaceDescriptorFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> 
+          getNamespaceDescriptorFieldBuilder() {
+        if (namespaceDescriptorBuilder_ == null) {
+          namespaceDescriptorBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder>(
+                  namespaceDescriptor_,
+                  ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
                   isClean());
-          namespaceList_ = null;
+          namespaceDescriptor_ = null;
         }
-        return namespaceListBuilder_;
+        return namespaceDescriptorBuilder_;
       }
       
       // @@protoc_insertion_point(builder_scope:ListNamespaceDescriptorsResponse)
@@ -28178,103 +28298,103 @@ public final class MasterAdminProtos {
       "Response\0221\n\023namespaceDescriptor\030\001 \002(\0132\024." +
       "NamespaceDescriptor\"\031\n\027ModifyNamespaceRe" +
       "sponse\"!\n\037ListNamespaceDescriptorsReques" +
-      "t\"S\n ListNamespaceDescriptorsResponse\022/\n" +
-      "\rnamespaceList\030\001 \002(\0132\030.NamespaceDescript" +
-      "orList\">\n%GetTableDescriptorsByNamespace" +
-      "Request\022\025\n\rnamespaceName\030\001 \002(\t\"K\n&GetTab" +
-      "leDescriptorsByNamespaceResponse\022!\n\013tabl" +
-      "eSchema\030\001 \003(\0132\014.TableSchema\"\021\n\017ShutdownR",
-      "equest\"\022\n\020ShutdownResponse\"\023\n\021StopMaster" +
-      "Request\"\024\n\022StopMasterResponse\"\020\n\016Balance" +
-      "Request\"&\n\017BalanceResponse\022\023\n\013balancerRa" +
-      "n\030\001 \002(\010\"<\n\031SetBalancerRunningRequest\022\n\n\002" +
-      "on\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\"6\n\032SetBala" +
-      "ncerRunningResponse\022\030\n\020prevBalanceValue\030" +
-      "\001 \001(\010\"\024\n\022CatalogScanRequest\")\n\023CatalogSc" +
-      "anResponse\022\022\n\nscanResult\030\001 \001(\005\"-\n\033Enable" +
-      "CatalogJanitorRequest\022\016\n\006enable\030\001 \002(\010\"1\n" +
-      "\034EnableCatalogJanitorResponse\022\021\n\tprevVal",
-      "ue\030\001 \001(\010\" \n\036IsCatalogJanitorEnabledReque" +
-      "st\"0\n\037IsCatalogJanitorEnabledResponse\022\r\n" +
-      "\005value\030\001 \002(\010\"=\n\023TakeSnapshotRequest\022&\n\010s" +
-      "napshot\030\001 \002(\0132\024.SnapshotDescription\"/\n\024T" +
-      "akeSnapshotResponse\022\027\n\017expectedTimeout\030\001" +
-      " \002(\003\"\025\n\023ListSnapshotRequest\"?\n\024ListSnaps" +
-      "hotResponse\022\'\n\tsnapshots\030\001 \003(\0132\024.Snapsho" +
-      "tDescription\"?\n\025DeleteSnapshotRequest\022&\n" +
-      "\010snapshot\030\001 \002(\0132\024.SnapshotDescription\"\030\n" +
-      "\026DeleteSnapshotResponse\"@\n\026RestoreSnapsh",
-      "otRequest\022&\n\010snapshot\030\001 \002(\0132\024.SnapshotDe" +
-      "scription\"\031\n\027RestoreSnapshotResponse\"?\n\025" +
-      "IsSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132" +
-      "\024.SnapshotDescription\"U\n\026IsSnapshotDoneR" +
-      "esponse\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapshot" +
-      "\030\002 \001(\0132\024.SnapshotDescription\"F\n\034IsRestor" +
-      "eSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\0132\024" +
-      ".SnapshotDescription\"3\n\035IsRestoreSnapsho" +
-      "tDoneResponse\022\022\n\004done\030\001 \001(\010:\004true2\306\022\n\022Ma" +
-      "sterAdminService\0222\n\taddColumn\022\021.AddColum",
-      "nRequest\032\022.AddColumnResponse\022;\n\014deleteCo" +
-      "lumn\022\024.DeleteColumnRequest\032\025.DeleteColum" +
-      "nResponse\022;\n\014modifyColumn\022\024.ModifyColumn" +
-      "Request\032\025.ModifyColumnResponse\0225\n\nmoveRe" +
-      "gion\022\022.MoveRegionRequest\032\023.MoveRegionRes" +
-      "ponse\022Y\n\026dispatchMergingRegions\022\036.Dispat" +
-      "chMergingRegionsRequest\032\037.DispatchMergin" +
-      "gRegionsResponse\022;\n\014assignRegion\022\024.Assig" +
-      "nRegionRequest\032\025.AssignRegionResponse\022A\n" +
-      "\016unassignRegion\022\026.UnassignRegionRequest\032",
-      "\027.UnassignRegionResponse\022>\n\rofflineRegio" +
-      "n\022\025.OfflineRegionRequest\032\026.OfflineRegion" +
-      "Response\0228\n\013deleteTable\022\023.DeleteTableReq" +
-      "uest\032\024.DeleteTableResponse\0228\n\013enableTabl" +
-      "e\022\023.EnableTableRequest\032\024.EnableTableResp" +
-      "onse\022;\n\014disableTable\022\024.DisableTableReque" +
-      "st\032\025.DisableTableResponse\0228\n\013modifyTable" +
-      "\022\023.ModifyTableRequest\032\024.ModifyTableRespo" +
-      "nse\0228\n\013createTable\022\023.CreateTableRequest\032" +
-      "\024.CreateTableResponse\022/\n\010shutdown\022\020.Shut",
-      "downRequest\032\021.ShutdownResponse\0225\n\nstopMa" +
-      "ster\022\022.StopMasterRequest\032\023.StopMasterRes" +
-      "ponse\022,\n\007balance\022\017.BalanceRequest\032\020.Bala" +
-      "nceResponse\022M\n\022setBalancerRunning\022\032.SetB" +
-      "alancerRunningRequest\032\033.SetBalancerRunni" +
-      "ngResponse\022;\n\016runCatalogScan\022\023.CatalogSc" +
-      "anRequest\032\024.CatalogScanResponse\022S\n\024enabl" +
-      "eCatalogJanitor\022\034.EnableCatalogJanitorRe" +
-      "quest\032\035.EnableCatalogJanitorResponse\022\\\n\027" +
-      "isCatalogJanitorEnabled\022\037.IsCatalogJanit",
-      "orEnabledRequest\032 .IsCatalogJanitorEnabl" +
-      "edResponse\022L\n\021execMasterService\022\032.Coproc" +
-      "essorServiceRequest\032\033.CoprocessorService" +
-      "Response\0227\n\010snapshot\022\024.TakeSnapshotReque" +
-      "st\032\025.TakeSnapshotResponse\022D\n\025getComplete" +
-      "dSnapshots\022\024.ListSnapshotRequest\032\025.ListS" +
-      "napshotResponse\022A\n\016deleteSnapshot\022\026.Dele" +
-      "teSnapshotRequest\032\027.DeleteSnapshotRespon" +
-      "se\022A\n\016isSnapshotDone\022\026.IsSnapshotDoneReq" +
-      "uest\032\027.IsSnapshotDoneResponse\022D\n\017restore",
-      "Snapshot\022\027.RestoreSnapshotRequest\032\030.Rest" +
-      "oreSnapshotResponse\022V\n\025isRestoreSnapshot" +
-      "Done\022\035.IsRestoreSnapshotDoneRequest\032\036.Is" +
-      "RestoreSnapshotDoneResponse\022D\n\017isMasterR" +
-      "unning\022\027.IsMasterRunningRequest\032\030.IsMast" +
-      "erRunningResponse\022D\n\017modifyNamespace\022\027.M" +
-      "odifyNamespaceRequest\032\030.ModifyNamespaceR" +
-      "esponse\022D\n\017createNamespace\022\027.CreateNames" +
-      "paceRequest\032\030.CreateNamespaceResponse\022D\n" +
-      "\017deleteNamespace\022\027.DeleteNamespaceReques",
-      "t\032\030.DeleteNamespaceResponse\022Y\n\026getNamesp" +
-      "aceDescriptor\022\036.GetNamespaceDescriptorRe" +
-      "quest\032\037.GetNamespaceDescriptorResponse\022_" +
-      "\n\030listNamespaceDescriptors\022 .ListNamespa" +
-      "ceDescriptorsRequest\032!.ListNamespaceDesc" +
-      "riptorsResponse\022q\n\036getTableDescriptorsBy" +
-      "Namespace\022&.GetTableDescriptorsByNamespa" +
-      "ceRequest\032\'.GetTableDescriptorsByNamespa" +
-      "ceResponseBG\n*org.apache.hadoop.hbase.pr" +
-      "otobuf.generatedB\021MasterAdminProtosH\001\210\001\001",
-      "\240\001\001"
+      "t\"U\n ListNamespaceDescriptorsResponse\0221\n" +
+      "\023namespaceDescriptor\030\001 \003(\0132\024.NamespaceDe" +
+      "scriptor\">\n%GetTableDescriptorsByNamespa" +
+      "ceRequest\022\025\n\rnamespaceName\030\001 \002(\t\"K\n&GetT" +
+      "ableDescriptorsByNamespaceResponse\022!\n\013ta" +
+      "bleSchema\030\001 \003(\0132\014.TableSchema\"\021\n\017Shutdow",
+      "nRequest\"\022\n\020ShutdownResponse\"\023\n\021StopMast" +
+      "erRequest\"\024\n\022StopMasterResponse\"\020\n\016Balan" +
+      "ceRequest\"&\n\017BalanceResponse\022\023\n\013balancer" +
+      "Ran\030\001 \002(\010\"<\n\031SetBalancerRunningRequest\022\n" +
+      "\n\002on\030\001 \002(\010\022\023\n\013synchronous\030\002 \001(\010\"6\n\032SetBa" +
+      "lancerRunningResponse\022\030\n\020prevBalanceValu" +
+      "e\030\001 \001(\010\"\024\n\022CatalogScanRequest\")\n\023Catalog" +
+      "ScanResponse\022\022\n\nscanResult\030\001 \001(\005\"-\n\033Enab" +
+      "leCatalogJanitorRequest\022\016\n\006enable\030\001 \002(\010\"" +
+      "1\n\034EnableCatalogJanitorResponse\022\021\n\tprevV",
+      "alue\030\001 \001(\010\" \n\036IsCatalogJanitorEnabledReq" +
+      "uest\"0\n\037IsCatalogJanitorEnabledResponse\022" +
+      "\r\n\005value\030\001 \002(\010\"=\n\023TakeSnapshotRequest\022&\n" +
+      "\010snapshot\030\001 \002(\0132\024.SnapshotDescription\"/\n" +
+      "\024TakeSnapshotResponse\022\027\n\017expectedTimeout" +
+      "\030\001 \002(\003\"\025\n\023ListSnapshotRequest\"?\n\024ListSna" +
+      "pshotResponse\022\'\n\tsnapshots\030\001 \003(\0132\024.Snaps" +
+      "hotDescription\"?\n\025DeleteSnapshotRequest\022" +
+      "&\n\010snapshot\030\001 \002(\0132\024.SnapshotDescription\"" +
+      "\030\n\026DeleteSnapshotResponse\"@\n\026RestoreSnap",
+      "shotRequest\022&\n\010snapshot\030\001 \002(\0132\024.Snapshot" +
+      "Description\"\031\n\027RestoreSnapshotResponse\"?" +
+      "\n\025IsSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(" +
+      "\0132\024.SnapshotDescription\"U\n\026IsSnapshotDon" +
+      "eResponse\022\023\n\004done\030\001 \001(\010:\005false\022&\n\010snapsh" +
+      "ot\030\002 \001(\0132\024.SnapshotDescription\"F\n\034IsRest" +
+      "oreSnapshotDoneRequest\022&\n\010snapshot\030\001 \001(\013" +
+      "2\024.SnapshotDescription\"3\n\035IsRestoreSnaps" +
+      "hotDoneResponse\022\022\n\004done\030\001 \001(\010:\004true2\306\022\n\022" +
+      "MasterAdminService\0222\n\taddColumn\022\021.AddCol",
+      "umnRequest\032\022.AddColumnResponse\022;\n\014delete" +
+      "Column\022\024.DeleteColumnRequest\032\025.DeleteCol" +
+      "umnResponse\022;\n\014modifyColumn\022\024.ModifyColu" +
+      "mnRequest\032\025.ModifyColumnResponse\0225\n\nmove" +
+      "Region\022\022.MoveRegionRequest\032\023.MoveRegionR" +
+      "esponse\022Y\n\026dispatchMergingRegions\022\036.Disp" +
+      "atchMergingRegionsRequest\032\037.DispatchMerg" +
+      "ingRegionsResponse\022;\n\014assignRegion\022\024.Ass" +
+      "ignRegionRequest\032\025.AssignRegionResponse\022" +
+      "A\n\016unassignRegion\022\026.UnassignRegionReques",
+      "t\032\027.UnassignRegionResponse\022>\n\rofflineReg" +
+      "ion\022\025.OfflineRegionRequest\032\026.OfflineRegi" +
+      "onResponse\0228\n\013deleteTable\022\023.DeleteTableR" +
+      "equest\032\024.DeleteTableResponse\0228\n\013enableTa" +
+      "ble\022\023.EnableTableRequest\032\024.EnableTableRe" +
+      "sponse\022;\n\014disableTable\022\024.DisableTableReq" +
+      "uest\032\025.DisableTableResponse\0228\n\013modifyTab" +
+      "le\022\023.ModifyTableRequest\032\024.ModifyTableRes" +
+      "ponse\0228\n\013createTable\022\023.CreateTableReques" +
+      "t\032\024.CreateTableResponse\022/\n\010shutdown\022\020.Sh",
+      "utdownRequest\032\021.ShutdownResponse\0225\n\nstop" +
+      "Master\022\022.StopMasterRequest\032\023.StopMasterR" +
+      "esponse\022,\n\007balance\022\017.BalanceRequest\032\020.Ba" +
+      "lanceResponse\022M\n\022setBalancerRunning\022\032.Se" +
+      "tBalancerRunningRequest\032\033.SetBalancerRun" +
+      "ningResponse\022;\n\016runCatalogScan\022\023.Catalog" +
+      "ScanRequest\032\024.CatalogScanResponse\022S\n\024ena" +
+      "bleCatalogJanitor\022\034.EnableCatalogJanitor" +
+      "Request\032\035.EnableCatalogJanitorResponse\022\\" +
+      "\n\027isCatalogJanitorEnabled\022\037.IsCatalogJan",
+      "itorEnabledRequest\032 .IsCatalogJanitorEna" +
+      "bledResponse\022L\n\021execMasterService\022\032.Copr" +
+      "ocessorServiceRequest\032\033.CoprocessorServi" +
+      "ceResponse\0227\n\010snapshot\022\024.TakeSnapshotReq" +
+      "uest\032\025.TakeSnapshotResponse\022D\n\025getComple" +
+      "tedSnapshots\022\024.ListSnapshotRequest\032\025.Lis" +
+      "tSnapshotResponse\022A\n\016deleteSnapshot\022\026.De" +
+      "leteSnapshotRequest\032\027.DeleteSnapshotResp" +
+      "onse\022A\n\016isSnapshotDone\022\026.IsSnapshotDoneR" +
+      "equest\032\027.IsSnapshotDoneResponse\022D\n\017resto",
+      "reSnapshot\022\027.RestoreSnapshotRequest\032\030.Re" +
+      "storeSnapshotResponse\022V\n\025isRestoreSnapsh" +
+      "otDone\022\035.IsRestoreSnapshotDoneRequest\032\036." +
+      "IsRestoreSnapshotDoneResponse\022D\n\017isMaste" +
+      "rRunning\022\027.IsMasterRunningRequest\032\030.IsMa" +
+      "sterRunningResponse\022D\n\017modifyNamespace\022\027" +
+      ".ModifyNamespaceRequest\032\030.ModifyNamespac" +
+      "eResponse\022D\n\017createNamespace\022\027.CreateNam" +
+      "espaceRequest\032\030.CreateNamespaceResponse\022" +
+      "D\n\017deleteNamespace\022\027.DeleteNamespaceRequ",
+      "est\032\030.DeleteNamespaceResponse\022Y\n\026getName" +
+      "spaceDescriptor\022\036.GetNamespaceDescriptor" +
+      "Request\032\037.GetNamespaceDescriptorResponse" +
+      "\022_\n\030listNamespaceDescriptors\022 .ListNames" +
+      "paceDescriptorsRequest\032!.ListNamespaceDe" +
+      "scriptorsResponse\022q\n\036getTableDescriptors" +
+      "ByNamespace\022&.GetTableDescriptorsByNames" +
+      "paceRequest\032\'.GetTableDescriptorsByNames" +
+      "paceResponseBG\n*org.apache.hadoop.hbase." +
+      "protobuf.generatedB\021MasterAdminProtosH\001\210",
+      "\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -28566,7 +28686,7 @@ public final class MasterAdminProtos {
           internal_static_ListNamespaceDescriptorsResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ListNamespaceDescriptorsResponse_descriptor,
-              new java.lang.String[] { "NamespaceList", },
+              new java.lang.String[] { "NamespaceDescriptor", },
               org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse.class,
               org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder.class);
           internal_static_GetTableDescriptorsByNamespaceRequest_descriptor =

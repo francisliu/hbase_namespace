@@ -20,9 +20,7 @@
 package org.apache.hadoop.hbase;
 
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.DataOutput;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,7 +35,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.hbase.io.HeapSize;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
@@ -72,8 +69,8 @@ import com.google.common.primitives.Longs;
 public class KeyValue implements Cell, HeapSize, Cloneable {
   static final Log LOG = LogFactory.getLog(KeyValue.class);
 
-  private static final int metalength =
-      TableName.valueOf(HConstants.META_TABLE_NAME).getName().length+1; // '.META.' length
+  private static final int META_LENGTH =
+      TableName.valueOf(HConstants.META_TABLE_NAME).getName().length; // 'hbase.meta' length
 
   // TODO: Group Key-only comparators and operations into a Key class, just
   // for neatness sake, if can figure what to call it.
@@ -2398,13 +2395,13 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
       // Rows look like this: .META.,ROW_FROM_META,RID
       //        LOG.info("ROOT " + Bytes.toString(left, loffset, llength) +
       //          "---" + Bytes.toString(right, roffset, rlength));
-      int lmetaOffsetPlusDelimiter = loffset + metalength;
+      int lmetaOffsetPlusDelimiter = loffset + META_LENGTH + 1;
       int leftFarDelimiter = getDelimiterInReverse(left,
           lmetaOffsetPlusDelimiter,
-          llength - metalength, HConstants.DELIMITER);
-      int rmetaOffsetPlusDelimiter = roffset + metalength;
+          llength - META_LENGTH - 1, HConstants.DELIMITER);
+      int rmetaOffsetPlusDelimiter = roffset + META_LENGTH + 1;
       int rightFarDelimiter = getDelimiterInReverse(right,
-          rmetaOffsetPlusDelimiter, rlength - metalength,
+          rmetaOffsetPlusDelimiter, rlength - META_LENGTH - 1,
           HConstants.DELIMITER);
       if (leftFarDelimiter < 0 && rightFarDelimiter >= 0) {
         // Nothing between .META. and regionid.  Its first key.

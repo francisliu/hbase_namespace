@@ -27,6 +27,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.management.ObjectName;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -51,7 +54,6 @@ import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -830,7 +832,7 @@ MasterServices, Server {
 
     status.setStatus("Assigning System tables");
     // Make sure system tables are assigned before proceeding.
-    if(!assignSystemTables(status)) return;
+    if (!assignSystemTables(status)) return;
 
     enableServerShutdownHandler();
 
@@ -965,9 +967,9 @@ MasterServices, Server {
         this.catalogTracker.getMetaLocation());
     }
 
-    enableCatalogTables(Bytes.toString(HConstants.META_TABLE_NAME));
-    LOG.info(".META. assigned=" + assigned + ", rit=" + rit + ", location="
-        + catalogTracker.getMetaLocation());
+    enableCatalogTables(HConstants.META_TABLE_NAME_STR);
+    LOG.info(".META. assigned=" + assigned + ", rit=" + rit +
+      ", location=" + catalogTracker.getMetaLocation());
     status.setStatus("META assigned.");
   }
 
@@ -1003,10 +1005,10 @@ MasterServices, Server {
     // Scan META for all system regions, skipping any disabled tables
     Map<HRegionInfo, ServerName> allRegions =
         MetaReader.fullScan(catalogTracker, disabledOrDisablingOrEnabling, true);
-    for(HRegionInfo regionInfo: allRegions.keySet()) {
-      if(!TableName.valueOf(regionInfo.getTableName())
-          .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
-        allRegions.remove(regionInfo);
+    for(Iterator<HRegionInfo> iter = allRegions.keySet().iterator();
+        iter.hasNext();) {
+      if (!HTableDescriptor.isSystemTable(iter.next().getTableName())) {
+        iter.remove();
       }
     }
 
@@ -1017,7 +1019,7 @@ MasterServices, Server {
       boolean rit =
           assignmentManager.processRegionInTransitionAndBlockUntilAssigned(regionInfo);
       boolean serverValid = false;
-      if(currServer != null) {
+      if (currServer != null) {
         serverValid = verifyRegionLocation(currServer, regionInfo);
       }
       if (!rit && !serverValid) {
@@ -1069,7 +1071,7 @@ MasterServices, Server {
         ProtobufUtil.getRegionInfo(HConnectionManager.getConnection(conf)
             .getAdmin(serverName),
             regionInfo.getRegionName()) != null;
-    if(!serverValid) {
+    if (!serverValid) {
       throw new IOException("Region "+regionInfo.getRegionNameAsString()+
           " online validation failed on server "+serverName);
     }
@@ -2937,12 +2939,9 @@ MasterServices, Server {
     try {
       MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder response =
           MasterAdminProtos.ListNamespaceDescriptorsResponse.newBuilder();
-      HBaseProtos.NamespaceDescriptorList.Builder bList =
-          HBaseProtos.NamespaceDescriptorList.newBuilder();
       for(NamespaceDescriptor ns: listNamespaceDescriptors()) {
-        bList.addNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
+        response.addNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
       }
-      response.setNamespaceList(bList.build());
       return response.build();
     } catch (IOException e) {
       throw new ServiceException(e);

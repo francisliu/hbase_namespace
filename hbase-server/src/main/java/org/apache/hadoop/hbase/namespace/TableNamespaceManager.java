@@ -82,7 +82,8 @@ public class TableNamespaceManager {
     TableName tableName = TableName.valueOf(HConstants.NAMESPACE_TABLE_NAME);
     boolean newTable = false;
     try {
-      if(!MetaReader.tableExists(masterServices.getCatalogTracker(), tableName.getNameAsString())) {
+      if (!MetaReader.tableExists(masterServices.getCatalogTracker(),
+          tableName.getNameAsString())) {
         LOG.info("Namespace table not found. Creating...");
         newTable = true;
         createNamespaceTable(masterServices);
@@ -95,24 +96,24 @@ public class TableNamespaceManager {
     zkNamespaceManager.start();
 
     boolean fullyInitialized = true;
-    if(get(NamespaceDescriptor.DEFAULT_NAMESPACE.getName()) == null) {
+    if (get(NamespaceDescriptor.DEFAULT_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.DEFAULT_NAMESPACE);
       fullyInitialized = false;
     }
-    if(get(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) == null) {
+    if (get(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.SYSTEM_NAMESPACE);
       fullyInitialized = false;
     }
     //this part is for migrating to namespace aware hbase
     //we create namespaces for all the tables which have dots
-    if(!fullyInitialized) {
+    if (!fullyInitialized) {
       MasterFileSystem mfs = masterServices.getMasterFileSystem();
       List<Path> dirs = FSUtils.getTableDirs(mfs.getFileSystem(), mfs.getRootDir());
       for(Path p: dirs) {
         NamespaceDescriptor ns =
             NamespaceDescriptor.create(TableName.valueOf(p.getName()).getNamespaceAsString())
                         .build();
-        if(get(ns.getName()) == null) {
+        if (get(ns.getName()) == null) {
           create(ns);
         }
       }
@@ -142,7 +143,7 @@ public class TableNamespaceManager {
   }
 
   public void create(NamespaceDescriptor ns) throws IOException {
-    if(get(ns.getName()) != null) {
+    if (get(ns.getName()) != null) {
       throw new ConstraintException("Namespace "+ns.getName()+" already exists");
     }
     FileSystem fs = masterServices.getMasterFileSystem().getFileSystem();
@@ -152,7 +153,7 @@ public class TableNamespaceManager {
   }
 
   public void update(NamespaceDescriptor ns) throws IOException {
-    if(get(ns.getName()) == null) {
+    if (get(ns.getName()) == null) {
       throw new ConstraintException("Namespace "+ns.getName()+" does not exist");
     }
     upsert(ns);
@@ -174,11 +175,11 @@ public class TableNamespaceManager {
   }
 
   public void remove(String name) throws IOException {
-    if(RESERVED_NAMESPACES.contains(name)) {
+    if (RESERVED_NAMESPACES.contains(name)) {
       throw new ConstraintException("Reserved namespace "+name+" cannot be removed.");
     }
     int tableCount = masterServices.getTableDescriptorsByNamespace(name).size();
-    if(tableCount > 0) {
+    if (tableCount > 0) {
       throw new ConstraintException("Only empty namespaces can be removed. " +
           "Namespace "+name+" has "+tableCount+" tables");
     }
@@ -191,11 +192,11 @@ public class TableNamespaceManager {
     for(FileStatus status :
             fs.listStatus(FSUtils.getNamespaceDir(
                 masterServices.getMasterFileSystem().getRootDir(), name))) {
-      if(!HConstants.HBASE_NON_TABLE_DIRS.contains(status.getPath().getName())) {
+      if (!HConstants.HBASE_NON_TABLE_DIRS.contains(status.getPath().getName())) {
         throw new IOException("Namespace directory contains table dir: "+status.getPath());
       }
     }
-    if(!fs.delete(FSUtils.getNamespaceDir(
+    if (!fs.delete(FSUtils.getNamespaceDir(
         masterServices.getMasterFileSystem().getRootDir(), name), true)) {
       throw new IOException("Failed to remove namespace: "+name);
     }
@@ -234,7 +235,7 @@ public class TableNamespaceManager {
       Thread.sleep(100);
       tries--;
     }
-    if(tries <= 0) {
+    if (tries <= 0) {
       throw new IOException("Failed to create namespace table.");
     }
   }
