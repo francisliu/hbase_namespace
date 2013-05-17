@@ -445,41 +445,37 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     }
     int namespaceDelimIndex = com.google.common.primitives.Bytes.lastIndexOf(tableName,
         (byte)TableName.NAMESPACE_DELIM);
-    if(namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
+    if (namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
       NamespaceDescriptor.isLegalNamespaceName(tableName);
       isLegalTableQualifierName(tableName);
-    }else {
-      byte[] namespace = Arrays.copyOfRange(tableName, 0, namespaceDelimIndex);
-      byte[] table =  Arrays.copyOfRange(tableName, namespaceDelimIndex + 1, tableName.length);
-      NamespaceDescriptor.isLegalNamespaceName(namespace);
-      isLegalTableQualifierName(table);
+    } else {
+      NamespaceDescriptor.isLegalNamespaceName(tableName, 0, namespaceDelimIndex);
+      isLegalTableQualifierName(tableName, namespaceDelimIndex + 1, tableName.length);
     }
     return tableName;
   }
-  
+
   private static void isLegalTableQualifierName(final byte[] qualifierName){
-    if (HConstants.CLUSTER_ID_FILE_NAME.equalsIgnoreCase(Bytes
-        .toString(qualifierName))
-        || HConstants.SPLIT_LOGDIR_NAME.equalsIgnoreCase(Bytes
-            .toString(qualifierName))
-        || HConstants.VERSION_FILE_NAME.equalsIgnoreCase(Bytes
-            .toString(qualifierName))) {
-      throw new IllegalArgumentException(Bytes.toString(qualifierName)
-          + " conflicted with system reserved words");
-    }
+    isLegalTableQualifierName(qualifierName, 0, qualifierName.length);
+  }
+
+  private static void isLegalTableQualifierName(final byte[] qualifierName,
+                                                int offset,
+                                                int length){
     boolean foundDot = false;
-    for (int i = 0; i < qualifierName.length; i++) {
+    for (int i = offset; i < length; i++) {
       if ((Character.isLetterOrDigit(qualifierName[i]) || qualifierName[i] == '_' ||
            qualifierName[i] == '-') && !foundDot) {
         continue;
       }
-      if(qualifierName[i] == '.') {
+      if (qualifierName[i] == '.') {
         foundDot = true;
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + qualifierName[i] +
         "> at " + i + ". User-space table qualifiers can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " + Bytes.toString(qualifierName));
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " +
+          Bytes.toString(qualifierName, offset, length));
     }
   }
 

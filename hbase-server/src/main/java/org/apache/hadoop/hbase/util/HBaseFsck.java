@@ -1273,7 +1273,7 @@ public class HBaseFsck extends Configured implements Tool {
       String tableName = path.getName();
        if ((!checkMetaOnly &&
            isTableIncluded(tableName)) ||
-           tableName.equals(Bytes.toString(HConstants.META_TABLE_NAME))) {
+           tableName.equals(HConstants.META_TABLE_NAME_STR)) {
          tableDirs.add(fs.getFileStatus(path));
        }
     }

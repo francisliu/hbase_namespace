@@ -120,7 +120,7 @@ public class TestNamespaceMigration {
         throw new IOException("Failed delete of " + tgtUntarDir.toString());
       }
     }
-    if(!srcTarFile.exists()) {
+    if (!srcTarFile.exists()) {
       throw new IOException(srcTarFile+" does not exist");
     }
     LOG.info("Untarring " + srcTarFile + " into " + homedir.toString());

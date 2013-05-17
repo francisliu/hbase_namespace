@@ -45,6 +45,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
@@ -2505,10 +2506,10 @@ public class AssignmentManager extends ZooKeeperListener {
         catalogTracker, disabledOrDisablingOrEnabling, true);
     }
     //remove system tables because they would have been assigned earlier
-    for(HRegionInfo regionInfo: allRegions.keySet()) {
-      if(TableName.valueOf(regionInfo.getTableName())
-          .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
-        allRegions.remove(regionInfo);
+    for(Iterator<HRegionInfo> iter = allRegions.keySet().iterator();
+        iter.hasNext();) {
+      if (HTableDescriptor.isSystemTable(iter.next().getTableName())) {
+        iter.remove();
       }
     }
     if (allRegions == null || allRegions.isEmpty()) return;

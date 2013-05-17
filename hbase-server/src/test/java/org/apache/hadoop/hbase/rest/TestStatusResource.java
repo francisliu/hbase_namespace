@@ -43,7 +43,7 @@ import org.junit.experimental.categories.Category;
 
 @Category(MediumTests.class)
 public class TestStatusResource {
-  private static final byte[] META_REGION_NAME = Bytes.toBytes(Bytes.toString(HConstants.META_TABLE_NAME)+",,1");
+  private static final byte[] META_REGION_NAME = Bytes.toBytes(HConstants.META_TABLE_NAME_STR+",,1");
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static final HBaseRESTTestingUtility REST_TEST_UTIL = 

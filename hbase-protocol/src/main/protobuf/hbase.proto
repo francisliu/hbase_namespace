@@ -174,10 +174,6 @@ message UUID {
   required uint64 mostSigBits = 2;
 }
 
-message NamespaceDescriptorList {
-  repeated NamespaceDescriptor namespaceDescriptor = 1;
-}
-
 message NamespaceDescriptor {
   required string name = 1;
   repeated NamespaceProp props = 2;

@@ -70,7 +70,7 @@ public class TestNamespace {
       admin.deleteTable(desc.getName());
     }
     for(NamespaceDescriptor ns: admin.listNamespaceDescriptors()) {
-      if(ns.getName().startsWith(prefix)) {
+      if (ns.getName().startsWith(prefix)) {
         admin.deleteNamespace(ns.getName());
       }
     }
@@ -94,7 +94,7 @@ public class TestNamespace {
 
     //verify existence of system tables
     Set<String> systemTables = Sets.newHashSet(
-        Bytes.toString(HConstants.META_TABLE_NAME),
+        HConstants.META_TABLE_NAME_STR,
         Bytes.toString(HConstants.NAMESPACE_TABLE_NAME));
     List<HTableDescriptor> descs =
         admin.getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());

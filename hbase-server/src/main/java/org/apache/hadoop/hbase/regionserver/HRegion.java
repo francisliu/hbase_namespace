@@ -5188,7 +5188,7 @@ public class HRegion implements HeapSize { // , Writable{
       final boolean majorCompact)
   throws IOException {
     HRegion region = null;
-    String metaStr = Bytes.toString(HConstants.META_TABLE_NAME);
+    String metaStr = HConstants.META_TABLE_NAME_STR;
     // Currently expects tables have one region only.
     if (p.getName().startsWith(metaStr)) {
       region = HRegion.newHRegion(p, log, fs, c,

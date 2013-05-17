@@ -2020,7 +2020,7 @@ public class HBaseAdmin implements Abortable, Closeable {
   }
 
   /**
-   * Delete an existing namespace
+   * Delete an existing namespace. Only empty namespaces (no tables) can be removed.
    * @param name namespace name
    * @throws IOException
    */
@@ -2068,7 +2068,7 @@ public class HBaseAdmin implements Abortable, Closeable {
             List<HBaseProtos.NamespaceDescriptor> list =
                 masterAdmin.listNamespaceDescriptors(null,
                     MasterAdminProtos.ListNamespaceDescriptorsRequest.newBuilder().build())
-                    .getNamespaceList().getNamespaceDescriptorList();
+                    .getNamespaceDescriptorList();
             List<NamespaceDescriptor> res = new ArrayList<NamespaceDescriptor>(list.size());
             for(HBaseProtos.NamespaceDescriptor ns: list) {
               res.add(ProtobufUtil.toNamespaceDescriptor(ns));

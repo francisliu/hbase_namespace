@@ -500,7 +500,7 @@ public class TestMemStore extends TestCase {
     for (int k = start; k <= end; k++) {
       byte [] kk = Bytes.toBytes(k);
       byte [] row =
-        Bytes.toBytes(Bytes.toString(HConstants.META_TABLE_NAME)+",table," + Bytes.toString(kk) + ",1," + k);
+        Bytes.toBytes(HConstants.META_TABLE_NAME_STR+",table," + Bytes.toString(kk) + ",1," + k);
       KeyValue key = new KeyValue(row, CONTENTS, BASIC,
         System.currentTimeMillis(),
         Bytes.toBytes(CONTENTSTR + k));

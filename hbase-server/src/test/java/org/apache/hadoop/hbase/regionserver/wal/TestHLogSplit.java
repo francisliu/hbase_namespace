@@ -333,7 +333,7 @@ public class TestHLogSplit {
   public void testRecoveredEditsPathForMeta() throws IOException {
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     byte [] encoded = HRegionInfo.FIRST_META_REGIONINFO.getEncodedNameAsBytes();
-    Path tdir = FSUtils.getTableDir(HBASEDIR, Bytes.toString(HConstants.META_TABLE_NAME));
+    Path tdir = FSUtils.getTableDir(HBASEDIR, HConstants.META_TABLE_NAME_STR);
     Path regiondir = new Path(tdir,
         HRegionInfo.FIRST_META_REGIONINFO.getEncodedName());
     fs.mkdirs(regiondir);
@@ -355,7 +355,7 @@ public class TestHLogSplit {
   public void testOldRecoveredEditsFileSidelined() throws IOException {
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     byte [] encoded = HRegionInfo.FIRST_META_REGIONINFO.getEncodedNameAsBytes();
-    Path tdir = FSUtils.getTableDir(HBASEDIR, Bytes.toString(HConstants.META_TABLE_NAME));
+    Path tdir = FSUtils.getTableDir(HBASEDIR, HConstants.META_TABLE_NAME_STR);
     Path regiondir = new Path(tdir,
         HRegionInfo.FIRST_META_REGIONINFO.getEncodedName());
     fs.mkdirs(regiondir);

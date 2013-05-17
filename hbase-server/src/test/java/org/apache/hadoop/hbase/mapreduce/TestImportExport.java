@@ -193,7 +193,7 @@ public class TestImportExport {
    */
   @Test
   public void testMetaExport() throws Exception {
-    String EXPORT_TABLE = Bytes.toString(HConstants.META_TABLE_NAME);
+    String EXPORT_TABLE = HConstants.META_TABLE_NAME_STR;
     String[] args = new String[] { EXPORT_TABLE, FQ_OUTPUT_DIR, "1", "0", "0" };
     assertTrue(runExport(args));
   }

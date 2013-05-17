@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.Arrays;
@@ -84,24 +85,30 @@ public class NamespaceDescriptor {
     return Collections.unmodifiableMap(properties);
   }
 
-  public static void isLegalNamespaceName(final byte[] namespaceName){
-    if(Arrays.equals(namespaceName, SYSTEM_NAMESPACE_NAME)){
+  public static void isLegalNamespaceName(byte[] namespaceName) {
+    isLegalNamespaceName(namespaceName, 0, namespaceName.length);
+  }
+
+  public static void isLegalNamespaceName(byte[] namespaceName, int offset, int length) {
+    if (Bytes.equals(namespaceName, offset, length,
+        SYSTEM_NAMESPACE_NAME, 0, SYSTEM_NAMESPACE_NAME.length)){
       return;
     }
-    if (namespaceName[0] == '.' || namespaceName[0] == '-') {
+    if (namespaceName[offset] == '.' || namespaceName[offset] == '-') {
       throw new IllegalArgumentException("Illegal first character <" + namespaceName[0] +
           "> at 0. Namespaces can only start with alphanumeric " +
           "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName));
     }
-    for (int i = 0; i < namespaceName.length; i++) {
-      if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' || 
+    for (int i = offset; i < length; i++) {
+      if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' ||
           namespaceName[i] == '-' ||
           namespaceName[i] == '.') {
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +
         "> at " + i + ". Namespaces can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " + Bytes.toString(namespaceName));
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " + Bytes.toString(namespaceName,
+          offset, length));
     }
   }
 
@@ -176,7 +183,7 @@ public class NamespaceDescriptor {
     }
 
     public NamespaceDescriptor build() {
-      if(this.bName == null){
+      if (this.bName == null){
          throw new IllegalArgumentException("A name has to be specified in a namespace.");
       }
       
