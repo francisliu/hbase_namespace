@@ -61,6 +61,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SplitLogCounters;
 import org.apache.hadoop.hbase.TableName;
@@ -776,7 +777,7 @@ public class TestDistributedLogSplitting {
     int count = 0;
     FileSystem fs = master.getMasterFileSystem().getFileSystem();
     Path rootdir = FSUtils.getRootDir(conf);
-    Path tdir = HTableDescriptor.getTableDir(rootdir, Bytes.toBytes("disableTable"));
+    Path tdir = FSUtils.getTableDir(rootdir, Bytes.toBytes("disableTable"));
     for (HRegionInfo hri : regions) {
       @SuppressWarnings("deprecation")
       Path editsdir =
@@ -1171,14 +1172,14 @@ public class TestDistributedLogSplitting {
       for (String oregion : regions)
         LOG.debug("Region still online: " + oregion);
     }
-    assertEquals(1 + existingRegions, regions.size());
+    assertEquals(2 + existingRegions, regions.size());
     LOG.debug("Enabling table\n");
     TEST_UTIL.getHBaseAdmin().enableTable(table);
     LOG.debug("Waiting for no more RIT\n");
     blockUntilNoRIT(zkw, master);
     LOG.debug("Verifying there are " + numRegions + " assigned on cluster\n");
     regions = getAllOnlineRegions(cluster);
-    assertEquals(numRegions + 1 + existingRegions, regions.size());
+    assertEquals(numRegions + 2 + existingRegions, regions.size());
     return ht;
   }
 

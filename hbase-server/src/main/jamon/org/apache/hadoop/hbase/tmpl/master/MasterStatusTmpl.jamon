@@ -317,9 +317,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
         <td align="center"><% frags.get(tableName) != null ? frags.get(tableName).intValue() + "%" : "n/a" %></td>
     </%if>
     <%java>String description = null;
-        if(tableName.equalsIgnoreCase(Bytes.toString(HConstants.ROOT_TABLE_NAME))){
-            description = "The -ROOT- table holds references to all .META. regions.";
-        } else if (tableName.equalsIgnoreCase(Bytes.toString(HConstants.META_TABLE_NAME))){
+        if (tableName.equalsIgnoreCase(Bytes.toString(HConstants.META_TABLE_NAME))){
             description = "The .META. table holds references to all User Table regions";
         } else {
             description = "The .NAMESPACE. table holds information about namespaces.";

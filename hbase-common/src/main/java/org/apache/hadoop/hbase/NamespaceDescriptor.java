@@ -20,14 +20,15 @@ package org.apache.hadoop.hbase;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.hbase.util.ByteRange;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Namespace POJO class. Used to represent and define namespaces.
@@ -50,8 +51,24 @@ public class NamespaceDescriptor {
   public static final NamespaceDescriptor SYSTEM_NAMESPACE = NamespaceDescriptor.create(
     SYSTEM_NAMESPACE_NAME_STR).build();
 
+  public final static Set<String> RESERVED_NAMESPACES;
+  static {
+    Set<String> set = new HashSet<String>();
+    set.add(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
+    set.add(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
+    RESERVED_NAMESPACES = Collections.unmodifiableSet(set);
+  }
+  public final static Set<byte[]> RESERVED_NAMESPACES_BYTES;
+  static {
+    Set<byte[]> set = new TreeSet<byte[]>(Bytes.BYTES_RAWCOMPARATOR);
+    for(String name: RESERVED_NAMESPACES) {
+      set.add(Bytes.toBytes(name));
+    }
+    RESERVED_NAMESPACES_BYTES = Collections.unmodifiableSet(set);
+  }
+
   private String name;
-  private Map<byte[], byte[]> properties;
+  private Map<String, String> configuration;
 
   public static final Comparator<NamespaceDescriptor> NAMESPACE_DESCRIPTOR_COMPARATOR =
       new Comparator<NamespaceDescriptor>() {
@@ -73,27 +90,60 @@ public class NamespaceDescriptor {
     return name;
   }
 
-  public byte[] getValue(byte[] key) {
-    return properties.get(key);
+  /**
+   * Getter for accessing the configuration value by key
+   */
+  public String getConfigurationValue(String key) {
+    return configuration.get(key);
   }
 
-  public String getValue(String key) {
-    return Bytes.toString(properties.get(Bytes.toBytes(key)));
+  /**
+   * Getter for fetching an unmodifiable {@link #configuration} map.
+   */
+  public Map<String, String> getConfiguration() {
+    // shallow pointer copy
+    return Collections.unmodifiableMap(configuration);
   }
 
-  public Map<byte[], byte[]> getProperties() {
-    return Collections.unmodifiableMap(properties);
+  /**
+   * Setter for storing a configuration setting in {@link #configuration} map.
+   * @param key Config key. Same as XML config key e.g. hbase.something.or.other.
+   * @param value String value. If null, removes the setting.
+   */
+  public void setConfiguration(String key, String value) {
+    if (value == null) {
+      removeConfiguration(key);
+    } else {
+      configuration.put(key, value);
+    }
+  }
+
+  /**
+   * Remove a config setting represented by the key from the {@link #configuration} map
+   */
+  public void removeConfiguration(final String key) {
+    configuration.remove(key);
   }
 
   public static void isLegalNamespaceName(byte[] namespaceName) {
     isLegalNamespaceName(namespaceName, 0, namespaceName.length);
   }
 
+  /**
+   * Valid namespace characters are [a-zA-Z_0-9-.]
+   * Namespaces cannot start with the characters '.' and '-'.
+   * @param namespaceName
+   * @param offset
+   * @param length
+   */
   public static void isLegalNamespaceName(byte[] namespaceName, int offset, int length) {
-    if (Bytes.equals(namespaceName, offset, length,
-        SYSTEM_NAMESPACE_NAME, 0, SYSTEM_NAMESPACE_NAME.length)){
-      return;
+    for(byte[] name: RESERVED_NAMESPACES_BYTES) {
+      if (Bytes.equals(namespaceName, offset, length,
+          name, 0, name.length)){
+        return;
+      }
     }
+
     if (namespaceName[offset] == '.' || namespaceName[offset] == '-') {
       throw new IllegalArgumentException("Illegal first character <" + namespaceName[0] +
           "> at 0. Namespaces can only start with alphanumeric " +
@@ -120,9 +170,9 @@ public class NamespaceDescriptor {
     s.append(" => '");
     s.append(name);
     s.append("'");
-    for (Map.Entry<byte[], byte[]> e : properties.entrySet()) {
-      String key = Bytes.toString(e.getKey());
-      String value = Bytes.toString(e.getValue());
+    for (Map.Entry<String, String> e : configuration.entrySet()) {
+      String key = e.getKey();
+      String value = e.getValue();
       if (key == null) {
         continue;
       }
@@ -146,39 +196,29 @@ public class NamespaceDescriptor {
 
   public static class Builder {
     private String bName;
-    private Map<byte[], byte[]> bProperties = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
+    private Map<String, String> bConfiguration = new TreeMap<String, String>();
 
     private Builder(NamespaceDescriptor ns) {
       this.bName = ns.name;
-      this.bProperties = ns.properties;
+      this.bConfiguration = ns.configuration;
     }
 
     private Builder(String name) {
       this.bName = name;
     }
     
-    public Builder addProperties(Map<byte[], byte[]> values) {
-      this.bProperties.putAll(values);
+    public Builder addConfiguration(Map<String, String> configuration) {
+      this.bConfiguration.putAll(configuration);
       return this;
     }
 
-    public Builder addProperty(byte[] key, byte[] value) {
-      this.bProperties.put(key, value);
+    public Builder addConfiguration(String key, String value) {
+      this.bConfiguration.put(key, value);
       return this;
     }
 
-    public Builder addProperty(String key, String value) {
-      this.bProperties.put(Bytes.toBytes(key), Bytes.toBytes(value));
-      return this;
-    }
-
-    public Builder removeValue(String key) {
-      this.bProperties.remove(Bytes.toBytes(key));
-      return this;
-    }
-
-    public Builder removeValue(byte[] key) {
-      this.bProperties.remove(key);
+    public Builder removeConfiguration(String key) {
+      this.bConfiguration.remove(key);
       return this;
     }
 
@@ -188,7 +228,7 @@ public class NamespaceDescriptor {
       }
       
       NamespaceDescriptor desc = new NamespaceDescriptor(this.bName);
-      desc.properties = this.bProperties;
+      desc.configuration = this.bConfiguration;
       return desc;
     }
   }

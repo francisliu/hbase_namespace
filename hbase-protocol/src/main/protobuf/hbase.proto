@@ -176,10 +176,5 @@ message UUID {
 
 message NamespaceDescriptor {
   required string name = 1;
-  repeated NamespaceProp props = 2;
-}
-
-message NamespaceProp {
-  required bytes key = 1;
-  required bytes value = 2;
+  repeated NameStringPair configuration = 2;
 }

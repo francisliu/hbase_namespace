@@ -19,10 +19,8 @@
 package org.apache.hadoop.hbase.namespace;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.NavigableSet;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,11 +61,6 @@ import org.apache.hadoop.hbase.util.FSUtils;
 public class TableNamespaceManager {
   private static final Log LOG = LogFactory.getLog(TableNamespaceManager.class);
 
-  private static Set<String> RESERVED_NAMESPACES = new HashSet<String>();
-  static {
-    RESERVED_NAMESPACES.add(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
-    RESERVED_NAMESPACES.add(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
-  }
   private Configuration conf;
   private MasterServices masterServices;
   private HTable table;
@@ -175,7 +168,7 @@ public class TableNamespaceManager {
   }
 
   public void remove(String name) throws IOException {
-    if (RESERVED_NAMESPACES.contains(name)) {
+    if (NamespaceDescriptor.RESERVED_NAMESPACES.contains(name)) {
       throw new ConstraintException("Reserved namespace "+name+" cannot be removed.");
     }
     int tableCount = masterServices.getTableDescriptorsByNamespace(name).size();
@@ -228,7 +221,7 @@ public class TableNamespaceManager {
             newRegions,
             masterServices).prepare());
     //wait for region to be online
-    int tries = 600;
+    int tries = 100;
     while(masterServices.getAssignmentManager()
         .getRegionStates().getRegionServerOfRegion(newRegions[0]) == null &&
         tries > 0) {

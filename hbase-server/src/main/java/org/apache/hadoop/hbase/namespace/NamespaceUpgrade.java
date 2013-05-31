@@ -23,12 +23,16 @@ import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 
@@ -99,10 +103,26 @@ public class NamespaceUpgrade {
       Path oldSnapshotDir = new Path(rootDir, HConstants.OLD_SNAPSHOT_DIR_NAME);
       Path newSnapshotDir = new Path(rootDir, HConstants.SNAPSHOT_DIR_NAME);
       if (fs.exists(oldSnapshotDir)) {
-        LOG.info("Migrating snapshot dir");
-        if (!fs.rename(oldSnapshotDir, newSnapshotDir)) {
-          throw new IOException("Failed to move old snapshot dir "+
-              oldSnapshotDir+" to new "+newSnapshotDir);
+        boolean foundOldSnapshotDir = false;
+        // Logic to verify old snapshot dir culled from SnapshotManager
+        // ignore all the snapshots in progress
+        FileStatus[] snapshots = fs.listStatus(oldSnapshotDir,
+          new SnapshotDescriptionUtils.CompletedSnaphotDirectoriesFilter(fs));
+        // loop through all the completed snapshots
+        for (FileStatus snapshot : snapshots) {
+          Path info = new Path(snapshot.getPath(), SnapshotDescriptionUtils.SNAPSHOTINFO_FILE);
+          // if the snapshot is bad
+          if (fs.exists(info)) {
+            foundOldSnapshotDir = true;
+            break;
+          }
+        }
+        if(foundOldSnapshotDir) {
+          LOG.info("Migrating snapshot dir");
+          if (!fs.rename(oldSnapshotDir, newSnapshotDir)) {
+            throw new IOException("Failed to move old snapshot dir "+
+                oldSnapshotDir+" to new "+newSnapshotDir);
+          }
         }
       }
 

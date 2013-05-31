@@ -112,7 +112,7 @@ public class TestRegionObserverStacking extends TestCase {
 
   public void testRegionObserverStacking() throws Exception {
     byte[] ROW = Bytes.toBytes("testRow");
-    byte[] TABLE = Bytes.toBytes("testRegionObserverStacking");
+    byte[] TABLE = Bytes.toBytes(this.getClass().getSimpleName());
     byte[] A = Bytes.toBytes("A");
     byte[][] FAMILIES = new byte[][] { A } ;
 

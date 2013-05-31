@@ -83,7 +83,6 @@ public class TestRegionServerMetrics {
     }
   }
 
-  private final int META_AND_ROOT = 2;
   @Test(timeout = 300000)
   public void testRegionCount() throws Exception {
     String regionMetricsKey = "regionCount";
