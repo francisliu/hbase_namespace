@@ -95,17 +95,6 @@ public class NamespaceUpgrade {
         }
       }
 
-      //migrate snapshot dir
-      Path oldSnapshotDir = new Path(rootDir, HConstants.OLD_SNAPSHOT_DIR_NAME);
-      Path newSnapshotDir = new Path(rootDir, HConstants.SNAPSHOT_DIR_NAME);
-      if (fs.exists(oldSnapshotDir)) {
-        LOG.info("Migrating snapshot dir");
-        if (!fs.rename(oldSnapshotDir, newSnapshotDir)) {
-          throw new IOException("Failed to move old snapshot dir "+
-              oldSnapshotDir+" to new "+newSnapshotDir);
-        }
-      }
-
       Path newMetaDir = FSUtils.getTableDir(rootDir, HConstants.META_TABLE_NAME_STR);
       Path oldMetaDir = new Path(rootDir, ".META.");
       if (fs.exists(oldMetaDir)) {

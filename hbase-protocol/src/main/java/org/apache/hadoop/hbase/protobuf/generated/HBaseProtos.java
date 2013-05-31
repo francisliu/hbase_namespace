@@ -15961,7 +15961,6 @@ public final class HBaseProtos {
       "hema\022&\n\rconfiguration\030\004 \003(\0132\017.NameString" +
       "Pair\"o\n\022ColumnFamilySchema\022\014\n\004name\030\001 \002(\014" +
       "\022#\n\nattributes\030\002 \003(\0132\017.BytesBytesPair\022&\n" +
-<<<<<<< HEAD
       "\rconfiguration\030\003 \003(\0132\017.NameStringPair\"\207\001",
       "\n\nRegionInfo\022\020\n\010regionId\030\001 \002(\004\022\021\n\ttableN" +
       "ame\030\002 \002(\014\022\020\n\010startKey\030\003 \001(\014\022\016\n\006endKey\030\004 " +
@@ -16008,87 +16007,17 @@ public final class HBaseProtos {
       "D\020\000\022\t\n\005FLUSH\020\001\"\n\n\010EmptyMsg\"\032\n\007LongMsg\022\017\n" +
       "\007longMsg\030\001 \002(\003\"&\n\rBigDecimalMsg\022\025\n\rbigde" +
       "cimalMsg\030\001 \002(\014\"1\n\004UUID\022\024\n\014leastSigBits\030\001" +
-      " \002(\004\022\023\n\013mostSigBits\030\002 \002(\004*`\n\010CellType\022\013\n" +
-      "\007MINIMUM\020\000\022\007\n\003PUT\020\004\022\n\n\006DELETE\020\010\022\021\n\rDELET" +
-      "E_COLUMN\020\014\022\021\n\rDELETE_FAMILY\020\016\022\014\n\007MAXIMUM" +
-      "\020\377\001*r\n\013CompareType\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_" +
-      "EQUAL\020\001\022\t\n\005EQUAL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GRE",
-      "ATER_OR_EQUAL\020\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B" +
-      ">\n*org.apache.hadoop.hbase.protobuf.gene" +
-      "ratedB\013HBaseProtosH\001\240\001\001"
-=======
-      "\rconfiguration\030\003 \003(\0132\017.NameStringPair\"s\n",
-      "\nRegionInfo\022\020\n\010regionId\030\001 \002(\004\022\021\n\ttableNa" +
-      "me\030\002 \002(\014\022\020\n\010startKey\030\003 \001(\014\022\016\n\006endKey\030\004 \001" +
-      "(\014\022\017\n\007offline\030\005 \001(\010\022\r\n\005split\030\006 \001(\010\"0\n\014Fa" +
-      "voredNodes\022 \n\013favoredNode\030\001 \003(\0132\013.Server" +
-      "Name\"\225\001\n\017RegionSpecifier\0222\n\004type\030\001 \002(\0162$" +
-      ".RegionSpecifier.RegionSpecifierType\022\r\n\005" +
-      "value\030\002 \002(\014\"?\n\023RegionSpecifierType\022\017\n\013RE" +
-      "GION_NAME\020\001\022\027\n\023ENCODED_REGION_NAME\020\002\"\260\003\n" +
-      "\nRegionLoad\022)\n\017regionSpecifier\030\001 \002(\0132\020.R" +
-      "egionSpecifier\022\016\n\006stores\030\002 \001(\r\022\022\n\nstoref",
-      "iles\030\003 \001(\r\022\037\n\027storeUncompressedSizeMB\030\004 " +
-      "\001(\r\022\027\n\017storefileSizeMB\030\005 \001(\r\022\026\n\016memstore" +
-      "SizeMB\030\006 \001(\r\022\034\n\024storefileIndexSizeMB\030\007 \001" +
-      "(\r\022\031\n\021readRequestsCount\030\010 \001(\004\022\032\n\022writeRe" +
-      "questsCount\030\t \001(\004\022\032\n\022totalCompactingKVs\030" +
-      "\n \001(\004\022\033\n\023currentCompactedKVs\030\013 \001(\004\022\027\n\017ro" +
-      "otIndexSizeKB\030\014 \001(\r\022\036\n\026totalStaticIndexS" +
-      "izeKB\030\r \001(\r\022\036\n\026totalStaticBloomSizeKB\030\016 " +
-      "\001(\r\022\032\n\022completeSequenceId\030\017 \001(\004\"\372\001\n\nServ" +
-      "erLoad\022\030\n\020numberOfRequests\030\001 \001(\r\022\035\n\025tota",
-      "lNumberOfRequests\030\002 \001(\r\022\022\n\nusedHeapMB\030\003 " +
-      "\001(\r\022\021\n\tmaxHeapMB\030\004 \001(\r\022 \n\013regionLoads\030\005 " +
-      "\003(\0132\013.RegionLoad\022\"\n\014coprocessors\030\006 \003(\0132\014" +
-      ".Coprocessor\022\027\n\017reportStartTime\030\007 \001(\004\022\025\n" +
-      "\rreportEndTime\030\010 \001(\004\022\026\n\016infoServerPort\030\t" +
-      " \001(\r\"%\n\tTimeRange\022\014\n\004from\030\001 \001(\004\022\n\n\002to\030\002 " +
-      "\001(\004\"0\n\006Filter\022\014\n\004name\030\001 \002(\t\022\030\n\020serialize" +
-      "dFilter\030\002 \001(\014\"x\n\010KeyValue\022\013\n\003row\030\001 \002(\014\022\016" +
-      "\n\006family\030\002 \002(\014\022\021\n\tqualifier\030\003 \002(\014\022\021\n\ttim" +
-      "estamp\030\004 \001(\004\022\032\n\007keyType\030\005 \001(\0162\t.CellType",
-      "\022\r\n\005value\030\006 \001(\014\"?\n\nServerName\022\020\n\010hostNam" +
-      "e\030\001 \002(\t\022\014\n\004port\030\002 \001(\r\022\021\n\tstartCode\030\003 \001(\004" +
-      "\"\033\n\013Coprocessor\022\014\n\004name\030\001 \002(\t\"-\n\016NameStr" +
-      "ingPair\022\014\n\004name\030\001 \002(\t\022\r\n\005value\030\002 \002(\t\",\n\r" +
-      "NameBytesPair\022\014\n\004name\030\001 \002(\t\022\r\n\005value\030\002 \001" +
-      "(\014\"/\n\016BytesBytesPair\022\r\n\005first\030\001 \002(\014\022\016\n\006s" +
-      "econd\030\002 \002(\014\",\n\rNameInt64Pair\022\014\n\004name\030\001 \001" +
-      "(\t\022\r\n\005value\030\002 \001(\003\"\255\001\n\023SnapshotDescriptio" +
-      "n\022\014\n\004name\030\001 \002(\t\022\r\n\005table\030\002 \001(\t\022\027\n\014creati" +
-      "onTime\030\003 \001(\003:\0010\022.\n\004type\030\004 \001(\0162\031.Snapshot",
-      "Description.Type:\005FLUSH\022\017\n\007version\030\005 \001(\005" +
-      "\"\037\n\004Type\022\014\n\010DISABLED\020\000\022\t\n\005FLUSH\020\001\"\n\n\010Emp" +
-      "tyMsg\"\032\n\007LongMsg\022\017\n\007longMsg\030\001 \002(\003\"&\n\rBig" +
-      "DecimalMsg\022\025\n\rbigdecimalMsg\030\001 \002(\014\"1\n\004UUI" +
-      "D\022\024\n\014leastSigBits\030\001 \002(\004\022\023\n\013mostSigBits\030\002" +
-<<<<<<< HEAD
-      " \002(\004\"L\n\027NamespaceDescriptorList\0221\n\023names" +
-      "paceDescriptor\030\001 \003(\0132\024.NamespaceDescript" +
-      "or\"B\n\023NamespaceDescriptor\022\014\n\004name\030\001 \002(\t\022" +
-      "\035\n\005props\030\002 \003(\0132\016.NamespaceProp\"+\n\rNamesp" +
-      "aceProp\022\013\n\003key\030\001 \002(\014\022\r\n\005value\030\002 \002(\014*`\n\010C",
-      "ellType\022\013\n\007MINIMUM\020\000\022\007\n\003PUT\020\004\022\n\n\006DELETE\020" +
-      "\010\022\021\n\rDELETE_COLUMN\020\014\022\021\n\rDELETE_FAMILY\020\016\022" +
-      "\014\n\007MAXIMUM\020\377\001*r\n\013CompareType\022\010\n\004LESS\020\000\022\021" +
-      "\n\rLESS_OR_EQUAL\020\001\022\t\n\005EQUAL\020\002\022\r\n\tNOT_EQUA" +
-      "L\020\003\022\024\n\020GREATER_OR_EQUAL\020\004\022\013\n\007GREATER\020\005\022\t" +
-      "\n\005NO_OP\020\006B>\n*org.apache.hadoop.hbase.pro" +
-      "tobuf.generatedB\013HBaseProtosH\001\240\001\001"
->>>>>>> addressed first batch of open source comments and fixed a tabledir issue with getStoreFileMap
-=======
-      " \002(\004\"B\n\023NamespaceDescriptor\022\014\n\004name\030\001 \002(" +
-      "\t\022\035\n\005props\030\002 \003(\0132\016.NamespaceProp\"+\n\rName" +
-      "spaceProp\022\013\n\003key\030\001 \002(\014\022\r\n\005value\030\002 \002(\014*`\n" +
-      "\010CellType\022\013\n\007MINIMUM\020\000\022\007\n\003PUT\020\004\022\n\n\006DELET" +
-      "E\020\010\022\021\n\rDELETE_COLUMN\020\014\022\021\n\rDELETE_FAMILY\020",
-      "\016\022\014\n\007MAXIMUM\020\377\001*r\n\013CompareType\022\010\n\004LESS\020\000" +
-      "\022\021\n\rLESS_OR_EQUAL\020\001\022\t\n\005EQUAL\020\002\022\r\n\tNOT_EQ" +
-      "UAL\020\003\022\024\n\020GREATER_OR_EQUAL\020\004\022\013\n\007GREATER\020\005" +
-      "\022\t\n\005NO_OP\020\006B>\n*org.apache.hadoop.hbase.p" +
-      "rotobuf.generatedB\013HBaseProtosH\001\240\001\001"
->>>>>>> addressed mateo's comments, used iterator remove in allREgions removal
+      " \002(\004\022\023\n\013mostSigBits\030\002 \002(\004\"B\n\023NamespaceDe" +
+      "scriptor\022\014\n\004name\030\001 \002(\t\022\035\n\005props\030\002 \003(\0132\016." +
+      "NamespaceProp\"+\n\rNamespaceProp\022\013\n\003key\030\001 " +
+      "\002(\014\022\r\n\005value\030\002 \002(\014*`\n\010CellType\022\013\n\007MINIMU" +
+      "M\020\000\022\007\n\003PUT\020\004\022\n\n\006DELETE\020\010\022\021\n\rDELETE_COLUM",
+      "N\020\014\022\021\n\rDELETE_FAMILY\020\016\022\014\n\007MAXIMUM\020\377\001*r\n\013" +
+      "CompareType\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020\001" +
+      "\022\t\n\005EQUAL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_OR" +
+      "_EQUAL\020\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B>\n*org." +
+      "apache.hadoop.hbase.protobuf.generatedB\013" +
+      "HBaseProtosH\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
