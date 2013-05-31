@@ -49,13 +49,12 @@ import java.util.concurrent.ConcurrentSkipListMap;
 @InterfaceAudience.Private
 class ZKNamespaceManager extends ZooKeeperListener {
   private static Log LOG = LogFactory.getLog(ZKNamespaceManager.class);
-  private static String namespaceZNode = "namespace";
   private final String nsZNode;
   private NavigableMap<String,NamespaceDescriptor> cache;
 
   public ZKNamespaceManager(ZooKeeperWatcher zkw) throws IOException {
     super(zkw);
-    nsZNode = ZKUtil.joinZNode(zkw.baseZNode, namespaceZNode);
+    nsZNode = ZooKeeperWatcher.namespaceZNode;
     cache = new ConcurrentSkipListMap<String, NamespaceDescriptor>();
   }
 

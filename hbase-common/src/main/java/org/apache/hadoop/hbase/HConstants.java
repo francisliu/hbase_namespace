@@ -104,9 +104,10 @@ public final class HConstants {
    * Version 5 changes versions in catalog table regions.
    * Version 6 enables blockcaching on catalog tables.
    * Version 7 introduces hfile -- hbase 0.19 to 0.20..
+   * Version 8 introduces namespace
    */
   // public static final String FILE_SYSTEM_VERSION = "6";
-  public static final String FILE_SYSTEM_VERSION = "7";
+  public static final String FILE_SYSTEM_VERSION = "8";
 
   // Configuration parameters
 
@@ -369,7 +370,7 @@ public final class HConstants {
   public static final String NAMESPACE_TABLE_NAME_STR =
       Bytes.toString(NAMESPACE_TABLE_NAME);
 
-  public static final String BASE_NAMESPACE_DIR = "data";
+  public static final String BASE_NAMESPACE_DIR = ".data";
 
   /** delimiter used between portions of a region name */
   public static final int META_ROW_DELIMITER = ',';
