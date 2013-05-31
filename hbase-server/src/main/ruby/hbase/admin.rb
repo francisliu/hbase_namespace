@@ -739,7 +739,7 @@ module Hbase
     end
 
     #----------------------------------------------------------------------------------------------
-    # Returns a list of namespace in hbase
+    # Returns a list of namespaces in hbase
     def list_namespace
       @admin.listNamespaceDescriptors.map { |ns| ns.getName }
     end
@@ -778,17 +778,17 @@ module Hbase
     end
 
     #----------------------------------------------------------------------------------------------
-    # Creates a table
+    # modify a namespace
     def alter_namespace(namespace_name, *args)
       # Fail if table name is not a string
       raise(ArgumentError, "Namespace name must be of type String") unless namespace_name.kind_of?(String)
 
       nsd = @admin.getNamespaceDescriptor(namespace_name)
-      nsb = org.apache.hadoop.hbase.NamespaceDescriptor::create(nsd)
 
       unless nsd
         raise(ArgumentError, "Namespace does not exist")
       end
+      nsb = org.apache.hadoop.hbase.NamespaceDescriptor::create(nsd)
 
       # Flatten params array
       args = args.flatten.compact

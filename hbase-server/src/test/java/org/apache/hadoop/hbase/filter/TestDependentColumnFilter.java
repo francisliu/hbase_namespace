@@ -70,7 +70,7 @@ public class TestDependentColumnFilter {
   public void setUp() throws Exception {
     testVals = makeTestVals();
 
-    HTableDescriptor htd = new HTableDescriptor(this.getClass().getName().replaceAll("[.]","_"));
+    HTableDescriptor htd = new HTableDescriptor(this.getClass().getSimpleName());
     HColumnDescriptor hcd0 = new HColumnDescriptor(FAMILIES[0]);
     hcd0.setMaxVersions(3);
     htd.addFamily(hcd0);

@@ -28,17 +28,17 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.util.List;
 
 /**
- * POJO class for representing a fully-qualified table name.
+ * Immutable POJO class for representing a fully-qualified table name.
  * Which is of the form:
  * &lt;table namespace&gt;.&lt;table qualifier&gt;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
-public class TableName implements Comparable<TableName> {
+public final class TableName implements Comparable<TableName> {
 
   /** Namespace delimiter */
   //this should always be only 1 byte long
-  public static char NAMESPACE_DELIM = '.';
+  public final static char NAMESPACE_DELIM = '.';
 
   private byte[] name;
   private String nameAsString;
@@ -95,7 +95,6 @@ public class TableName implements Comparable<TableName> {
 
   public static TableName valueOf(String namespaceAsString, String qualifierAsString) {
     TableName ret = new TableName();
-    ret.namespace = Bytes.toBytes(namespaceAsString);
     ret.namespaceAsString = namespaceAsString;
     ret.qualifier = Bytes.toBytes(qualifierAsString);
     ret.qualifierAsString = qualifierAsString;

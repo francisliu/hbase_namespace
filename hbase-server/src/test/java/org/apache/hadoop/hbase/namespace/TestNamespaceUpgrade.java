@@ -45,7 +45,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
- * Test migration from no namespace in 0.94 to namespace directory structure.
+ * Test upgrade from no namespace in 0.94 to namespace directory structure.
  * Mainly tests that tables are migrated and consistent. Also verifies
  * that snapshots have been migrated correctly.
  *
@@ -59,8 +59,8 @@ import org.junit.experimental.categories.Category;
  *
  */
 @Category(MediumTests.class)
-public class TestNamespaceMigration {
-  static final Log LOG = LogFactory.getLog(TestNamespaceMigration.class);
+public class TestNamespaceUpgrade {
+  static final Log LOG = LogFactory.getLog(TestNamespaceUpgrade.class);
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private final static String snapshot1Keys[] =
       {"1","10","2","3","4","5","6","7","8","9"};
@@ -76,7 +76,7 @@ public class TestNamespaceMigration {
     // a 0.94 hbase run and see if we can migrate to 0.96
     TEST_UTIL.startMiniZKCluster();
     TEST_UTIL.startMiniDFSCluster(1);
-    Path testdir = TEST_UTIL.getDataTestDir("TestNamespaceMigration");
+    Path testdir = TEST_UTIL.getDataTestDir("TestNamespaceUpgrade");
     // Untar our test dir.
     File untar = untar(new File(testdir.toString()));
     // Now copy the untar up into hdfs so when we start hbase, we'll run from it.
@@ -109,7 +109,7 @@ public class TestNamespaceMigration {
 
   private static File untar(final File testdir) throws IOException {
     // Find the src data under src/test/data
-    final String datafile = "TestNamespaceMigration";
+    final String datafile = "TestNamespaceUpgrade";
     File srcTarFile = new File(
       System.getProperty("project.build.testSourceDirectory", "src/test") +
       File.separator + "data" + File.separator + datafile + ".tgz");
