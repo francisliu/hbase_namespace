@@ -18,14 +18,12 @@
 
 package org.apache.hadoop.hbase.security.access;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.lang.reflect.UndeclaredThrowableException;
-import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +55,6 @@ import org.apache.hadoop.hbase.client.Increment;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.MasterCoprocessorEnvironment;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -77,15 +74,10 @@ import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.RegionCoprocessorHost;
 import org.apache.hadoop.hbase.regionserver.RegionServerCoprocessorHost;
 import org.apache.hadoop.hbase.regionserver.ScanType;
-import org.apache.hadoop.hbase.exceptions.AccessDeniedException;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.security.access.AccessControlLists;
-import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.security.access.Permission.Action;
-import org.apache.hadoop.hbase.security.access.UserPermission;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -103,7 +95,7 @@ import com.google.protobuf.ServiceException;
  */
 @Category(LargeTests.class)
 @SuppressWarnings("rawtypes")
-public class TestAccessController {
+public class TestAccessController extends SecureTestUtil {
   private static final Log LOG = LogFactory.getLog(TestAccessController.class);
   private static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static Configuration conf;
@@ -225,77 +217,7 @@ public class TestAccessController {
     assertEquals(0, AccessControlLists.getTablePermissions(conf, TEST_TABLE).size());
   }
 
-  public void verifyAllowed(User user, PrivilegedExceptionAction... actions) throws Exception {
-    for (PrivilegedExceptionAction action : actions) {
-      try {
-        user.runAs(action);
-      } catch (AccessDeniedException ade) {
-        fail("Expected action to pass for user '" + user.getShortName() + "' but was denied");
-      }
-    }
-  }
-
-  public void verifyAllowed(PrivilegedExceptionAction action, User... users) throws Exception {
-    for (User user : users) {
-      verifyAllowed(user, action);
-    }
-  }
-
-  public void verifyDenied(User user, PrivilegedExceptionAction... actions) throws Exception {
-    for (PrivilegedExceptionAction action : actions) {
-      try {
-        user.runAs(action);
-        fail("Expected AccessDeniedException for user '" + user.getShortName() + "'");
-      } catch (IOException e) {
-        boolean isAccessDeniedException = false;
-        if(e instanceof RetriesExhaustedWithDetailsException) {
-          // in case of batch operations, and put, the client assembles a
-          // RetriesExhaustedWithDetailsException instead of throwing an
-          // AccessDeniedException
-          for(Throwable ex : ((RetriesExhaustedWithDetailsException) e).getCauses()) {
-            if (ex instanceof AccessDeniedException) {
-              isAccessDeniedException = true;
-              break;
-            }
-          }
-        }
-        else {
-          // For doBulkLoad calls AccessDeniedException
-          // is buried in the stack trace
-          Throwable ex = e;
-          do {
-            if (ex instanceof AccessDeniedException) {
-              isAccessDeniedException = true;
-              break;
-            }
-          } while((ex = ex.getCause()) != null);
-        }
-        if (!isAccessDeniedException) {
-          fail("Not receiving AccessDeniedException for user '" + user.getShortName() + "'");
-        }
-      } catch (UndeclaredThrowableException ute) {
-        // TODO why we get a PrivilegedActionException, which is unexpected?
-        Throwable ex = ute.getUndeclaredThrowable();
-        if (ex instanceof PrivilegedActionException) {
-          ex = ((PrivilegedActionException) ex).getException();
-        }
-        if (ex instanceof ServiceException) {
-          ServiceException se = (ServiceException)ex;
-          if (se.getCause() != null && se.getCause() instanceof AccessDeniedException) {
-            // expected result
-            return;
-          }
-        }
-        fail("Not receiving AccessDeniedException for user '" + user.getShortName() + "'");
-      }
-    }
-  }
-
-  public void verifyDenied(PrivilegedExceptionAction action, User... users) throws Exception {
-    for (User user : users) {
-      verifyDenied(user, action);
-    }
-  }
+ 
 
   @Test
   public void testTableCreate() throws Exception {

@@ -576,4 +576,8 @@ public class AccessControlLists {
 
     return aclKey.substring(GROUP_PREFIX.length());
   }
+  
+  public static byte[] getNamespaceEntry(String namespace){
+    return Bytes.toBytes("@" + namespace);
+  }
 }

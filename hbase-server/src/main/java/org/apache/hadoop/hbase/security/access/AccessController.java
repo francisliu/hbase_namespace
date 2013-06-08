@@ -490,7 +490,14 @@ public class AccessController extends BaseRegionObserver
     for (byte[] family: families) {
       familyMap.put(family, null);
     }
-    requireGlobalPermission("createTable", Permission.Action.CREATE, desc.getName(), familyMap);
+    try {
+      requireGlobalPermission("createTable", Permission.Action.CREATE, desc.getName(), familyMap);
+    } catch (AccessDeniedException exp) {
+      LOG.warn("Access denied at HBase admin level, now checking at namespace level.", exp);
+      requirePermission("create Table",
+        AccessControlLists.getNamespaceEntry(desc.getTableName().getNamespaceAsString()), null,
+        null, Permission.Action.WRITE);
+    }
   }
 
   @Override
@@ -778,27 +785,36 @@ public class AccessController extends BaseRegionObserver
 
   @Override
   public void preCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
-                                 NamespaceDescriptor ns) throws IOException {
+      NamespaceDescriptor ns) throws IOException {
+    requirePermission("createNamespace", AccessControlLists.ACL_TABLE_NAME, null, null,
+      Action.ADMIN, Action.CREATE);
   }
 
   @Override
   public void postCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
-                                  NamespaceDescriptor ns) throws IOException {
+      NamespaceDescriptor ns) throws IOException {
   }
 
   @Override
-  public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
-                                 String namespace) throws IOException {
+  public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, String namespace)
+      throws IOException {
+    requirePermission("deleteNamespace", AccessControlLists.ACL_TABLE_NAME, null, null,
+      Action.ADMIN, Action.CREATE);
   }
 
   @Override
   public void postDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
                                   String namespace) throws IOException {
+    AccessControlLists.removeTablePermissions(ctx.getEnvironment().getConfiguration(),
+      AccessControlLists.getNamespaceEntry(namespace));
+    LOG.info(namespace + "entry deleted in _acl_ table.");
   }
 
   @Override
   public void preModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
-                                 NamespaceDescriptor ns) throws IOException {
+      NamespaceDescriptor ns) throws IOException {
+    requirePermission("modifyNamespace", AccessControlLists.ACL_TABLE_NAME, null, null,
+      Action.ADMIN, Action.CREATE);
   }
 
   @Override
@@ -1371,8 +1387,10 @@ public class AccessController extends BaseRegionObserver
 
   private boolean isSpecialTable(HRegionInfo regionInfo) {
     byte[] tableName = regionInfo.getTableName();
-    return Arrays.equals(tableName, AccessControlLists.ACL_TABLE_NAME)
-        || Arrays.equals(tableName, HConstants.META_TABLE_NAME);
+    return tableName.equals(AccessControlLists.ACL_TABLE_NAME)
+        || tableName.equals(HConstants.ROOT_TABLE_NAME)
+        || tableName.equals(HConstants.META_TABLE_NAME)
+        || tableName.equals(HConstants.NAMESPACE_TABLE_NAME);
   }
 
   @Override
