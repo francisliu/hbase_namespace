@@ -19,10 +19,6 @@
 package org.apache.hadoop.hbase.security.access;
 
 import static org.junit.Assert.fail;
-import AccessControllerProtocol;
-import Permission;
-import TablePermission;
-import UserPermission;
 
 import java.io.IOException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -37,7 +33,6 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos.AccessControlService;
 import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos.CheckPermissionsRequest;
 import org.apache.hadoop.hbase.security.User;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.protobuf.ServiceException;
 
@@ -157,8 +152,8 @@ public class SecureTestUtil {
     }
   }
   
-  public void grant(AccessControllerProtocol protocol, User user, byte[] t, byte[] f, byte[] q,
+  /*public void grant(AccessControllerProtocol protocol, User user, byte[] t, byte[] f, byte[] q,
       Permission.Action... actions) throws IOException {
     protocol.grant(new UserPermission(Bytes.toBytes(user.getShortName()), t, f, q, actions));
-  }
+  }*/
 }

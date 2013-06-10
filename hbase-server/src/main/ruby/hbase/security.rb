@@ -42,18 +42,29 @@ module Hbase
       end
 
       if (table_name != nil)
-        # Table should exist
-        raise(ArgumentError, "Can't find a table: #{table_name}") unless exists?(table_name)
+	#check if the tablename passed is actually a namespace
+        if (isNamespace?(table_name))
+          # Namespace should exist first.
+          namespace_name = table_name[1...table_name.length]
+          raise(ArgumentError, "Can't find a namespace: #{namespace_name}") unless namespace_exists?(namespace_name)
+          
+	  #We pass the namespace name along with "@" so that we can differentiate a namespace from a table.
+	  tablebytes=table_name.to_java_bytes
+	  fambytes = nil
+	  qualbytes = nil
+       else
+           # Table should exist
+           raise(ArgumentError, "Can't find a table: #{table_name}") unless exists?(table_name)
 
-        tablebytes=table_name.to_java_bytes
-        htd = @admin.getTableDescriptor(tablebytes)
+           tablebytes=table_name.to_java_bytes
+           htd = @admin.getTableDescriptor(tablebytes)
 
-        if (family != nil)
-          raise(ArgumentError, "Can't find a family: #{family}") unless htd.hasFamily(family.to_java_bytes)
-        end
+           if (family != nil)
+             raise(ArgumentError, "Can't find a family: #{family}") unless htd.hasFamily(family.to_java_bytes)
+           end
 
-        fambytes = family.to_java_bytes if (family != nil)
-        qualbytes = qualifier.to_java_bytes if (qualifier != nil)
+           fambytes = family.to_java_bytes if (family != nil)
+           qualbytes = qualifier.to_java_bytes if (qualifier != nil)
       end
 
       begin
@@ -81,20 +92,30 @@ module Hbase
       security_available?
 
       # TODO: need to validate user name
-
       if (table_name != nil)
-        # Table should exist
-        raise(ArgumentError, "Can't find a table: #{table_name}") unless exists?(table_name)
+        #check if the tablename passed is actually a namespace
+        if (isNamespace?(table_name))
+          # Namespace should exist first.
+          namespace_name = table_name[1...table_name.length]
+          raise(ArgumentError, "Can't find a namespace: #{namespace_name}") unless namespace_exists?(namespace_name)
 
-        tablebytes=table_name.to_java_bytes
-        htd = @admin.getTableDescriptor(tablebytes)
+          #We pass the namespace name along with "@" so that we can differentiate a namespace from a table.
+          tablebytes=table_name.to_java_bytes
+          fambytes = nil
+          qualbytes = nil
+       else
+           # Table should exist
+           raise(ArgumentError, "Can't find a table: #{table_name}") unless exists?(table_name)
 
-        if (family != nil)
-          raise(ArgumentError, "Can't find family: #{family}") unless htd.hasFamily(family.to_java_bytes)
-        end
+           tablebytes=table_name.to_java_bytes
+           htd = @admin.getTableDescriptor(tablebytes)
 
-        fambytes = family.to_java_bytes if (family != nil)
-        qualbytes = qualifier.to_java_bytes if (qualifier != nil)
+           if (family != nil)
+             raise(ArgumentError, "Can't find a family: #{family}") unless htd.hasFamily(family.to_java_bytes)
+           end
+
+           fambytes = family.to_java_bytes if (family != nil)
+           qualbytes = qualifier.to_java_bytes if (qualifier != nil)
       end
 
       begin
@@ -119,7 +140,14 @@ module Hbase
       security_available?
 
       if (table_name != nil)
-        raise(ArgumentError, "Can't find table: #{table_name}") unless exists?(table_name)
+	#check if namespace is passed.
+	if (isNamespace?(table_name))
+          # Namespace should exist first.
+          namespace_name = table_name[1...table_name.length]
+          raise(ArgumentError, "Can't find a namespace: #{namespace_name}") unless namespace_exists?(namespace_name)
+        else 
+           raise(ArgumentError, "Can't find table: #{table_name}") unless exists?(table_name)
+        end
 
         tablebytes=table_name.to_java_bytes
       end
@@ -172,6 +200,20 @@ module Hbase
       raise(ArgumentError, "DISABLED: Security features are not available") \
         unless exists?(org.apache.hadoop.hbase.security.access.AccessControlLists::ACL_TABLE_NAME)
     end
+
+    def isNamespace?(table_name)
+        table_name.start_with?('@')
+    end
+
+     # Does Namespace exist
+    def namespace_exists?(namespace_name)
+        namespaceDesc = @admin.getNamespaceDescriptor(namespace_name)
+        if(namespaceDesc == nil)
+                return false
+        else
+                return true
+        end
+   end
 
   end
 end

@@ -28,6 +28,8 @@ import java.util.TreeSet;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 import com.google.protobuf.Service;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -496,7 +498,7 @@ public class AccessController extends BaseRegionObserver
       LOG.warn("Access denied at HBase admin level, now checking at namespace level.", exp);
       requirePermission("create Table",
         AccessControlLists.getNamespaceEntry(desc.getTableName().getNamespaceAsString()), null,
-        null, Permission.Action.WRITE);
+        null, Permission.Action.WRITE, Permission.Action.ADMIN);
     }
   }
 
@@ -786,8 +788,8 @@ public class AccessController extends BaseRegionObserver
   @Override
   public void preCreateNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
       NamespaceDescriptor ns) throws IOException {
-    requirePermission("createNamespace", AccessControlLists.ACL_TABLE_NAME, null, null,
-      Action.ADMIN, Action.CREATE);
+    requirePermission("createNamespace", AccessControlLists.ACL_TABLE_NAME,
+      ArrayUtils.EMPTY_BYTE_ARRAY, ArrayUtils.EMPTY_BYTE_ARRAY, Action.ADMIN, Action.CREATE);
   }
 
   @Override
@@ -798,8 +800,8 @@ public class AccessController extends BaseRegionObserver
   @Override
   public void preDeleteNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx, String namespace)
       throws IOException {
-    requirePermission("deleteNamespace", AccessControlLists.ACL_TABLE_NAME, null, null,
-      Action.ADMIN, Action.CREATE);
+    requirePermission("deleteNamespace", AccessControlLists.ACL_TABLE_NAME,
+      ArrayUtils.EMPTY_BYTE_ARRAY, ArrayUtils.EMPTY_BYTE_ARRAY, Action.ADMIN, Action.CREATE);
   }
 
   @Override
@@ -813,8 +815,8 @@ public class AccessController extends BaseRegionObserver
   @Override
   public void preModifyNamespace(ObserverContext<MasterCoprocessorEnvironment> ctx,
       NamespaceDescriptor ns) throws IOException {
-    requirePermission("modifyNamespace", AccessControlLists.ACL_TABLE_NAME, null, null,
-      Action.ADMIN, Action.CREATE);
+    requirePermission("modifyNamespace", AccessControlLists.ACL_TABLE_NAME,
+      ArrayUtils.EMPTY_BYTE_ARRAY, ArrayUtils.EMPTY_BYTE_ARRAY, Action.ADMIN, Action.CREATE);
   }
 
   @Override
