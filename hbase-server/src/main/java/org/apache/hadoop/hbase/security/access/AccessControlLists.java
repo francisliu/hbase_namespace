@@ -37,6 +37,8 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -88,7 +90,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
  */
 public class AccessControlLists {
   /** Internal storage table for access control lists */
-  public static final String ACL_TABLE_NAME_STR = "_acl_";
+  public static final String ACL_TABLE_NAME_STR = NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR
+      + TableName.NAMESPACE_DELIM + "_acl_";
   public static final byte[] ACL_TABLE_NAME = Bytes.toBytes(ACL_TABLE_NAME_STR);
   public static final byte[] ACL_GLOBAL_NAME = ACL_TABLE_NAME;
   /** Column family used to store ACL grants */
