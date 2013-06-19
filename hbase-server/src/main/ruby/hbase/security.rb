@@ -215,7 +215,6 @@ module Hbase
     def security_available?()
       raise(ArgumentError, "DISABLED: Security features are not available") \
         unless exists?(org.apache.hadoop.hbase.security.access.AccessControlLists::ACL_TABLE_NAME)
-      end
     end
 
 end
