@@ -163,7 +163,7 @@ message GetNamespaceDescriptorRequest {
 }
 
 message GetNamespaceDescriptorResponse {
-  required NamespaceDescriptor namespaceDescriptor = 1;
+  optional NamespaceDescriptor namespaceDescriptor = 1;
 }
 
 message ModifyNamespaceResponse {
@@ -173,7 +173,7 @@ message ListNamespaceDescriptorsRequest {
 }
 
 message ListNamespaceDescriptorsResponse {
-  repeated NamespaceDescriptor amespaceDescriptor = 1;
+  repeated NamespaceDescriptor namespaceDescriptor = 1;
 }
 
 message GetTableDescriptorsByNamespaceRequest {

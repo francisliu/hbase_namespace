@@ -21,11 +21,23 @@ package org.apache.hadoop.hbase;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Immutable POJO class for representing a fully-qualified table name.
@@ -35,10 +47,15 @@ import java.util.List;
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
 public final class TableName implements Comparable<TableName> {
+  public static final Log LOG = LogFactory.getLog(TableName.class);
 
   /** Namespace delimiter */
   //this should always be only 1 byte long
   public final static char NAMESPACE_DELIM = '.';
+
+  private static Set<String> exceptionTables = new HashSet<String>();
+  private static Set<String> exceptionNS = new HashSet<String>();
+  private static boolean exceptionInitialized = false;
 
   private byte[] name;
   private String nameAsString;
@@ -108,6 +125,13 @@ public final class TableName implements Comparable<TableName> {
   }
 
   public static TableName valueOf(String name) {
+    if(!exceptionInitialized) {
+      throw new IllegalStateException("refereshExceptionTables must be called prior to using this" +
+          " method");
+    }
+    if(containsExceptionTable(name)) {
+      return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
+    }
     int index = -1;
     for(int i=1;i<name.length();i++) {
       if (name.charAt(i) == NAMESPACE_DELIM && index == -1) {
@@ -152,5 +176,77 @@ public final class TableName implements Comparable<TableName> {
   @Override
   public int compareTo(TableName tableName) {
     return this.nameAsString.compareTo(tableName.getNameAsString());
+  }
+
+  @InterfaceAudience.Private
+  public static boolean containsExceptionTable(String tableName) {
+    return exceptionTables.contains(tableName);
+  }
+
+  @InterfaceAudience.Private
+  public static boolean containsExceptionNS(String namespace) {
+    return exceptionNS.contains(namespace);
+  }
+
+  /**
+   * One of the refresh apis need to be called prior to threads get started
+   */
+  @InterfaceAudience.Private
+  public static void refereshExceptionTables() {
+    refereshExceptionTables(HBaseConfiguration.create());
+  }
+
+  /**
+   * One of the refresh apis need to be called prior to threads get started
+   */
+  @InterfaceAudience.Private
+  public static synchronized void refereshExceptionTables(Configuration conf) {
+    try {
+      Set<String> exceptionTables = new HashSet<String>();
+      Set<String> exceptionNS = new HashSet<String>();
+      Class<?> clazz = Class.forName("org.apache.hadoop.hbase.util.FSUtils");
+      Method m;
+      m = clazz.getMethod("getRootDir", Configuration.class);
+      Path hbaseDir = (Path)m.invoke(null, conf);
+      Path[] baseDirs = {hbaseDir,
+          new Path(hbaseDir, HConstants.HFILE_ARCHIVE_DIRECTORY),
+          new Path(hbaseDir, HConstants.HBASE_TEMP_DIRECTORY)};
+      for(Path baseDir: baseDirs) {
+        m = clazz.getMethod("getNamespaceDir", Path.class, String.class);
+        Path nsDir = (Path) m.invoke(null, baseDir, NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
+        m = clazz.getMethod("getLocalTableDirs", FileSystem.class, Path.class);
+        List<Path> dirs = (List<Path>) m.invoke(null, FileSystem.get(conf), nsDir);
+        for(Path dir: dirs) {
+          TableName tableName = TableName.valueOf(dir.getName());
+          if(!tableName.getNamespaceAsString()
+              .equals(NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR)) {
+            exceptionTables.add(tableName.toString());
+            exceptionNS.add(tableName.getNamespaceAsString());
+          }
+        }
+      }
+      LOG.debug("Loaded exception tables: "+exceptionTables);
+      LOG.debug("Loaded exception namespaces: "+exceptionNS);
+      TableName.exceptionNS = exceptionNS;
+      TableName.exceptionTables = exceptionTables;
+      exceptionInitialized = true;
+    } catch (ClassNotFoundException e) {
+    } catch (NoSuchMethodException e) {
+      LOG.error("Failed to refereshExceptionTables, this api can only be called by hbase", e);
+      throw new IllegalStateException("Failed to refereshExceptionTables, "+
+          "this api is internal.", e);
+    } catch (InvocationTargetException e) {
+      LOG.error("Failed to refereshExceptionTables, this api can only be called by hbase", e);
+      throw new IllegalStateException("Failed to refereshExceptionTables, "+
+          "this api is internal.", e);
+    } catch (IllegalAccessException e) {
+      LOG.error("Failed to refereshExceptionTables, this api can only be called by hbase", e);
+      throw new IllegalStateException("Failed to refereshExceptionTables, "+
+          "this api is internal.", e);
+    } catch (IOException e) {
+      LOG.error("Failed to refereshExceptionTables, this api can only be called by hbase", e);
+      throw new IllegalStateException("Failed to refereshExceptionTables, "+
+          "this api is internal.", e);
+    }
   }
 }

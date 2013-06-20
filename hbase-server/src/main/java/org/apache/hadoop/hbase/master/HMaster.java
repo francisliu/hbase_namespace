@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -741,6 +742,7 @@ MasterServices, Server {
 
     status.setStatus("Initializing Master file system");
     new NamespaceUpgrade().upgradeTableDirs(conf, FSUtils.getRootDir(conf));
+    TableName.refereshExceptionTables(conf);
 
     this.masterActiveTime = System.currentTimeMillis();
     // TODO: Do this using Dependency Injection, using PicoContainer, Guice or Spring.
@@ -2923,10 +2925,15 @@ MasterServices, Server {
       RpcController controller, MasterAdminProtos.GetNamespaceDescriptorRequest request)
       throws ServiceException {
     try {
-      return MasterAdminProtos.GetNamespaceDescriptorResponse.newBuilder()
-          .setNamespaceDescriptor(
-              ProtobufUtil.toProtoBuf(getNamespaceDescriptor(request.getNamespaceName())))
-          .build();
+      NamespaceDescriptor ns = getNamespaceDescriptor(request.getNamespaceName());
+      MasterAdminProtos.GetNamespaceDescriptorResponse.Builder b
+          = MasterAdminProtos.GetNamespaceDescriptorResponse.newBuilder();
+      if(ns != null) {
+        b.setNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
+      } else {
+        b.clearNamespaceDescriptor();
+      }
+      return b.build();
     } catch (IOException e) {
       throw new ServiceException(e);
     }
@@ -2975,6 +2982,10 @@ MasterServices, Server {
       if (cpHost.preCreateNamespace(descriptor)) {
         return;
       }
+    }
+    if(TableName.containsExceptionNS(descriptor.getName())) {
+      throw new ConstraintException("An exception table is preventing you from creating this " +
+          "namespace");
     }
     synchronized (this) {
       tableNamespaceManager.create(descriptor);

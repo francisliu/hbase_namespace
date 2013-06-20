@@ -12957,7 +12957,7 @@ public final class MasterAdminProtos {
   public interface GetNamespaceDescriptorResponseOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
     
-    // required .NamespaceDescriptor namespaceDescriptor = 1;
+    // optional .NamespaceDescriptor namespaceDescriptor = 1;
     boolean hasNamespaceDescriptor();
     org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor getNamespaceDescriptor();
     org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder getNamespaceDescriptorOrBuilder();
@@ -12991,7 +12991,7 @@ public final class MasterAdminProtos {
     }
     
     private int bitField0_;
-    // required .NamespaceDescriptor namespaceDescriptor = 1;
+    // optional .NamespaceDescriptor namespaceDescriptor = 1;
     public static final int NAMESPACEDESCRIPTOR_FIELD_NUMBER = 1;
     private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_;
     public boolean hasNamespaceDescriptor() {
@@ -13012,13 +13012,11 @@ public final class MasterAdminProtos {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
       
-      if (!hasNamespaceDescriptor()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!getNamespaceDescriptor().isInitialized()) {
-        memoizedIsInitialized = 0;
-        return false;
+      if (hasNamespaceDescriptor()) {
+        if (!getNamespaceDescriptor().isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
       }
       memoizedIsInitialized = 1;
       return true;
@@ -13277,13 +13275,11 @@ public final class MasterAdminProtos {
       }
       
       public final boolean isInitialized() {
-        if (!hasNamespaceDescriptor()) {
-          
-          return false;
-        }
-        if (!getNamespaceDescriptor().isInitialized()) {
-          
-          return false;
+        if (hasNamespaceDescriptor()) {
+          if (!getNamespaceDescriptor().isInitialized()) {
+            
+            return false;
+          }
         }
         return true;
       }
@@ -13326,7 +13322,7 @@ public final class MasterAdminProtos {
       
       private int bitField0_;
       
-      // required .NamespaceDescriptor namespaceDescriptor = 1;
+      // optional .NamespaceDescriptor namespaceDescriptor = 1;
       private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor namespaceDescriptor_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptor.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NamespaceDescriptorOrBuilder> namespaceDescriptorBuilder_;
@@ -28295,7 +28291,7 @@ public final class MasterAdminProtos {
       "Descriptor\030\001 \002(\0132\024.NamespaceDescriptor\"6" +
       "\n\035GetNamespaceDescriptorRequest\022\025\n\rnames",
       "paceName\030\001 \002(\t\"S\n\036GetNamespaceDescriptor" +
-      "Response\0221\n\023namespaceDescriptor\030\001 \002(\0132\024." +
+      "Response\0221\n\023namespaceDescriptor\030\001 \001(\0132\024." +
       "NamespaceDescriptor\"\031\n\027ModifyNamespaceRe" +
       "sponse\"!\n\037ListNamespaceDescriptorsReques" +
       "t\"U\n ListNamespaceDescriptorsResponse\0221\n" +

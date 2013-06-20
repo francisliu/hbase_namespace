@@ -2051,10 +2051,14 @@ public class HBaseAdmin implements Abortable, Closeable {
         execute(new MasterAdminCallable<NamespaceDescriptor>() {
           @Override
           public NamespaceDescriptor call() throws Exception {
-            return ProtobufUtil.toNamespaceDescriptor(
+            MasterAdminProtos.GetNamespaceDescriptorResponse response =
               masterAdmin.getNamespaceDescriptor(null,
                   MasterAdminProtos.GetNamespaceDescriptorRequest.newBuilder()
-                    .setNamespaceName(name).build()).getNamespaceDescriptor());
+                    .setNamespaceName(name).build());
+            if(!response.hasNamespaceDescriptor()) {
+              return null;
+            }
+            return ProtobufUtil.toNamespaceDescriptor(response.getNamespaceDescriptor());
           }
         });
   }

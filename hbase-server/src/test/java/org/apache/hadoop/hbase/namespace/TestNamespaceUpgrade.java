@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.AfterClass;
@@ -103,8 +104,11 @@ public class TestNamespaceUpgrade {
       }
       Assert.assertEquals(currentKeys.length, count);
     }
-    assertNotNull(TEST_UTIL.getHBaseAdmin().getNamespaceDescriptor("ns1"));
-    assertNotNull(TEST_UTIL.getHBaseAdmin().getNamespaceDescriptor("ns.two"));
+    assertNull(TEST_UTIL.getHBaseAdmin().getNamespaceDescriptor("ns1"));
+    assertNull(TEST_UTIL.getHBaseAdmin().getNamespaceDescriptor("ns.two"));
+    for(String table: tables) {
+      assertNotNull(TEST_UTIL.getHBaseAdmin().getTableDescriptor(Bytes.toBytes(table)));
+    }
   }
 
   private static File untar(final File testdir) throws IOException {
@@ -145,18 +149,20 @@ public class TestNamespaceUpgrade {
   public void testSnapshots() throws IOException, InterruptedException {
     String snapshots[][] = {snapshot1Keys, snapshot2Keys};
     for(int i=1; i<=snapshots.length; i++) {
-      for(String table: tables) {
-        TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot"+i, table+"_clone"+i);
-        FSUtils.logFileSystemState(FileSystem.get(TEST_UTIL.getConfiguration()),
-            FSUtils.getRootDir(TEST_UTIL.getConfiguration()),
-            LOG);
-        int count = 0;
-        for(Result res: new HTable(TEST_UTIL.getConfiguration(), table+"_clone"+i).getScanner(new
-            Scan())) {
-          assertEquals(snapshots[i-1][count++], Bytes.toString(res.getRow()));
-        }
-        Assert.assertEquals(table+"_snapshot"+i, snapshots[i-1].length, count);
+      String table = "foo";
+      FSUtils.logFileSystemState(FileSystem.get(TEST_UTIL.getConfiguration()),
+          FSUtils.getRootDir(TEST_UTIL.getConfiguration()),
+          LOG);
+      TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot"+i, table+"_clone"+i);
+      FSUtils.logFileSystemState(FileSystem.get(TEST_UTIL.getConfiguration()),
+          FSUtils.getRootDir(TEST_UTIL.getConfiguration()),
+          LOG);
+      int count = 0;
+      for(Result res: new HTable(TEST_UTIL.getConfiguration(), table+"_clone"+i).getScanner(new
+          Scan())) {
+        assertEquals(snapshots[i-1][count++], Bytes.toString(res.getRow()));
       }
+      Assert.assertEquals(table+"_snapshot"+i, snapshots[i-1].length, count);
     }
   }
 
@@ -174,6 +180,29 @@ public class TestNamespaceUpgrade {
         assertEquals(currentKeys[count++], Bytes.toString(res.getRow()));
       }
       Assert.assertEquals(newTableName, currentKeys.length, count);
+    }
+  }
+
+  @Test
+  public void testExceptionTables() throws IOException {
+    for(String table: tables) {
+      HTable htable = new HTable(TEST_UTIL.getConfiguration(), table);
+      int i = 0;
+      for(Result result: htable.getScanner(new Scan())) {
+        assertEquals(Bytes.toString(result.getRow()), currentKeys[i]);
+        i++;
+      }
+      assertEquals(i, currentKeys.length);
+    }
+    try {
+      TEST_UTIL.getHBaseAdmin().createNamespace(NamespaceDescriptor.create("ns1").build());
+      fail("Excepted constraint exception when trying to create exception namespace");
+    } catch(ConstraintException ex) {
+    }
+    try {
+      TEST_UTIL.getHBaseAdmin().createNamespace(NamespaceDescriptor.create("ns.two").build());
+      fail("Excepted constraint exception when trying to create exception namespace");
+    } catch(ConstraintException ex) {
     }
   }
 }

@@ -30,6 +30,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.exceptions.ConstraintException;
 import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.exceptions.TableExistsException;
@@ -84,6 +86,12 @@ public class CreateTableHandler extends EventHandler {
 
   public CreateTableHandler prepare()
       throws NotAllMetaRegionsOnlineException, TableExistsException, IOException {
+    //prevent tables in exception namespace to be created
+    if(TableName.containsExceptionNS(
+        TableName.valueOf(hTableDescriptor.getNameAsString()).getNamespaceAsString())) {
+      throw new ConstraintException("Table name conflicts with an exception namespace");
+    }
+
     int timeout = conf.getInt("hbase.client.catalog.timeout", 10000);
     // Need META availability to create a table
     try {

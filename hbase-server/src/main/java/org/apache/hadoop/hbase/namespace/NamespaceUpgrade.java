@@ -30,6 +30,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
@@ -83,13 +84,15 @@ public class NamespaceUpgrade {
         List<Path> oldTableDirs = FSUtils.getLocalTableDirs(fs, baseDir);
         for(Path oldTableDir: oldTableDirs) {
           if (!sysTables.contains(oldTableDir.getName())) {
-            Path nsDir = FSUtils.getTableDir(baseDir, oldTableDir.getName());
+            Path nsDir = new Path(FSUtils.getNamespaceDir(baseDir,
+                NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR),
+                oldTableDir.getName().toString());
             if(!fs.exists(nsDir.getParent())) {
               if(!fs.mkdirs(nsDir.getParent())) {
                 throw new IOException("Failed to create namespace dir "+nsDir.getParent());
               }
             }
-            if (sysTables.indexOf(oldTableDir.getName()) < 0) {
+            if(sysTables.indexOf(oldTableDir.getName()) < 0) {
               LOG.info("Migrating table " + oldTableDir.getName() + " to " + nsDir);
               if (!fs.rename(oldTableDir, nsDir)) {
                 throw new IOException("Failed to move "+oldTableDir+" to namespace dir "+nsDir);
