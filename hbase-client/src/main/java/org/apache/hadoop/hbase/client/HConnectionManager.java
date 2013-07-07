@@ -2130,7 +2130,7 @@ public class HConnectionManager {
       // To fulfill the original contract, we have a special callback. This callback
       //  will set the results in the Object array.
       ObjectResultFiller<R> cb = new ObjectResultFiller<R>(results, callback);
-      AsyncProcess<?> asyncProcess = createAsyncProcess(tableName, pool, cb, conf);
+      AsyncProcess<?> asyncProcess = createAsyncProcess(fqtn, pool, cb, conf);
 
       // We're doing a submit all. This way, the originalIndex will match the initial list.
       asyncProcess.submitAll(list);
@@ -2142,8 +2142,10 @@ public class HConnectionManager {
     }
 
     // For tests.
-    protected <R> AsyncProcess createAsyncProcess(byte[] tableName, ExecutorService pool,
-           AsyncProcess.AsyncProcessCallback<R> callback, Configuration conf) {
+    protected <R> AsyncProcess createAsyncProcess(FullyQualifiedTableName tableName,
+        ExecutorService pool,
+        AsyncProcess.AsyncProcessCallback<R> callback,
+        Configuration conf) {
       return new AsyncProcess<R>(this, tableName, pool, callback, conf);
     }
 
@@ -2343,7 +2345,7 @@ public class HConnectionManager {
       MasterMonitorKeepAliveConnection master = getKeepAliveMasterMonitorService();
       try {
         GetTableDescriptorsRequest req =
-          RequestConverter.buildGetTableDescriptorsRequest((List<String>)null);
+          RequestConverter.buildGetTableDescriptorsRequest((List<FullyQualifiedTableName>)null);
         return ProtobufUtil.getHTableDescriptorArray(master.getTableDescriptors(null, req));
       } catch (ServiceException se) {
         throw ProtobufUtil.getRemoteException(se);
@@ -2386,7 +2388,7 @@ public class HConnectionManager {
       GetTableDescriptorsResponse htds;
       try {
         GetTableDescriptorsRequest req =
-          RequestConverter.buildGetTableDescriptorsRequest(fqtn.getName());
+          RequestConverter.buildGetTableDescriptorsRequest(fqtn);
         htds = master.getTableDescriptors(null, req);
       } catch (ServiceException se) {
         throw ProtobufUtil.getRemoteException(se);

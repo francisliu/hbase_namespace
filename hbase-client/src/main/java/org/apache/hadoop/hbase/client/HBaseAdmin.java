@@ -596,7 +596,7 @@ public class HBaseAdmin implements Abortable, Closeable {
           MasterMonitorKeepAliveConnection master = connection.getKeepAliveMasterMonitorService();
           try {
             GetTableDescriptorsRequest req =
-              RequestConverter.buildGetTableDescriptorsRequest(tableName);
+              RequestConverter.buildGetTableDescriptorsRequest(fqtn);
             htds = master.getTableDescriptors(null, req);
           } catch (ServiceException se) {
             throw ProtobufUtil.getRemoteException(se);

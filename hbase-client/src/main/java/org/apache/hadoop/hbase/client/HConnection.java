@@ -182,7 +182,7 @@ public interface HConnection extends Abortable, Closeable {
    * @param exception the exception if any. Can be null.
    * @param source the previous location
    */
-  public void updateCachedLocations(byte[] tableName, byte[] rowkey,
+  public void updateCachedLocations(FullyQualifiedTableName fqtn, byte[] rowkey,
                                     Object exception, HRegionLocation source);
 
   /**

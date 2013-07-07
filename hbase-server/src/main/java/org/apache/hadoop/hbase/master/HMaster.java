@@ -2572,11 +2572,14 @@ MasterServices, Server {
   public GetTableDescriptorsResponse getTableDescriptors(
 	      RpcController controller, GetTableDescriptorsRequest req) throws ServiceException {
     List<HTableDescriptor> descriptors = new ArrayList<HTableDescriptor>();
-
+    List<FullyQualifiedTableName> tableNameList = new ArrayList<FullyQualifiedTableName>();
+    for(String tableName: req.getTableNamesList()) {
+      tableNameList.add(FullyQualifiedTableName.valueOf(tableName));
+    }
     boolean bypass = false;
     if (this.cpHost != null) {
       try {
-        bypass = this.cpHost.preGetTableDescriptors(req.getTableNamesList(), descriptors);
+        bypass = this.cpHost.preGetTableDescriptors(tableNameList, descriptors);
       } catch (IOException ioe) {
         throw new ServiceException(ioe);
       }
@@ -2592,20 +2595,16 @@ MasterServices, Server {
           LOG.warn("Failed getting all descriptors", e);
         }
         if (descriptorMap != null) {
-          descriptors.addAll(descriptorMap.values());
-        }
-        try {
-          for(HTableDescriptor desc:
-            getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
-            descriptors.remove(desc.getNameAsString());
+          for(HTableDescriptor desc: descriptorMap.values()) {
+            if(!HTableDescriptor.isSystemTable(desc.getFullyQualifiedTableName())) {
+              descriptors.add(desc);
+            }
           }
-        } catch (IOException e) {
-          LOG.warn("Failed getting all descriptors", e);
         }
       } else {
-        for (String s: req.getTableNamesList()) {
+        for (FullyQualifiedTableName s: tableNameList) {
           try {
-            HTableDescriptor desc = this.tableDescriptors.get(FullyQualifiedTableName.valueOf(s));
+            HTableDescriptor desc = this.tableDescriptors.get(s);
             if (desc != null) {
               descriptors.add(desc);
             }

@@ -1122,9 +1122,9 @@ public final class RequestConverter {
    * @return a GetTableDescriptorsRequest
    */
   public static GetTableDescriptorsRequest buildGetTableDescriptorsRequest(
-      final byte[] tableName) {
+      final FullyQualifiedTableName tableName) {
     return GetTableDescriptorsRequest.newBuilder()
-      .addTableNames(Bytes.toString(tableName))
+      .addTableNames(tableName.getNameAsString())
       .build();
   }
 

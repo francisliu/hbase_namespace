@@ -118,7 +118,7 @@ import java.util.concurrent.TimeUnit;
 @InterfaceStability.Stable
 public class HTable implements HTableInterface {
   private static final Log LOG = LogFactory.getLog(HTable.class);
-  private HConnection connection;
+  HConnection connection;
   private final FullyQualifiedTableName tableName;
   private volatile Configuration configuration;
   protected List<Row> writeAsyncBuffer = new LinkedList<Row>();
@@ -296,7 +296,7 @@ public class HTable implements HTableInterface {
    * For internal testing.
    */
   protected HTable(){
-    tableName = new byte[]{};
+    tableName = null;
     cleanupPoolOnClose = false;
     cleanupConnectionOnClose = false;
   }
@@ -891,7 +891,7 @@ public class HTable implements HTableInterface {
 
       if (synchronous || ap.hasError()) {
         if (ap.hasError() && LOG.isDebugEnabled()) {
-          LOG.debug(Bytes.toString(tableName) + ": One or more of the operations have failed -" +
+          LOG.debug(tableName + ": One or more of the operations have failed -" +
               " waiting for all operation in progress to finish (successfully or not)");
         }
         ap.waitUntilDone();

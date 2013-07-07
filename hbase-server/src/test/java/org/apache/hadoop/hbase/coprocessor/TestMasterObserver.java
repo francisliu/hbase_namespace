@@ -907,7 +907,8 @@ public class TestMasterObserver {
 
     @Override
     public void preGetTableDescriptors(ObserverContext<MasterCoprocessorEnvironment> ctx,
-        List<String> tableNamesList, List<HTableDescriptor> descriptors) throws IOException {
+        List<FullyQualifiedTableName> tableNamesList, List<HTableDescriptor> descriptors)
+        throws IOException {
       preGetTableDescriptorsCalled = true;
     }
 
@@ -1362,7 +1363,7 @@ public class TestMasterObserver {
     cp.resetStates();
 
     GetTableDescriptorsRequest req =
-        RequestConverter.buildGetTableDescriptorsRequest((List<String>)null);
+        RequestConverter.buildGetTableDescriptorsRequest((List<FullyQualifiedTableName>)null);
     master.getTableDescriptors(null, req);
 
     assertTrue("Coprocessor should be called on table descriptors request",

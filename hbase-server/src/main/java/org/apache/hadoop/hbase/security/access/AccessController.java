@@ -1399,7 +1399,8 @@ public class AccessController extends BaseRegionObserver
 
   @Override
   public void preGetTableDescriptors(ObserverContext<MasterCoprocessorEnvironment> ctx,
-      List<String> tableNamesList, List<HTableDescriptor> descriptors) throws IOException {
+      List<FullyQualifiedTableName> tableNamesList,
+      List<HTableDescriptor> descriptors) throws IOException {
     // If the list is empty, this is a request for all table descriptors and requires GLOBAL
     // ADMIN privs.
     if (tableNamesList == null || tableNamesList.isEmpty()) {
@@ -1409,18 +1410,17 @@ public class AccessController extends BaseRegionObserver
     // request can be granted.
     else {
       MasterServices masterServices = ctx.getEnvironment().getMasterServices();
-      for (String tableName: tableNamesList) {
+      for (FullyQualifiedTableName tableName: tableNamesList) {
         // Do not deny if the table does not exist
-        byte[] nameAsBytes = Bytes.toBytes(tableName);
         try {
-          masterServices.checkTableModifiable(nameAsBytes);
+          masterServices.checkTableModifiable(tableName);
         } catch (TableNotFoundException ex) {
           // Skip checks for a table that does not exist
           continue;
         } catch (TableNotDisabledException ex) {
           // We don't care about this
         }
-        requirePermission("getTableDescriptors", nameAsBytes, null, null,
+        requirePermission("getTableDescriptors", tableName, null, null,
           Permission.Action.ADMIN, Permission.Action.CREATE);
       }
     }

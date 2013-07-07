@@ -192,7 +192,7 @@ public abstract class ServerCallable<T> implements Callable<T> {
           // .META. again to find the new location
           getConnection().clearCaches(location.getServerName());
         } else if (t instanceof RegionMovedException) {
-          getConnection().updateCachedLocations(tableName, row, t, location);
+          getConnection().updateCachedLocations(fqtn, row, t, location);
         } else if (t instanceof NotServingRegionException && numRetries == 1) {
           // Purge cache entries for this specific region from META cache
           // since we don't call connect(true) when number of retries is 1.

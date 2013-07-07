@@ -29,6 +29,7 @@ import java.util.List;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -346,7 +347,8 @@ public class TestRegionMergeTransaction {
 
   @Test
   public void testMeregedRegionBoundary() {
-    byte[] tableName = Bytes.toBytes("testMeregedRegionBoundary");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testMeregedRegionBoundary");
     byte[] a = Bytes.toBytes("a");
     byte[] b = Bytes.toBytes("b");
     byte[] z = Bytes.toBytes("z");
@@ -354,19 +356,19 @@ public class TestRegionMergeTransaction {
     HRegionInfo r2 = new HRegionInfo(tableName, a, z);
     HRegionInfo m = RegionMergeTransaction.getMergedRegionInfo(r1, r2);
     assertTrue(Bytes.equals(m.getStartKey(), r1.getStartKey())
-      && Bytes.equals(m.getEndKey(), r1.getEndKey()));
+        && Bytes.equals(m.getEndKey(), r1.getEndKey()));
 
     r1 = new HRegionInfo(tableName, null, a);
     r2 = new HRegionInfo(tableName, a, z);
     m = RegionMergeTransaction.getMergedRegionInfo(r1, r2);
     assertTrue(Bytes.equals(m.getStartKey(), r1.getStartKey())
-      && Bytes.equals(m.getEndKey(), r2.getEndKey()));
+        && Bytes.equals(m.getEndKey(), r2.getEndKey()));
 
     r1 = new HRegionInfo(tableName, null, a);
     r2 = new HRegionInfo(tableName, z, null);
     m = RegionMergeTransaction.getMergedRegionInfo(r1, r2);
     assertTrue(Bytes.equals(m.getStartKey(), r1.getStartKey())
-      && Bytes.equals(m.getEndKey(), r2.getEndKey()));
+        && Bytes.equals(m.getEndKey(), r2.getEndKey()));
 
     r1 = new HRegionInfo(tableName, a, z);
     r2 = new HRegionInfo(tableName, z, null);

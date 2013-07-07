@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -50,7 +51,8 @@ import org.junit.experimental.categories.Category;
 @Category(MediumTests.class)
 public class TestOpenTableInCoprocessor {
 
-  private static final byte[] otherTable = Bytes.toBytes("otherTable");
+  private static final FullyQualifiedTableName otherTable =
+      FullyQualifiedTableName.valueOf("otherTable");
   private static final byte[] family = new byte[] { 'f' };
 
   private static boolean completed = false;

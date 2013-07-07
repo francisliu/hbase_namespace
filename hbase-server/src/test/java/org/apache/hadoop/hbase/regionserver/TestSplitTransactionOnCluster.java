@@ -439,7 +439,8 @@ public class TestSplitTransactionOnCluster {
   public void testSplitShouldNotThrowNPEEvenARegionHasEmptySplitFiles() throws Exception {
     Configuration conf = TESTING_UTIL.getConfiguration();
     ZooKeeperWatcher zkw = HBaseTestingUtility.getZooKeeperWatcher(TESTING_UTIL);
-    String userTableName = "testSplitShouldNotThrowNPEEvenARegionHasEmptySplitFiles";
+    FullyQualifiedTableName userTableName =
+        FullyQualifiedTableName.valueOf("testSplitShouldNotThrowNPEEvenARegionHasEmptySplitFiles");
     HTableDescriptor htd = new HTableDescriptor(userTableName);
     HColumnDescriptor hcd = new HColumnDescriptor("col");
     htd.addFamily(hcd);
@@ -452,16 +453,16 @@ public class TestSplitTransactionOnCluster {
         String val = "Val" + i;
         p.add("col".getBytes(), "ql".getBytes(), val.getBytes());
         table.put(p);
-        admin.flush(userTableName);
+        admin.flush(userTableName.getName());
         Delete d = new Delete(row.getBytes());
         // Do a normal delete
         table.delete(d);
-        admin.flush(userTableName);
+        admin.flush(userTableName.getName());
       }
-      admin.majorCompact(userTableName);
+      admin.majorCompact(userTableName.getName());
       List<HRegionInfo> regionsOfTable = TESTING_UTIL.getMiniHBaseCluster()
           .getMaster().getAssignmentManager().getRegionStates()
-          .getRegionsOfTable(userTableName.getBytes());
+          .getRegionsOfTable(userTableName);
       HRegionInfo hRegionInfo = regionsOfTable.get(0);
       Put p = new Put("row6".getBytes());
       p.add("col".getBytes(), "ql".getBytes(), "val".getBytes());
@@ -472,17 +473,17 @@ public class TestSplitTransactionOnCluster {
       p = new Put("row8".getBytes());
       p.add("col".getBytes(), "ql".getBytes(), "val".getBytes());
       table.put(p);
-      admin.flush(userTableName);
+      admin.flush(userTableName.getName());
       admin.split(hRegionInfo.getRegionName(), "row7".getBytes());
       regionsOfTable = TESTING_UTIL.getMiniHBaseCluster().getMaster()
           .getAssignmentManager().getRegionStates()
-          .getRegionsOfTable(userTableName.getBytes());
+          .getRegionsOfTable(userTableName);
 
       while (regionsOfTable.size() != 2) {
         Thread.sleep(2000);
         regionsOfTable = TESTING_UTIL.getMiniHBaseCluster().getMaster()
             .getAssignmentManager().getRegionStates()
-            .getRegionsOfTable(userTableName.getBytes());
+            .getRegionsOfTable(userTableName);
       }
       Assert.assertEquals(2, regionsOfTable.size());
       Scan s = new Scan();

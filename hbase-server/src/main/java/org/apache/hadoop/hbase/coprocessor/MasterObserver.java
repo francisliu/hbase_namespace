@@ -614,7 +614,6 @@ public interface MasterObserver extends Coprocessor {
       final SnapshotDescription snapshot) throws IOException;
 
   /**
-<<<<<<< HEAD
    * Called before a getTableDescriptors request has been processed.
    * @param ctx the environment to interact with the framework and master
    * @param tableNamesList the list of table names, or null if querying for all
@@ -622,7 +621,8 @@ public interface MasterObserver extends Coprocessor {
    * @throws IOException
    */
   void preGetTableDescriptors(ObserverContext<MasterCoprocessorEnvironment> ctx,
-      List<String> tableNamesList, List<HTableDescriptor> descriptors) throws IOException;
+      List<FullyQualifiedTableName> tableNamesList,
+      List<HTableDescriptor> descriptors) throws IOException;
 
   /**
    * Called after a getTableDescriptors request has been processed.

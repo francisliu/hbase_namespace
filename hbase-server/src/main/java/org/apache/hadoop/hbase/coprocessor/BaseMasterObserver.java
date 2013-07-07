@@ -372,7 +372,8 @@ public class BaseMasterObserver implements MasterObserver {
 
   @Override
   public void preGetTableDescriptors(ObserverContext<MasterCoprocessorEnvironment> ctx,
-      List<String> tableNamesList, List<HTableDescriptor> descriptors) throws IOException {
+      List<FullyQualifiedTableName> tableNamesList, List<HTableDescriptor> descriptors)
+      throws IOException {
   }
 
   @Override

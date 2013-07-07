@@ -1232,7 +1232,7 @@ public class MasterCoprocessorHost
     }
   }
 
-  public boolean preGetTableDescriptors(final List<String> tableNamesList,
+  public boolean preGetTableDescriptors(final List<FullyQualifiedTableName> tableNamesList,
       final List<HTableDescriptor> descriptors) throws IOException {
     boolean bypass = false;
     ObserverContext<MasterCoprocessorEnvironment> ctx = null;

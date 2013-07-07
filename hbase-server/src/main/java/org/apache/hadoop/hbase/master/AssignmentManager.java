@@ -1218,31 +1218,25 @@ public class AssignmentManager extends ZooKeeperListener {
             if (rs == null) return;
 
             HRegionInfo regionInfo = rs.getRegion();
-            if (rs.isSplit()) {
-              LOG.debug("Ephemeral node deleted, regionserver crashed?, " +
-                "clearing from RIT; rs=" + rs);
-              regionOffline(rs.getRegion());
-            } else {
-              String regionNameStr = regionInfo.getRegionNameAsString();
-              LOG.debug("The znode of region " + regionNameStr
-                + " has been deleted.");
-              if (rs.isOpened()) {
-                ServerName serverName = rs.getServerName();
-                regionOnline(regionInfo, serverName);
-                LOG.info("The master has opened the region "
-                  + regionNameStr + " that was online on " + serverName);
-                boolean disabled = getZKTable().isDisablingOrDisabledTable(
-                  regionInfo.getFullyQualifiedTableName());
-                if (!serverManager.isServerOnline(serverName) && !disabled) {
-                  LOG.info("Opened region " + regionNameStr
-                    + "but the region server is offline, reassign the region");
-                  assign(regionInfo, true);
-                } else if (disabled) {
-                  // if server is offline, no hurt to unassign again
-                  LOG.info("Opened region " + regionNameStr
-                    + "but this table is disabled, triggering close of region");
-                  unassign(regionInfo);
-                }
+            String regionNameStr = regionInfo.getRegionNameAsString();
+            LOG.debug("The znode of region " + regionNameStr
+              + " has been deleted, region state: " + rs);
+            if (rs.isOpened()) {
+              ServerName serverName = rs.getServerName();
+              regionOnline(regionInfo, serverName);
+              LOG.info("The master has opened the region "
+                + regionNameStr + " that was online on " + serverName);
+              boolean disabled = getZKTable().isDisablingOrDisabledTable(
+                regionInfo.getFullyQualifiedTableName());
+              if (!serverManager.isServerOnline(serverName) && !disabled) {
+                LOG.info("Opened region " + regionNameStr
+                  + "but the region server is offline, reassign the region");
+                assign(regionInfo, true);
+              } else if (disabled) {
+                // if server is offline, no hurt to unassign again
+                LOG.info("Opened region " + regionNameStr
+                  + "but this table is disabled, triggering close of region");
+                unassign(regionInfo);
               }
             }
           } finally {
