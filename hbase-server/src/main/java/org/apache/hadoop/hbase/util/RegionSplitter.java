@@ -409,7 +409,7 @@ public class RegionSplitter {
         Math.max(table.getConnection().getCurrentNrHRS() / 2, minOS);
 
     Path hbDir = FSUtils.getRootDir(conf);
-    Path tableDir = FSUtils.getTableDir(hbDir, table.getTableName());
+    Path tableDir = FSUtils.getTableDir(hbDir, table.getFullyQualifiedTableName());
     Path splitFile = new Path(tableDir, "_balancedSplit");
     FileSystem fs = FileSystem.get(conf);
 
@@ -639,7 +639,7 @@ public class RegionSplitter {
 
     // get table info
     Path rootDir = FSUtils.getRootDir(table.getConfiguration());
-    Path tableDir = FSUtils.getTableDir(rootDir, table.getTableName());
+    Path tableDir = FSUtils.getTableDir(rootDir, table.getFullyQualifiedTableName());
     FileSystem fs = tableDir.getFileSystem(table.getConfiguration());
     HTableDescriptor htd = table.getTableDescriptor();
 
@@ -715,7 +715,7 @@ public class RegionSplitter {
   static LinkedList<Pair<byte[], byte[]>> getSplits(HTable table,
       SplitAlgorithm splitAlgo) throws IOException {
     Path hbDir = FSUtils.getRootDir(table.getConfiguration());
-    Path tableDir = FSUtils.getTableDir(hbDir, table.getTableName());
+    Path tableDir = FSUtils.getTableDir(hbDir, table.getFullyQualifiedTableName());
     Path splitFile = new Path(tableDir, "_balancedSplit");
     FileSystem fs = tableDir.getFileSystem(table.getConfiguration());
 

@@ -30,6 +30,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
@@ -105,8 +106,9 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
     this.monitor = new ForeignExceptionDispatcher(snapshot.getName());
 
     this.tableLockManager = master.getTableLockManager();
-    this.tableLock = this.tableLockManager.writeLock(Bytes.toBytes(snapshot.getTable())
-      , EventType.C_M_SNAPSHOT_TABLE.toString());
+    this.tableLock = this.tableLockManager.writeLock(
+        FullyQualifiedTableName.valueOf(snapshot.getTable()),
+        EventType.C_M_SNAPSHOT_TABLE.toString());
 
     // prepare the verify
     this.verifier = new MasterSnapshotVerifier(masterServices, snapshot, rootDir);
@@ -119,7 +121,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
       throws FileNotFoundException, IOException {
     final String name = snapshot.getTable();
     HTableDescriptor htd =
-      this.master.getTableDescriptors().get(name);
+      this.master.getTableDescriptors().get(FullyQualifiedTableName.valueOf(name));
     if (htd == null) {
       throw new IOException("HTableDescriptor missing for " + name);
     }
@@ -164,7 +166,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
 
       List<Pair<HRegionInfo, ServerName>> regionsAndLocations =
           MetaReader.getTableRegionsAndLocations(this.server.getCatalogTracker(),
-            Bytes.toBytes(snapshot.getTable()), true);
+            FullyQualifiedTableName.valueOf(snapshot.getTable()), true);
 
       // run the snapshot
       snapshotRegions(regionsAndLocations);

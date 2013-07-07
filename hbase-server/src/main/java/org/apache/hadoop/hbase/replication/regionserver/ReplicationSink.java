@@ -37,6 +37,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValueUtil;
@@ -129,9 +130,11 @@ public class ReplicationSink {
       long totalReplicated = 0;
       // Map of table => list of Rows, we only want to flushCommits once per
       // invocation of this method per table.
-      Map<byte[], List<Row>> rows = new TreeMap<byte[], List<Row>>(Bytes.BYTES_COMPARATOR);
+      Map<FullyQualifiedTableName, List<Row>> rows =
+          new TreeMap<FullyQualifiedTableName, List<Row>>();
       for (WALEntry entry : entries) {
-        byte[] table = entry.getKey().getTableName().toByteArray();
+        FullyQualifiedTableName table =
+            FullyQualifiedTableName.valueOf(entry.getKey().getTableName().toByteArray());
         Cell previousCell = null;
         Mutation m = null;
         java.util.UUID uuid = toUUID(entry.getKey().getClusterId());
@@ -159,7 +162,7 @@ public class ReplicationSink {
         }
         totalReplicated++;
       }
-      for (Entry<byte[], List<Row>> entry : rows.entrySet()) {
+      for (Entry<FullyQualifiedTableName, List<Row>> entry : rows.entrySet()) {
         batch(entry.getKey(), entry.getValue());
       }
       int size = entries.size();
@@ -231,7 +234,7 @@ public class ReplicationSink {
    * @param rows list of actions
    * @throws IOException
    */
-  private void batch(byte[] tableName, List<Row> rows) throws IOException {
+  private void batch(FullyQualifiedTableName tableName, List<Row> rows) throws IOException {
     if (rows.isEmpty()) {
       return;
     }

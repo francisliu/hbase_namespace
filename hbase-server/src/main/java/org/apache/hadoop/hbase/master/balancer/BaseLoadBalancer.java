@@ -145,7 +145,7 @@ public abstract class BaseLoadBalancer implements LoadBalancer {
         regionPerServerIndex = 0;
 
         for (HRegionInfo region : entry.getValue()) {
-          String tableName = region.getTableNameAsString();
+          String tableName = region.getFullyQualifiedTableName().getNameAsString();
           Integer idx = tablesToIndex.get(tableName);
           if (idx == null) {
             tables.add(tableName);

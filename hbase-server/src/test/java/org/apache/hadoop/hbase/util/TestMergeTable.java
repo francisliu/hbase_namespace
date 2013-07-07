@@ -114,14 +114,14 @@ public class TestMergeTable {
       CatalogTracker ct = new CatalogTracker(c);
       ct.start();
       List<HRegionInfo> originalTableRegions =
-        MetaReader.getTableRegions(ct, desc.getName());
+        MetaReader.getTableRegions(ct, desc.getFullyQualifiedTableName());
       LOG.info("originalTableRegions size=" + originalTableRegions.size() +
         "; " + originalTableRegions);
       HBaseAdmin admin = new HBaseAdmin(c);
-      admin.disableTable(desc.getName());
-      HMerge.merge(c, FileSystem.get(c), desc.getName());
+      admin.disableTable(desc.getFullyQualifiedTableName());
+      HMerge.merge(c, FileSystem.get(c), desc.getFullyQualifiedTableName());
       List<HRegionInfo> postMergeTableRegions =
-        MetaReader.getTableRegions(ct, desc.getName());
+        MetaReader.getTableRegions(ct, desc.getFullyQualifiedTableName());
       LOG.info("postMergeTableRegions size=" + postMergeTableRegions.size() +
         "; " + postMergeTableRegions);
       assertTrue("originalTableRegions=" + originalTableRegions.size() +
@@ -137,7 +137,7 @@ public class TestMergeTable {
   private HRegion createRegion(final HTableDescriptor desc,
       byte [] startKey, byte [] endKey, int firstRow, int nrows, Path rootdir)
   throws IOException {
-    HRegionInfo hri = new HRegionInfo(desc.getName(), startKey, endKey);
+    HRegionInfo hri = new HRegionInfo(desc.getFullyQualifiedTableName(), startKey, endKey);
     HRegion region = HRegion.createHRegion(hri, rootdir, UTIL.getConfiguration(), desc);
     LOG.info("Created region " + region.getRegionNameAsString());
     for(int i = firstRow; i < firstRow + nrows; i++) {

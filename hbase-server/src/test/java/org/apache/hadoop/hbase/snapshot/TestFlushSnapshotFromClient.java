@@ -33,6 +33,7 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -79,7 +80,8 @@ public class TestFlushSnapshotFromClient {
   private static final int NUM_RS = 2;
   private static final String STRING_TABLE_NAME = "test";
   private static final byte[] TEST_FAM = Bytes.toBytes("fam");
-  private static final byte[] TABLE_NAME = Bytes.toBytes(STRING_TABLE_NAME);
+  private static final FullyQualifiedTableName TABLE_NAME =
+      FullyQualifiedTableName.valueOf(STRING_TABLE_NAME);
 
   /**
    * Setup the config for the cluster
@@ -269,7 +271,7 @@ public class TestFlushSnapshotFromClient {
 
     // make sure we only have 1 matching snapshot
     List<SnapshotDescription> snapshots = SnapshotTestingUtils.assertOneSnapshotThatMatches(admin,
-      snapshotName, STRING_TABLE_NAME);
+      snapshotName, TABLE_NAME);
 
     // check the directory structure
     FileSystem fs = UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getFileSystem();
@@ -318,7 +320,8 @@ public class TestFlushSnapshotFromClient {
   @Test(timeout=60000)
   public void testConcurrentSnapshottingAttempts() throws IOException, InterruptedException {
     final String STRING_TABLE2_NAME = STRING_TABLE_NAME + "2";
-    final byte[] TABLE2_NAME = Bytes.toBytes(STRING_TABLE2_NAME);
+    final FullyQualifiedTableName TABLE2_NAME =
+        FullyQualifiedTableName.valueOf(STRING_TABLE2_NAME);
 
     int ssNum = 20;
     HBaseAdmin admin = UTIL.getHBaseAdmin();
@@ -427,7 +430,7 @@ public class TestFlushSnapshotFromClient {
     FSUtils.logFileSystemState(UTIL.getDFSCluster().getFileSystem(), root, LOG);
   }
 
-  private void waitForTableToBeOnline(final byte[] tableName) throws IOException {
+  private void waitForTableToBeOnline(final FullyQualifiedTableName tableName) throws IOException {
     HRegionServer rs = UTIL.getRSForFirstRegionInTable(tableName);
     List<HRegion> onlineRegions = rs.getOnlineRegions(tableName);
     for (HRegion region : onlineRegions) {

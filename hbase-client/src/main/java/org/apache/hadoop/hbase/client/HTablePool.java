@@ -23,6 +23,7 @@ import com.google.protobuf.ServiceException;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
@@ -337,6 +338,11 @@ public class HTablePool implements Closeable {
     public byte[] getTableName() {
       checkState();
       return table.getTableName();
+    }
+
+    @Override
+    public FullyQualifiedTableName getFullyQualifiedTableName() {
+      return table.getFullyQualifiedTableName();
     }
 
     @Override

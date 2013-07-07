@@ -32,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompatibilityFactory;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -539,7 +540,8 @@ public class TestThriftServer {
     try {
       handler.mutateRow(tableAname, rowAname, getMutations(), null);
       byte[] searchRow = HRegionInfo.createRegionName(
-          tableAname.array(), rowAname.array(), HConstants.NINES, false);
+          FullyQualifiedTableName.valueOf(tableAname.array()), rowAname.array(),
+          HConstants.NINES, false);
       TRegionInfo regionInfo = handler.getRegionInfo(ByteBuffer.wrap(searchRow));
       assertTrue(Bytes.toStringBinary(regionInfo.getName()).startsWith(
             Bytes.toStringBinary(tableAname)));

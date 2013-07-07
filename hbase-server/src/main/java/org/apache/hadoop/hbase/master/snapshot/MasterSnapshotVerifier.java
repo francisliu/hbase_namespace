@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
@@ -77,7 +78,7 @@ public final class MasterSnapshotVerifier {
   private SnapshotDescription snapshot;
   private FileSystem fs;
   private Path rootDir;
-  private String tableName;
+  private FullyQualifiedTableName tableName;
   private MasterServices services;
 
   /**
@@ -90,7 +91,7 @@ public final class MasterSnapshotVerifier {
     this.services = services;
     this.snapshot = snapshot;
     this.rootDir = rootDir;
-    this.tableName = snapshot.getTable();
+    this.tableName = FullyQualifiedTableName.valueOf(snapshot.getTable());
   }
 
   /**
@@ -139,7 +140,7 @@ public final class MasterSnapshotVerifier {
    */
   private void verifyRegions(Path snapshotDir) throws IOException {
     List<HRegionInfo> regions = MetaReader.getTableRegions(this.services.getCatalogTracker(),
-      Bytes.toBytes(tableName));
+        tableName);
     for (HRegionInfo region : regions) {
       // if offline split parent, skip it
       if (region.isOffline() && (region.isSplit() || region.isSplitParent())) {

@@ -49,6 +49,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -152,7 +153,8 @@ public class TestHBaseFsck {
 
     // Now let's mess it up and change the assignment in .META. to
     // point to a different region server
-    HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName(), executorService);
+    HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName(),
+        executorService);
     Scan scan = new Scan();
     scan.setStartRow(Bytes.toBytes(table+",,"));
     ResultScanner scanner = meta.getScanner(scan);
@@ -212,7 +214,7 @@ public class TestHBaseFsck {
       htd, byte[] startKey, byte[] endKey)
       throws IOException {
     HTable meta = new HTable(conf, HConstants.META_TABLE_NAME, executorService);
-    HRegionInfo hri = new HRegionInfo(htd.getName(), startKey, endKey);
+    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName(), startKey, endKey);
     MetaEditor.addRegionToMeta(meta, hri);
     meta.close();
     return hri;
@@ -221,7 +223,7 @@ public class TestHBaseFsck {
   /**
    * Debugging method to dump the contents of meta.
    */
-  private void dumpMeta(byte[] tableName) throws IOException {
+  private void dumpMeta(FullyQualifiedTableName tableName) throws IOException {
     List<byte[]> metaRows = TEST_UTIL.getMetaTableRows(tableName);
     for (byte[] row : metaRows) {
       LOG.info(Bytes.toString(row));
@@ -265,7 +267,7 @@ public class TestHBaseFsck {
       byte[] startKey, byte[] endKey, boolean unassign, boolean metaRow,
       boolean hdfs, boolean regionInfoOnly) throws IOException, InterruptedException {
     LOG.info("** Before delete:");
-    dumpMeta(htd.getName());
+    dumpMeta(htd.getFullyQualifiedTableName());
 
     Map<HRegionInfo, ServerName> hris = tbl.getRegionLocations();
     for (Entry<HRegionInfo, ServerName> e: hris.entrySet()) {
@@ -286,7 +288,7 @@ public class TestHBaseFsck {
           LOG.info("deleting hdfs .regioninfo data: " + hri.toString() + hsa.toString());
           Path rootDir = FSUtils.getRootDir(conf);
           FileSystem fs = rootDir.getFileSystem(conf);
-          Path p = new Path(FSUtils.getTableDir(rootDir, htd.getNameAsString()),
+          Path p = new Path(FSUtils.getTableDir(rootDir, htd.getFullyQualifiedTableName()),
               hri.getEncodedName());
           Path hriPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);
           fs.delete(hriPath, true);
@@ -296,7 +298,7 @@ public class TestHBaseFsck {
           LOG.info("deleting hdfs data: " + hri.toString() + hsa.toString());
           Path rootDir = FSUtils.getRootDir(conf);
           FileSystem fs = rootDir.getFileSystem(conf);
-          Path p = new Path(FSUtils.getTableDir(rootDir, htd.getNameAsString()),
+          Path p = new Path(FSUtils.getTableDir(rootDir, htd.getFullyQualifiedTableName()),
               hri.getEncodedName());
           HBaseFsck.debugLsr(conf, p);
           boolean success = fs.delete(p, true);
@@ -313,9 +315,9 @@ public class TestHBaseFsck {
       LOG.info(hri.toString() + hsa.toString());
     }
 
-    TEST_UTIL.getMetaTableRows(htd.getName());
+    TEST_UTIL.getMetaTableRows(htd.getFullyQualifiedTableName());
     LOG.info("*** After delete:");
-    dumpMeta(htd.getName());
+    dumpMeta(htd.getFullyQualifiedTableName());
   }
 
   /**
@@ -325,12 +327,12 @@ public class TestHBaseFsck {
    * @throws InterruptedException
    * @throws KeeperException
    */
-  HTable setupTable(String tablename) throws Exception {
+  HTable setupTable(FullyQualifiedTableName tablename) throws Exception {
     HTableDescriptor desc = new HTableDescriptor(tablename);
     HColumnDescriptor hcd = new HColumnDescriptor(Bytes.toString(FAM));
     desc.addFamily(hcd); // If a table has no CF's it doesn't get checked
     TEST_UTIL.getHBaseAdmin().createTable(desc, SPLITS);
-    tbl = new HTable(TEST_UTIL.getConfiguration(), Bytes.toBytes(tablename), executorService);
+    tbl = new HTable(TEST_UTIL.getConfiguration(), tablename, executorService);
 
     List<Put> puts = new ArrayList<Put>();
     for (byte[] row : ROWKEYS) {
@@ -362,15 +364,14 @@ public class TestHBaseFsck {
    * @param tablename
    * @throws IOException
    */
-  void deleteTable(String tablename) throws IOException {
+  void deleteTable(FullyQualifiedTableName tablename) throws IOException {
     HBaseAdmin admin = new HBaseAdmin(conf);
     admin.getConnection().clearRegionCache();
-    byte[] tbytes = Bytes.toBytes(tablename);
-    admin.disableTableAsync(tbytes);
+    admin.disableTableAsync(tablename);
     long totalWait = 0;
     long maxWait = 30*1000;
     long sleepTime = 250;
-    while (!admin.isTableDisabled(tbytes)) {
+    while (!admin.isTableDisabled(tablename)) {
       try {
         Thread.sleep(sleepTime);
         totalWait += sleepTime;
@@ -382,7 +383,7 @@ public class TestHBaseFsck {
         fail("Interrupted when trying to disable table " + tablename);
       }
     }
-    admin.deleteTable(tbytes);
+    admin.deleteTable(tablename);
   }
 
   /**
@@ -391,7 +392,7 @@ public class TestHBaseFsck {
   @Test
   public void testHBaseFsckClean() throws Exception {
     assertNoErrors(doFsck(conf, false));
-    String table = "tableClean";
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("tableClean");
     try {
       HBaseFsck hbck = doFsck(conf, false);
       assertNoErrors(hbck);
@@ -414,7 +415,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testHbckThreadpooling() throws Exception {
-    String table = "tableDupeStartKey";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableDupeStartKey");
     try {
       // Create table with 4 regions
       setupTable(table);
@@ -432,7 +434,7 @@ public class TestHBaseFsck {
 
   @Test
   public void testHbckFixOrphanTable() throws Exception {
-    String table = "tableInfo";
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("tableInfo");
     FileSystem fs = null;
     Path tableinfo = null;
     try {
@@ -440,7 +442,7 @@ public class TestHBaseFsck {
       HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
 
       Path hbaseTableDir = FSUtils.getTableDir(
-          FSUtils.getRootDir(conf), Bytes.toBytes(table));
+          FSUtils.getRootDir(conf), table);
       fs = hbaseTableDir.getFileSystem(conf);
       FileStatus status = FSTableDescriptors.getTableInfoPath(fs, hbaseTableDir);
       tableinfo = status.getPath();
@@ -457,21 +459,21 @@ public class TestHBaseFsck {
       status = FSTableDescriptors.getTableInfoPath(fs, hbaseTableDir);
       assertNotNull(status);
 
-      HTableDescriptor htd = admin.getTableDescriptor(table.getBytes());
+      HTableDescriptor htd = admin.getTableDescriptor(table);
       htd.setValue("NOT_DEFAULT", "true");
       admin.disableTable(table);
-      admin.modifyTable(table.getBytes(), htd);
+      admin.modifyTable(table, htd);
       admin.enableTable(table);
       fs.delete(status.getPath(), true);
 
       // fix OrphanTable with cache
-      htd = admin.getTableDescriptor(table.getBytes()); // warms up cached htd on master
+      htd = admin.getTableDescriptor(table); // warms up cached htd on master
       hbck = doFsck(conf, true);
       assertNoErrors(hbck);
       status = null;
       status = FSTableDescriptors.getTableInfoPath(fs, hbaseTableDir);
       assertNotNull(status);
-      htd = admin.getTableDescriptor(table.getBytes());
+      htd = admin.getTableDescriptor(table);
       assertEquals(htd.getValue("NOT_DEFAULT"), "true");
     } finally {
       fs.rename(new Path("/.tableinfo"), tableinfo);
@@ -485,7 +487,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testDupeStartKey() throws Exception {
-    String table = "tableDupeStartKey";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableDupeStartKey");
     try {
       setupTable(table);
       assertNoErrors(doFsck(conf, false));
@@ -561,7 +564,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testDupeRegion() throws Exception {
-    String table = "tableDupeRegion";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableDupeRegion");
     try {
       setupTable(table);
       assertNoErrors(doFsck(conf, false));
@@ -613,7 +617,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testDegenerateRegions() throws Exception {
-    String table = "tableDegenerateRegions";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableDegenerateRegions");
     try {
       setupTable(table);
       assertNoErrors(doFsck(conf,false));
@@ -653,7 +658,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testContainedRegionOverlap() throws Exception {
-    String table = "tableContainedRegionOverlap";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableContainedRegionOverlap");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -694,7 +700,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testSidelineOverlapRegion() throws Exception {
-    String table = "testSidelineOverlapRegion";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testSidelineOverlapRegion");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -784,7 +791,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testOverlapAndOrphan() throws Exception {
-    String table = "tableOverlapAndOrphan";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableOverlapAndOrphan");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -828,7 +836,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testCoveredStartKey() throws Exception {
-    String table = "tableCoveredStartKey";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableCoveredStartKey");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -868,7 +877,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testRegionHole() throws Exception {
-    String table = "tableRegionHole";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableRegionHole");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -902,7 +912,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testHDFSRegioninfoMissing() throws Exception {
-    String table = "tableHDFSRegioininfoMissing";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableHDFSRegioininfoMissing");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -938,7 +949,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testNotInMetaOrDeployedHole() throws Exception {
-    String table = "tableNotInMetaOrDeployedHole";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableNotInMetaOrDeployedHole");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -972,7 +984,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testNotInMetaHole() throws Exception {
-    String table = "tableNotInMetaHole";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableNotInMetaHole");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1007,13 +1020,14 @@ public class TestHBaseFsck {
    */
   @Test
   public void testNotInHdfs() throws Exception {
-    String table = "tableNotInHdfs";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableNotInHdfs");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
 
       // make sure data in regions, if in hlog only there is no data loss
-      TEST_UTIL.getHBaseAdmin().flush(table);
+      TEST_UTIL.getHBaseAdmin().flush(table.getName());
 
       // Mess it up by leaving a hole in the hdfs data
       deleteRegion(conf, tbl.getTableDescriptor(), Bytes.toBytes("B"),
@@ -1041,12 +1055,12 @@ public class TestHBaseFsck {
    */
   @Test
   public void testNoHdfsTable() throws Exception {
-    String table = "NoHdfsTable";
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("NoHdfsTable");
     setupTable(table);
     assertEquals(ROWKEYS.length, countRows());
 
     // make sure data in regions, if in hlog only there is no data loss
-    TEST_UTIL.getHBaseAdmin().flush(table);
+    TEST_UTIL.getHBaseAdmin().flush(table.getName());
 
     // Mess it up by leaving a giant hole in meta
     deleteRegion(conf, tbl.getTableDescriptor(), Bytes.toBytes(""),
@@ -1100,7 +1114,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testRegionShouldNotBeDeployed() throws Exception {
-    String table = "tableRegionShouldNotBeDeployed";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("tableRegionShouldNotBeDeployed");
     try {
       LOG.info("Starting testRegionShouldNotBeDeployed.");
       MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
@@ -1111,7 +1126,7 @@ public class TestHBaseFsck {
 
       byte[][] SPLIT_KEYS = new byte[][] { new byte[0], Bytes.toBytes("aaa"),
           Bytes.toBytes("bbb"), Bytes.toBytes("ccc"), Bytes.toBytes("ddd") };
-      HTableDescriptor htdDisabled = new HTableDescriptor(Bytes.toBytes(table));
+      HTableDescriptor htdDisabled = new HTableDescriptor(table);
       htdDisabled.addFamily(new HColumnDescriptor(FAM));
 
       // Write the .tableinfo
@@ -1162,19 +1177,21 @@ public class TestHBaseFsck {
    */
   @Test
   public void testFixByTable() throws Exception {
-    String table1 = "testFixByTable1";
-    String table2 = "testFixByTable2";
+    FullyQualifiedTableName table1 =
+        FullyQualifiedTableName.valueOf("testFixByTable1");
+    FullyQualifiedTableName table2 =
+        FullyQualifiedTableName.valueOf("testFixByTable2");
     try {
       setupTable(table1);
       // make sure data in regions, if in hlog only there is no data loss
-      TEST_UTIL.getHBaseAdmin().flush(table1);
+      TEST_UTIL.getHBaseAdmin().flush(table1.getName());
       // Mess them up by leaving a hole in the hdfs data
       deleteRegion(conf, tbl.getTableDescriptor(), Bytes.toBytes("B"),
         Bytes.toBytes("C"), false, false, true); // don't rm meta
 
       setupTable(table2);
       // make sure data in regions, if in hlog only there is no data loss
-      TEST_UTIL.getHBaseAdmin().flush(table2);
+      TEST_UTIL.getHBaseAdmin().flush(table2.getName());
       // Mess them up by leaving a hole in the hdfs data
       deleteRegion(conf, tbl.getTableDescriptor(), Bytes.toBytes("B"),
         Bytes.toBytes("C"), false, false, true); // don't rm meta
@@ -1206,14 +1223,15 @@ public class TestHBaseFsck {
    */
   @Test
   public void testLingeringSplitParent() throws Exception {
-    String table = "testLingeringSplitParent";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testLingeringSplitParent");
     HTable meta = null;
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
 
       // make sure data in regions, if in hlog only there is no data loss
-      TEST_UTIL.getHBaseAdmin().flush(table);
+      TEST_UTIL.getHBaseAdmin().flush(table.getName());
       HRegionLocation location = tbl.getRegionLocation("B");
 
       // Delete one region from meta, but not hdfs, unassign it.
@@ -1221,12 +1239,13 @@ public class TestHBaseFsck {
         Bytes.toBytes("C"), true, true, false);
 
       // Create a new meta entry to fake it as a split parent.
-      meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName(), executorService);
+      meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName(),
+          executorService);
       HRegionInfo hri = location.getRegionInfo();
 
-      HRegionInfo a = new HRegionInfo(tbl.getTableName(),
+      HRegionInfo a = new HRegionInfo(tbl.getFullyQualifiedTableName(),
         Bytes.toBytes("B"), Bytes.toBytes("BM"));
-      HRegionInfo b = new HRegionInfo(tbl.getTableName(),
+      HRegionInfo b = new HRegionInfo(tbl.getFullyQualifiedTableName(),
         Bytes.toBytes("BM"), Bytes.toBytes("C"));
 
       hri.setOffline(true);
@@ -1234,7 +1253,7 @@ public class TestHBaseFsck {
 
       MetaEditor.addRegionToMeta(meta, hri, a, b);
       meta.flushCommits();
-      TEST_UTIL.getHBaseAdmin().flush(HConstants.META_TABLE_NAME);
+      TEST_UTIL.getHBaseAdmin().flush(HConstants.META_TABLE_NAME.getName());
 
       HBaseFsck hbck = doFsck(conf, false);
       assertErrors(hbck, new ERROR_CODE[] {
@@ -1264,7 +1283,7 @@ public class TestHBaseFsck {
         HConstants.SPLITA_QUALIFIER).isEmpty());
       assertTrue(result.getColumn(HConstants.CATALOG_FAMILY,
         HConstants.SPLITB_QUALIFIER).isEmpty());
-      TEST_UTIL.getHBaseAdmin().flush(HConstants.META_TABLE_NAME);
+      TEST_UTIL.getHBaseAdmin().flush(HConstants.META_TABLE_NAME.getName());
 
       // fix other issues
       doFsck(conf, true);
@@ -1284,17 +1303,18 @@ public class TestHBaseFsck {
    */
   @Test
   public void testValidLingeringSplitParent() throws Exception {
-    String table = "testLingeringSplitParent";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testLingeringSplitParent");
     HTable meta = null;
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
 
       // make sure data in regions, if in hlog only there is no data loss
-      TEST_UTIL.getHBaseAdmin().flush(table);
+      TEST_UTIL.getHBaseAdmin().flush(table.getName());
       HRegionLocation location = tbl.getRegionLocation("B");
 
-      meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName());
+      meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName());
       HRegionInfo hri = location.getRegionInfo();
 
       // do a regular split
@@ -1333,17 +1353,18 @@ public class TestHBaseFsck {
    */
   @Test
   public void testSplitDaughtersNotInMeta() throws Exception {
-    String table = "testSplitdaughtersNotInMeta";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testSplitdaughtersNotInMeta");
     HTable meta = null;
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
 
       // make sure data in regions, if in hlog only there is no data loss
-      TEST_UTIL.getHBaseAdmin().flush(table);
+      TEST_UTIL.getHBaseAdmin().flush(table.getName());
       HRegionLocation location = tbl.getRegionLocation("B");
 
-      meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName());
+      meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName());
       HRegionInfo hri = location.getRegionInfo();
 
       // do a regular split
@@ -1396,7 +1417,8 @@ public class TestHBaseFsck {
    */
   @Test(timeout=120000)
   public void testMissingFirstRegion() throws Exception {
-    String table = "testMissingFirstRegion";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testMissingFirstRegion");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1424,7 +1446,8 @@ public class TestHBaseFsck {
    */
   @Test(timeout=120000)
   public void testMissingLastRegion() throws Exception {
-    String table = "testMissingLastRegion";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testMissingLastRegion");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1451,7 +1474,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testFixAssignmentsAndNoHdfsChecking() throws Exception {
-    String table = "testFixAssignmentsAndNoHdfsChecking";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testFixAssignmentsAndNoHdfsChecking");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1500,7 +1524,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testFixMetaNotWorkingWithNoHdfsChecking() throws Exception {
-    String table = "testFixMetaNotWorkingWithNoHdfsChecking";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testFixMetaNotWorkingWithNoHdfsChecking");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1547,7 +1572,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testFixHdfsHolesNotWorkingWithNoHdfsChecking() throws Exception {
-    String table = "testFixHdfsHolesNotWorkingWithNoHdfsChecking";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testFixHdfsHolesNotWorkingWithNoHdfsChecking");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1610,7 +1636,7 @@ public class TestHBaseFsck {
    * @return Path of a flushed hfile.
    * @throws IOException
    */
-  Path getFlushedHFile(FileSystem fs, String table) throws IOException {
+  Path getFlushedHFile(FileSystem fs, FullyQualifiedTableName table) throws IOException {
     Path tableDir= FSUtils.getTableDir(FSUtils.getRootDir(conf), table);
     Path regionDir = FSUtils.getRegionDirs(fs, tableDir).get(0);
     Path famDir = new Path(regionDir, FAM_STR);
@@ -1634,11 +1660,11 @@ public class TestHBaseFsck {
    */
   @Test(timeout=120000)
   public void testQuarantineCorruptHFile() throws Exception {
-    String table = name.getMethodName();
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(name.getMethodName());
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
-      TEST_UTIL.getHBaseAdmin().flush(table); // flush is async.
+      TEST_UTIL.getHBaseAdmin().flush(table.getName()); // flush is async.
 
       FileSystem fs = FileSystem.get(conf);
       Path hfile = getFlushedHFile(fs, table);
@@ -1672,17 +1698,18 @@ public class TestHBaseFsck {
   /**
   * Test that use this should have a timeout, because this method could potentially wait forever.
   */
-  private void doQuarantineTest(String table, HBaseFsck hbck, int check, int corrupt, int fail,
-      int quar, int missing) throws Exception {
+  private void doQuarantineTest(FullyQualifiedTableName table, HBaseFsck hbck, int check,
+                                int corrupt, int fail, int quar, int missing) throws Exception {
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
-      TEST_UTIL.getHBaseAdmin().flush(table); // flush is async.
+      TEST_UTIL.getHBaseAdmin().flush(table.getName()); // flush is async.
 
       // Mess it up by leaving a hole in the assignment, meta, and hdfs data
       TEST_UTIL.getHBaseAdmin().disableTable(table);
 
-      String[] args = {"-sidelineCorruptHFiles", "-repairHoles", "-ignorePreCheckPermission", table};
+      String[] args = {"-sidelineCorruptHFiles", "-repairHoles", "-ignorePreCheckPermission",
+          table.getNameAsString()};
       ExecutorService exec = new ScheduledThreadPoolExecutor(10);
       HBaseFsck res = hbck.exec(exec, args);
 
@@ -1715,7 +1742,7 @@ public class TestHBaseFsck {
    */
   @Test(timeout=120000)
   public void testQuarantineMissingHFile() throws Exception {
-    String table = name.getMethodName();
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(name.getMethodName());
     ExecutorService exec = new ScheduledThreadPoolExecutor(10);
     // inject a fault in the hfcc created.
     final FileSystem fs = FileSystem.get(conf);
@@ -1744,7 +1771,7 @@ public class TestHBaseFsck {
   // files in a column family on initial creation -- as suggested by Matteo.
   @Ignore @Test(timeout=120000)
   public void testQuarantineMissingFamdir() throws Exception {
-    String table = name.getMethodName();
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(name.getMethodName());
     ExecutorService exec = new ScheduledThreadPoolExecutor(10);
     // inject a fault in the hfcc created.
     final FileSystem fs = FileSystem.get(conf);
@@ -1771,7 +1798,7 @@ public class TestHBaseFsck {
    */
   @Test(timeout=120000)
   public void testQuarantineMissingRegionDir() throws Exception {
-    String table = name.getMethodName();
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(name.getMethodName());
     ExecutorService exec = new ScheduledThreadPoolExecutor(10);
     // inject a fault in the hfcc created.
     final FileSystem fs = FileSystem.get(conf);
@@ -1797,7 +1824,8 @@ public class TestHBaseFsck {
    */
   @Test
   public void testLingeringReferenceFile() throws Exception {
-    String table = "testLingeringReferenceFile";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testLingeringReferenceFile");
     try {
       setupTable(table);
       assertEquals(ROWKEYS.length, countRows());
@@ -1826,12 +1854,13 @@ public class TestHBaseFsck {
    */
   @Test
   public void testMissingRegionInfoQualifier() throws Exception {
-    String table = "testMissingRegionInfoQualifier";
+    FullyQualifiedTableName table =
+        FullyQualifiedTableName.valueOf("testMissingRegionInfoQualifier");
     try {
       setupTable(table);
 
       // Mess it up by removing the RegionInfo for one region.
-      HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName());
+      HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName());
       ResultScanner scanner = meta.getScanner(new Scan());
       Result result = scanner.next();
       Delete delete = new Delete (result.getRow());
@@ -1956,7 +1985,8 @@ public class TestHBaseFsck {
 
     // obtain one lock
     final TableLockManager tableLockManager = TableLockManager.createTableLockManager(conf, TEST_UTIL.getZooKeeperWatcher(), mockName);
-    TableLock writeLock = tableLockManager.writeLock(Bytes.toBytes("foo"), "testCheckTableLocks");
+    TableLock writeLock = tableLockManager.writeLock(FullyQualifiedTableName.valueOf("foo"),
+        "testCheckTableLocks");
     writeLock.acquire();
     hbck = doFsck(conf, false);
     assertNoErrors(hbck); // should not have expired, no problems
@@ -1970,7 +2000,8 @@ public class TestHBaseFsck {
     final CountDownLatch latch = new CountDownLatch(1);
     new Thread() {
       public void run() {
-        TableLock readLock = tableLockManager.writeLock(Bytes.toBytes("foo"), "testCheckTableLocks");
+        TableLock readLock = tableLockManager.writeLock(FullyQualifiedTableName.valueOf("foo"),
+            "testCheckTableLocks");
         try {
           latch.countDown();
           readLock.acquire();
@@ -2004,7 +2035,8 @@ public class TestHBaseFsck {
     assertNoErrors(hbck);
 
     // ensure that locks are deleted
-    writeLock = tableLockManager.writeLock(Bytes.toBytes("foo"), "should acquire without blocking");
+    writeLock = tableLockManager.writeLock(FullyQualifiedTableName.valueOf("foo"),
+        "should acquire without blocking");
     writeLock.acquire(); // this should not block.
     writeLock.release(); // release for clean state
   }

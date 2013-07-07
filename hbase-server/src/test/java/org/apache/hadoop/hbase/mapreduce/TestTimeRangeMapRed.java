@@ -149,7 +149,7 @@ public class TestTimeRangeMapRed {
     col.setMaxVersions(Integer.MAX_VALUE);
     desc.addFamily(col);
     admin.createTable(desc);
-    HTable table = new HTable(UTIL.getConfiguration(), desc.getName());
+    HTable table = new HTable(UTIL.getConfiguration(), desc.getFullyQualifiedTableName());
     prepareTest(table);
     runTestOnTable();
     verify(table);

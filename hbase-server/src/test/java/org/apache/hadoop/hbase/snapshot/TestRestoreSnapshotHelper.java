@@ -96,7 +96,7 @@ public class TestRestoreSnapshotHelper {
     verifyRestore(rootDir, htd, htdClone);
 
     // Test clone a clone ("link to link")
-    Path cloneDir = FSUtils.getTableDir(rootDir, htdClone.getName());
+    Path cloneDir = FSUtils.getTableDir(rootDir, htdClone.getFullyQualifiedTableName());
     HTableDescriptor htdClone2 = createTableDescriptor("testtb-clone2");
     testRestore(cloneDir, htdClone.getNameAsString(), htdClone2);
     verifyRestore(rootDir, htd, htdClone2);
@@ -104,7 +104,7 @@ public class TestRestoreSnapshotHelper {
 
   private void verifyRestore(final Path rootDir, final HTableDescriptor sourceHtd,
       final HTableDescriptor htdClone) throws IOException {
-    String[] files = getHFiles(FSUtils.getTableDir(rootDir, htdClone.getName()));
+    String[] files = getHFiles(FSUtils.getTableDir(rootDir, htdClone.getFullyQualifiedTableName()));
     assertEquals(2, files.length);
     assertTrue(files[0] + " should be a HFileLink", HFileLink.isHFileLink(files[0]));
     assertTrue(files[1] + " should be a Referene", StoreFileInfo.isReference(files[1]));
@@ -148,29 +148,29 @@ public class TestRestoreSnapshotHelper {
       .setName("snapshot").setTable(sourceTableName).build();
 
     return new RestoreSnapshotHelper(conf, fs, sd, snapshotDir,
-      htdClone, rootDir, FSUtils.getTableDir(rootDir, htdClone.getName()), monitor, status);
+      htdClone, rootDir, FSUtils.getTableDir(rootDir, htdClone.getFullyQualifiedTableName()), monitor, status);
   }
 
   private void createSnapshot(final Path rootDir, final Path snapshotDir, final HTableDescriptor htd)
       throws IOException {
     // First region, simple with one plain hfile.
-    HRegionInfo hri = new HRegionInfo(htd.getName());
+    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName());
     HRegionFileSystem r0fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, FSUtils.getTableDir(archiveDir, hri.getTableNameAsString()), hri);
+      fs, FSUtils.getTableDir(archiveDir, hri.getFullyQualifiedTableName()), hri);
     Path storeFile = new Path(rootDir, TEST_HFILE);
     fs.createNewFile(storeFile);
     r0fs.commitStoreFile(TEST_FAMILY, storeFile);
 
     // Second region, used to test the split case.
     // This region contains a reference to the hfile in the first region.
-    hri = new HRegionInfo(htd.getName());
+    hri = new HRegionInfo(htd.getFullyQualifiedTableName());
     HRegionFileSystem r1fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, FSUtils.getTableDir(archiveDir, hri.getTableNameAsString()), hri);
+      fs, FSUtils.getTableDir(archiveDir, hri.getFullyQualifiedTableName()), hri);
     storeFile = new Path(rootDir, TEST_HFILE + '.' + r0fs.getRegionInfo().getEncodedName());
     fs.createNewFile(storeFile);
     r1fs.commitStoreFile(TEST_FAMILY, storeFile);
 
-    Path tableDir = FSUtils.getTableDir(archiveDir, htd.getName());
+    Path tableDir = FSUtils.getTableDir(archiveDir, htd.getFullyQualifiedTableName());
     FileUtil.copy(fs, tableDir, fs, snapshotDir, false, conf);
   }
 

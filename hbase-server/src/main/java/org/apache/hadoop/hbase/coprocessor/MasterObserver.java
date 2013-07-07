@@ -25,6 +25,7 @@ import java.util.List;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -97,7 +98,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void preDeleteTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName) throws IOException;
+      FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called after the deleteTable operation has been requested.  Called as part
@@ -106,7 +107,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void postDeleteTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName) throws IOException;
+      FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called before {@link org.apache.hadoop.hbase.master.HMaster} deletes a
@@ -117,7 +118,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void preDeleteTableHandler(
-      final ObserverContext<MasterCoprocessorEnvironment> ctx, byte[] tableName)
+      final ObserverContext<MasterCoprocessorEnvironment> ctx, FullyQualifiedTableName tableName)
       throws IOException;
 
   /**
@@ -129,7 +130,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void postDeleteTableHandler(
-      final ObserverContext<MasterCoprocessorEnvironment> ctx, byte[] tableName)
+      final ObserverContext<MasterCoprocessorEnvironment> ctx, FullyQualifiedTableName tableName)
       throws IOException;
 
   /**
@@ -141,7 +142,7 @@ public interface MasterObserver extends Coprocessor {
    * @param htd the HTableDescriptor
    */
   void preModifyTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName, HTableDescriptor htd) throws IOException;
+      final FullyQualifiedTableName tableName, HTableDescriptor htd) throws IOException;
 
   /**
    * Called after the modifyTable operation has been requested.  Called as part
@@ -151,7 +152,7 @@ public interface MasterObserver extends Coprocessor {
    * @param htd the HTableDescriptor
    */
   void postModifyTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName, HTableDescriptor htd) throws IOException;
+      final FullyQualifiedTableName tableName, HTableDescriptor htd) throws IOException;
 
   /**
    * Called prior to modifying a table's properties.  Called as part of modify
@@ -163,7 +164,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void preModifyTableHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName, HTableDescriptor htd) throws IOException;
+      final FullyQualifiedTableName tableName, HTableDescriptor htd) throws IOException;
 
   /**
    * Called after to modifying a table's properties.  Called as part of modify
@@ -175,7 +176,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void postModifyTableHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName, HTableDescriptor htd) throws IOException;
+      final FullyQualifiedTableName tableName, HTableDescriptor htd) throws IOException;
 
   /**
    * Called prior to adding a new column family to the table.  Called as part of
@@ -185,7 +186,7 @@ public interface MasterObserver extends Coprocessor {
    * @param column the HColumnDescriptor
    */
   void preAddColumn(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor column) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException;
 
   /**
    * Called after the new column family has been created.  Called as part of
@@ -195,7 +196,7 @@ public interface MasterObserver extends Coprocessor {
    * @param column the HColumnDescriptor
    */
   void postAddColumn(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor column) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException;
 
   /**
    * Called prior to adding a new column family to the table.  Called as part of
@@ -206,7 +207,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void preAddColumnHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor column) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException;
 
   /**
    * Called after the new column family has been created.  Called as part of
@@ -217,17 +218,17 @@ public interface MasterObserver extends Coprocessor {
    */
   void postAddColumnHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor column) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException;
 
   /**
    * Called prior to modifying a column family's attributes.  Called as part of
    * modify column RPC call.
    * @param ctx the environment to interact with the framework and master
-   * @param tableName the name of the table
+   * @param fqtn the name of the table
    * @param descriptor the HColumnDescriptor
    */
   void preModifyColumn(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte [] tableName, HColumnDescriptor descriptor) throws IOException;
+      FullyQualifiedTableName fqtn, HColumnDescriptor descriptor) throws IOException;
 
   /**
    * Called after the column family has been updated.  Called as part of modify
@@ -237,7 +238,7 @@ public interface MasterObserver extends Coprocessor {
    * @param descriptor the HColumnDescriptor
    */
   void postModifyColumn(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor descriptor) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor descriptor) throws IOException;
 
   /**
    * Called prior to modifying a column family's attributes.  Called as part of
@@ -248,7 +249,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void preModifyColumnHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor descriptor) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor descriptor) throws IOException;
 
   /**
    * Called after the column family has been updated.  Called as part of modify
@@ -259,28 +260,28 @@ public interface MasterObserver extends Coprocessor {
    */
   void postModifyColumnHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      byte[] tableName, HColumnDescriptor descriptor) throws IOException;
+      FullyQualifiedTableName tableName, HColumnDescriptor descriptor) throws IOException;
 
 
   /**
    * Called prior to deleting the entire column family.  Called as part of
    * delete column RPC call.
    * @param ctx the environment to interact with the framework and master
-   * @param tableName the name of the table
+   * @param fqtn the name of the table
    * @param c the column
    */
   void preDeleteColumn(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte [] tableName, final byte[] c) throws IOException;
+      final FullyQualifiedTableName fqtn, final byte[] c) throws IOException;
 
   /**
    * Called after the column family has been deleted.  Called as part of delete
    * column RPC call.
    * @param ctx the environment to interact with the framework and master
-   * @param tableName the name of the table
+   * @param fqtn the name of the table
    * @param c the column
    */
   void postDeleteColumn(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte [] tableName, final byte[] c) throws IOException;
+      final FullyQualifiedTableName fqtn, final byte[] c) throws IOException;
 
   /**
    * Called prior to deleting the entire column family.  Called as part of
@@ -291,7 +292,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void preDeleteColumnHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName, final byte[] c) throws IOException;
+      final FullyQualifiedTableName tableName, final byte[] c) throws IOException;
 
   /**
    * Called after the column family has been deleted.  Called as part of
@@ -302,7 +303,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void postDeleteColumnHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName, final byte[] c) throws IOException;
+      final FullyQualifiedTableName tableName, final byte[] c) throws IOException;
 
   /**
    * Called prior to enabling a table.  Called as part of enable table RPC call.
@@ -311,7 +312,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void preEnableTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called after the enableTable operation has been requested.  Called as part
@@ -320,7 +321,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void postEnableTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called prior to enabling a table.  Called as part of enable table handler
@@ -331,7 +332,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void preEnableTableHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called after the enableTable operation has been requested.  Called as part
@@ -341,7 +342,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void postEnableTableHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called prior to disabling a table.  Called as part of disable table RPC
@@ -351,7 +352,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void preDisableTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called after the disableTable operation has been requested.  Called as part
@@ -360,7 +361,7 @@ public interface MasterObserver extends Coprocessor {
    * @param tableName the name of the table
    */
   void postDisableTable(final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called prior to disabling a table.  Called as part of disable table handler
@@ -371,7 +372,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void preDisableTableHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called after the disableTable operation has been requested.  Called as part
@@ -381,7 +382,7 @@ public interface MasterObserver extends Coprocessor {
    */
   void postDisableTableHandler(
       final ObserverContext<MasterCoprocessorEnvironment> ctx,
-      final byte[] tableName) throws IOException;
+      final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Called prior to moving a given region from one region server to another.

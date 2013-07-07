@@ -26,6 +26,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -117,8 +118,8 @@ import java.util.concurrent.TimeUnit;
 @InterfaceStability.Stable
 public class HTable implements HTableInterface {
   private static final Log LOG = LogFactory.getLog(HTable.class);
-  protected HConnection connection;
-  private final byte [] tableName;
+  private HConnection connection;
+  private final FullyQualifiedTableName tableName;
   private volatile Configuration configuration;
   protected List<Row> writeAsyncBuffer = new LinkedList<Row>();
   private long writeBufferSize;
@@ -148,9 +149,8 @@ public class HTable implements HTableInterface {
    */
   public HTable(Configuration conf, final String tableName)
   throws IOException {
-    this(conf, Bytes.toBytes(tableName));
+    this(conf, FullyQualifiedTableName.valueOf(tableName));
   }
-
 
   /**
    * Creates an object to access a HBase table.
@@ -162,9 +162,26 @@ public class HTable implements HTableInterface {
    * @param tableName Name of the table.
    * @throws IOException if a remote or network exception occurs
    */
-  public HTable(Configuration conf, final byte [] tableName)
+  public HTable(Configuration conf, final byte[] tableName)
   throws IOException {
-    this.tableName = tableName;
+    this(conf, FullyQualifiedTableName.valueOf(tableName));
+  }
+
+
+
+  /**
+   * Creates an object to access a HBase table.
+   * Shares zookeeper connection and other resources with other HTable instances
+   * created with the same <code>conf</code> instance.  Uses already-populated
+   * region cache if one is available, populated by any other HTable instances
+   * sharing this <code>conf</code> instance.  Recommended.
+   * @param conf Configuration object to use.
+   * @param fqtn table name pojo
+   * @throws IOException if a remote or network exception occurs
+   */
+  public HTable(Configuration conf, final FullyQualifiedTableName fqtn)
+  throws IOException {
+    this.tableName = fqtn;
     this.cleanupPoolOnClose = this.cleanupConnectionOnClose = true;
     if (conf == null) {
       this.connection = null;
@@ -204,10 +221,27 @@ public class HTable implements HTableInterface {
    */
   public HTable(Configuration conf, final byte[] tableName, final ExecutorService pool)
       throws IOException {
+    this(conf, FullyQualifiedTableName.valueOf(tableName), pool);
+  }
+
+  /**
+   * Creates an object to access a HBase table.
+   * Shares zookeeper connection and other resources with other HTable instances
+   * created with the same <code>conf</code> instance.  Uses already-populated
+   * region cache if one is available, populated by any other HTable instances
+   * sharing this <code>conf</code> instance.
+   * Use this constructor when the ExecutorService is externally managed.
+   * @param conf Configuration object to use.
+   * @param fqtn Name of the table.
+   * @param pool ExecutorService to be used.
+   * @throws IOException if a remote or network exception occurs
+   */
+  public HTable(Configuration conf, final FullyQualifiedTableName fqtn, final ExecutorService pool)
+      throws IOException {
     this.connection = HConnectionManager.getConnection(conf);
     this.configuration = conf;
     this.pool = pool;
-    this.tableName = tableName;
+    this.tableName = fqtn;
     this.cleanupPoolOnClose = false;
     this.cleanupConnectionOnClose = true;
 
@@ -227,13 +261,29 @@ public class HTable implements HTableInterface {
    */
   public HTable(final byte[] tableName, final HConnection connection,
       final ExecutorService pool) throws IOException {
+    this(FullyQualifiedTableName.valueOf(tableName), connection, pool);
+  }
+
+  /**
+   * Creates an object to access a HBase table.
+   * Shares zookeeper connection and other resources with other HTable instances
+   * created with the same <code>connection</code> instance.
+   * Use this constructor when the ExecutorService and HConnection instance are
+   * externally managed.
+   * @param fqtn Name of the table.
+   * @param connection HConnection to be used.
+   * @param pool ExecutorService to be used.
+   * @throws IOException if a remote or network exception occurs
+   */
+  public HTable(FullyQualifiedTableName fqtn, final HConnection connection,
+      final ExecutorService pool) throws IOException {
     if (pool == null || pool.isShutdown()) {
       throw new IllegalArgumentException("Pool is null or shut down.");
     }
     if (connection == null || connection.isClosed()) {
       throw new IllegalArgumentException("Connection is null or closed.");
     }
-    this.tableName = tableName;
+    this.tableName = fqtn;
     this.cleanupPoolOnClose = this.cleanupConnectionOnClose = false;
     this.connection = connection;
     this.configuration = connection.getConfiguration();
@@ -298,7 +348,21 @@ public class HTable implements HTableInterface {
    */
   @Deprecated
   public static boolean isTableEnabled(String tableName) throws IOException {
-    return isTableEnabled(Bytes.toBytes(tableName));
+    return isTableEnabled(FullyQualifiedTableName.valueOf(tableName));
+  }
+
+  /**
+   * Tells whether or not a table is enabled or not. This method creates a
+   * new HBase configuration, so it might make your unit tests fail due to
+   * incorrect ZK client port.
+   * @param tableName Name of table to check.
+   * @return {@code true} if table is online.
+   * @throws IOException if a remote or network exception occurs
+	* @deprecated use {@link HBaseAdmin#isTableEnabled(byte[])}
+   */
+  @Deprecated
+  public static boolean isTableEnabled(byte[] tableName) throws IOException {
+    return isTableEnabled(FullyQualifiedTableName.valueOf(tableName));
   }
 
   /**
@@ -311,7 +375,7 @@ public class HTable implements HTableInterface {
    * @deprecated use {@link HBaseAdmin#isTableEnabled(byte[])}
    */
   @Deprecated
-  public static boolean isTableEnabled(byte[] tableName) throws IOException {
+  public static boolean isTableEnabled(FullyQualifiedTableName tableName) throws IOException {
     return isTableEnabled(HBaseConfiguration.create(), tableName);
   }
 
@@ -326,7 +390,7 @@ public class HTable implements HTableInterface {
   @Deprecated
   public static boolean isTableEnabled(Configuration conf, String tableName)
   throws IOException {
-    return isTableEnabled(conf, Bytes.toBytes(tableName));
+    return isTableEnabled(conf, FullyQualifiedTableName.valueOf(tableName));
   }
 
   /**
@@ -335,11 +399,25 @@ public class HTable implements HTableInterface {
    * @param tableName Name of table to check.
    * @return {@code true} if table is online.
    * @throws IOException if a remote or network exception occurs
-   * @deprecated use {@link HBaseAdmin#isTableEnabled(byte[] tableName)}
+	 * @deprecated use {@link HBaseAdmin#isTableEnabled(byte[])}
+   */
+  @Deprecated
+  public static boolean isTableEnabled(Configuration conf, byte[] tableName)
+  throws IOException {
+    return isTableEnabled(conf, FullyQualifiedTableName.valueOf(tableName));
+  }
+
+  /**
+   * Tells whether or not a table is enabled or not.
+   * @param conf The Configuration object to use.
+   * @param tableName Name of table to check.
+   * @return {@code true} if table is online.
+   * @throws IOException if a remote or network exception occurs
+   * @deprecated use {@link HBaseAdmin#isTableEnabled(FullyQualifiedTableName tableName)}
    */
   @Deprecated
   public static boolean isTableEnabled(Configuration conf,
-      final byte[] tableName) throws IOException {
+      final FullyQualifiedTableName tableName) throws IOException {
     return HConnectionManager.execute(new HConnectable<Boolean>(conf) {
       @Override
       public Boolean connect(HConnection connection) throws IOException {
@@ -387,7 +465,12 @@ public class HTable implements HTableInterface {
    */
   @Override
   public byte [] getTableName() {
-    return this.tableName;
+    return this.tableName.getName();
+  }
+
+  @Override
+  public FullyQualifiedTableName getFullyQualifiedTableName() {
+    return tableName;
   }
 
   /**
@@ -501,7 +584,7 @@ public class HTable implements HTableInterface {
    */
   public NavigableMap<HRegionInfo, ServerName> getRegionLocations() throws IOException {
     // TODO: Odd that this returns a Map of HRI to SN whereas getRegionLocation, singular, returns an HRegionLocation.
-    return MetaScanner.allTableRegions(getConfiguration(), getTableName(), false);
+    return MetaScanner.allTableRegions(getConfiguration(), getFullyQualifiedTableName(), false);
   }
 
   /**
@@ -608,7 +691,8 @@ public class HTable implements HTableInterface {
     if (scan.getCaching() <= 0) {
       scan.setCaching(getScannerCaching());
     }
-    return new ClientScanner(getConfiguration(), scan, getTableName(), this.connection);
+    return new ClientScanner(getConfiguration(), scan,
+        getFullyQualifiedTableName(), this.connection);
   }
 
   /**
@@ -1330,11 +1414,17 @@ public class HTable implements HTableInterface {
    */
   public static void setRegionCachePrefetch(final byte[] tableName,
       final boolean enable) throws IOException {
+    setRegionCachePrefetch(FullyQualifiedTableName.valueOf(tableName), enable);
+  }
+
+  public static void setRegionCachePrefetch(
+      final FullyQualifiedTableName fqtn,
+      final boolean enable) throws IOException {
     HConnectionManager.execute(new HConnectable<Void>(HBaseConfiguration
         .create()) {
       @Override
       public Void connect(HConnection connection) throws IOException {
-        connection.setRegionCachePrefetch(tableName, enable);
+        connection.setRegionCachePrefetch(fqtn, enable);
         return null;
       }
     });
@@ -1352,10 +1442,16 @@ public class HTable implements HTableInterface {
    */
   public static void setRegionCachePrefetch(final Configuration conf,
       final byte[] tableName, final boolean enable) throws IOException {
+    setRegionCachePrefetch(conf, FullyQualifiedTableName.valueOf(tableName), enable);
+  }
+
+  public static void setRegionCachePrefetch(final Configuration conf,
+      final FullyQualifiedTableName fqtn,
+      final boolean enable) throws IOException {
     HConnectionManager.execute(new HConnectable<Void>(conf) {
       @Override
       public Void connect(HConnection connection) throws IOException {
-        connection.setRegionCachePrefetch(tableName, enable);
+        connection.setRegionCachePrefetch(fqtn, enable);
         return null;
       }
     });
@@ -1371,10 +1467,15 @@ public class HTable implements HTableInterface {
    */
   public static boolean getRegionCachePrefetch(final Configuration conf,
       final byte[] tableName) throws IOException {
+    return getRegionCachePrefetch(conf, FullyQualifiedTableName.valueOf(tableName));
+  }
+
+  public static boolean getRegionCachePrefetch(final Configuration conf,
+      final FullyQualifiedTableName fqtn) throws IOException {
     return HConnectionManager.execute(new HConnectable<Boolean>(conf) {
       @Override
       public Boolean connect(HConnection connection) throws IOException {
-        return connection.getRegionCachePrefetch(tableName);
+        return connection.getRegionCachePrefetch(fqtn);
       }
     });
   }
@@ -1387,14 +1488,19 @@ public class HTable implements HTableInterface {
    * @throws IOException
    */
   public static boolean getRegionCachePrefetch(final byte[] tableName) throws IOException {
+    return getRegionCachePrefetch(FullyQualifiedTableName.valueOf(tableName));
+  }
+
+  public static boolean getRegionCachePrefetch(
+      final FullyQualifiedTableName fqtn) throws IOException {
     return HConnectionManager.execute(new HConnectable<Boolean>(
         HBaseConfiguration.create()) {
       @Override
       public Boolean connect(HConnection connection) throws IOException {
-        return connection.getRegionCachePrefetch(tableName);
+        return connection.getRegionCachePrefetch(fqtn);
       }
     });
- }
+  }
 
   /**
    * Explicitly clears the region cache to fetch the latest value from META.

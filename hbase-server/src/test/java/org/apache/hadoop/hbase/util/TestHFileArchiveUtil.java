@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.SmallTests;
 import org.junit.Test;
@@ -36,7 +37,8 @@ public class TestHFileArchiveUtil {
   private Path rootDir = new Path("./");
   @Test
   public void testGetTableArchivePath() {
-    assertNotNull(HFileArchiveUtil.getTableArchivePath(rootDir, "table"));
+    assertNotNull(HFileArchiveUtil.getTableArchivePath(rootDir,
+        FullyQualifiedTableName.valueOf("table")));
   }
 
   @Test
@@ -49,14 +51,16 @@ public class TestHFileArchiveUtil {
   @Test
   public void testRegionArchiveDir() {
     Path regionDir = new Path("region");
-    assertNotNull(HFileArchiveUtil.getRegionArchiveDir(rootDir, "table", regionDir));
+    assertNotNull(HFileArchiveUtil.getRegionArchiveDir(rootDir,
+        FullyQualifiedTableName.valueOf("table"), regionDir));
   }
   
   @Test
   public void testGetStoreArchivePath() throws IOException {
       byte[] family = Bytes.toBytes("Family");
-    Path tabledir = FSUtils.getTableDir(rootDir, "table");
-    HRegionInfo region = new HRegionInfo(Bytes.toBytes("table"));
+    Path tabledir = FSUtils.getTableDir(rootDir,
+        FullyQualifiedTableName.valueOf("table"));
+    HRegionInfo region = new HRegionInfo(FullyQualifiedTableName.valueOf("table"));
     Configuration conf = new Configuration();
     FSUtils.setRootDir(conf, new Path("root"));
     assertNotNull(HFileArchiveUtil.getStoreArchivePath(conf, region, tabledir, family));

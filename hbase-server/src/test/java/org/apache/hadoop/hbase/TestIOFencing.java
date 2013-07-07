@@ -189,7 +189,8 @@ public class TestIOFencing {
   }
 
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private final static byte[] TABLE_NAME = Bytes.toBytes("tabletest");
+  private final static FullyQualifiedTableName TABLE_NAME =
+      FullyQualifiedTableName.valueOf("tabletest");
   private final static byte[] FAMILY = Bytes.toBytes("family");
   private static final int FIRST_BATCH_COUNT = 4000;
   private static final int SECOND_BATCH_COUNT = FIRST_BATCH_COUNT;
@@ -252,7 +253,7 @@ public class TestIOFencing {
       assertTrue(compactingRegion.countStoreFiles() > 1);
       final byte REGION_NAME[] = compactingRegion.getRegionName();
       LOG.info("Asking for compaction");
-      admin.majorCompact(TABLE_NAME);
+      admin.majorCompact(TABLE_NAME.getName());
       LOG.info("Waiting for compaction to be about to start");
       compactingRegion.waitForCompactionToBlock();
       LOG.info("Starting a new server");
@@ -286,7 +287,7 @@ public class TestIOFencing {
       // If we survive the split keep going...
       // Now we make sure that the region isn't totally confused.  Load up more rows.
       TEST_UTIL.loadNumericRows(table, FAMILY, FIRST_BATCH_COUNT, FIRST_BATCH_COUNT + SECOND_BATCH_COUNT);
-      admin.majorCompact(TABLE_NAME);
+      admin.majorCompact(TABLE_NAME.getName());
       startWaitTime = System.currentTimeMillis();
       while (newRegion.compactCount == 0) {
         Thread.sleep(1000);

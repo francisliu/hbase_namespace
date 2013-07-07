@@ -99,7 +99,7 @@ public class TestMasterRestartAfterDisablingTable {
 
     assertTrue("The table should not be in enabled state", cluster.getMaster()
         .getAssignmentManager().getZKTable().isDisablingOrDisabledTable(
-            "tableRestart"));
+            FullyQualifiedTableName.valueOf("tableRestart")));
     log("Enabling table\n");
     // Need a new Admin, the previous one is on the old master
     HBaseAdmin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
@@ -113,7 +113,8 @@ public class TestMasterRestartAfterDisablingTable {
         "The assigned regions were not onlined after master switch except for the catalog and namespace tables.",
         6, regions.size());
     assertTrue("The table should be in enabled state", cluster.getMaster()
-        .getAssignmentManager().getZKTable().isEnabledTable("tableRestart"));
+        .getAssignmentManager().getZKTable()
+        .isEnabledTable(FullyQualifiedTableName.valueOf("tableRestart")));
     ht.close();
     TEST_UTIL.shutdownMiniCluster();
   }

@@ -31,6 +31,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -39,7 +40,6 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -85,7 +85,7 @@ public class OfflineMetaRebuildTestCore {
 
   private final static String TABLE_BASE = "tableMetaRebuild";
   private static int tableIdx = 0;
-  protected String table = "tableMetaRebuild";
+  protected FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("tableMetaRebuild");
 
   @Before
   public void setUpBefore() throws Exception {
@@ -96,7 +96,7 @@ public class OfflineMetaRebuildTestCore {
     assertEquals(0, TEST_UTIL.getHBaseAdmin().listTables().length);
 
     // setup the table
-    table = TABLE_BASE + "-" + tableIdx;
+    table = FullyQualifiedTableName.valueOf(TABLE_BASE + "-" + tableIdx);
     tableIdx++;
     htbl = setupTable(table);
     populateTable(htbl);
@@ -121,7 +121,7 @@ public class OfflineMetaRebuildTestCore {
    * @throws InterruptedException
    * @throws KeeperException
    */
-  private HTable setupTable(String tablename) throws Exception {
+  private HTable setupTable(FullyQualifiedTableName tablename) throws Exception {
     HTableDescriptor desc = new HTableDescriptor(tablename);
     HColumnDescriptor hcd = new HColumnDescriptor(Bytes.toString(FAM));
     desc.addFamily(hcd); // If a table has no CF's it doesn't get checked
@@ -130,7 +130,7 @@ public class OfflineMetaRebuildTestCore {
   }
 
   private void dumpMeta(HTableDescriptor htd) throws IOException {
-    List<byte[]> metaRows = TEST_UTIL.getMetaTableRows(htd.getName());
+    List<byte[]> metaRows = TEST_UTIL.getMetaTableRows(htd.getFullyQualifiedTableName());
     for (byte[] row : metaRows) {
       LOG.info(Bytes.toString(row));
     }
@@ -186,7 +186,7 @@ public class OfflineMetaRebuildTestCore {
         LOG.info("deleting hdfs data: " + hri.toString() + hsa.toString());
         Path rootDir = FSUtils.getRootDir(conf);
         FileSystem fs = rootDir.getFileSystem(conf);
-        Path p = new Path(FSUtils.getTableDir(rootDir, htd.getNameAsString()),
+        Path p = new Path(FSUtils.getTableDir(rootDir, htd.getFullyQualifiedTableName()),
             hri.getEncodedName());
         fs.delete(p, true);
 
@@ -198,7 +198,7 @@ public class OfflineMetaRebuildTestCore {
       LOG.info(hri.toString() + hsa.toString());
     }
 
-    TEST_UTIL.getMetaTableRows(htd.getName());
+    TEST_UTIL.getMetaTableRows(htd.getFullyQualifiedTableName());
     LOG.info("After delete:");
     dumpMeta(htd);
   }
@@ -207,12 +207,12 @@ public class OfflineMetaRebuildTestCore {
       byte[] startKey, byte[] endKey) throws IOException {
     HTable meta = new HTable(conf, HConstants.META_TABLE_NAME);
     HTableDescriptor htd = htbl.getTableDescriptor();
-    HRegionInfo hri = new HRegionInfo(htbl.getTableName(), startKey, endKey);
+    HRegionInfo hri = new HRegionInfo(htbl.getFullyQualifiedTableName(), startKey, endKey);
 
     LOG.info("manually adding regioninfo and hdfs data: " + hri.toString());
     Path rootDir = FSUtils.getRootDir(conf);
     FileSystem fs = rootDir.getFileSystem(conf);
-    Path p = new Path(FSUtils.getTableDir(rootDir, htbl.getTableName()),
+    Path p = new Path(FSUtils.getTableDir(rootDir, htbl.getFullyQualifiedTableName()),
         hri.getEncodedName());
     fs.mkdirs(p);
     Path riPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);
@@ -237,7 +237,7 @@ public class OfflineMetaRebuildTestCore {
       HRegionInfo info =
           HRegionInfo.getHRegionInfo(r);
       if(info != null &&
-          !TableName.valueOf(info.getTableNameAsString()).getNamespaceAsString()
+          !info.getFullyQualifiedTableName().getNamespaceAsString()
           .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         Delete d = new Delete(r.getRow());
         dels.add(d);
@@ -256,7 +256,7 @@ public class OfflineMetaRebuildTestCore {
    *
    * @return # of rows in the specified table
    */
-  protected int tableRowCount(Configuration conf, String table)
+  protected int tableRowCount(Configuration conf, FullyQualifiedTableName table)
       throws IOException {
     HTable t = new HTable(conf, table);
     Scan st = new Scan();
@@ -278,7 +278,7 @@ public class OfflineMetaRebuildTestCore {
    */
   protected int scanMeta() throws IOException {
     int count = 0;
-    HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getName());
+    HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName());
     ResultScanner scanner = meta.getScanner(new Scan());
     LOG.info("Table: " + Bytes.toString(meta.getTableName()));
     for (Result res : scanner) {

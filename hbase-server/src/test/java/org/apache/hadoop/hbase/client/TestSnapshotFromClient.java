@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.LargeTests;
@@ -62,7 +63,8 @@ public class TestSnapshotFromClient {
   private static final int NUM_RS = 2;
   private static final String STRING_TABLE_NAME = "test";
   private static final byte[] TEST_FAM = Bytes.toBytes("fam");
-  private static final byte[] TABLE_NAME = Bytes.toBytes(STRING_TABLE_NAME);
+  private static final FullyQualifiedTableName TABLE_NAME =
+      FullyQualifiedTableName.valueOf(STRING_TABLE_NAME);
 
   /**
    * Setup the config for the cluster

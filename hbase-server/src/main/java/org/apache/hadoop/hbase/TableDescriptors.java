@@ -31,19 +31,11 @@ import org.apache.hadoop.classification.InterfaceStability;
 @InterfaceStability.Evolving
 public interface TableDescriptors {
   /**
-   * @param tablename
+   * @param fqtn
    * @return HTableDescriptor for tablename
    * @throws IOException
    */
-  public HTableDescriptor get(final String tablename)
-  throws IOException;
-
-  /**
-   * @param tablename
-   * @return HTableDescriptor for tablename
-   * @throws IOException
-   */
-  public HTableDescriptor get(final byte[] tablename)
+  public HTableDescriptor get(final FullyQualifiedTableName fqtn)
   throws IOException;
 
   /**
@@ -76,6 +68,6 @@ public interface TableDescriptors {
    * @return Instance of table descriptor or null if none found.
    * @throws IOException
    */
-  public HTableDescriptor remove(final String tablename)
+  public HTableDescriptor remove(final FullyQualifiedTableName tablename)
   throws IOException;
 }

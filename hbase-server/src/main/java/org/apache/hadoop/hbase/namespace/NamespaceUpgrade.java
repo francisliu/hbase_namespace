@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -83,7 +84,8 @@ public class NamespaceUpgrade {
         List<Path> oldTableDirs = FSUtils.getLocalTableDirs(fs, baseDir);
         for(Path oldTableDir: oldTableDirs) {
           if (!sysTables.contains(oldTableDir.getName())) {
-            Path nsDir = FSUtils.getTableDir(baseDir, oldTableDir.getName());
+            Path nsDir = FSUtils.getTableDir(baseDir,
+                FullyQualifiedTableName.valueOf(oldTableDir.getName()));
             if(!fs.exists(nsDir.getParent())) {
               if(!fs.mkdirs(nsDir.getParent())) {
                 throw new IOException("Failed to create namespace dir "+nsDir.getParent());
@@ -126,7 +128,7 @@ public class NamespaceUpgrade {
         }
       }
 
-      Path newMetaDir = FSUtils.getTableDir(rootDir, HConstants.META_TABLE_NAME_STR);
+      Path newMetaDir = FSUtils.getTableDir(rootDir, HConstants.META_TABLE_NAME);
       Path oldMetaDir = new Path(rootDir, ".META.");
       if (fs.exists(oldMetaDir)) {
         LOG.info("Migrating meta table " + oldMetaDir.getName() + " to " + newMetaDir);

@@ -39,6 +39,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -81,8 +82,8 @@ public class FSTableDescriptors implements TableDescriptors {
   // This cache does not age out the old stuff.  Thinking is that the amount
   // of data we keep up in here is so small, no need to do occasional purge.
   // TODO.
-  private final Map<String, TableDescriptorModtime> cache =
-    new ConcurrentHashMap<String, TableDescriptorModtime>();
+  private final Map<FullyQualifiedTableName, TableDescriptorModtime> cache =
+    new ConcurrentHashMap<FullyQualifiedTableName, TableDescriptorModtime>();
 
   /**
    * Data structure to hold modification time and table descriptor.
@@ -124,32 +125,23 @@ public class FSTableDescriptors implements TableDescriptors {
   }
 
   /* (non-Javadoc)
-   * @see org.apache.hadoop.hbase.TableDescriptors#getHTableDescriptor(java.lang.String)
-   */
-  @Override
-  public HTableDescriptor get(final byte [] tablename)
-  throws IOException {
-    return get(Bytes.toString(tablename));
-  }
-
-  /* (non-Javadoc)
    * @see org.apache.hadoop.hbase.TableDescriptors#getTableDescriptor(byte[])
    */
   @Override
-  public HTableDescriptor get(final String tablename)
+  public HTableDescriptor get(final FullyQualifiedTableName tablename)
   throws IOException {
     invocations++;
-    if (HTableDescriptor.ROOT_TABLEDESC.getNameAsString().equals(tablename)) {
+    if (HTableDescriptor.ROOT_TABLEDESC.getFullyQualifiedTableName().equals(tablename)) {
       cachehits++;
       return HTableDescriptor.ROOT_TABLEDESC;
     }
-    if (HTableDescriptor.META_TABLEDESC.getNameAsString().equals(tablename)) {
+    if (HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName().equals(tablename)) {
       cachehits++;
       return HTableDescriptor.META_TABLEDESC;
     }
     // .META. and -ROOT- is already handled. If some one tries to get the descriptor for
     // .logs, .oldlogs or .corrupt throw an exception.
-    if (HConstants.HBASE_NON_USER_TABLE_DIRS.contains(tablename)) {
+    if (HConstants.HBASE_NON_USER_TABLE_DIRS.contains(tablename.getNameAsString())) {
        throw new IOException("No descriptor found for table = " + tablename);
     }
 
@@ -196,7 +188,7 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-        htd = get(d.getName());
+        htd = get(FullyQualifiedTableName.valueOf(d.getName()));
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
@@ -219,7 +211,7 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-        htd = get(d.getName());
+        htd = get(FullyQualifiedTableName.valueOf(d.getName()));
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
@@ -232,25 +224,25 @@ public class FSTableDescriptors implements TableDescriptors {
 
   @Override
   public void add(HTableDescriptor htd) throws IOException {
-    if (Bytes.equals(HConstants.ROOT_TABLE_NAME, htd.getName())) {
+    if (HConstants.ROOT_TABLE_NAME.equals(htd.getFullyQualifiedTableName())) {
       throw new NotImplementedException();
     }
-    if (Bytes.equals(HConstants.META_TABLE_NAME, htd.getName())) {
+    if (HConstants.META_TABLE_NAME.equals(htd.getFullyQualifiedTableName())) {
       throw new NotImplementedException();
     }
     if (HConstants.HBASE_NON_USER_TABLE_DIRS.contains(htd.getNameAsString())) {
       throw new NotImplementedException();
     }
     if (!this.fsreadonly) updateHTableDescriptor(this.fs, this.rootdir, htd);
-    long modtime = getTableInfoModtime(this.fs, this.rootdir, htd.getNameAsString());
-    this.cache.put(htd.getNameAsString(), new TableDescriptorModtime(modtime, htd));
+    long modtime = getTableInfoModtime(this.fs, this.rootdir, htd.getFullyQualifiedTableName());
+    this.cache.put(htd.getFullyQualifiedTableName(), new TableDescriptorModtime(modtime, htd));
   }
 
   @Override
-  public HTableDescriptor remove(final String tablename)
+  public HTableDescriptor remove(final FullyQualifiedTableName tablename)
   throws IOException {
     if (!this.fsreadonly) {
-      Path tabledir = FSUtils.getTableDir(this.rootdir, Bytes.toBytes(tablename));
+      Path tabledir = FSUtils.getTableDir(this.rootdir, tablename);
       if (this.fs.exists(tabledir)) {
         if (!this.fs.delete(tabledir, true)) {
           throw new IOException("Failed delete of " + tabledir.toString());
@@ -271,15 +263,15 @@ public class FSTableDescriptors implements TableDescriptors {
    * @throws IOException
    */
   public static boolean isTableInfoExists(FileSystem fs, Path rootdir,
-      String tableName) throws IOException {
+      FullyQualifiedTableName tableName) throws IOException {
     FileStatus status = getTableInfoPath(fs, rootdir, tableName);
     return status == null? false: fs.exists(status.getPath());
   }
 
   private static FileStatus getTableInfoPath(final FileSystem fs,
-      final Path rootdir, final String tableName)
+      final Path rootdir, final FullyQualifiedTableName tableName)
   throws IOException {
-    Path tabledir = FSUtils.getTableDir(rootdir, Bytes.toBytes(tableName));
+    Path tabledir = FSUtils.getTableDir(rootdir, tableName);
     return getTableInfoPath(fs, tabledir);
   }
 
@@ -391,7 +383,7 @@ public class FSTableDescriptors implements TableDescriptors {
    * @throws IOException
    */
   static long getTableInfoModtime(final FileSystem fs, final Path rootdir,
-      final String tableName)
+      final FullyQualifiedTableName tableName)
   throws IOException {
     FileStatus status = getTableInfoPath(fs, rootdir, tableName);
     return status == null? 0: status.getModificationTime();
@@ -406,35 +398,29 @@ public class FSTableDescriptors implements TableDescriptors {
    * @throws IOException
    */
   public static HTableDescriptor getTableDescriptor(FileSystem fs,
-      Path hbaseRootDir, byte[] tableName)
+      Path hbaseRootDir, FullyQualifiedTableName tableName)
   throws IOException {
      HTableDescriptor htd = null;
      try {
        TableDescriptorModtime tdmt =
-         getTableDescriptorModtime(fs, hbaseRootDir, Bytes.toString(tableName));
+         getTableDescriptorModtime(fs, hbaseRootDir, tableName);
        htd = tdmt == null ? null : tdmt.getTableDescriptor();
      } catch (NullPointerException e) {
        LOG.debug("Exception during readTableDecriptor. Current table name = "
-           + Bytes.toString(tableName), e);
+           + tableName, e);
      }
      return htd;
   }
 
-  static HTableDescriptor getTableDescriptor(FileSystem fs,
-      Path hbaseRootDir, String tableName) throws NullPointerException, IOException {
-    TableDescriptorModtime tdmt = getTableDescriptorModtime(fs, hbaseRootDir, tableName);
-    return tdmt == null ? null : tdmt.getTableDescriptor();
-  }
-
   static TableDescriptorModtime getTableDescriptorModtime(FileSystem fs,
-      Path hbaseRootDir, String tableName) throws NullPointerException, IOException{
+      Path hbaseRootDir, FullyQualifiedTableName tableName) throws NullPointerException, IOException{
     // ignore both -ROOT- and .META. tables
-    if (Bytes.compareTo(Bytes.toBytes(tableName), HConstants.ROOT_TABLE_NAME) == 0
-        || Bytes.compareTo(Bytes.toBytes(tableName), HConstants.META_TABLE_NAME) == 0) {
+    if (tableName.compareTo(HConstants.ROOT_TABLE_NAME) == 0
+        || tableName.compareTo(HConstants.META_TABLE_NAME) == 0) {
       return null;
     }
     return getTableDescriptorModtime(fs,
-        FSUtils.getTableDir(hbaseRootDir, Bytes.toBytes(tableName)));
+        FSUtils.getTableDir(hbaseRootDir, tableName));
   }
 
   public static TableDescriptorModtime getTableDescriptorModtime(FileSystem fs, Path tableDir)
@@ -483,7 +469,7 @@ public class FSTableDescriptors implements TableDescriptors {
   static Path updateHTableDescriptor(FileSystem fs, Path rootdir,
       HTableDescriptor hTableDescriptor)
   throws IOException {
-    Path tableDir = FSUtils.getTableDir(rootdir, hTableDescriptor.getName());
+    Path tableDir = FSUtils.getTableDir(rootdir, hTableDescriptor.getFullyQualifiedTableName());
     Path p = writeTableDescriptor(fs, hTableDescriptor, tableDir,
       getTableInfoPath(fs, tableDir));
     if (p == null) throw new IOException("Failed update");
@@ -495,7 +481,7 @@ public class FSTableDescriptors implements TableDescriptors {
    * Deletes a table's directory from the file system if exists. Used in unit
    * tests.
    */
-  public static void deleteTableDescriptorIfExists(String tableName,
+  public static void deleteTableDescriptorIfExists(FullyQualifiedTableName tableName,
       Configuration conf) throws IOException {
     FileSystem fs = FSUtils.getCurrentFileSystem(conf);
     FileStatus status = getTableInfoPath(fs, FSUtils.getRootDir(conf), tableName);
@@ -630,7 +616,7 @@ public class FSTableDescriptors implements TableDescriptors {
   public static boolean createTableDescriptor(FileSystem fs, Path rootdir,
       HTableDescriptor htableDescriptor, boolean forceCreation)
   throws IOException {
-    Path tabledir = FSUtils.getTableDir(rootdir, htableDescriptor.getName());
+    Path tabledir = FSUtils.getTableDir(rootdir, htableDescriptor.getFullyQualifiedTableName());
     return createTableDescriptorForTableDirectory(fs, tabledir, htableDescriptor, forceCreation);
   }
 

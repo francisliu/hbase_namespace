@@ -60,7 +60,8 @@ public class TestMasterStatusServlet {
   static final HTableDescriptor FAKE_TABLE =
     new HTableDescriptor("mytable");
   static final HRegionInfo FAKE_HRI =
-      new HRegionInfo(FAKE_TABLE.getName(), Bytes.toBytes("a"), Bytes.toBytes("b"));
+      new HRegionInfo(FAKE_TABLE.getFullyQualifiedTableName(),
+          Bytes.toBytes("a"), Bytes.toBytes("b"));
 
   @Before
   public void setupBasicMocks() {
@@ -158,7 +159,7 @@ public class TestMasterStatusServlet {
     NavigableMap<String, RegionState> regionsInTransition =
       Maps.newTreeMap();
     for (byte i = 0; i < 100; i++) {
-      HRegionInfo hri = new HRegionInfo(FAKE_TABLE.getName(),
+      HRegionInfo hri = new HRegionInfo(FAKE_TABLE.getFullyQualifiedTableName(),
           new byte[]{i}, new byte[]{(byte) (i+1)});
       regionsInTransition.put(hri.getEncodedName(),
         new RegionState(hri, RegionState.State.CLOSING, 12345L, FAKE_HOST));

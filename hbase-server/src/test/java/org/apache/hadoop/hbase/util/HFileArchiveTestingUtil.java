@@ -215,7 +215,7 @@ public class HFileArchiveTestingUtil {
   public static Path getRegionArchiveDir(Configuration conf, HRegion region) throws IOException {
     return HFileArchiveUtil.getRegionArchiveDir(
         FSUtils.getRootDir(conf),
-        region.getTableDesc().getNameAsString(),
+        region.getTableDesc().getFullyQualifiedTableName(),
         region.getRegionInfo().getEncodedName());
   }
 

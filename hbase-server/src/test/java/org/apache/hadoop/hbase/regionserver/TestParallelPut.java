@@ -188,7 +188,7 @@ public class TestParallelPut extends HBaseTestCase {
     for(byte [] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     Path path = new Path(DIR + callingMethod);
     if (fs.exists(path)) {
       if (!fs.delete(path, true)) {

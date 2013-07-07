@@ -22,6 +22,7 @@ package org.apache.hadoop.hbase.tool;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -160,7 +161,7 @@ public final class Canary implements Tool {
 
       if (tables_index >= 0) {
         for (int i = tables_index; i < args.length; i++) {
-          sniff(args[i]);
+          sniff(FullyQualifiedTableName.valueOf(args[i]));
         }
       } else {
         sniff();
@@ -193,9 +194,9 @@ public final class Canary implements Tool {
   /*
    * canary entry point to monitor specified table.
    */
-  private void sniff(String tableName) throws Exception {
+  private void sniff(FullyQualifiedTableName tableName) throws Exception {
     if (admin.isTableAvailable(tableName)) {
-      sniff(admin.getTableDescriptor(tableName.getBytes()));
+      sniff(admin.getTableDescriptor(tableName));
     } else {
       LOG.warn(String.format("Table %s is not available", tableName));
     }
@@ -209,12 +210,12 @@ public final class Canary implements Tool {
     HTable table = null;
 
     try {
-      table = new HTable(admin.getConfiguration(), tableDesc.getName());
+      table = new HTable(admin.getConfiguration(), tableDesc.getFullyQualifiedTableName());
     } catch (TableNotFoundException e) {
       return;
     }
 
-    for (HRegionInfo region : admin.getTableRegions(tableDesc.getName())) {
+    for (HRegionInfo region : admin.getTableRegions(tableDesc.getFullyQualifiedTableName())) {
       try {
         sniffRegion(region, table);
       } catch (Exception e) {

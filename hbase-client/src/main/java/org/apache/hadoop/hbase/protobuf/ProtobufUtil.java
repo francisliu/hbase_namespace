@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -1590,7 +1591,7 @@ public final class ProtobufUtil {
     if (proto.hasFamily()) family = proto.getFamily().toByteArray();
     if (proto.hasQualifier()) qualifier = proto.getQualifier().toByteArray();
 
-    return new TablePermission(table, family, qualifier,
+    return new TablePermission(FullyQualifiedTableName.valueOf(table), family, qualifier,
         actions.toArray(new Permission.Action[actions.size()]));
   }
 
@@ -1605,7 +1606,7 @@ public final class ProtobufUtil {
     if (perm instanceof TablePermission) {
       TablePermission tablePerm = (TablePermission)perm;
       if (tablePerm.hasTable()) {
-        builder.setTable(ByteString.copyFrom(tablePerm.getTable()));
+        builder.setTable(ByteString.copyFrom(tablePerm.getTable().getName()));
       }
       if (tablePerm.hasFamily()) {
         builder.setFamily(ByteString.copyFrom(tablePerm.getFamily()));
@@ -1694,7 +1695,7 @@ public final class ProtobufUtil {
       permissionBuilder.addAction(toPermissionAction(a));
     }
     if (perm.hasTable()) {
-      permissionBuilder.setTable(ByteString.copyFrom(perm.getTable()));
+      permissionBuilder.setTable(ByteString.copyFrom(perm.getTable().getName()));
     }
     if (perm.hasFamily()) {
       permissionBuilder.setFamily(ByteString.copyFrom(perm.getFamily()));
@@ -1728,7 +1729,7 @@ public final class ProtobufUtil {
     if (permission.hasQualifier()) qualifier = permission.getQualifier().toByteArray();
 
     return new UserPermission(proto.getUser().toByteArray(),
-        table, family, qualifier,
+        FullyQualifiedTableName.valueOf(table), family, qualifier,
         actions.toArray(new Permission.Action[actions.size()]));
   }
 
@@ -1764,14 +1765,14 @@ public final class ProtobufUtil {
    *
    * @param protocol the AccessControlService protocol proxy
    * @param userShortName the short name of the user to grant permissions
-   * @param t optional table name
+   * @param fqtn optional table name
    * @param f optional column family
    * @param q optional qualifier
    * @param actions the permissions to be granted
    * @throws ServiceException
    */
   public static void grant(AccessControlService.BlockingInterface protocol,
-      String userShortName, byte[] t, byte[] f, byte[] q,
+      String userShortName, FullyQualifiedTableName fqtn, byte[] f, byte[] q,
       Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
@@ -1779,7 +1780,7 @@ public final class ProtobufUtil {
       permActions.add(ProtobufUtil.toPermissionAction(a));
     }
     AccessControlProtos.GrantRequest request = RequestConverter.
-      buildGrantRequest(userShortName, t, f, q, permActions.toArray(
+      buildGrantRequest(userShortName, fqtn, f, q, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
     protocol.grant(null, request);
   }
@@ -1793,14 +1794,14 @@ public final class ProtobufUtil {
    *
    * @param protocol the AccessControlService protocol proxy
    * @param userShortName the short name of the user to revoke permissions
-   * @param t optional table name
+   * @param fqtn optional table name
    * @param f optional column family
    * @param q optional qualifier
    * @param actions the permissions to be revoked
    * @throws ServiceException
    */
   public static void revoke(AccessControlService.BlockingInterface protocol,
-      String userShortName, byte[] t, byte[] f, byte[] q,
+      String userShortName, FullyQualifiedTableName fqtn, byte[] f, byte[] q,
       Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
@@ -1808,7 +1809,7 @@ public final class ProtobufUtil {
       permActions.add(ProtobufUtil.toPermissionAction(a));
     }
     AccessControlProtos.RevokeRequest request = RequestConverter.
-      buildRevokeRequest(userShortName, t, f, q, permActions.toArray(
+      buildRevokeRequest(userShortName, fqtn, f, q, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
     protocol.revoke(null, request);
   }
@@ -1824,11 +1825,11 @@ public final class ProtobufUtil {
    */
   public static List<UserPermission> getUserPermissions(
       AccessControlService.BlockingInterface protocol,
-      byte[] t) throws ServiceException {
+      FullyQualifiedTableName t) throws ServiceException {
     AccessControlProtos.UserPermissionsRequest.Builder builder =
       AccessControlProtos.UserPermissionsRequest.newBuilder();
     if (t != null) {
-      builder.setTable(ByteString.copyFrom(t));
+      builder.setTable(ByteString.copyFrom(t.getName()));
     }
     AccessControlProtos.UserPermissionsRequest request = builder.build();
     AccessControlProtos.UserPermissionsResponse response =
@@ -2053,7 +2054,7 @@ public final class ProtobufUtil {
     // input / output paths are relative to the store dir
     // store dir is relative to region dir
     CompactionDescriptor.Builder builder = CompactionDescriptor.newBuilder()
-        .setTableName(ByteString.copyFrom(info.getTableName()))
+        .setTableName(ByteString.copyFrom(info.getFullyQualifiedTableName().getName()))
         .setEncodedRegionName(ByteString.copyFrom(info.getEncodedNameAsBytes()))
         .setFamilyName(ByteString.copyFrom(family))
         .setStoreHomeDir(storeDir.getName()); //make relative

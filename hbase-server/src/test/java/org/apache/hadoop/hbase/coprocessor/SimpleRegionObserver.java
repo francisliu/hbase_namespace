@@ -289,7 +289,7 @@ public class SimpleRegionObserver extends BaseRegionObserver {
     assertNotNull(e.getRegion());
     assertNotNull(get);
     assertNotNull(results);
-    if (Arrays.equals(e.getRegion().getTableDesc().getName(),
+    if (e.getRegion().getTableDesc().getFullyQualifiedTableName().equals(
         TestRegionObserverInterface.TEST_TABLE)) {
       boolean foundA = false;
       boolean foundB = false;
@@ -321,7 +321,7 @@ public class SimpleRegionObserver extends BaseRegionObserver {
     assertNotNull(e);
     assertNotNull(e.getRegion());
     assertNotNull(familyMap);
-    if (Arrays.equals(e.getRegion().getTableDesc().getName(),
+    if (e.getRegion().getTableDesc().getFullyQualifiedTableName().equals(
         TestRegionObserverInterface.TEST_TABLE)) {
       List<? extends Cell> cells = familyMap.get(TestRegionObserverInterface.A);
       assertNotNull(cells);
@@ -355,7 +355,7 @@ public class SimpleRegionObserver extends BaseRegionObserver {
     assertNotNull(e.getRegion());
     assertNotNull(familyMap);
     List<? extends Cell> cells = familyMap.get(TestRegionObserverInterface.A);
-    if (Arrays.equals(e.getRegion().getTableDesc().getName(),
+    if (e.getRegion().getTableDesc().getFullyQualifiedTableName().equals(
         TestRegionObserverInterface.TEST_TABLE)) {
       assertNotNull(cells);
       assertNotNull(cells.get(0));
@@ -471,7 +471,7 @@ public class SimpleRegionObserver extends BaseRegionObserver {
     RegionCoprocessorEnvironment e = ctx.getEnvironment();
     assertNotNull(e);
     assertNotNull(e.getRegion());
-    if (Arrays.equals(e.getRegion().getTableDesc().getName(),
+    if (e.getRegion().getTableDesc().getFullyQualifiedTableName().equals(
         TestRegionObserverInterface.TEST_TABLE)) {
       assertNotNull(familyPaths);
       assertEquals(1,familyPaths.size());
@@ -489,7 +489,7 @@ public class SimpleRegionObserver extends BaseRegionObserver {
     RegionCoprocessorEnvironment e = ctx.getEnvironment();
     assertNotNull(e);
     assertNotNull(e.getRegion());
-    if (Arrays.equals(e.getRegion().getTableDesc().getName(),
+    if (e.getRegion().getTableDesc().getFullyQualifiedTableName().equals(
         TestRegionObserverInterface.TEST_TABLE)) {
       assertNotNull(familyPaths);
       assertEquals(1,familyPaths.size());

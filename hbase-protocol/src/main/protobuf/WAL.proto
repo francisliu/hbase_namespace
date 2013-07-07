@@ -30,7 +30,7 @@ message WALHeader {
 // Protocol buffer version of HLogKey; see HLogKey comment, not really a key but WALEdit header for some KVs
 message WALKey {
   required bytes encodedRegionName = 1;
-  required bytes tableName = 2;
+  required bytes fqtn = 2;
   required uint64 logSequenceNumber = 3;
   required uint64 writeTime = 4;
   optional UUID clusterId = 5;
@@ -67,7 +67,7 @@ message FamilyScope {
  * the * compaction should we fail the WAL write.
  */
 message CompactionDescriptor {
-  required bytes tableName = 1; // TODO: WALKey already stores these, might remove
+  required bytes fqtn = 1; // TODO: WALKey already stores these, might remove
   required bytes encodedRegionName = 2;
   required bytes familyName = 3;
   repeated string compactionInput = 4;

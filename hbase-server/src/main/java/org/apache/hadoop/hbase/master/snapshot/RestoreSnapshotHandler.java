@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
@@ -72,7 +73,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
   public RestoreSnapshotHandler(final MasterServices masterServices,
       final SnapshotDescription snapshot, final HTableDescriptor htd,
       final MetricsMaster metricsMaster) throws IOException {
-    super(EventType.C_M_RESTORE_SNAPSHOT, htd.getName(), masterServices, masterServices);
+    super(EventType.C_M_RESTORE_SNAPSHOT, htd.getFullyQualifiedTableName(), masterServices, masterServices);
     this.metricsMaster = metricsMaster;
 
     // Snapshot information
@@ -110,7 +111,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
     CatalogTracker catalogTracker = masterServices.getCatalogTracker();
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
-    byte[] tableName = hTableDescriptor.getName();
+    FullyQualifiedTableName tableName = hTableDescriptor.getFullyQualifiedTableName();
     Path tableDir = FSUtils.getTableDir(rootDir, tableName);
 
     try {
@@ -135,7 +136,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
 
       // At this point the restore is complete. Next step is enabling the table.
       LOG.info("Restore snapshot=" + ClientSnapshotDescriptionUtils.toString(snapshot) +
-        " on table=" + Bytes.toString(tableName) + " completed!");
+        " on table=" + tableName + " completed!");
     } catch (IOException e) {
       String msg = "restore snapshot=" + ClientSnapshotDescriptionUtils.toString(snapshot)
           + " failed. Try re-running the restore command.";

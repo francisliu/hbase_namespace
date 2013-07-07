@@ -51,7 +51,7 @@ message ColumnFamilySchema {
  */
 message RegionInfo {
   required uint64 regionId = 1;
-  required bytes tableName = 2;
+  required bytes fqtn = 2;
   optional bytes startKey = 3;
   optional bytes endKey = 4;
   optional bool offline = 5;

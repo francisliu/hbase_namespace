@@ -32,6 +32,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.exceptions.FailedLogCloseException;
@@ -267,7 +268,7 @@ public interface HLog {
    * Same as {@link #appendNoSync(HRegionInfo, byte[], WALEdit, UUID, long, HTableDescriptor)},
    * except it causes a sync on the log
    */
-  public void append(HRegionInfo info, byte[] tableName, WALEdit edits,
+  public void append(HRegionInfo info, FullyQualifiedTableName tableName, WALEdit edits,
       final long now, HTableDescriptor htd) throws IOException;
 
   /**
@@ -281,7 +282,7 @@ public interface HLog {
    * @param htd
    * @param isInMemstore Whether the record is in memstore. False for system records.
    */
-  public void append(HRegionInfo info, byte[] tableName, WALEdit edits,
+  public void append(HRegionInfo info, FullyQualifiedTableName tableName, WALEdit edits,
       final long now, HTableDescriptor htd, boolean isInMemstore) throws IOException;
 
   /**
@@ -299,7 +300,7 @@ public interface HLog {
    * @return txid of this transaction
    * @throws IOException
    */
-  public long appendNoSync(HRegionInfo info, byte[] tableName, WALEdit edits,
+  public long appendNoSync(HRegionInfo info, FullyQualifiedTableName fqtn, WALEdit edits,
       UUID clusterId, final long now, HTableDescriptor htd) throws IOException;
 
   public void hsync() throws IOException;

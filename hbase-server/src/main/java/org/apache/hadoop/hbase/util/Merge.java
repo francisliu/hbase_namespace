@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -58,7 +59,7 @@ public class Merge extends Configured implements Tool {
   static final Log LOG = LogFactory.getLog(Merge.class);
   private Path rootdir;
   private volatile MetaUtils utils;
-  private byte [] tableName;               // Name of table
+  private FullyQualifiedTableName tableName;               // Name of table
   private volatile byte [] region1;        // Name of region 1
   private volatile byte [] region2;        // Name of region 2
   private volatile boolean isMetaTable;
@@ -132,7 +133,7 @@ public class Merge extends Configured implements Tool {
    */
   private void mergeTwoRegions() throws IOException {
     LOG.info("Merging regions " + Bytes.toStringBinary(this.region1) + " and " +
-        Bytes.toStringBinary(this.region2) + " in table " + Bytes.toString(this.tableName));
+        Bytes.toStringBinary(this.region2) + " in table " + this.tableName);
     HRegion meta = this.utils.getMetaRegion();
     Get get = new Get(region1);
     get.addColumn(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);
@@ -245,8 +246,8 @@ public class Merge extends Configured implements Tool {
       usage();
       return -1;
     }
-    tableName = Bytes.toBytes(remainingArgs[0]);
-    isMetaTable = Bytes.compareTo(tableName, HConstants.META_TABLE_NAME) == 0;
+    tableName = FullyQualifiedTableName.valueOf(Bytes.toBytes(remainingArgs[0]));
+    isMetaTable = tableName.compareTo(HConstants.META_TABLE_NAME) == 0;
 
     region1 = Bytes.toBytesBinary(remainingArgs[1]);
     region2 = Bytes.toBytesBinary(remainingArgs[2]);
@@ -260,10 +261,11 @@ public class Merge extends Configured implements Tool {
     return status;
   }
 
-  private boolean notInTable(final byte [] tn, final byte [] rn) {
-    if (WritableComparator.compareBytes(tn, 0, tn.length, rn, 0, tn.length) != 0) {
+  private boolean notInTable(final FullyQualifiedTableName tn, final byte [] rn) {
+    if (WritableComparator.compareBytes(tn.getName(), 0, tn.getName().length,
+        rn, 0, tn.getName().length) != 0) {
       LOG.error("Region " + Bytes.toStringBinary(rn) + " does not belong to table " +
-        Bytes.toString(tn));
+        tn);
       return true;
     }
     return false;

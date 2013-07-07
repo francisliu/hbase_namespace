@@ -46,6 +46,7 @@ org.apache.hadoop.hbase.client.HBaseAdmin;
 org.apache.hadoop.hbase.client.HConnectionManager;
 org.apache.hadoop.hbase.HTableDescriptor;
 org.apache.hadoop.hbase.HBaseConfiguration;
+org.apache.hadoop.hbase.FullyQualifiedTableName;
 org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 org.apache.hadoop.hbase.master.DeadServer;
 </%import>
@@ -311,13 +312,13 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
 </tr>
 <%for HTableDescriptor systemTable : hTableList%>
 <tr>
-<%java>String tableName = systemTable.getTableName().getNameAsString();</%java>
+<%java>FullyQualifiedTableName tableName = systemTable.getFullyQualifiedTableName();</%java>
     <td><a href="table.jsp?name=<% tableName %>"><% tableName %></a></td>
     <%if (frags != null)%>
         <td align="center"><% frags.get(tableName) != null ? frags.get(tableName).intValue() + "%" : "n/a" %></td>
     </%if>
     <%java>String description = null;
-        if (tableName.equalsIgnoreCase(Bytes.toString(HConstants.META_TABLE_NAME))){
+        if (tableName.equals(HConstants.META_TABLE_NAME)){
             description = "The .META. table holds references to all User Table regions";
         } else {
             description = "The .NAMESPACE. table holds information about namespaces.";
@@ -349,7 +350,8 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
         <%if (frags != null) %>
             <td align="center"><% frags.get(htDesc.getNameAsString()) != null ? frags.get(htDesc.getNameAsString()).intValue() + "%" : "n/a" %></td>
         </%if>
-        <td><% master.getAssignmentManager().getRegionStates().getRegionsOfTable(htDesc.getName()).size() %>
+        <td><% master.getAssignmentManager().getRegionStates().getRegionsOfTable(htDesc
+        .getFullyQualifiedTableName()).size() %>
         <td><% htDesc.toStringCustomizedValues() %></td>
     </tr>
     </%for>

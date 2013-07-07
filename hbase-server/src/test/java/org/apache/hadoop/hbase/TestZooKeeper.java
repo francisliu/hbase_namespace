@@ -232,7 +232,7 @@ public class TestZooKeeper {
    * @throws Exception
    */
   private void testSanity(final String testName) throws Exception{
-    String tableName = testName + "." + System.currentTimeMillis();
+    String tableName = testName + "_" + System.currentTimeMillis();
     HTableDescriptor desc = new HTableDescriptor(tableName);
     HColumnDescriptor family = new HColumnDescriptor("fam");
     desc.addFamily(family);

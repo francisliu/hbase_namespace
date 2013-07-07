@@ -279,7 +279,7 @@ public class RemoteAdmin {
       path.append(accessToken);
       path.append('/');
     }
-    path.append(Bytes.toStringBinary(desc.getName()));
+    path.append(desc.getNameAsString());
     path.append('/');
     path.append("schema");
     int code = 0;

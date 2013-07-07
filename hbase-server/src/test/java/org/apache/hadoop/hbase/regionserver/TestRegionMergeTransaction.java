@@ -399,7 +399,7 @@ public class TestRegionMergeTransaction {
     HTableDescriptor htd = new HTableDescriptor("table");
     HColumnDescriptor hcd = new HColumnDescriptor(CF);
     htd.addFamily(hcd);
-    HRegionInfo hri = new HRegionInfo(htd.getName(), startrow, endrow);
+    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName(), startrow, endrow);
     HRegion a = HRegion.createHRegion(hri, testdir,
         TEST_UTIL.getConfiguration(), htd);
     HRegion.closeHRegion(a);

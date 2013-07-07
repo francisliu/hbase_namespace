@@ -52,12 +52,12 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.ClusterId;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HDFSBlocksDistribution;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.exceptions.FileSystemVersionException;
 import org.apache.hadoop.hbase.fs.HFileSystem;
@@ -1134,25 +1134,12 @@ public abstract class FSUtils {
    * path rootdir
    *
    * @param rootdir qualified path of HBase root directory
-   * @param tableName name of table
+   * @param fqtn name of table
    * @return {@link org.apache.hadoop.fs.Path} for table
    */
-   public static Path getTableDir(Path rootdir, final String tableName) {
-     return getTableDir(rootdir, Bytes.toBytes(tableName));
-   }
-
-  /**
-   * Returns the {@link org.apache.hadoop.fs.Path} object representing the table directory under
-   * path rootdir
-   *
-   * @param rootdir qualified path of HBase root directory
-   * @param tableName name of table
-   * @return {@link org.apache.hadoop.fs.Path} for table
-   */
-  public static Path getTableDir(Path rootdir, final byte [] tableName) {
-    TableName name = TableName.valueOf(tableName);
-    return new Path(getNamespaceDir(rootdir, name.getNamespaceAsString()),
-        name.getNameAsString());
+  public static Path getTableDir(Path rootdir, final FullyQualifiedTableName fqtn) {
+    return new Path(getNamespaceDir(rootdir, fqtn.getNamespaceAsString()),
+        fqtn.getNameAsString());
   }
 
   /**
@@ -1482,19 +1469,19 @@ public abstract class FSUtils {
    * @param map map to add values.  If null, this method will create and populate one to return
    * @param fs  The file system to use.
    * @param hbaseRootDir  The root directory to scan.
-   * @param tablename name of the table to scan.
+   * @param fqtn name of the table to scan.
    * @return Map keyed by StoreFile name with a value of the full Path.
    * @throws IOException When scanning the directory fails.
    */
   public static Map<String, Path> getTableStoreFilePathMap(Map<String, Path> map, 
-    final FileSystem fs, final Path hbaseRootDir, byte[] tablename)
+    final FileSystem fs, final Path hbaseRootDir, FullyQualifiedTableName fqtn)
   throws IOException {
     if (map == null) {
       map = new HashMap<String, Path>();
     }
 
     // only include the directory paths to tables
-    Path tableDir = FSUtils.getTableDir(hbaseRootDir, tablename);
+    Path tableDir = FSUtils.getTableDir(hbaseRootDir, fqtn);
     // Inside a table, there are compaction.dir directories to skip.  Otherwise, all else
     // should be regions. 
     PathFilter df = new BlackListDirFilter(fs, HConstants.HBASE_NON_TABLE_DIRS);
@@ -1544,8 +1531,8 @@ public abstract class FSUtils {
     
     // only include the directory paths to tables
     for (Path tableDir : FSUtils.getTableDirs(fs, hbaseRootDir)) {
-      byte[] tablename = Bytes.toBytes(tableDir.getName());
-      getTableStoreFilePathMap(map, fs, hbaseRootDir, tablename);
+      getTableStoreFilePathMap(map, fs, hbaseRootDir,
+          FullyQualifiedTableName.valueOf(tableDir.getName()));
     }
     return map;
   }

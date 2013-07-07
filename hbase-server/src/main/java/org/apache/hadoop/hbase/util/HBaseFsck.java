@@ -57,6 +57,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -202,7 +203,7 @@ public class HBaseFsck extends Configured implements Tool {
 
   // limit checking/fixes to listed tables, if empty attempt to check/fix all
   // .META. are always checked
-  private Set<String> tablesIncluded = new HashSet<String>();
+  private Set<FullyQualifiedTableName> tablesIncluded = new HashSet<FullyQualifiedTableName>();
   private int maxMerge = DEFAULT_MAX_MERGE; // maximum number of overlapping regions to merge
   private int maxOverlapsToSideline = DEFAULT_OVERLAPS_TO_SIDELINE; // maximum number of overlapping regions to sideline
   private boolean sidelineBigOverlaps = false; // sideline overlaps with >maxMerge regions
@@ -225,8 +226,8 @@ public class HBaseFsck extends Configured implements Tool {
    * to detect and correct consistency (hdfs/meta/deployment) problems.
    */
   private TreeMap<String, HbckInfo> regionInfoMap = new TreeMap<String, HbckInfo>();
-  private TreeSet<byte[]> disabledTables =
-    new TreeSet<byte[]>(Bytes.BYTES_COMPARATOR);
+  private TreeSet<FullyQualifiedTableName> disabledTables =
+    new TreeSet<FullyQualifiedTableName>();
   // Empty regioninfo qualifiers in .META.
   private Set<Result> emptyRegionInfoQualifiers = new HashSet<Result>();
 
@@ -240,14 +241,16 @@ public class HBaseFsck extends Configured implements Tool {
    * unless checkMetaOnly is specified, in which case, it contains only
    * the meta table
    */
-  private SortedMap<String, TableInfo> tablesInfo = new ConcurrentSkipListMap<String,TableInfo>();
+  private SortedMap<FullyQualifiedTableName, TableInfo> tablesInfo =
+      new ConcurrentSkipListMap<FullyQualifiedTableName, TableInfo>();
 
   /**
    * When initially looking at HDFS, we attempt to find any orphaned data.
    */
   private List<HbckInfo> orphanHdfsDirs = Collections.synchronizedList(new ArrayList<HbckInfo>());
 
-  private Map<String, Set<String>> orphanTableDirs = new HashMap<String, Set<String>>();
+  private Map<FullyQualifiedTableName, Set<String>> orphanTableDirs =
+      new HashMap<FullyQualifiedTableName, Set<String>>();
 
   /**
    * Constructor
@@ -493,7 +496,7 @@ public class HBaseFsck extends Configured implements Tool {
       return ;
     }
 
-    String tableName = Bytes.toString(hi.getTableName());
+    FullyQualifiedTableName tableName = hi.getTableName();
     TableInfo tableInfo = tablesInfo.get(tableName);
     Preconditions.checkNotNull(tableInfo, "Table '" + tableName + "' not present!");
     HTableDescriptor template = tableInfo.getHTD();
@@ -556,7 +559,7 @@ public class HBaseFsck extends Configured implements Tool {
         Bytes.toString(orphanRegionRange.getSecond()) + ")");
 
     // create new region on hdfs.  move data into place.
-    HRegionInfo hri = new HRegionInfo(template.getName(), orphanRegionRange.getFirst(), orphanRegionRange.getSecond());
+    HRegionInfo hri = new HRegionInfo(template.getFullyQualifiedTableName(), orphanRegionRange.getFirst(), orphanRegionRange.getSecond());
     LOG.info("Creating new region : " + hri);
     HRegion region = HBaseFsckRepair.createHDFSRegionDir(getConf(), hri, template);
     Path target = region.getRegionFileSystem().getRegionDir();
@@ -751,7 +754,8 @@ public class HBaseFsck extends Configured implements Tool {
   /**
    * Populate hbi's from regionInfos loaded from file system.
    */
-  private SortedMap<String, TableInfo> loadHdfsRegionInfos() throws IOException, InterruptedException {
+  private SortedMap<FullyQualifiedTableName, TableInfo> loadHdfsRegionInfos()
+      throws IOException, InterruptedException {
     tablesInfo.clear(); // regenerating the data
     // generate region split structure
     Collection<HbckInfo> hbckInfos = regionInfoMap.values();
@@ -789,7 +793,7 @@ public class HBaseFsck extends Configured implements Tool {
 
 
       // get table name from hdfs, populate various HBaseFsck tables.
-      String tableName = Bytes.toString(hbi.getTableName());
+      FullyQualifiedTableName tableName = hbi.getTableName();
       if (tableName == null) {
         // There was an entry in META not in the HDFS?
         LOG.warn("tableName was null for: " + hbi);
@@ -852,7 +856,8 @@ public class HBaseFsck extends Configured implements Tool {
    * @param tableName
    * @throws IOException
    */
-  private boolean fabricateTableInfo(String tableName, Set<String> columns) throws IOException {
+  private boolean fabricateTableInfo(
+      FullyQualifiedTableName tableName, Set<String> columns) throws IOException {
     if (columns ==null || columns.isEmpty()) return false;
     HTableDescriptor htd = new HTableDescriptor(tableName);
     for (String columnfamimly : columns) {
@@ -890,18 +895,20 @@ public class HBaseFsck extends Configured implements Tool {
     if (shouldFixTableOrphans() && !orphanTableDirs.isEmpty()) {
 
       Path hbaseRoot = FSUtils.getRootDir(getConf());
-      List<String> tmpList = new ArrayList<String>();
+      List<FullyQualifiedTableName> tmpList = new ArrayList<FullyQualifiedTableName>();
       tmpList.addAll(orphanTableDirs.keySet());
       HTableDescriptor[] htds = getHTableDescriptors(tmpList);
-      Iterator<Entry<String, Set<String>>> iter = orphanTableDirs.entrySet().iterator();
+      Iterator<Entry<FullyQualifiedTableName, Set<String>>> iter =
+          orphanTableDirs.entrySet().iterator();
       int j = 0;
       int numFailedCase = 0;
       while (iter.hasNext()) {
-        Entry<String, Set<String>> entry = (Entry<String, Set<String>>) iter.next();
-        String tableName = entry.getKey();
+        Entry<FullyQualifiedTableName, Set<String>> entry =
+            (Entry<FullyQualifiedTableName, Set<String>>) iter.next();
+        FullyQualifiedTableName tableName = entry.getKey();
         LOG.info("Trying to fix orphan table error: " + tableName);
         if (j < htds.length) {
-          if (tableName.equals(Bytes.toString(htds[j].getName()))) {
+          if (tableName.equals(htds[j].getFullyQualifiedTableName())) {
             HTableDescriptor htd = htds[j];
             LOG.info("fixing orphan table: " + tableName + " from cache");
             FSTableDescriptors.createTableDescriptor(
@@ -960,14 +967,15 @@ public class HBaseFsck extends Configured implements Tool {
    *
    * @return An array list of puts to do in bulk, null if tables have problems
    */
-  private ArrayList<Put> generatePuts(SortedMap<String, TableInfo> tablesInfo) throws IOException {
+  private ArrayList<Put> generatePuts(
+      SortedMap<FullyQualifiedTableName, TableInfo> tablesInfo) throws IOException {
     ArrayList<Put> puts = new ArrayList<Put>();
     boolean hasProblems = false;
-    for (Entry<String, TableInfo> e : tablesInfo.entrySet()) {
-      String name = e.getKey();
+    for (Entry<FullyQualifiedTableName, TableInfo> e : tablesInfo.entrySet()) {
+      FullyQualifiedTableName name = e.getKey();
 
       // skip ".META."
-      if (Bytes.compareTo(Bytes.toBytes(name), HConstants.META_TABLE_NAME) == 0) {
+      if (name.compareTo(HConstants.META_TABLE_NAME) == 0) {
         continue;
       }
 
@@ -997,7 +1005,8 @@ public class HBaseFsck extends Configured implements Tool {
   /**
    * Suggest fixes for each table
    */
-  private void suggestFixes(SortedMap<String, TableInfo> tablesInfo) throws IOException {
+  private void suggestFixes(
+      SortedMap<FullyQualifiedTableName, TableInfo> tablesInfo) throws IOException {
     for (TableInfo tInfo : tablesInfo.values()) {
       TableIntegrityErrorHandler handler = tInfo.new IntegrityFixSuggester(tInfo, errors);
       tInfo.checkRegionChain(handler);
@@ -1068,7 +1077,7 @@ public class HBaseFsck extends Configured implements Tool {
     return true;
   }
 
-  private SortedMap<String, TableInfo> checkHdfsIntegrity(boolean fixHoles,
+  private SortedMap<FullyQualifiedTableName, TableInfo> checkHdfsIntegrity(boolean fixHoles,
       boolean fixOverlaps) throws IOException {
     LOG.info("Checking HBase region split map from HDFS data...");
     for (TableInfo tInfo : tablesInfo.values()) {
@@ -1114,7 +1123,7 @@ public class HBaseFsck extends Configured implements Tool {
    */
   Path sidelineRegionDir(FileSystem fs,
       String parentDir, HbckInfo hi) throws IOException {
-    String tableName = Bytes.toString(hi.getTableName());
+    FullyQualifiedTableName tableName = hi.getTableName();
     Path regionDir = hi.getHdfsRegionDir();
 
     if (!fs.exists(regionDir)) {
@@ -1185,9 +1194,8 @@ public class HBaseFsck extends Configured implements Tool {
   /**
    * Side line an entire table.
    */
-  void sidelineTable(FileSystem fs, byte[] table, Path hbaseDir,
+  void sidelineTable(FileSystem fs, FullyQualifiedTableName tableName, Path hbaseDir,
       Path backupHbaseDir) throws IOException {
-    String tableName = Bytes.toString(table);
     Path tableDir = FSUtils.getTableDir(hbaseDir, tableName);
     if (fs.exists(tableDir)) {
       Path backupTableDir= FSUtils.getTableDir(backupHbaseDir, tableName);
@@ -1235,8 +1243,9 @@ public class HBaseFsck extends Configured implements Tool {
       public Void connect(HConnection connection) throws IOException {
         ZooKeeperWatcher zkw = createZooKeeperWatcher();
         try {
-          for (String tableName : ZKTableReadOnly.getDisabledOrDisablingTables(zkw)) {
-            disabledTables.add(Bytes.toBytes(tableName));
+          for (FullyQualifiedTableName tableName :
+              ZKTableReadOnly.getDisabledOrDisablingTables(zkw)) {
+            disabledTables.add(tableName);
           }
         } catch (KeeperException ke) {
           throw new IOException(ke);
@@ -1252,7 +1261,7 @@ public class HBaseFsck extends Configured implements Tool {
    * Check if the specified region's table is disabled.
    */
   private boolean isTableDisabled(HRegionInfo regionInfo) {
-    return disabledTables.contains(regionInfo.getTableName());
+    return disabledTables.contains(regionInfo.getFullyQualifiedTableName());
   }
 
   /**
@@ -1270,10 +1279,10 @@ public class HBaseFsck extends Configured implements Tool {
 
     List<Path> paths = FSUtils.getTableDirs(fs, rootDir);
     for (Path path : paths) {
-      String tableName = path.getName();
+      FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(path.getName());
        if ((!checkMetaOnly &&
            isTableIncluded(tableName)) ||
-           tableName.equals(HConstants.META_TABLE_NAME_STR)) {
+           tableName.equals(HConstants.META_TABLE_NAME)) {
          tableDirs.add(fs.getFileStatus(path));
        }
     }
@@ -1761,8 +1770,8 @@ public class HBaseFsck extends Configured implements Tool {
    * repeated or overlapping ones.
    * @throws IOException
    */
-  SortedMap<String, TableInfo> checkIntegrity() throws IOException {
-    tablesInfo = new TreeMap<String,TableInfo> ();
+  SortedMap<FullyQualifiedTableName, TableInfo> checkIntegrity() throws IOException {
+    tablesInfo = new TreeMap<FullyQualifiedTableName,TableInfo> ();
     List<HbckInfo> noHDFSRegionInfos = new ArrayList<HbckInfo>();
     LOG.debug("There are " + regionInfoMap.size() + " region info entries");
     for (HbckInfo hbi : regionInfoMap.values()) {
@@ -1799,7 +1808,7 @@ public class HBaseFsck extends Configured implements Tool {
       if (hbi.deployedOn.size() == 0) continue;
 
       // We should be safe here
-      String tableName = hbi.metaEntry.getTableNameAsString();
+      FullyQualifiedTableName tableName = hbi.metaEntry.getFullyQualifiedTableName();
       TableInfo modTInfo = tablesInfo.get(tableName);
       if (modTInfo == null) {
         modTInfo = new TableInfo(tableName);
@@ -1889,7 +1898,7 @@ public class HBaseFsck extends Configured implements Tool {
    * Maintain information about a particular table.
    */
   public class TableInfo {
-    String tableName;
+    FullyQualifiedTableName tableName;
     TreeSet <ServerName> deployedOn;
 
     // backwards regions
@@ -1908,7 +1917,7 @@ public class HBaseFsck extends Configured implements Tool {
     final Multimap<byte[], HbckInfo> overlapGroups =
       TreeMultimap.create(RegionSplitCalculator.BYTES_COMPARATOR, cmp);
 
-    TableInfo(String name) {
+    TableInfo(FullyQualifiedTableName name) {
       this.tableName = name;
       deployedOn = new TreeSet <ServerName>();
     }
@@ -1953,7 +1962,7 @@ public class HBaseFsck extends Configured implements Tool {
       this.deployedOn.add(server);
     }
 
-    public String getName() {
+    public FullyQualifiedTableName getName() {
       return tableName;
     }
 
@@ -2058,7 +2067,7 @@ public class HBaseFsck extends Configured implements Tool {
             getTableInfo(), next);
         HTableDescriptor htd = getTableInfo().getHTD();
         // from special EMPTY_START_ROW to next region's startKey
-        HRegionInfo newRegion = new HRegionInfo(htd.getName(),
+        HRegionInfo newRegion = new HRegionInfo(htd.getFullyQualifiedTableName(),
             HConstants.EMPTY_START_ROW, next.getStartKey());
 
         // TODO test
@@ -2074,7 +2083,7 @@ public class HBaseFsck extends Configured implements Tool {
                 + "region and regioninfo in HDFS to plug the hole.", getTableInfo());
         HTableDescriptor htd = getTableInfo().getHTD();
         // from curEndKey to EMPTY_START_ROW
-        HRegionInfo newRegion = new HRegionInfo(htd.getName(), curEndKey,
+        HRegionInfo newRegion = new HRegionInfo(htd.getFullyQualifiedTableName(), curEndKey,
             HConstants.EMPTY_START_ROW);
 
         HRegion region = HBaseFsckRepair.createHDFSRegionDir(conf, newRegion, htd);
@@ -2096,7 +2105,7 @@ public class HBaseFsck extends Configured implements Tool {
                 + ".  Creating a new regioninfo and region "
                 + "dir in hdfs to plug the hole.");
         HTableDescriptor htd = getTableInfo().getHTD();
-        HRegionInfo newRegion = new HRegionInfo(htd.getName(), holeStartKey, holeStopKey);
+        HRegionInfo newRegion = new HRegionInfo(htd.getFullyQualifiedTableName(), holeStartKey, holeStopKey);
         HRegion region = HBaseFsckRepair.createHDFSRegionDir(conf, newRegion, htd);
         LOG.info("Plugged hold by creating new empty region: "+ newRegion + " " +region);
         fixes++;
@@ -2181,7 +2190,7 @@ public class HBaseFsck extends Configured implements Tool {
         // create new empty container region.
         HTableDescriptor htd = getTableInfo().getHTD();
         // from start key to end Key
-        HRegionInfo newRegion = new HRegionInfo(htd.getName(), range.getFirst(),
+        HRegionInfo newRegion = new HRegionInfo(htd.getFullyQualifiedTableName(), range.getFirst(),
             range.getSecond());
         HRegion region = HBaseFsckRepair.createHDFSRegionDir(conf, newRegion, htd);
         LOG.info("Created new empty container region: " +
@@ -2262,7 +2271,7 @@ public class HBaseFsck extends Configured implements Tool {
       // When table is disabled no need to check for the region chain. Some of the regions
       // accidently if deployed, this below code might report some issues like missing start
       // or end regions or region hole in chain and may try to fix which is unwanted.
-      if (disabledTables.contains(this.tableName.getBytes())) {
+      if (disabledTables.contains(this.tableName)) {
         return true;
       }
       int originalErrorsCount = errors.getErrorList().size();
@@ -2403,7 +2412,7 @@ public class HBaseFsck extends Configured implements Tool {
 
   public void dumpSidelinedRegions(Map<Path, HbckInfo> regions) {
     for (Map.Entry<Path, HbckInfo> entry: regions.entrySet()) {
-      String tableName = Bytes.toStringBinary(entry.getValue().getTableName());
+      FullyQualifiedTableName tableName = entry.getValue().getTableName();
       Path path = entry.getKey();
       errors.print("This sidelined region dir should be bulk loaded: "
         + path.toString());
@@ -2414,7 +2423,7 @@ public class HBaseFsck extends Configured implements Tool {
   }
 
   public Multimap<byte[], HbckInfo> getOverlapGroups(
-      String table) {
+      FullyQualifiedTableName table) {
     TableInfo ti = tablesInfo.get(table);
     return ti.overlapGroups;
   }
@@ -2429,7 +2438,7 @@ public class HBaseFsck extends Configured implements Tool {
    * @throws IOException if an error is encountered
    */
    HTableDescriptor[] getTables(AtomicInteger numSkipped) {
-    List<String> tableNames = new ArrayList<String>();
+    List<FullyQualifiedTableName> tableNames = new ArrayList<FullyQualifiedTableName>();
     long now = System.currentTimeMillis();
 
     for (HbckInfo hbi : regionInfoMap.values()) {
@@ -2439,7 +2448,7 @@ public class HBaseFsck extends Configured implements Tool {
       // pick only those tables that were not modified in the last few milliseconds.
       if (info != null && info.getStartKey().length == 0 && !info.isMetaRegion()) {
         if (info.modTime + timelag < now) {
-          tableNames.add(info.getTableNameAsString());
+          tableNames.add(info.getFullyQualifiedTableName());
         } else {
           numSkipped.incrementAndGet(); // one more in-flux table
         }
@@ -2448,7 +2457,7 @@ public class HBaseFsck extends Configured implements Tool {
     return getHTableDescriptors(tableNames);
   }
 
-   HTableDescriptor[] getHTableDescriptors(List<String> tableNames) {
+   HTableDescriptor[] getHTableDescriptors(List<FullyQualifiedTableName> tableNames) {
     HTableDescriptor[] htd = new HTableDescriptor[0];
      try {
        LOG.info("getHTableDescriptors == tableNames => " + tableNames);
@@ -2581,7 +2590,7 @@ public class HBaseFsck extends Configured implements Tool {
             sn = pair.getSecond();
           }
           HRegionInfo hri = pair.getFirst();
-          if (!(isTableIncluded(hri.getTableNameAsString())
+          if (!(isTableIncluded(hri.getFullyQualifiedTableName())
               || hri.isMetaRegion())) {
             return true;
           }
@@ -2655,7 +2664,7 @@ public class HBaseFsck extends Configured implements Tool {
       hash ^= Arrays.hashCode(getStartKey());
       hash ^= Arrays.hashCode(getEndKey());
       hash ^= Boolean.valueOf(isOffline()).hashCode();
-      hash ^= Arrays.hashCode(getTableName());
+      hash ^= getFullyQualifiedTableName().hashCode();
       if (regionServer != null) {
         hash ^= regionServer.hashCode();
       }
@@ -2744,14 +2753,14 @@ public class HBaseFsck extends Configured implements Tool {
       }
     }
 
-    public byte[] getTableName() {
+    public FullyQualifiedTableName getTableName() {
       if (this.metaEntry != null) {
-        return this.metaEntry.getTableName();
+        return this.metaEntry.getFullyQualifiedTableName();
       } else if (this.hdfsEntry != null) {
         // we are only guaranteed to have a path and not an HRI for hdfsEntry,
         // so we get the name from the Path
         Path tableDir = this.hdfsEntry.hdfsRegionDir.getParent();
-        return Bytes.toBytes(tableDir.getName());
+        return FullyQualifiedTableName.valueOf(tableDir.getName());
       } else {
         // Currently no code exercises this path, but we could add one for
         // getting table name from OnlineEntry
@@ -2832,8 +2841,7 @@ public class HBaseFsck extends Configured implements Tool {
         return 0;
       }
 
-      int tableCompare = RegionSplitCalculator.BYTES_COMPARATOR.compare(
-          l.getTableName(), r.getTableName());
+      int tableCompare = l.getTableName().compareTo(r.getTableName());
       if (tableCompare != 0) {
         return tableCompare;
       }
@@ -2876,7 +2884,7 @@ public class HBaseFsck extends Configured implements Tool {
   /**
    * Prints summary of all tables found on the system.
    */
-  private void printTableSummary(SortedMap<String, TableInfo> tablesInfo) {
+  private void printTableSummary(SortedMap<FullyQualifiedTableName, TableInfo> tablesInfo) {
     StringBuilder sb = new StringBuilder();
     errors.print("Summary:");
     for (TableInfo tInfo : tablesInfo.values()) {
@@ -3097,7 +3105,7 @@ public class HBaseFsck extends Configured implements Tool {
       List<HRegionInfo> ret = Lists.newArrayList();
       for (HRegionInfo hri : regions) {
         if (hri.isMetaTable() || (!hbck.checkMetaOnly
-            && hbck.isTableIncluded(hri.getTableNameAsString()))) {
+            && hbck.isTableIncluded(hri.getFullyQualifiedTableName()))) {
           ret.add(hri);
         }
       }
@@ -3200,7 +3208,7 @@ public class HBaseFsck extends Configured implements Tool {
           hbck.loadHdfsRegioninfo(hbi);
         } catch (IOException ioe) {
           String msg = "Orphan region in HDFS: Unable to load .regioninfo from table "
-              + Bytes.toString(hbi.getTableName()) + " in hdfs dir "
+              + hbi.getTableName() + " in hdfs dir "
               + hbi.getHdfsRegionDir()
               + "!  It may be an invalid format or version file.  Treating as "
               + "an orphaned regiondir.";
@@ -3396,16 +3404,16 @@ public class HBaseFsck extends Configured implements Tool {
    * Only check/fix tables specified by the list,
    * Empty list means all tables are included.
    */
-  boolean isTableIncluded(String table) {
+  boolean isTableIncluded(FullyQualifiedTableName table) {
     return (tablesIncluded.size() == 0) || tablesIncluded.contains(table);
   }
 
-  public void includeTable(String table) {
+  public void includeTable(FullyQualifiedTableName table) {
     tablesIncluded.add(table);
   }
 
-  Set<String> getIncludedTables() {
-    return new HashSet<String>(tablesIncluded);
+  Set<FullyQualifiedTableName> getIncludedTables() {
+    return new HashSet<FullyQualifiedTableName>(tablesIncluded);
   }
 
   /**
@@ -3672,7 +3680,7 @@ public class HBaseFsck extends Configured implements Tool {
         errors.reportError(ERROR_CODE.WRONG_USAGE, "Unrecognized option:" + cmd);
         return printUsageAndExit();
       } else {
-        includeTable(cmd);
+        includeTable(FullyQualifiedTableName.valueOf(cmd));
         errors.print("Allow checking/fixes for table: " + cmd);
       }
     }
@@ -3694,18 +3702,15 @@ public class HBaseFsck extends Configured implements Tool {
       LOG.info("Checking all hfiles for corruption");
       HFileCorruptionChecker hfcc = createHFileCorruptionChecker(sidelineCorruptHFiles);
       setHFileCorruptionChecker(hfcc); // so we can get result
-      Collection<String> tables = getIncludedTables();
+      Collection<FullyQualifiedTableName> tables = getIncludedTables();
       Collection<Path> tableDirs = new ArrayList<Path>();
       Path rootdir = FSUtils.getRootDir(getConf());
       if (tables.size() > 0) {
-        for (String t : tables) {
+        for (FullyQualifiedTableName t : tables) {
           tableDirs.add(FSUtils.getTableDir(rootdir, t));
         }
       } else {
         tableDirs = FSUtils.getTableDirs(FSUtils.getCurrentFileSystem(getConf()), rootdir);
-        for(String tableName : HConstants.HBASE_NON_USER_TABLE_DIRS) {
-          tableDirs.remove(FSUtils.getTableDir(rootdir, Bytes.toBytes(tableName)));
-        }
       }
       hfcc.checkTables(tableDirs);
       hfcc.report(errors);

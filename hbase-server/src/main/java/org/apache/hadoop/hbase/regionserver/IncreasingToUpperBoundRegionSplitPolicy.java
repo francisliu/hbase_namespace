@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -105,13 +106,13 @@ extends ConstantSizeRegionSplitPolicy {
     RegionServerServices rss = this.region.getRegionServerServices();
     // Can be null in tests
     if (rss == null) return 0;
-    byte [] tablename = this.region.getTableDesc().getName();
+    FullyQualifiedTableName tablename = this.region.getTableDesc().getFullyQualifiedTableName();
     int tableRegionsCount = 0;
     try {
       List<HRegion> hri = rss.getOnlineRegions(tablename);
       tableRegionsCount = hri == null || hri.isEmpty()? 0: hri.size();
     } catch (IOException e) {
-      LOG.debug("Failed getOnlineRegions " + Bytes.toString(tablename), e);
+      LOG.debug("Failed getOnlineRegions " + tablename, e);
     }
     return tableRegionsCount;
   }

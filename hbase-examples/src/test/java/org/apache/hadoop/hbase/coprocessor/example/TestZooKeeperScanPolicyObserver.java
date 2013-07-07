@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -70,7 +71,8 @@ public class TestZooKeeperScanPolicyObserver {
 
   // @Ignore @Test
   public void testScanPolicyObserver() throws Exception {
-    byte[] tableName = Bytes.toBytes("testScanPolicyObserver");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testScanPolicyObserver");
     HTableDescriptor desc = new HTableDescriptor(tableName);
     HColumnDescriptor hcd = new HColumnDescriptor(F)
     .setMaxVersions(10)

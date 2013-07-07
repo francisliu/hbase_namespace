@@ -39,6 +39,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -76,7 +77,7 @@ public class TestExportSnapshot {
 
   private byte[] emptySnapshotName;
   private byte[] snapshotName;
-  private byte[] tableName;
+  private FullyQualifiedTableName tableName;
   private HBaseAdmin admin;
 
   @BeforeClass
@@ -102,7 +103,7 @@ public class TestExportSnapshot {
     this.admin = TEST_UTIL.getHBaseAdmin();
 
     long tid = System.currentTimeMillis();
-    tableName = Bytes.toBytes("testtb-" + tid);
+    tableName = FullyQualifiedTableName.valueOf("testtb-" + tid);
     snapshotName = Bytes.toBytes("snaptb0-" + tid);
     emptySnapshotName = Bytes.toBytes("emptySnaptb0-" + tid);
 
@@ -189,13 +190,14 @@ public class TestExportSnapshot {
   public void testSnapshotWithRefsExportFileSystemState() throws Exception {
     Configuration conf = TEST_UTIL.getConfiguration();
 
-    final byte[] tableWithRefsName = Bytes.toBytes("tableWithRefs");
+    final FullyQualifiedTableName tableWithRefsName =
+        FullyQualifiedTableName.valueOf("tableWithRefs");
     final String snapshotName = "tableWithRefs";
     final String TEST_FAMILY = Bytes.toString(FAMILY);
     final String TEST_HFILE = "abc";
 
     final SnapshotDescription sd = SnapshotDescription.newBuilder()
-        .setName(snapshotName).setTable(Bytes.toString(tableWithRefsName)).build();
+        .setName(snapshotName).setTable(tableWithRefsName.getNameAsString()).build();
 
     FileSystem fs = TEST_UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getFileSystem();
     Path rootDir = TEST_UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getRootDir();
@@ -204,7 +206,7 @@ public class TestExportSnapshot {
     // First region, simple with one plain hfile.
     HRegionInfo hri = new HRegionInfo(tableWithRefsName);
     HRegionFileSystem r0fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, FSUtils.getTableDir(archiveDir, hri.getTableNameAsString()), hri);
+      fs, FSUtils.getTableDir(archiveDir, hri.getFullyQualifiedTableName()), hri);
     Path storeFile = new Path(rootDir, TEST_HFILE);
     FSDataOutputStream out = fs.create(storeFile);
     out.write(Bytes.toBytes("Test Data"));
@@ -215,7 +217,7 @@ public class TestExportSnapshot {
     // This region contains a reference to the hfile in the first region.
     hri = new HRegionInfo(tableWithRefsName);
     HRegionFileSystem r1fs = HRegionFileSystem.createRegionOnFileSystem(conf,
-      fs, new Path(archiveDir, hri.getTableNameAsString()), hri);
+      fs, new Path(archiveDir, hri.getFullyQualifiedTableName().getNameAsString()), hri);
     storeFile = new Path(rootDir, TEST_HFILE + '.' + r0fs.getRegionInfo().getEncodedName());
     out = fs.create(storeFile);
     out.write(Bytes.toBytes("Test Data"));
@@ -233,7 +235,7 @@ public class TestExportSnapshot {
   /**
    * Test ExportSnapshot
    */
-  private void testExportFileSystemState(final byte[] tableName, final byte[] snapshotName,
+  private void testExportFileSystemState(final FullyQualifiedTableName tableName, final byte[] snapshotName,
       int filesExpected) throws Exception {
     Path copyDir = TEST_UTIL.getDataTestDir("export-" + System.currentTimeMillis());
     URI hdfsUri = FileSystem.get(TEST_UTIL.getConfiguration()).getUri();
@@ -281,7 +283,7 @@ public class TestExportSnapshot {
    * Verify if the files exists
    */
   private void verifyArchive(final FileSystem fs, final Path rootDir,
-      final byte[] tableName, final String snapshotName) throws IOException {
+      final FullyQualifiedTableName tableName, final String snapshotName) throws IOException {
     final Path exportedSnapshot = new Path(rootDir,
       new Path(HConstants.SNAPSHOT_DIR_NAME, snapshotName));
     final Path exportedArchive = new Path(rootDir, HConstants.HFILE_ARCHIVE_DIRECTORY);
@@ -291,14 +293,14 @@ public class TestExportSnapshot {
         public void storeFile (final String region, final String family, final String hfile)
             throws IOException {
           verifyNonEmptyFile(new Path(exportedArchive,
-            new Path(FSUtils.getTableDir(new Path("./"), Bytes.toString(tableName)),
+            new Path(FSUtils.getTableDir(new Path("./"), tableName),
                 new Path(region, new Path(family, hfile)))));
         }
 
         public void recoveredEdits (final String region, final String logfile)
             throws IOException {
           verifyNonEmptyFile(new Path(exportedSnapshot,
-            new Path(Bytes.toString(tableName), new Path(region, logfile))));
+            new Path(tableName.getNameAsString(), new Path(region, logfile))));
         }
 
         public void logFile (final String server, final String logfile)

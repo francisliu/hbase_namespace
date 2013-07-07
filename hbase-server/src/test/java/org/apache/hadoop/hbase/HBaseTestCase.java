@@ -161,7 +161,7 @@ public abstract class HBaseTestCase extends TestCase {
   public HRegion createNewHRegion(HTableDescriptor desc, byte [] startKey,
       byte [] endKey, Configuration conf)
   throws IOException {
-    HRegionInfo hri = new HRegionInfo(desc.getName(), startKey, endKey);
+    HRegionInfo hri = new HRegionInfo(desc.getFullyQualifiedTableName(), startKey, endKey);
     return HRegion.createHRegion(hri, testDir, conf, desc);
   }
 

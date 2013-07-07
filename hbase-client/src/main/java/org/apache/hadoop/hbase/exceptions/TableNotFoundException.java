@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.exceptions;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 
 /** Thrown when a table can not be located */
 @InterfaceAudience.Public
@@ -35,5 +36,9 @@ public class TableNotFoundException extends RegionException {
   /** @param s message */
   public TableNotFoundException(String s) {
     super(s);
+  }
+
+  public TableNotFoundException(FullyQualifiedTableName fqtn) {
+    super(fqtn.getNameAsString());
   }
 }

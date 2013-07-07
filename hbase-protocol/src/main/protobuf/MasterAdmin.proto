@@ -32,7 +32,7 @@ import "Client.proto";
 /* Column-level protobufs */
 
 message AddColumnRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
   required ColumnFamilySchema columnFamilies = 2;
 }
 
@@ -40,7 +40,7 @@ message AddColumnResponse {
 }
 
 message DeleteColumnRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
   required bytes columnName = 2;
 }
 
@@ -48,7 +48,7 @@ message DeleteColumnResponse {
 }
 
 message ModifyColumnRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
   required ColumnFamilySchema columnFamilies = 2;
 }
 
@@ -110,28 +110,28 @@ message CreateTableResponse {
 }
 
 message DeleteTableRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
 }
 
 message DeleteTableResponse {
 }
 
 message EnableTableRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
 }
 
 message EnableTableResponse {
 }
 
 message DisableTableRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
 }
 
 message DisableTableResponse {
 }
 
 message ModifyTableRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
   required TableSchema tableSchema = 2;
 }
 

@@ -21,12 +21,14 @@ package org.apache.hadoop.hbase.client;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
@@ -76,21 +78,21 @@ public interface HConnection extends Abortable, Closeable {
    * @return true if the table is enabled, false otherwise
    * @throws IOException if a remote or network exception occurs
    */
-  public boolean isTableEnabled(byte[] tableName) throws IOException;
+  public boolean isTableEnabled(FullyQualifiedTableName fqtn) throws IOException;
 
   /**
    * @param tableName table name
    * @return true if the table is disabled, false otherwise
    * @throws IOException if a remote or network exception occurs
    */
-  public boolean isTableDisabled(byte[] tableName) throws IOException;
+  public boolean isTableDisabled(FullyQualifiedTableName fqtn) throws IOException;
 
   /**
    * @param tableName table name
    * @return true if all regions of the table are available, false otherwise
    * @throws IOException if a remote or network exception occurs
    */
-  public boolean isTableAvailable(byte[] tableName) throws IOException;
+  public boolean isTableAvailable(FullyQualifiedTableName fqtn) throws IOException;
 
   /**
    * Use this api to check if the table has been created with the specified number of
@@ -104,7 +106,8 @@ public interface HConnection extends Abortable, Closeable {
    * @throws IOException
    *           if a remote or network exception occurs
    */
-  public boolean isTableAvailable(byte[] tableName, byte[][] splitKeys) throws IOException;
+  public boolean isTableAvailable(FullyQualifiedTableName fqtn, byte[][] splitKeys) throws
+      IOException;
 
   /**
    * List all the userspace tables.  In other words, scan the META table.
@@ -123,7 +126,7 @@ public interface HConnection extends Abortable, Closeable {
    * @return table metadata
    * @throws IOException if a remote or network exception occurs
    */
-  public HTableDescriptor getHTableDescriptor(byte[] tableName)
+  public HTableDescriptor getHTableDescriptor(FullyQualifiedTableName fqtn)
   throws IOException;
 
   /**
@@ -135,7 +138,7 @@ public interface HConnection extends Abortable, Closeable {
    * question
    * @throws IOException if a remote or network exception occurs
    */
-  public HRegionLocation locateRegion(final byte [] tableName,
+  public HRegionLocation locateRegion(final FullyQualifiedTableName fqtn,
       final byte [] row)
   throws IOException;
 
@@ -150,7 +153,7 @@ public interface HConnection extends Abortable, Closeable {
    * @param tableName Name of the table whose regions we are to remove from
    * cache.
    */
-  public void clearRegionCache(final byte [] tableName);
+  public void clearRegionCache(final FullyQualifiedTableName fqtn);
 
   /**
    * Deletes cached locations for the specific region.
@@ -167,7 +170,7 @@ public interface HConnection extends Abortable, Closeable {
    * question
    * @throws IOException if a remote or network exception occurs
    */
-  public HRegionLocation relocateRegion(final byte [] tableName,
+  public HRegionLocation relocateRegion(final FullyQualifiedTableName fqtn,
       final byte [] row)
   throws IOException;
 
@@ -198,7 +201,7 @@ public interface HConnection extends Abortable, Closeable {
    * @return list of region locations for all regions of table
    * @throws IOException
    */
-  public List<HRegionLocation> locateRegions(final byte[] tableName)
+  public List<HRegionLocation> locateRegions(final FullyQualifiedTableName fqtn)
   throws IOException;
 
   /**
@@ -210,7 +213,8 @@ public interface HConnection extends Abortable, Closeable {
    * @return list of region locations for all regions of table
    * @throws IOException
    */
-  public List<HRegionLocation> locateRegions(final byte[] tableName, final boolean useCache,
+  public List<HRegionLocation> locateRegions(final FullyQualifiedTableName fqtn,
+      final boolean useCache,
       final boolean offlined) throws IOException;
 
   /**
@@ -261,7 +265,7 @@ public interface HConnection extends Abortable, Closeable {
    * @return Location of row.
    * @throws IOException if a remote or network exception occurs
    */
-  HRegionLocation getRegionLocation(byte [] tableName, byte [] row,
+  HRegionLocation getRegionLocation(FullyQualifiedTableName fqtn, byte [] row,
     boolean reload)
   throws IOException;
 
@@ -309,7 +313,8 @@ public interface HConnection extends Abortable, Closeable {
    * @deprecated since 0.96 - Use {@link HTableInterface#batch} instead
    */
   @Deprecated
-  public void processBatch(List<? extends Row> actions, final byte[] tableName,
+  public void processBatch(List<? extends Row> actions,
+                           final FullyQualifiedTableName fqtn,
       ExecutorService pool, Object[] results)
       throws IOException, InterruptedException;
 
@@ -320,7 +325,7 @@ public interface HConnection extends Abortable, Closeable {
    */
   @Deprecated
   public <R> void processBatchCallback(List<? extends Row> list,
-      byte[] tableName,
+      final FullyQualifiedTableName fqtn,
       ExecutorService pool,
       Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException;
@@ -332,7 +337,7 @@ public interface HConnection extends Abortable, Closeable {
    * @param tableName name of table to configure.
    * @param enable Set to true to enable region cache prefetch.
    */
-  public void setRegionCachePrefetch(final byte[] tableName,
+  public void setRegionCachePrefetch(final FullyQualifiedTableName fqtn,
       final boolean enable);
 
   /**
@@ -341,7 +346,7 @@ public interface HConnection extends Abortable, Closeable {
    * @return true if table's region cache prefetch is enabled. Otherwise
    * it is disabled.
    */
-  public boolean getRegionCachePrefetch(final byte[] tableName);
+  public boolean getRegionCachePrefetch(final FullyQualifiedTableName fqtn);
 
   /**
    * @return the number of region servers that are currently running
@@ -355,7 +360,7 @@ public interface HConnection extends Abortable, Closeable {
    * @return HTD[] table metadata
    * @throws IOException if a remote or network exception occurs
    */
-  public HTableDescriptor[] getHTableDescriptors(List<String> tableNames)
+  public HTableDescriptor[] getHTableDescriptors(List<FullyQualifiedTableName> fqtns)
   throws IOException;
 
   /**

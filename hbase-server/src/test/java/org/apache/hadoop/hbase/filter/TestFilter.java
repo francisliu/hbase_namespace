@@ -137,7 +137,7 @@ public class TestFilter {
     htd.addFamily(new HColumnDescriptor(NEW_FAMILIES[0]));
     htd.addFamily(new HColumnDescriptor(NEW_FAMILIES[1]));
     htd.addFamily(new HColumnDescriptor(FAMILIES_1[1]));
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     this.region = HRegion.createHRegion(info, TEST_UTIL.getDataTestDir(),
             TEST_UTIL.getConfiguration(), htd);
 
@@ -1772,7 +1772,7 @@ public class TestFilter {
     byte[] columnStatus = Bytes.toBytes("S");
     HTableDescriptor htd = new HTableDescriptor("testNestedFilterListWithSCVF");
     htd.addFamily(new HColumnDescriptor(FAMILIES[0]));
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     HRegion testRegion = HRegion.createHRegion(info, TEST_UTIL.getDataTestDir(),
       TEST_UTIL.getConfiguration(), htd);
     for(int i=0; i<10; i++) {

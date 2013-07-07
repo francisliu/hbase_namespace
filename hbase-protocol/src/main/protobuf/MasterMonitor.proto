@@ -29,7 +29,7 @@ import "hbase.proto";
 import "ClusterStatus.proto";
 
 message GetSchemaAlterStatusRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
 }
 
 message GetSchemaAlterStatusResponse {

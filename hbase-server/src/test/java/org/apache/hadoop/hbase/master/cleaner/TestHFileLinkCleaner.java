@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
@@ -58,13 +59,13 @@ public class TestHFileLinkCleaner {
     Path rootDir = FSUtils.getRootDir(conf);
     FileSystem fs = FileSystem.get(conf);
 
-    final String tableName = "test-table";
-    final String tableLinkName = "test-link";
+    final FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("test-table");
+    final FullyQualifiedTableName tableLinkName = FullyQualifiedTableName.valueOf("test-link");
     final String hfileName = "1234567890";
     final String familyName = "cf";
 
-    HRegionInfo hri = new HRegionInfo(Bytes.toBytes(tableName));
-    HRegionInfo hriLink = new HRegionInfo(Bytes.toBytes(tableLinkName));
+    HRegionInfo hri = new HRegionInfo(tableName);
+    HRegionInfo hriLink = new HRegionInfo(tableLinkName);
 
     Path archiveDir = HFileArchiveUtil.getArchivePath(conf);
     Path archiveStoreDir = HFileArchiveUtil.getStoreArchivePath(conf,
@@ -101,7 +102,8 @@ public class TestHFileLinkCleaner {
     assertTrue(fs.exists(hfilePath));
 
     // Link backref can be removed
-    fs.rename(FSUtils.getTableDir(rootDir, tableLinkName), new Path(archiveDir, tableLinkName));
+    fs.rename(FSUtils.getTableDir(rootDir, tableLinkName),
+        FSUtils.getTableDir(archiveDir, tableLinkName));
     cleaner.chore();
     assertFalse("Link should be deleted", fs.exists(linkBackRef));
 
@@ -115,13 +117,13 @@ public class TestHFileLinkCleaner {
       Thread.sleep(ttl * 2);
       cleaner.chore();
     }
-    assertFalse("HFile should be deleted", fs.exists(new Path(archiveDir, tableName)));
-    assertFalse("Link should be deleted", fs.exists(new Path(archiveDir, tableLinkName)));
+    assertFalse("HFile should be deleted", fs.exists(FSUtils.getTableDir(archiveDir, tableName)));
+    assertFalse("Link should be deleted", fs.exists(FSUtils.getTableDir(archiveDir, tableLinkName)));
 
     cleaner.interrupt();
   }
 
-  private static Path getFamilyDirPath (final Path rootDir, final String table,
+  private static Path getFamilyDirPath (final Path rootDir, final FullyQualifiedTableName table,
     final String region, final String family) {
     return new Path(new Path(FSUtils.getTableDir(rootDir, table), region), family);
   }

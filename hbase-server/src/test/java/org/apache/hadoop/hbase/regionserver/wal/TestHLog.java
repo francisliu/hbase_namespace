@@ -155,14 +155,15 @@ public class TestHLog  {
   @Test
   public void testSplit() throws IOException {
 
-    final byte [] tableName = Bytes.toBytes(getName());
-    final byte [] rowName = tableName;
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf(getName());
+    final byte [] rowName = tableName.getName();
     Path logdir = new Path(hbaseDir, HConstants.HREGION_LOGDIR_NAME);
     HLog log = HLogFactory.createHLog(fs, hbaseDir, 
         HConstants.HREGION_LOGDIR_NAME, conf);
     final int howmany = 3;
     HRegionInfo[] infos = new HRegionInfo[3];
-    Path tabledir = FSUtils.getTableDir(hbaseDir, getName());
+    Path tabledir = FSUtils.getTableDir(hbaseDir, tableName);
     fs.mkdirs(tabledir);
     for(int i = 0; i < howmany; i++) {
       infos[i] = new HRegionInfo(tableName,
@@ -212,11 +213,12 @@ public class TestHLog  {
    */
   @Test
   public void Broken_testSync() throws Exception {
-    byte [] bytes = Bytes.toBytes(getName());
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf(getName());
     // First verify that using streams all works.
     Path p = new Path(dir, getName() + ".fsdos");
     FSDataOutputStream out = fs.create(p);
-    out.write(bytes);
+    out.write(tableName.getName());
     Method syncMethod = null;
     try {
       syncMethod = out.getClass().getMethod("hflush", new Class<?> []{});
@@ -233,7 +235,7 @@ public class TestHLog  {
     assertTrue(in.available() > 0);
     byte [] buffer = new byte [1024];
     int read = in.read(buffer);
-    assertEquals(bytes.length, read);
+    assertEquals(tableName.getName().length, read);
     out.close();
     in.close();
 
@@ -243,15 +245,15 @@ public class TestHLog  {
     HLog.Reader reader = null;
 
     try {
-      HRegionInfo info = new HRegionInfo(bytes,
+      HRegionInfo info = new HRegionInfo(tableName,
                   null,null, false);
       HTableDescriptor htd = new HTableDescriptor();
-      htd.addFamily(new HColumnDescriptor(bytes));
+      htd.addFamily(new HColumnDescriptor(tableName.getName()));
 
       for (int i = 0; i < total; i++) {
         WALEdit kvs = new WALEdit();
-        kvs.add(new KeyValue(Bytes.toBytes(i), bytes, bytes));
-        wal.append(info, bytes, kvs, System.currentTimeMillis(), htd);
+        kvs.add(new KeyValue(Bytes.toBytes(i), tableName.getName(), tableName.getName()));
+        wal.append(info, tableName, kvs, System.currentTimeMillis(), htd);
       }
       // Now call sync and try reading.  Opening a Reader before you sync just
       // gives you EOFE.
@@ -268,8 +270,8 @@ public class TestHLog  {
       // that has had a sync done on it.
       for (int i = 0; i < total; i++) {
         WALEdit kvs = new WALEdit();
-        kvs.add(new KeyValue(Bytes.toBytes(i), bytes, bytes));
-        wal.append(info, bytes, kvs, System.currentTimeMillis(), htd);
+        kvs.add(new KeyValue(Bytes.toBytes(i), tableName.getName(), tableName.getName()));
+        wal.append(info, tableName, kvs, System.currentTimeMillis(), htd);
       }
       reader = HLogFactory.createReader(fs, walPath, conf);
       count = 0;
@@ -287,8 +289,8 @@ public class TestHLog  {
       final byte [] value = new byte[1025 * 1024];  // Make a 1M value.
       for (int i = 0; i < total; i++) {
         WALEdit kvs = new WALEdit();
-        kvs.add(new KeyValue(Bytes.toBytes(i), bytes, value));
-        wal.append(info, bytes, kvs, System.currentTimeMillis(), htd);
+        kvs.add(new KeyValue(Bytes.toBytes(i), tableName.getName(), value));
+        wal.append(info, tableName, kvs, System.currentTimeMillis(), htd);
       }
       // Now I should have written out lots of blocks.  Sync then read.
       wal.sync();
@@ -380,7 +382,8 @@ public class TestHLog  {
    */
   @Test
   public void testAppendClose() throws Exception {
-    byte [] tableName = Bytes.toBytes(getName());
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf(getName());
     HRegionInfo regioninfo = new HRegionInfo(tableName,
              HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW, false);
 
@@ -389,11 +392,11 @@ public class TestHLog  {
     final int total = 20;
 
     HTableDescriptor htd = new HTableDescriptor();
-    htd.addFamily(new HColumnDescriptor(tableName));
+    htd.addFamily(new HColumnDescriptor(tableName.getName()));
 
     for (int i = 0; i < total; i++) {
       WALEdit kvs = new WALEdit();
-      kvs.add(new KeyValue(Bytes.toBytes(i), tableName, tableName));
+      kvs.add(new KeyValue(Bytes.toBytes(i), tableName.getName(), tableName.getName()));
       wal.append(regioninfo, tableName, kvs, System.currentTimeMillis(), htd);
     }
     // Now call sync to send the data to HDFS datanodes
@@ -501,7 +504,8 @@ public class TestHLog  {
   @Test
   public void testEditAdd() throws IOException {
     final int COL_COUNT = 10;
-    final byte [] tableName = Bytes.toBytes("tablename");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("tablename");
     final byte [] row = Bytes.toBytes("row");
     HLog.Reader reader = null;
     HLog log = null;
@@ -538,7 +542,7 @@ public class TestHLog  {
         HLogKey key = entry.getKey();
         WALEdit val = entry.getEdit();
         assertTrue(Bytes.equals(info.getEncodedNameAsBytes(), key.getEncodedRegionName()));
-        assertTrue(Bytes.equals(tableName, key.getTablename()));
+        assertTrue(tableName.equals(key.getTablename()));
         KeyValue kv = val.getKeyValues().get(0);
         assertTrue(Bytes.equals(row, kv.getRow()));
         assertEquals((byte)(i + '0'), kv.getValue()[0]);
@@ -560,7 +564,8 @@ public class TestHLog  {
   @Test
   public void testAppend() throws IOException {
     final int COL_COUNT = 10;
-    final byte [] tableName = Bytes.toBytes("tablename");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("tablename");
     final byte [] row = Bytes.toBytes("row");
     Reader reader = null;
     HLog log = HLogFactory.createHLog(fs, hbaseDir, getName(), conf);
@@ -592,7 +597,7 @@ public class TestHLog  {
       for (KeyValue val : entry.getEdit().getKeyValues()) {
         assertTrue(Bytes.equals(hri.getEncodedNameAsBytes(),
           entry.getKey().getEncodedRegionName()));
-        assertTrue(Bytes.equals(tableName, entry.getKey().getTablename()));
+        assertTrue(tableName.equals(entry.getKey().getTablename()));
         assertTrue(Bytes.equals(row, val.getRow()));
         assertEquals((byte)(idx + '0'), val.getValue()[0]);
         System.out.println(entry.getKey() + " " + val);
@@ -615,7 +620,8 @@ public class TestHLog  {
   @Test
   public void testVisitors() throws Exception {
     final int COL_COUNT = 10;
-    final byte [] tableName = Bytes.toBytes("tablename");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("tablename");
     final byte [] row = Bytes.toBytes("row");
     HLog log = HLogFactory.createHLog(fs, hbaseDir, getName(), conf);
     try {
@@ -650,8 +656,10 @@ public class TestHLog  {
   @Test
   public void testLogCleaning() throws Exception {
     LOG.info("testLogCleaning");
-    final byte [] tableName = Bytes.toBytes("testLogCleaning");
-    final byte [] tableName2 = Bytes.toBytes("testLogCleaning2");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testLogCleaning");
+    final FullyQualifiedTableName tableName2 =
+        FullyQualifiedTableName.valueOf("testLogCleaning2");
 
     HLog log = HLogFactory.createHLog(fs, hbaseDir, 
         getName(), conf);
@@ -748,7 +756,7 @@ public class TestHLog  {
     }
   }
 
-  private void addEdits(HLog log, HRegionInfo hri, byte [] tableName,
+  private void addEdits(HLog log, HRegionInfo hri, FullyQualifiedTableName tableName,
                         int times) throws IOException {
     HTableDescriptor htd = new HTableDescriptor();
     htd.addFamily(new HColumnDescriptor("row"));
@@ -770,7 +778,8 @@ public class TestHLog  {
   public void testReadLegacyLog() throws IOException {
     final int columnCount = 5;
     final int recordCount = 5;
-    final byte[] tableName = Bytes.toBytes("tablename");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("tablename");
     final byte[] row = Bytes.toBytes("row");
     long timestamp = System.currentTimeMillis();
     Path path = new Path(dir, "temphlog");
@@ -808,7 +817,7 @@ public class TestHLog  {
         assertNotNull(entry);
         assertEquals(columnCount, entry.getEdit().size());
         assertArrayEquals(hri.getEncodedNameAsBytes(), entry.getKey().getEncodedRegionName());
-        assertArrayEquals(tableName, entry.getKey().getTablename());
+        assertEquals(tableName, entry.getKey().getTablename());
         int idx = 0;
         for (KeyValue val : entry.getEdit().getKeyValues()) {
           assertTrue(Bytes.equals(row, val.getRow()));
@@ -853,7 +862,8 @@ public class TestHLog  {
   private void doRead(boolean withTrailer) throws IOException {
     final int columnCount = 5;
     final int recordCount = 5;
-    final byte[] tableName = Bytes.toBytes("tablename");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("tablename");
     final byte[] row = Bytes.toBytes("row");
     long timestamp = System.currentTimeMillis();
     Path path = new Path(dir, "temphlog");
@@ -895,7 +905,7 @@ public class TestHLog  {
         assertNotNull(entry);
         assertEquals(columnCount, entry.getEdit().size());
         assertArrayEquals(hri.getEncodedNameAsBytes(), entry.getKey().getEncodedRegionName());
-        assertArrayEquals(tableName, entry.getKey().getTablename());
+        assertEquals(tableName, entry.getKey().getTablename());
         int idx = 0;
         for (KeyValue val : entry.getEdit().getKeyValues()) {
           assertTrue(Bytes.equals(row, val.getRow()));

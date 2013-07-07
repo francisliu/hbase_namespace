@@ -32,6 +32,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
@@ -84,7 +85,7 @@ public class TestSnapshotLogSplitter {
 
   @Test
   public void testSplitLogsOnDifferentTable() throws IOException {
-    byte[] tableName = getTableName(1);
+    FullyQualifiedTableName tableName = getTableName(1);
     Map<byte[], byte[]> regionsMap = new TreeMap<byte[], byte[]>(Bytes.BYTES_COMPARATOR);
     for (int j = 0; j < 10; ++j) {
       byte[] regionName = getRegionName(tableName, j);
@@ -97,9 +98,9 @@ public class TestSnapshotLogSplitter {
   /*
    * Split and verify test logs for the specified table
    */
-  private void splitTestLogs(final byte[] tableName, final Map<byte[], byte[]> regionsMap)
-      throws IOException {
-    Path tableDir = new Path(TEST_UTIL.getDataTestDir(), Bytes.toString(tableName));
+  private void splitTestLogs(final FullyQualifiedTableName tableName,
+                             final Map<byte[], byte[]> regionsMap) throws IOException {
+    Path tableDir = new Path(TEST_UTIL.getDataTestDir(), tableName.getNameAsString());
     SnapshotLogSplitter logSplitter = new SnapshotLogSplitter(conf, fs, tableDir,
       tableName, regionsMap);
     try {
@@ -113,10 +114,10 @@ public class TestSnapshotLogSplitter {
   /*
    * Verify that every logs in the table directory has just the specified table and regions.
    */
-  private void verifyRecoverEdits(final Path tableDir, final byte[] tableName,
+  private void verifyRecoverEdits(final Path tableDir, final FullyQualifiedTableName tableName,
       final Map<byte[], byte[]> regionsMap) throws IOException {
     for (FileStatus regionStatus: FSUtils.listStatus(fs, tableDir)) {
-      assertTrue(regionStatus.getPath().getName().startsWith(Bytes.toString(tableName)));
+      assertTrue(regionStatus.getPath().getName().startsWith(tableName.getNameAsString()));
       Path regionEdits = HLogUtil.getRegionDirRecoveredEditsDir(regionStatus.getPath());
       byte[] regionName = Bytes.toBytes(regionStatus.getPath().getName());
       assertFalse(regionsMap.containsKey(regionName));
@@ -126,7 +127,7 @@ public class TestSnapshotLogSplitter {
           HLog.Entry entry;
           while ((entry = reader.next()) != null) {
             HLogKey key = entry.getKey();
-            assertArrayEquals(tableName, key.getTablename());
+            assertEquals(tableName, key.getTablename());
             assertArrayEquals(regionName, key.getEncodedRegionName());
           }
         } finally {
@@ -147,7 +148,7 @@ public class TestSnapshotLogSplitter {
     HLog.Writer writer = HLogFactory.createWriter(fs, logFile, conf);
     try {
       for (int i = 0; i < 7; ++i) {
-        byte[] tableName = getTableName(i);
+        FullyQualifiedTableName tableName = getTableName(i);
         for (int j = 0; j < 10; ++j) {
           byte[] regionName = getRegionName(tableName, j);
           for (int k = 0; k < 50; ++k) {
@@ -165,15 +166,15 @@ public class TestSnapshotLogSplitter {
     }
   }
 
-  private byte[] getTableName(int tableId) {
-    return Bytes.toBytes("testtb-" + tableId);
+  private FullyQualifiedTableName getTableName(int tableId) {
+    return FullyQualifiedTableName.valueOf("testtb-" + tableId);
   }
 
-  private byte[] getRegionName(final byte[] tableName, int regionId) {
-    return Bytes.toBytes(Bytes.toString(tableName) + "-region-" + regionId);
+  private byte[] getRegionName(final FullyQualifiedTableName tableName, int regionId) {
+    return Bytes.toBytes(tableName + "-region-" + regionId);
   }
 
-  private byte[] getNewRegionName(final byte[] tableName, int regionId) {
-    return Bytes.toBytes(Bytes.toString(tableName) + "-new-region-" + regionId);
+  private byte[] getNewRegionName(final FullyQualifiedTableName tableName, int regionId) {
+    return Bytes.toBytes(tableName + "-new-region-" + regionId);
   }
 }

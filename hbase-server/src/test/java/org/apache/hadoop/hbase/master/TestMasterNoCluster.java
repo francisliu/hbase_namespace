@@ -30,6 +30,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -157,7 +158,7 @@ public class TestMasterNoCluster {
     // Put some data into the servers.  Make it look like sn0 has the metaH
     // Put data into sn2 so it looks like it has a few regions for a table named 't'.
     MetaRegionTracker.setMetaLocation(rs0.getZooKeeper(), rs0.getServerName());
-    final byte [] tableName = Bytes.toBytes("t");
+    final FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("t");
     Result [] results = new Result [] {
       MetaMockingUtil.getMetaTableRowResult(
         new HRegionInfo(tableName, HConstants.EMPTY_START_ROW, HBaseTestingUtility.KEYS[1]),

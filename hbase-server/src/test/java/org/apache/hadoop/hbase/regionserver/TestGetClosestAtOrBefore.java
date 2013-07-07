@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestCase;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -76,7 +77,7 @@ public class TestGetClosestAtOrBefore extends HBaseTestCase {
       final int last = 128;
       final int interval = 2;
       for (int i = 0; i <= last; i += interval) {
-        HRegionInfo hri = new HRegionInfo(htd.getName(),
+        HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName(),
           i == 0? HConstants.EMPTY_BYTE_ARRAY: Bytes.toBytes((byte)i),
           i == last? HConstants.EMPTY_BYTE_ARRAY: Bytes.toBytes((byte)i + interval));
 
@@ -105,8 +106,9 @@ public class TestGetClosestAtOrBefore extends HBaseTestCase {
     findRow(mr, 'C', 46, 46);
     findRow(mr, 'C', 43, 42);
     // Now delete 'C' and make sure I don't get entries from 'B'.
-    byte [] firstRowInC = HRegionInfo.createRegionName(Bytes.toBytes("" + 'C'),
-      HConstants.EMPTY_BYTE_ARRAY, HConstants.ZEROES, false);
+    byte [] firstRowInC = HRegionInfo.createRegionName(
+        FullyQualifiedTableName.valueOf("" + 'C'),
+        HConstants.EMPTY_BYTE_ARRAY, HConstants.ZEROES, false);
     Scan scan = new Scan(firstRowInC);
     s = mr.getScanner(scan);
     try {
@@ -151,10 +153,11 @@ public class TestGetClosestAtOrBefore extends HBaseTestCase {
   private byte [] findRow(final HRegion mr, final char table,
     final int rowToFind, final int answer)
   throws IOException {
-    byte [] tableb = Bytes.toBytes("" + table);
+    FullyQualifiedTableName tableb = FullyQualifiedTableName.valueOf("" + table);
     // Find the row.
     byte [] tofindBytes = Bytes.toBytes((short)rowToFind);
-    byte [] metaKey = HRegionInfo.createRegionName(tableb, tofindBytes,
+    byte [] metaKey = HRegionInfo.createRegionName(
+        tableb, tofindBytes,
       HConstants.NINES, false);
     LOG.info("find=" + new String(metaKey));
     Result r = mr.getClosestRowBefore(metaKey);

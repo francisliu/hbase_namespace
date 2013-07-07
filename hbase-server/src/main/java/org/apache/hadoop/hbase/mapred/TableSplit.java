@@ -22,6 +22,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapred.InputSplit;
@@ -31,14 +32,14 @@ import org.apache.hadoop.mapred.InputSplit;
  */
 @Deprecated
 public class TableSplit implements InputSplit, Comparable<TableSplit> {
-  private byte [] m_tableName;
+  private FullyQualifiedTableName m_tableName;
   private byte [] m_startRow;
   private byte [] m_endRow;
   private String m_regionLocation;
 
   /** default constructor */
   public TableSplit() {
-    this(HConstants.EMPTY_BYTE_ARRAY, HConstants.EMPTY_BYTE_ARRAY,
+    this(null, HConstants.EMPTY_BYTE_ARRAY,
       HConstants.EMPTY_BYTE_ARRAY, "");
   }
 
@@ -49,7 +50,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
    * @param endRow
    * @param location
    */
-  public TableSplit(byte [] tableName, byte [] startRow, byte [] endRow,
+  public TableSplit(FullyQualifiedTableName tableName, byte [] startRow, byte [] endRow,
       final String location) {
     this.m_tableName = tableName;
     this.m_startRow = startRow;
@@ -58,7 +59,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
   }
 
   /** @return table name */
-  public byte [] getTableName() {
+  public FullyQualifiedTableName getTableName() {
     return this.m_tableName;
   }
 
@@ -87,14 +88,14 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
   }
 
   public void readFields(DataInput in) throws IOException {
-    this.m_tableName = Bytes.readByteArray(in);
+    this.m_tableName = FullyQualifiedTableName.valueOf(Bytes.readByteArray(in));
     this.m_startRow = Bytes.readByteArray(in);
     this.m_endRow = Bytes.readByteArray(in);
     this.m_regionLocation = Bytes.toString(Bytes.readByteArray(in));
   }
 
   public void write(DataOutput out) throws IOException {
-    Bytes.writeByteArray(out, this.m_tableName);
+    Bytes.writeByteArray(out, this.m_tableName.getName());
     Bytes.writeByteArray(out, this.m_startRow);
     Bytes.writeByteArray(out, this.m_endRow);
     Bytes.writeByteArray(out, Bytes.toBytes(this.m_regionLocation));
@@ -117,7 +118,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
       return false;
     }
     TableSplit other = (TableSplit)o;
-    return Bytes.equals(m_tableName, other.m_tableName) &&
+    return m_tableName.equals(other.m_tableName) &&
       Bytes.equals(m_startRow, other.m_startRow) &&
       Bytes.equals(m_endRow, other.m_endRow) &&
       m_regionLocation.equals(other.m_regionLocation);

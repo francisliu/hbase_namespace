@@ -25,6 +25,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.SmallTests;
@@ -99,7 +100,7 @@ public class TestSnapshotFromAdmin {
     // setup the admin and run the test
     HBaseAdmin admin = new HBaseAdmin(mockConnection);
     String snapshot = "snapshot";
-    String table = "table";
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("table");
     // get start time
     long start = System.currentTimeMillis();
     admin.snapshot(snapshot, table);

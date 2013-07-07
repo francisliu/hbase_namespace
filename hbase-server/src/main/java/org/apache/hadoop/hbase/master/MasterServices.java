@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -77,7 +78,7 @@ public interface MasterServices extends Server {
    * @throws IOException
    */
   // We actually throw the exceptions mentioned in the
-  public void checkTableModifiable(final byte [] tableName)
+  public void checkTableModifiable(final FullyQualifiedTableName tableName)
       throws IOException, TableNotFoundException, TableNotDisabledException;
 
   /**
@@ -94,7 +95,7 @@ public interface MasterServices extends Server {
    * @param tableName The table name
    * @throws IOException
    */
-  public void deleteTable(final byte[] tableName) throws IOException;
+  public void deleteTable(final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Modify the descriptor of an existing table
@@ -102,7 +103,7 @@ public interface MasterServices extends Server {
    * @param descriptor The updated table descriptor
    * @throws IOException
    */
-  public void modifyTable(final byte[] tableName, final HTableDescriptor descriptor)
+  public void modifyTable(final FullyQualifiedTableName tableName, final HTableDescriptor descriptor)
       throws IOException;
 
   /**
@@ -110,14 +111,14 @@ public interface MasterServices extends Server {
    * @param tableName The table name
    * @throws IOException
    */
-  public void enableTable(final byte[] tableName) throws IOException;
+  public void enableTable(final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Disable an existing table
    * @param tableName The table name
    * @throws IOException
    */
-  public void disableTable(final byte[] tableName) throws IOException;
+  public void disableTable(final FullyQualifiedTableName tableName) throws IOException;
 
   /**
    * Add a new column to an existing table
@@ -125,7 +126,7 @@ public interface MasterServices extends Server {
    * @param column The column definition
    * @throws IOException
    */
-  public void addColumn(final byte[] tableName, final HColumnDescriptor column)
+  public void addColumn(final FullyQualifiedTableName tableName, final HColumnDescriptor column)
       throws IOException;
 
   /**
@@ -134,7 +135,7 @@ public interface MasterServices extends Server {
    * @param descriptor The updated column definition
    * @throws IOException
    */
-  public void modifyColumn(byte[] tableName, HColumnDescriptor descriptor)
+  public void modifyColumn(FullyQualifiedTableName tableName, HColumnDescriptor descriptor)
       throws IOException;
 
   /**
@@ -143,7 +144,7 @@ public interface MasterServices extends Server {
    * @param columnName The column name
    * @throws IOException
    */
-  public void deleteColumn(final byte[] tableName, final byte[] columnName)
+  public void deleteColumn(final FullyQualifiedTableName tableName, final byte[] columnName)
       throws IOException;
 
   /**

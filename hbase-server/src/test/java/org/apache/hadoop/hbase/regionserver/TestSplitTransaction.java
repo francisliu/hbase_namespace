@@ -333,7 +333,7 @@ public class TestSplitTransaction {
     HTableDescriptor htd = new HTableDescriptor("table");
     HColumnDescriptor hcd = new HColumnDescriptor(CF);
     htd.addFamily(hcd);
-    HRegionInfo hri = new HRegionInfo(htd.getName(), STARTROW, ENDROW);
+    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName(), STARTROW, ENDROW);
     HRegion r = HRegion.createHRegion(hri, testdir, TEST_UTIL.getConfiguration(), htd);
     HRegion.closeHRegion(r);
     return HRegion.openHRegion(testdir, hri, htd, wal,

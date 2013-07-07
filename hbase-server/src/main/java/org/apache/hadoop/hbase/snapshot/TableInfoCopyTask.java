@@ -23,6 +23,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
@@ -62,7 +63,7 @@ public class TableInfoCopyTask extends SnapshotTask {
         + ClientSnapshotDescriptionUtils.toString(this.snapshot));
     // get the HTable descriptor
     HTableDescriptor orig = FSTableDescriptors.getTableDescriptor(fs, rootDir,
-      Bytes.toBytes(this.snapshot.getTable()));
+        FullyQualifiedTableName.valueOf(this.snapshot.getTable()));
     this.rethrowException();
     // write a copy of descriptor to the snapshot directory
     Path snapshotDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);

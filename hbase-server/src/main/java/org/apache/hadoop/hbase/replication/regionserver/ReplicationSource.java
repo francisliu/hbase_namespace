@@ -417,8 +417,8 @@ public class ReplicationSource extends Thread
         removeNonReplicableEdits(entry);
         // Don't replicate catalog entries, if the WALEdit wasn't
         // containing anything to replicate and if we're currently not set to replicate
-        if (!(Bytes.equals(logKey.getTablename(), HConstants.ROOT_TABLE_NAME) ||
-            Bytes.equals(logKey.getTablename(), HConstants.META_TABLE_NAME)) &&
+        if (!(logKey.getTablename().equals(HConstants.ROOT_TABLE_NAME) ||
+            logKey.getTablename().equals(HConstants.META_TABLE_NAME)) &&
             edit.size() != 0 && replicating.get()) {
           // Only set the clusterId if is a local key.
           // This ensures that the originator sets the cluster id

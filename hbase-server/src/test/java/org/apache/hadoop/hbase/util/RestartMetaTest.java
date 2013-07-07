@@ -21,6 +21,7 @@ import java.io.IOException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTable;
@@ -44,7 +45,8 @@ public class RestartMetaTest extends AbstractHBaseTool {
   private static final int DEFAULT_NUM_RS = 2;
 
   /** Table name for the test */
-  private static byte[] TABLE_NAME = Bytes.toBytes("load_test");
+  private static FullyQualifiedTableName TABLE_NAME =
+      FullyQualifiedTableName.valueOf("load_test");
 
   /** The number of seconds to sleep after loading the data */
   private static final int SLEEP_SEC_AFTER_DATA_LOAD = 5;

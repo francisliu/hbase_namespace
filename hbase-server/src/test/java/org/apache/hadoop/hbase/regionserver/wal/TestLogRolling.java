@@ -594,7 +594,7 @@ public class TestLogRolling  {
     server = TEST_UTIL.getRSForFirstRegionInTable(Bytes.toBytes(tableName));
     this.log = server.getWAL();
     FSHLog fshLog = (FSHLog)log;
-    HRegion region = server.getOnlineRegions(table2.getTableName()).get(0);
+    HRegion region = server.getOnlineRegions(table2.getFullyQualifiedTableName()).get(0);
     Store s = region.getStore(HConstants.CATALOG_FAMILY);
 
 
