@@ -53,6 +53,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -64,7 +65,6 @@ import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SplitLogCounters;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HTable;
@@ -170,7 +170,7 @@ public class TestDistributedLogSplitting {
 
     installTable(new ZooKeeperWatcher(conf, "table-creation", null),
         "table", "family", 40);
-    byte[] table = Bytes.toBytes("table");
+    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("table");
     List<HRegionInfo> regions = null;
     HRegionServer hrs = null;
     for (int i = 0; i < NUM_RS; i++) {
@@ -185,7 +185,7 @@ public class TestDistributedLogSplitting {
     Iterator<HRegionInfo> it = regions.iterator();
     while (it.hasNext()) {
       HRegionInfo region = it.next();
-      if (TableName.valueOf(region.getTableName()).getNamespaceAsString()
+      if (region.getFullyQualifiedTableName().getNamespaceAsString()
           .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
         it.remove();
       }
@@ -782,7 +782,7 @@ public class TestDistributedLogSplitting {
     int count = 0;
     FileSystem fs = master.getMasterFileSystem().getFileSystem();
     Path rootdir = FSUtils.getRootDir(conf);
-    Path tdir = FSUtils.getTableDir(rootdir, Bytes.toBytes("disableTable"));
+    Path tdir = FSUtils.getTableDir(rootdir, FullyQualifiedTableName.valueOf("disableTable"));
     for (HRegionInfo hri : regions) {
       @SuppressWarnings("deprecation")
       Path editsdir =
@@ -1113,7 +1113,7 @@ public class TestDistributedLogSplitting {
       HRegionServer hrs = rst.getRegionServer();
       List<HRegionInfo> hris = ProtobufUtil.getOnlineRegions(hrs);
       for (HRegionInfo hri : hris) {
-        if (TableName.valueOf(hri.getTableName()).getNamespaceAsString().equals(
+        if (hri.getFullyQualifiedTableName().getNamespaceAsString().equals(
             NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
           continue;
         }
@@ -1133,7 +1133,7 @@ public class TestDistributedLogSplitting {
 
   public void makeHLog(HLog log, List<HRegionInfo> regions, String tname, String fname,
       int num_edits, int edit_size, boolean closeLog) throws IOException {
-
+    FullyQualifiedTableName fullTName = FullyQualifiedTableName.valueOf(tname);
     // remove root and meta region
     regions.remove(HRegionInfo.FIRST_META_REGIONINFO);
     byte[] table = Bytes.toBytes(tname);
@@ -1142,7 +1142,7 @@ public class TestDistributedLogSplitting {
 
     List<HRegionInfo> hris = new ArrayList<HRegionInfo>();
     for (HRegionInfo region : regions) {
-      if (!region.getTableNameAsString().equalsIgnoreCase(tname)) {
+      if (!region.getFullyQualifiedTableName().getNameAsString().equalsIgnoreCase(tname)) {
         continue;
       }
       hris.add(region);
@@ -1167,7 +1167,7 @@ public class TestDistributedLogSplitting {
         byte[] family = Bytes.toBytes(fname);
         byte[] qualifier = Bytes.toBytes("c" + Integer.toString(i));
         e.add(new KeyValue(row, family, qualifier, System.currentTimeMillis(), value));
-        log.append(curRegionInfo, table, e, System.currentTimeMillis(), htd);
+        log.append(curRegionInfo, fullTName, e, System.currentTimeMillis(), htd);
         counts[i % n] += 1;
       }
     }

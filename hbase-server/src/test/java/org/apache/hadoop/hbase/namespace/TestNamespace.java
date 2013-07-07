@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseCluster;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -66,8 +67,8 @@ public class TestNamespace {
   @Before
   public void beforeMethod() throws IOException {
     for(HTableDescriptor desc: admin.listTables(prefix+".*")) {
-      admin.disableTable(desc.getName());
-      admin.deleteTable(desc.getName());
+      admin.disableTable(desc.getFullyQualifiedTableName());
+      admin.deleteTable(desc.getFullyQualifiedTableName());
     }
     for(NamespaceDescriptor ns: admin.listNamespaceDescriptors()) {
       if (ns.getName().startsWith(prefix)) {
@@ -93,14 +94,14 @@ public class TestNamespace {
     assertEquals(2, admin.listNamespaceDescriptors().size());
 
     //verify existence of system tables
-    Set<String> systemTables = Sets.newHashSet(
-        HConstants.META_TABLE_NAME_STR,
-        Bytes.toString(HConstants.NAMESPACE_TABLE_NAME));
+    Set<FullyQualifiedTableName> systemTables = Sets.newHashSet(
+        HConstants.META_TABLE_NAME,
+        HConstants.NAMESPACE_TABLE_NAME);
     List<HTableDescriptor> descs =
         admin.getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
     assertEquals(systemTables.size(), descs.size());
     for(HTableDescriptor desc : descs) {
-      assertTrue(systemTables.contains(desc.getNameAsString()));
+      assertTrue(systemTables.contains(desc.getFullyQualifiedTableName()));
     }
     //verify system tables aren't listed
     assertEquals(0, admin.listTables().length);
@@ -233,7 +234,7 @@ public class TestNamespace {
     //create table and in new namespace
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
     admin.createTable(desc);
-    TEST_UTIL.waitTableAvailable(desc.getName(), 10000);
+    TEST_UTIL.waitTableAvailable(desc.getFullyQualifiedTableName().getName(), 10000);
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     assertTrue(fs.exists(new Path(master.getMasterFileSystem().getRootDir(),
         new Path(HConstants.BASE_NAMESPACE_DIR, new Path(nsName, desc.getNameAsString())))));
@@ -248,17 +249,17 @@ public class TestNamespace {
     }
 
     //sanity check try to write and read from table
-    HTable table = new HTable(TEST_UTIL.getConfiguration(), desc.getName());
+    HTable table = new HTable(TEST_UTIL.getConfiguration(), desc.getFullyQualifiedTableName());
     Put p = new Put(Bytes.toBytes("row1"));
     p.add(Bytes.toBytes("my_cf"),Bytes.toBytes("my_col"),Bytes.toBytes("value1"));
     table.put(p);
     //flush and read from disk to make sure directory changes are working
-    admin.flush(desc.getName());
+    admin.flush(desc.getFullyQualifiedTableName().getName());
     Get g = new Get(Bytes.toBytes("row1"));
     assertTrue(table.exists(g));
 
     //normal case of removing namespace
-    TEST_UTIL.deleteTable(desc.getName());
+    TEST_UTIL.deleteTable(desc.getFullyQualifiedTableName());
     admin.deleteNamespace(nsName);
   }
 
@@ -269,8 +270,8 @@ public class TestNamespace {
     desc.addFamily(colDesc);
     admin.createTable(desc);
     assertTrue(admin.listTables().length == 1);  
-    admin.disableTable(desc.getName());
-    admin.deleteTable(desc.getName());    
+    admin.disableTable(desc.getFullyQualifiedTableName());
+    admin.deleteTable(desc.getFullyQualifiedTableName());
   }
 
   @Test
@@ -282,8 +283,8 @@ public class TestNamespace {
     admin.createTable(desc);
     assertEquals(0, admin.listTables().length);
     assertTrue(admin.tableExists(Bytes.toBytes(tableName)));
-    admin.disableTable(desc.getName());
-    admin.deleteTable(desc.getName());
+    admin.disableTable(desc.getFullyQualifiedTableName());
+    admin.deleteTable(desc.getFullyQualifiedTableName());
   }
 
 }

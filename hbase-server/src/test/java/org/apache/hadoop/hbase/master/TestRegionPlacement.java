@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -42,7 +43,6 @@ import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.MetaScanner;
@@ -89,7 +89,7 @@ public class TestRegionPlacement {
   @Test
   public void testGetFavoredNodes() {
     LoadBalancer balancer = LoadBalancerFactory.getLoadBalancer(TEST_UTIL.getConfiguration());
-    HRegionInfo regionInfo = new HRegionInfo("oneregion".getBytes());
+    HRegionInfo regionInfo = new HRegionInfo(FullyQualifiedTableName.valueOf("oneregion"));
     List<ServerName> servers = new ArrayList<ServerName>();
     for (int i = 0; i < 10; i++) {
       ServerName server = new ServerName("foo"+i+":1234",-1);
@@ -100,7 +100,7 @@ public class TestRegionPlacement {
     assertTrue(((FavoredNodeLoadBalancer)balancer).getFavoredNodes(regionInfo).size() == 3);
     List<HRegionInfo> regions = new ArrayList<HRegionInfo>(100);
     for (int i = 0; i < 100; i++) {
-      HRegionInfo region = new HRegionInfo(("foobar"+i).getBytes());
+      HRegionInfo region = new HRegionInfo(FullyQualifiedTableName.valueOf("foobar"+i));
       regions.add(region);
     }
     // test that we have enough favored nodes after we call roundRobinAssignment
@@ -150,7 +150,8 @@ public class TestRegionPlacement {
     MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
     for (int i = 0; i < SLAVES; i++) {
       HRegionServer rs = cluster.getRegionServer(i);
-      for (HRegion region: rs.getOnlineRegions(Bytes.toBytes("testRegionAssignment"))) {
+      for (HRegion region: rs.getOnlineRegions(
+          FullyQualifiedTableName.valueOf("testRegionAssignment"))) {
         InetSocketAddress[] favoredSocketAddress = rs.getFavoredNodesForRegion(
             region.getRegionInfo().getEncodedName());
         ServerName[] favoredServerList = favoredNodesAssignmentPlan.get(region.getRegionInfo());
@@ -204,7 +205,7 @@ public class TestRegionPlacement {
       public boolean processRow(Result result) throws IOException {
         try {
           HRegionInfo info = MetaScanner.getHRegionInfo(result);
-          if(TableName.valueOf(info.getTableName()).getNamespaceAsString()
+          if(info.getFullyQualifiedTableName().getNamespaceAsString()
               .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
             return true;
           }

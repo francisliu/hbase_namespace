@@ -136,7 +136,7 @@ public class TestHTableDescriptor {
   @Test
   public void testLegalHTableNames() {
     for (String tn : legalTableNames) {
-      HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(tn));
+      FullyQualifiedTableName.isLegalFullyQualifiedTableName(Bytes.toBytes(tn));
     }
   }
 
@@ -144,7 +144,7 @@ public class TestHTableDescriptor {
   public void testIllegalHTableNames() {
     for (String tn : illegalTableNames) {
       try {
-        HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(tn));
+        FullyQualifiedTableName.isLegalFullyQualifiedTableName(Bytes.toBytes(tn));
         fail("invalid tablename " + tn + " should have failed");
       } catch (Exception e) {
         // expected
@@ -156,8 +156,8 @@ public class TestHTableDescriptor {
   public void testLegalHTableNamesRegex() {
     for (String tn : legalTableNames) {
       LOG.info("Testing: '" + tn + "'");
-      TableName tName = TableName.valueOf(tn);
-      assertTrue(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNameAsString()));
+      FullyQualifiedTableName tName = FullyQualifiedTableName.valueOf(tn);
+      assertTrue(Pattern.matches(FullyQualifiedTableName.VALID_USER_TABLE_REGEX, tName.getNameAsString()));
     }
   }
 
@@ -165,8 +165,7 @@ public class TestHTableDescriptor {
   public void testIllegalHTableNamesRegex() {
     for (String tn : illegalTableNames) {
       LOG.info("Testing: '" + tn + "'");
-      TableName tName = TableName.valueOf(tn);
-      assertFalse(Pattern.matches(HTableDescriptor.VALID_USER_TABLE_REGEX, tName.getNameAsString()));
+      assertFalse(Pattern.matches(FullyQualifiedTableName.VALID_USER_TABLE_REGEX, tn));
     }
   }
 

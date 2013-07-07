@@ -202,7 +202,7 @@ public class TestAtomicOperation extends HBaseTestCase {
       hcd.setMaxVersions(maxVersions != null ? maxVersions[i++] : 1);
       htd.addFamily(hcd);
     }
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     Path path = new Path(DIR + callingMethod);
     if (fs.exists(path)) {
       if (!fs.delete(path, true)) {

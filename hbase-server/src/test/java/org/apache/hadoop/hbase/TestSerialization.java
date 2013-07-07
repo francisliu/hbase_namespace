@@ -141,7 +141,7 @@ public class TestSerialization {
     for (int i = 0; i < families.length; i++) {
       htd.addFamily(new HColumnDescriptor(families[i]));
     }
-    return new HRegionInfo(htd.getName(), HConstants.EMPTY_START_ROW,
+    return new HRegionInfo(htd.getFullyQualifiedTableName(), HConstants.EMPTY_START_ROW,
       HConstants.EMPTY_END_ROW);
   }
 

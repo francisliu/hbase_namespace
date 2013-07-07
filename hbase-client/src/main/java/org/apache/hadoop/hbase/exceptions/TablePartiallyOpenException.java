@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.exceptions;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class TablePartiallyOpenException extends IOException {
   /**
    * @param tableName Name of table that is partial open
    */
-  public TablePartiallyOpenException(byte[] tableName) {
-    this(Bytes.toString(tableName));
+  public TablePartiallyOpenException(FullyQualifiedTableName tableName) {
+    this(tableName.getNameAsString());
   }
 }

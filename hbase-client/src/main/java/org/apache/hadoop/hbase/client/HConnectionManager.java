@@ -49,6 +49,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -372,12 +373,12 @@ public class HConnectionManager {
    * @return Number of cached regions for the table.
    * @throws ZooKeeperConnectionException
    */
-  static int getCachedRegionCount(Configuration conf, final byte[] tableName)
+  static int getCachedRegionCount(Configuration conf, final FullyQualifiedTableName fqtn)
   throws IOException {
     return execute(new HConnectable<Integer>(conf) {
       @Override
       public Integer connect(HConnection connection) {
-        return ((HConnectionImplementation)connection).getNumberOfCachedRegionLocations(tableName);
+        return ((HConnectionImplementation)connection).getNumberOfCachedRegionLocations(fqtn);
       }
     });
   }
@@ -388,12 +389,14 @@ public class HConnectionManager {
    * @return true if the region where the table and row reside is cached.
    * @throws ZooKeeperConnectionException
    */
-  static boolean isRegionCached(Configuration conf, final byte[] tableName, final byte[] row)
+  static boolean isRegionCached(Configuration conf,
+                                final FullyQualifiedTableName fqtn,
+                                final byte[] row)
   throws IOException {
     return execute(new HConnectable<Boolean>(conf) {
       @Override
       public Boolean connect(HConnection connection) {
-        return ((HConnectionImplementation) connection).isRegionCached(tableName, row);
+        return ((HConnectionImplementation) connection).isRegionCached(fqtn, row);
       }
     });
   }
@@ -473,8 +476,9 @@ public class HConnectionManager {
      * Map of table to table {@link HRegionLocation}s.  The table key is made
      * by doing a {@link Bytes#mapKey(byte[])} of the table's name.
      */
-    private final Map<Integer, SoftValueSortedMap<byte [], HRegionLocation>> cachedRegionLocations =
-      new HashMap<Integer, SoftValueSortedMap<byte [], HRegionLocation>>();
+    private final Map<FullyQualifiedTableName, SoftValueSortedMap<byte[], HRegionLocation>>
+        cachedRegionLocations =
+      new HashMap<FullyQualifiedTableName, SoftValueSortedMap<byte[], HRegionLocation>>();
 
     // The presence of a server in the map implies it's likely that there is an
     // entry in cachedRegionLocations that map to this server; but the absence
@@ -654,24 +658,24 @@ public class HConnectionManager {
     }
 
     @Override
-    public HRegionLocation getRegionLocation(final byte [] name,
+    public HRegionLocation getRegionLocation(final FullyQualifiedTableName fqtn,
         final byte [] row, boolean reload)
     throws IOException {
-      return reload? relocateRegion(name, row): locateRegion(name, row);
+      return reload? relocateRegion(fqtn, row): locateRegion(fqtn, row);
     }
 
     @Override
-    public boolean isTableEnabled(byte[] tableName) throws IOException {
-      return this.registry.isTableOnlineState(tableName, true);
+    public boolean isTableEnabled(FullyQualifiedTableName fqtn) throws IOException {
+      return this.registry.isTableOnlineState(fqtn, true);
     }
 
     @Override
-    public boolean isTableDisabled(byte[] tableName) throws IOException {
-      return this.registry.isTableOnlineState(tableName, false);
+    public boolean isTableDisabled(FullyQualifiedTableName fqtn) throws IOException {
+      return this.registry.isTableOnlineState(fqtn, false);
     }
 
     @Override
-    public boolean isTableAvailable(final byte[] tableName) throws IOException {
+    public boolean isTableAvailable(final FullyQualifiedTableName fqtn) throws IOException {
       final AtomicBoolean available = new AtomicBoolean(true);
       final AtomicInteger regionCount = new AtomicInteger(0);
       MetaScannerVisitor visitor = new MetaScannerVisitorBase() {
@@ -679,14 +683,15 @@ public class HConnectionManager {
         public boolean processRow(Result row) throws IOException {
           HRegionInfo info = MetaScanner.getHRegionInfo(row);
           if (info != null) {
-            if (Bytes.compareTo(tableName, info.getTableName()) == 0) {
+            if (fqtn.equals(info.getFullyQualifiedTableName())) {
               ServerName server = HRegionInfo.getServerName(row);
               if (server == null) {
                 available.set(false);
                 return false;
               }
               regionCount.incrementAndGet();
-            } else if (Bytes.compareTo(tableName, info.getTableName()) < 0) {
+            } else if (fqtn.compareTo(
+                info.getFullyQualifiedTableName()) < 0) {
               // Return if we are done with the current table
               return false;
             }
@@ -694,12 +699,12 @@ public class HConnectionManager {
           return true;
         }
       };
-      MetaScanner.metaScan(conf, visitor, tableName);
+      MetaScanner.metaScan(conf, visitor, fqtn);
       return available.get() && (regionCount.get() > 0);
     }
 
     @Override
-    public boolean isTableAvailable(final byte[] tableName, final byte[][] splitKeys)
+    public boolean isTableAvailable(final FullyQualifiedTableName fqtn, final byte[][] splitKeys)
         throws IOException {
       final AtomicBoolean available = new AtomicBoolean(true);
       final AtomicInteger regionCount = new AtomicInteger(0);
@@ -708,7 +713,7 @@ public class HConnectionManager {
         public boolean processRow(Result row) throws IOException {
           HRegionInfo info = MetaScanner.getHRegionInfo(row);
           if (info != null) {
-            if (Bytes.compareTo(tableName, info.getTableName()) == 0) {
+            if (fqtn.equals(info.getFullyQualifiedTableName())) {
               ServerName server = HRegionInfo.getServerName(row);
               if (server == null) {
                 available.set(false);
@@ -726,7 +731,7 @@ public class HConnectionManager {
                 // Always empty start row should be counted
                 regionCount.incrementAndGet();
               }
-            } else if (Bytes.compareTo(tableName, info.getTableName()) < 0) {
+            } else if (fqtn.compareTo(info.getFullyQualifiedTableName()) < 0) {
               // Return if we are done with the current table
               return false;
             }
@@ -734,14 +739,14 @@ public class HConnectionManager {
           return true;
         }
       };
-      MetaScanner.metaScan(conf, visitor, tableName);
+      MetaScanner.metaScan(conf, visitor, fqtn);
       // +1 needs to be added so that the empty start row is also taken into account
       return available.get() && (regionCount.get() == splitKeys.length + 1);
     }
 
     @Override
     public HRegionLocation locateRegion(final byte[] regionName) throws IOException {
-      return locateRegion(HRegionInfo.getTableName(regionName),
+      return locateRegion(HRegionInfo.getFullyQualifiedTableName(regionName),
           HRegionInfo.getStartKey(regionName), false, true);
     }
 
@@ -755,59 +760,58 @@ public class HConnectionManager {
     }
 
     @Override
-    public List<HRegionLocation> locateRegions(final byte[] tableName)
+    public List<HRegionLocation> locateRegions(final FullyQualifiedTableName fqtn)
     throws IOException {
-      return locateRegions (tableName, false, true);
+      return locateRegions (fqtn, false, true);
     }
 
     @Override
-    public List<HRegionLocation> locateRegions(final byte[] tableName, final boolean useCache,
-        final boolean offlined) throws IOException {
-      NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, tableName,
+    public List<HRegionLocation> locateRegions(final FullyQualifiedTableName fqtn,
+        final boolean useCache, final boolean offlined) throws IOException {
+      NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, fqtn,
         offlined);
       final List<HRegionLocation> locations = new ArrayList<HRegionLocation>();
       for (HRegionInfo regionInfo : regions.keySet()) {
-        locations.add(locateRegion(tableName, regionInfo.getStartKey(), useCache, true));
+        locations.add(locateRegion(fqtn, regionInfo.getStartKey(), useCache, true));
       }
       return locations;
     }
 
     @Override
-    public HRegionLocation locateRegion(final byte [] tableName,
+    public HRegionLocation locateRegion(final FullyQualifiedTableName fqtn,
         final byte [] row)
     throws IOException{
-      return locateRegion(tableName, row, true, true);
+      return locateRegion(fqtn, row, true, true);
     }
 
     @Override
-    public HRegionLocation relocateRegion(final byte [] tableName,
+    public HRegionLocation relocateRegion(final FullyQualifiedTableName fqtn,
         final byte [] row)
     throws IOException{
-
       // Since this is an explicit request not to use any caching, finding
       // disabled tables should not be desirable.  This will ensure that an exception is thrown when
       // the first time a disabled table is interacted with.
-      if (isTableDisabled(tableName)) {
-        throw new DoNotRetryIOException(Bytes.toString(tableName) + " is disabled.");
+      if (isTableDisabled(fqtn)) {
+        throw new DoNotRetryIOException(fqtn.getNameAsString() + " is disabled.");
       }
 
-      return locateRegion(tableName, row, false, true);
+      return locateRegion(fqtn, row, false, true);
     }
 
-    private HRegionLocation locateRegion(final byte [] tableName,
+    private HRegionLocation locateRegion(final FullyQualifiedTableName fqtn,
       final byte [] row, boolean useCache, boolean retry)
     throws IOException {
       if (this.closed) throw new IOException(toString() + " closed");
-      if (tableName == null || tableName.length == 0) {
+      if (fqtn== null || fqtn.getName().length == 0) {
         throw new IllegalArgumentException(
             "table name cannot be null or zero length");
       }
 
-      if (Bytes.equals(tableName, HConstants.META_TABLE_NAME)) {
+      if (fqtn.equals(HConstants.META_TABLE_NAME)) {
         return this.registry.getMetaRegionLocation();
       } else {
         // Region not in the cache - have to go to the meta RS
-        return locateRegionInMeta(HConstants.META_TABLE_NAME, tableName, row,
+        return locateRegionInMeta(HConstants.META_TABLE_NAME, fqtn, row,
           useCache, userRegionLock, retry);
       }
     }
@@ -817,7 +821,7 @@ public class HConnectionManager {
      * row we're seeking. It will prefetch certain number of regions info and
      * save them to the global region cache.
      */
-    private void prefetchRegionCache(final byte[] tableName,
+    private void prefetchRegionCache(final FullyQualifiedTableName fqtn,
         final byte[] row) {
       // Implement a new visitor for MetaScanner, and use it to walk through
       // the .META.
@@ -830,7 +834,7 @@ public class HConnectionManager {
             }
 
             // possible we got a region of a different table...
-            if (!Bytes.equals(regionInfo.getTableName(), tableName)) {
+            if (!regionInfo.getFullyQualifiedTableName().equals(fqtn)) {
               return false; // stop scanning
             }
             if (regionInfo.isOffline()) {
@@ -846,7 +850,7 @@ public class HConnectionManager {
             long seqNum = HRegionInfo.getSeqNumDuringOpen(result);
             HRegionLocation loc = new HRegionLocation(regionInfo, serverName, seqNum);
             // cache this meta entry
-            cacheLocation(tableName, null, loc);
+            cacheLocation(fqtn, null, loc);
             return true;
           } catch (RuntimeException e) {
             throw new IOException(e);
@@ -855,7 +859,7 @@ public class HConnectionManager {
       };
       try {
         // pre-fetch certain number of regions info at region cache.
-        MetaScanner.metaScan(conf, visitor, tableName, row,
+        MetaScanner.metaScan(conf, visitor, fqtn, row,
             this.prefetchRegionLimit);
       } catch (IOException e) {
         LOG.warn("Encountered problems when prefetch META table: ", e);
@@ -866,15 +870,15 @@ public class HConnectionManager {
       * Search the .META. table for the HRegionLocation
       * info that contains the table and row we're seeking.
       */
-    private HRegionLocation locateRegionInMeta(final byte [] parentTable,
-      final byte [] tableName, final byte [] row, boolean useCache,
+    private HRegionLocation locateRegionInMeta(final FullyQualifiedTableName parentTable,
+      final FullyQualifiedTableName fqtn, final byte [] row, boolean useCache,
       Object regionLockObject, boolean retry)
     throws IOException {
       HRegionLocation location;
       // If we are supposed to be using the cache, look in the cache to see if
       // we already have the region.
       if (useCache) {
-        location = getCachedLocation(tableName, row);
+        location = getCachedLocation(fqtn, row);
         if (location != null) {
           return location;
         }
@@ -883,7 +887,7 @@ public class HConnectionManager {
       // build the key of the meta region we should be looking for.
       // the extra 9's on the end are necessary to allow "exact" matches
       // without knowing the precise region names.
-      byte [] metaKey = HRegionInfo.createRegionName(tableName, row,
+      byte [] metaKey = HRegionInfo.createRegionName(fqtn, row,
         HConstants.NINES, false);
       for (int tries = 0; true; tries++) {
         if (tries >= localNumRetries) {
@@ -907,24 +911,24 @@ public class HConnectionManager {
             // Check the cache again for a hit in case some other thread made the
             // same query while we were waiting on the lock. 
             if (useCache) {
-              location = getCachedLocation(tableName, row);
+              location = getCachedLocation(fqtn, row);
               if (location != null) {
                 return location;
               }
               // If the parent table is META, we may want to pre-fetch some
               // region info into the global region cache for this table.
-              if (Bytes.equals(parentTable, HConstants.META_TABLE_NAME)
-                  && (getRegionCachePrefetch(tableName))) {
-                prefetchRegionCache(tableName, row);
+              if (parentTable.equals(HConstants.META_TABLE_NAME)
+                  && (getRegionCachePrefetch(fqtn))) {
+                prefetchRegionCache(fqtn, row);
               }
-              location = getCachedLocation(tableName, row);
+              location = getCachedLocation(fqtn, row);
               if (location != null) {
                 return location;
               }
             } else {
               // If we are not supposed to be using the cache, delete any existing cached location
               // so it won't interfere.
-              forceDeleteCachedLocation(tableName, row);
+              forceDeleteCachedLocation(fqtn, row);
             }
             // Query the meta region for the location of the meta region
             regionInfoRow = ProtobufUtil.getRowOrBefore(service,
@@ -932,21 +936,21 @@ public class HConnectionManager {
               HConstants.CATALOG_FAMILY);
           }
           if (regionInfoRow == null) {
-            throw new TableNotFoundException(Bytes.toString(tableName));
+            throw new TableNotFoundException(fqtn);
           }
 
           // convert the row result into the HRegionLocation we need!
           HRegionInfo regionInfo = MetaScanner.getHRegionInfo(regionInfoRow);
           if (regionInfo == null) {
             throw new IOException("HRegionInfo was null or empty in " +
-              Bytes.toString(parentTable) + ", row=" + regionInfoRow);
+              parentTable.getNameAsString() + ", row=" + regionInfoRow);
           }
 
           // possible we got a region of a different table...
-          if (!Bytes.equals(regionInfo.getTableName(), tableName)) {
+          if (!regionInfo.getFullyQualifiedTableName().equals(fqtn)) {
             throw new TableNotFoundException(
-                  "Table '" + Bytes.toString(tableName) + "' was not found, got: " +
-                  Bytes.toString(regionInfo.getTableName()) + ".");
+                  "Table '" + fqtn.getNameAsString() + "' was not found, got: " +
+                  regionInfo.getFullyQualifiedTableName().getNameAsString() + ".");
           }
           if (regionInfo.isSplit()) {
             throw new RegionOfflineException("the only available region for" +
@@ -963,7 +967,7 @@ public class HConnectionManager {
           ServerName serverName = HRegionInfo.getServerName(regionInfoRow);
           if (serverName == null) {
             throw new NoServerForRegionException("No server address listed " +
-              "in " + Bytes.toString(parentTable) + " for region " +
+              "in " + parentTable.getNameAsString() + " for region " +
               regionInfo.getRegionNameAsString() + " containing row " +
               Bytes.toStringBinary(row));
           }
@@ -977,7 +981,7 @@ public class HConnectionManager {
           // Instantiate the location
           location = new HRegionLocation(regionInfo, serverName,
             HRegionInfo.getSeqNumDuringOpen(regionInfoRow));
-          cacheLocation(tableName, null, location);
+          cacheLocation(fqtn, null, location);
           return location;
         } catch (TableNotFoundException e) {
           // if we got this error, probably means the table just plain doesn't
@@ -991,7 +995,7 @@ public class HConnectionManager {
           if (tries < numTries - 1) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("locateRegionInMeta parentTable=" +
-                Bytes.toString(parentTable) + ", metaLocation=" +
+                parentTable.getNameAsString() + ", metaLocation=" +
                 ((metaLocation == null)? "null": "{" + metaLocation + "}") +
                 ", attempt=" + tries + " of " +
                 this.numTries + " failed; retrying after sleep of " +
@@ -1027,10 +1031,10 @@ public class HConnectionManager {
      * @param row
      * @return Null or region location found in cache.
      */
-    HRegionLocation getCachedLocation(final byte [] tableName,
+    HRegionLocation getCachedLocation(final FullyQualifiedTableName fqtn,
         final byte [] row) {
-      SoftValueSortedMap<byte [], HRegionLocation> tableLocations =
-        getTableLocations(tableName);
+      SoftValueSortedMap<byte[], HRegionLocation> tableLocations =
+        getTableLocations(fqtn);
 
       // start to examine the cache. we can only do cache actions
       // if there's something in the cache for this table.
@@ -1055,7 +1059,7 @@ public class HConnectionManager {
       // checking is actually the last region in the table.
       byte[] endKey = possibleRegion.getRegionInfo().getEndKey();
       if (Bytes.equals(endKey, HConstants.EMPTY_END_ROW) ||
-          KeyValue.getRowComparator(tableName).compareRows(
+          KeyValue.getRowComparator(fqtn).compareRows(
               endKey, 0, endKey.length, row, 0, row.length) > 0) {
         return possibleRegion;
       }
@@ -1066,17 +1070,17 @@ public class HConnectionManager {
 
     /**
      * Delete a cached location, no matter what it is. Called when we were told to not use cache.
-     * @param tableName tableName
+     * @param fqtn tableName
      * @param row
      */
-    void forceDeleteCachedLocation(final byte [] tableName, final byte [] row) {
+    void forceDeleteCachedLocation(final FullyQualifiedTableName fqtn, final byte [] row) {
       HRegionLocation rl = null;
       synchronized (this.cachedRegionLocations) {
-        Map<byte[], HRegionLocation> tableLocations = getTableLocations(tableName);
+        Map<byte[], HRegionLocation> tableLocations = getTableLocations(fqtn);
         // start to examine the cache. we can only do cache actions
         // if there's something in the cache for this table.
         if (!tableLocations.isEmpty()) {
-          rl = getCachedLocation(tableName, row);
+          rl = getCachedLocation(fqtn, row);
           if (rl != null) {
             tableLocations.remove(rl.getRegionInfo().getStartKey());
           }
@@ -1085,7 +1089,7 @@ public class HConnectionManager {
       if ((rl != null) && LOG.isDebugEnabled()) {
         LOG.debug("Removed " + rl.getHostname() + ":" + rl.getPort()
           + " as a location of " + rl.getRegionInfo().getRegionNameAsString() +
-          " for tableName=" + Bytes.toString(tableName) + " from cache");
+          " for tableName=" + fqtn.getNameAsString() + " from cache");
       }
     }
 
@@ -1119,18 +1123,16 @@ public class HConnectionManager {
      * @param tableName
      * @return Map of cached locations for passed <code>tableName</code>
      */
-    private SoftValueSortedMap<byte [], HRegionLocation> getTableLocations(
-        final byte [] tableName) {
+    private SoftValueSortedMap<byte[], HRegionLocation> getTableLocations(
+        final FullyQualifiedTableName fqtn) {
       // find the map of cached locations for this table
-      Integer key = Bytes.mapKey(tableName);
-      SoftValueSortedMap<byte [], HRegionLocation> result;
+      SoftValueSortedMap<byte[], HRegionLocation> result;
       synchronized (this.cachedRegionLocations) {
-        result = this.cachedRegionLocations.get(key);
+        result = this.cachedRegionLocations.get(fqtn);
         // if tableLocations for this table isn't built yet, make one
         if (result == null) {
-          result = new SoftValueSortedMap<byte [], HRegionLocation>(
-              Bytes.BYTES_COMPARATOR);
-          this.cachedRegionLocations.put(key, result);
+          result = new SoftValueSortedMap<byte[], HRegionLocation>(Bytes.BYTES_COMPARATOR);
+          this.cachedRegionLocations.put(fqtn, result);
         }
       }
       return result;
@@ -1145,24 +1147,24 @@ public class HConnectionManager {
     }
 
     @Override
-    public void clearRegionCache(final byte [] tableName) {
+    public void clearRegionCache(final FullyQualifiedTableName fqtn) {
       synchronized (this.cachedRegionLocations) {
-        this.cachedRegionLocations.remove(Bytes.mapKey(tableName));
+        this.cachedRegionLocations.remove(fqtn);
       }
     }
 
     /**
      * Put a newly discovered HRegionLocation into the cache.
-     * @param tableName The table name.
+     * @param fqtn The table name.
      * @param source the source of the new location, if it's not coming from meta
      * @param location the new location
      */
-    private void cacheLocation(final byte [] tableName, final HRegionLocation source,
+    private void cacheLocation(final FullyQualifiedTableName fqtn, final HRegionLocation source,
         final HRegionLocation location) {
       boolean isFromMeta = (source == null);
       byte [] startKey = location.getRegionInfo().getStartKey();
-      Map<byte [], HRegionLocation> tableLocations =
-        getTableLocations(tableName);
+      Map<byte[], HRegionLocation> tableLocations =
+        getTableLocations(fqtn);
       boolean isNewCacheEntry = false;
       boolean isStaleUpdate = false;
       HRegionLocation oldLocation = null;
@@ -2015,7 +2017,7 @@ public class HConnectionManager {
 
     @Deprecated
     private <R> Callable<MultiResponse> createCallable(final HRegionLocation loc,
-        final MultiAction<R> multi, final byte[] tableName) {
+        final MultiAction<R> multi, final FullyQualifiedTableName fqtn) {
       // TODO: This does not belong in here!!! St.Ack HConnections should
       // not be dealing in Callables; Callables have HConnections, not other
       // way around.
@@ -2024,7 +2026,7 @@ public class HConnectionManager {
         @Override
         public MultiResponse call() throws Exception {
           ServerCallable<MultiResponse> callable =
-            new MultiServerCallable<R>(connection, tableName, loc, multi);
+            new MultiServerCallable<R>(connection, fqtn, loc, multi);
           return callable.withoutRetries();
         }
       };
@@ -2034,7 +2036,7 @@ public class HConnectionManager {
        ServerName serverName, long seqNum) {
       HRegionLocation newHrl = new HRegionLocation(hri, serverName, seqNum);
       synchronized (this.cachedRegionLocations) {
-        cacheLocation(hri.getTableName(), source, newHrl);
+        cacheLocation(hri.getFullyQualifiedTableName(), source, newHrl);
       }
     }
 
@@ -2048,7 +2050,7 @@ public class HConnectionManager {
       HRegionLocation oldLocation;
       synchronized (this.cachedRegionLocations) {
         Map<byte[], HRegionLocation> tableLocations =
-          getTableLocations(hri.getTableName());
+          getTableLocations(hri.getFullyQualifiedTableName());
         oldLocation = tableLocations.get(hri.getStartKey());
         if (oldLocation != null) {
            // Do not delete the cache entry if it's not for the same server that gave us the error.
@@ -2066,8 +2068,9 @@ public class HConnectionManager {
         return;
       }
       synchronized (this.cachedRegionLocations) {
-        byte[] tableName = location.getRegionInfo().getTableName();
-        Map<byte[], HRegionLocation> tableLocations = getTableLocations(tableName);
+        FullyQualifiedTableName fqtn = location.getRegionInfo().getFullyQualifiedTableName();
+        Map<byte[], HRegionLocation> tableLocations =
+            getTableLocations(fqtn);
         if (!tableLocations.isEmpty()) {
           // Delete if there's something in the cache for this region.
           HRegionLocation removedLocation =
@@ -2075,7 +2078,7 @@ public class HConnectionManager {
           if (LOG.isDebugEnabled() && removedLocation != null) {
             LOG.debug("Removed " +
                 location.getRegionInfo().getRegionNameAsString() +
-                " for tableName=" + Bytes.toString(tableName) +
+                " for tableName=" + fqtn.getNameAsString() +
                 " from cache");
           }
         }
@@ -2089,16 +2092,16 @@ public class HConnectionManager {
      *                  or wrapped or both RegionMovedException
      * @param source server that is the source of the location update.
      */
-    private void updateCachedLocations(final byte[] tableName, Row row,
+    private void updateCachedLocations(final FullyQualifiedTableName fqtn, Row row,
       final Object exception, final HRegionLocation source) {
-      if (row == null || tableName == null) {
+      if (row == null || fqtn == null) {
         LOG.warn("Coding error, see method javadoc. row=" + (row == null ? "null" : row) +
-            ", tableName=" + (tableName == null ? "null" : Bytes.toString(tableName)));
+            ", tableName=" + (fqtn == null ? "null" : fqtn.getNameAsString()));
         return;
       }
 
       // Is it something we have already updated?
-      final HRegionLocation oldLocation = getCachedLocation(tableName, row.getRow());
+      final HRegionLocation oldLocation = getCachedLocation(fqtn, row.getRow());
       if (oldLocation == null) {
         // There is no such location in the cache => it's been removed already => nothing to do
         return;
@@ -2126,7 +2129,7 @@ public class HConnectionManager {
     @Override
     @Deprecated
     public void processBatch(List<? extends Row> list,
-        final byte[] tableName,
+        final FullyQualifiedTableName fqtn,
         ExecutorService pool,
         Object[] results) throws IOException, InterruptedException {
       // This belongs in HTable!!! Not in here.  St.Ack
@@ -2136,7 +2139,7 @@ public class HConnectionManager {
         throw new IllegalArgumentException(
           "argument results must be the same size as argument list");
       }
-      processBatchCallback(list, tableName, pool, results, null);
+      processBatchCallback(list, fqtn, pool, results, null);
     }
 
     /**
@@ -2150,13 +2153,13 @@ public class HConnectionManager {
     @Deprecated
     public <R> void processBatchCallback(
       List<? extends Row> list,
-      byte[] tableName,
+      FullyQualifiedTableName fqtn,
       ExecutorService pool,
       Object[] results,
       Batch.Callback<R> callback)
       throws IOException, InterruptedException {
 
-      Process<R> p = new Process<R>(this, list, tableName, pool, results, callback);
+      Process<R> p = new Process<R>(this, list, fqtn, pool, results, callback);
       p.processBatchCallback();
     }
 
@@ -2172,7 +2175,7 @@ public class HConnectionManager {
       // Info on the queries and their context
       private final HConnectionImplementation hci;
       private final List<? extends Row> rows;
-      private final byte[] tableName;
+      private final FullyQualifiedTableName fqtn;
       private final ExecutorService pool;
       private final Object[] results;
       private final Batch.Callback<R> callback;
@@ -2189,11 +2192,11 @@ public class HConnectionManager {
       private final List<MultiAction<R>> finishedTasks = new ArrayList<MultiAction<R>>();
 
       private Process(HConnectionImplementation hci, List<? extends Row> list,
-                       byte[] tableName, ExecutorService pool, Object[] results,
+                       FullyQualifiedTableName fqtn, ExecutorService pool, Object[] results,
                        Batch.Callback<R> callback){
         this.hci = hci;
         this.rows = list;
-        this.tableName = tableName;
+        this.fqtn = fqtn;
         this.pool = pool;
         this.results = results;
         this.callback = callback;
@@ -2220,7 +2223,7 @@ public class HConnectionManager {
           final Row row = aAction.getAction();
 
           if (row != null) {
-            final HRegionLocation loc = hci.locateRegion(this.tableName, row.getRow());
+            final HRegionLocation loc = hci.locateRegion(this.fqtn, row.getRow());
             if (loc == null) {
               throw new IOException("No location found, aborting submit.");
             }
@@ -2343,7 +2346,7 @@ public class HConnectionManager {
                 Row row = action.getAction();
                 // Do not use the exception for updating cache because it might be coming from
                 // any of the regions in the MultiAction.
-                hci.updateCachedLocations(tableName, row, null, location);
+                hci.updateCachedLocations(fqtn, row, null, location);
                 if (noRetry) {
                   errors.add(exception, row, location);
                 } else {
@@ -2369,7 +2372,7 @@ public class HConnectionManager {
                 // Failure: retry if it's make sense else update the errors lists
                 if (result == null || result instanceof Throwable) {
                   Row row = correspondingAction.getAction();
-                  hci.updateCachedLocations(this.tableName, row, result, location);
+                  hci.updateCachedLocations(this.fqtn, row, result, location);
                   if (result instanceof DoNotRetryIOException || noRetry) {
                     errors.add((Exception)result, row, location);
                   } else {
@@ -2494,7 +2497,7 @@ public class HConnectionManager {
       private Callable<MultiResponse> createDelayedCallable(
         final long delay, final HRegionLocation loc, final MultiAction<R> multi) {
 
-        final Callable<MultiResponse> delegate = hci.createCallable(loc, multi, tableName);
+        final Callable<MultiResponse> delegate = hci.createCallable(loc, multi, fqtn);
 
         return new Callable<MultiResponse>() {
           private final long creationTime = System.currentTimeMillis();
@@ -2522,10 +2525,9 @@ public class HConnectionManager {
      * Return the number of cached region for a table. It will only be called
      * from a unit test.
      */
-    int getNumberOfCachedRegionLocations(final byte[] tableName) {
-      Integer key = Bytes.mapKey(tableName);
+    int getNumberOfCachedRegionLocations(final FullyQualifiedTableName fqtn) {
       synchronized (this.cachedRegionLocations) {
-        Map<byte[], HRegionLocation> tableLocs = this.cachedRegionLocations.get(key);
+        Map<byte[], HRegionLocation> tableLocs = this.cachedRegionLocations.get(fqtn);
         if (tableLocs == null) {
           return 0;
         }
@@ -2536,29 +2538,29 @@ public class HConnectionManager {
     /**
      * Check the region cache to see whether a region is cached yet or not.
      * Called by unit tests.
-     * @param tableName tableName
+     * @param fqtn tableName
      * @param row row
      * @return Region cached or not.
      */
-    boolean isRegionCached(final byte[] tableName, final byte[] row) {
-      HRegionLocation location = getCachedLocation(tableName, row);
+    boolean isRegionCached(FullyQualifiedTableName fqtn, final byte[] row) {
+      HRegionLocation location = getCachedLocation(fqtn, row);
       return location != null;
     }
 
     @Override
-    public void setRegionCachePrefetch(final byte[] tableName,
+    public void setRegionCachePrefetch(final FullyQualifiedTableName fqtn,
         final boolean enable) {
       if (!enable) {
-        regionCachePrefetchDisabledTables.add(Bytes.mapKey(tableName));
+        regionCachePrefetchDisabledTables.add(Bytes.mapKey(fqtn.getName()));
       }
       else {
-        regionCachePrefetchDisabledTables.remove(Bytes.mapKey(tableName));
+        regionCachePrefetchDisabledTables.remove(Bytes.mapKey(fqtn.getName()));
       }
     }
 
     @Override
-    public boolean getRegionCachePrefetch(final byte[] tableName) {
-      return !regionCachePrefetchDisabledTables.contains(Bytes.mapKey(tableName));
+    public boolean getRegionCachePrefetch(FullyQualifiedTableName fqtn) {
+      return !regionCachePrefetchDisabledTables.contains(Bytes.mapKey(fqtn.getName()));
     }
 
     @Override
@@ -2686,12 +2688,13 @@ public class HConnectionManager {
     }
 
     @Override
-    public HTableDescriptor[] getHTableDescriptors(List<String> tableNames) throws IOException {
-      if (tableNames == null || tableNames.isEmpty()) return new HTableDescriptor[0];
+    public HTableDescriptor[] getHTableDescriptors(
+        List<FullyQualifiedTableName> fqtns) throws IOException {
+      if (fqtns == null || fqtns.isEmpty()) return new HTableDescriptor[0];
       MasterMonitorKeepAliveConnection master = getKeepAliveMasterMonitorService();
       try {
         GetTableDescriptorsRequest req =
-          RequestConverter.buildGetTableDescriptorsRequest(tableNames);
+          RequestConverter.buildGetTableDescriptorsRequest(fqtns);
         return ProtobufUtil.getHTableDescriptorArray(master.getTableDescriptors(null, req));
       } catch (ServiceException se) {
         throw ProtobufUtil.getRemoteException(se);
@@ -2702,16 +2705,16 @@ public class HConnectionManager {
 
     /**
      * Connects to the master to get the table descriptor.
-     * @param tableName table name
+     * @param fqtn table name
      * @return
      * @throws IOException if the connection to master fails or if the table
      *  is not found.
      */
     @Override
-    public HTableDescriptor getHTableDescriptor(final byte[] tableName)
+    public HTableDescriptor getHTableDescriptor(final FullyQualifiedTableName fqtn)
     throws IOException {
-      if (tableName == null || tableName.length == 0) return null;
-      if (Bytes.equals(tableName, HConstants.META_TABLE_NAME)) {
+      if (fqtn == null) return null;
+      if (fqtn.equals(HConstants.META_TABLE_NAME)) {
         return HTableDescriptor.META_TABLEDESC;
       }
       MasterMonitorKeepAliveConnection master = getKeepAliveMasterMonitorService();
@@ -2726,11 +2729,11 @@ public class HConnectionManager {
         master.close();
       }
       for (TableSchema ts : htds.getTableSchemaList()) {
-        if (Bytes.equals(tableName, ts.getName().toByteArray())) {
+        if (fqtn.equals(FullyQualifiedTableName.valueOf(ts.getName().toByteArray()))) {
           return HTableDescriptor.convert(ts);
         }
       }
-      throw new TableNotFoundException(Bytes.toString(tableName));
+      throw new TableNotFoundException(fqtn.getNameAsString());
     }
 
     /**

@@ -51,7 +51,8 @@ public class TestAggregateProtocol {
   /**
    * Creating the test infrastructure.
    */
-  private static final byte[] TEST_TABLE = Bytes.toBytes("TestTable");
+  private static final FullyQualifiedTableName TEST_TABLE =
+      FullyQualifiedTableName.valueOf("TestTable");
   private static final byte[] TEST_FAMILY = Bytes.toBytes("TestFamily");
   private static final byte[] TEST_QUALIFIER = Bytes.toBytes("TestQualifier");
   private static final byte[] TEST_MULTI_CQ = Bytes.toBytes("TestMultiCQ");

@@ -36,6 +36,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -76,7 +77,8 @@ import org.junit.experimental.categories.Category;
 public class TestRegionObserverInterface {
   static final Log LOG = LogFactory.getLog(TestRegionObserverInterface.class);
 
-  public static final byte[] TEST_TABLE = Bytes.toBytes("TestTable");
+  public static final FullyQualifiedTableName TEST_TABLE =
+      FullyQualifiedTableName.valueOf("TestTable");
   public final static byte[] A = Bytes.toBytes("a");
   public final static byte[] B = Bytes.toBytes("b");
   public final static byte[] C = Bytes.toBytes("c");
@@ -103,7 +105,7 @@ public class TestRegionObserverInterface {
 
   @Test
   public void testRegionObserver() throws IOException {
-    byte[] tableName = TEST_TABLE;
+    FullyQualifiedTableName tableName = TEST_TABLE;
     // recreate table every time in order to reset the status of the
     // coproccessor.
     HTable table = util.createTable(tableName, new byte[][] {A, B, C});
@@ -157,7 +159,7 @@ public class TestRegionObserverInterface {
 
   @Test
   public void testRowMutation() throws IOException {
-    byte[] tableName = TEST_TABLE;
+    FullyQualifiedTableName tableName = TEST_TABLE;
     HTable table = util.createTable(tableName, new byte[][] {A, B, C});
     verifyMethodResult(SimpleRegionObserver.class,
         new String[] {"hadPreGet", "hadPostGet", "hadPrePut", "hadPostPut",
@@ -192,7 +194,7 @@ public class TestRegionObserverInterface {
 
   @Test
   public void testIncrementHook() throws IOException {
-    byte[] tableName = TEST_TABLE;
+    FullyQualifiedTableName tableName = TEST_TABLE;
 
     HTable table = util.createTable(tableName, new byte[][] {A, B, C});
     Increment inc = new Increment(Bytes.toBytes(0));
@@ -218,7 +220,8 @@ public class TestRegionObserverInterface {
   @Test
   // HBase-3583
   public void testHBase3583() throws IOException {
-    byte[] tableName = Bytes.toBytes("testHBase3583");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testHBase3583");
     util.createTable(tableName, new byte[][] {A, B, C});
 
     verifyMethodResult(SimpleRegionObserver.class,
@@ -268,7 +271,8 @@ public class TestRegionObserverInterface {
   @Test
   // HBase-3758
   public void testHBase3758() throws IOException {
-    byte[] tableName = Bytes.toBytes("testHBase3758");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testHBase3758");
     util.createTable(tableName, new byte[][] {A, B, C});
 
     verifyMethodResult(SimpleRegionObserver.class,
@@ -444,7 +448,7 @@ public class TestRegionObserverInterface {
   @Test
   public void bulkLoadHFileTest() throws Exception {
     String testName = TestRegionObserverInterface.class.getName()+".bulkLoadHFileTest";
-    byte[] tableName = TEST_TABLE;
+    FullyQualifiedTableName tableName = TEST_TABLE;
     Configuration conf = util.getConfiguration();
     HTable table = util.createTable(tableName, new byte[][] {A, B, C});
 
@@ -473,12 +477,12 @@ public class TestRegionObserverInterface {
   }
 
   // check each region whether the coprocessor upcalls are called or not.
-  private void verifyMethodResult(Class c, String methodName[], byte[] tableName,
+  private void verifyMethodResult(Class c, String methodName[], FullyQualifiedTableName tableName,
                                   Object value[]) throws IOException {
     try {
       for (JVMClusterUtil.RegionServerThread t : cluster.getRegionServerThreads()) {
         for (HRegionInfo r : ProtobufUtil.getOnlineRegions(t.getRegionServer())) {
-          if (!Arrays.equals(r.getTableName(), tableName)) {
+          if (!r.getFullyQualifiedTableName().equals(tableName)) {
             continue;
           }
           RegionCoprocessorHost cph = t.getRegionServer().getOnlineRegion(r.getRegionName()).

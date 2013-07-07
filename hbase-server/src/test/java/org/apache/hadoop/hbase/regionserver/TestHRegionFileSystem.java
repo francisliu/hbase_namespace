@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.SmallTests;
@@ -58,9 +59,9 @@ public class TestHRegionFileSystem {
     Configuration conf = TEST_UTIL.getConfiguration();
 
     // Create a Region
-    HRegionInfo hri = new HRegionInfo(Bytes.toBytes("TestTable"));
+    HRegionInfo hri = new HRegionInfo(FullyQualifiedTableName.valueOf("TestTable"));
     HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(conf, fs,
-        FSUtils.getTableDir(rootDir, hri.getTableNameAsString()), hri);
+        FSUtils.getTableDir(rootDir, hri.getFullyQualifiedTableName()), hri);
 
     // Verify if the region is on disk
     Path regionDir = regionFs.getRegionDir();
@@ -72,12 +73,12 @@ public class TestHRegionFileSystem {
 
     // Open the region
     regionFs = HRegionFileSystem.openRegionFromFileSystem(conf, fs,
-        FSUtils.getTableDir(rootDir, hri.getTableNameAsString()), hri, false);
+        FSUtils.getTableDir(rootDir, hri.getFullyQualifiedTableName()), hri, false);
     assertEquals(regionDir, regionFs.getRegionDir());
 
     // Delete the region
     HRegionFileSystem.deleteRegionFromFileSystem(conf, fs,
-        FSUtils.getTableDir(rootDir, hri.getTableNameAsString()), hri);
+        FSUtils.getTableDir(rootDir, hri.getFullyQualifiedTableName()), hri);
     assertFalse("The region folder should be removed", fs.exists(regionDir));
 
     fs.delete(rootDir, true);
@@ -90,7 +91,7 @@ public class TestHRegionFileSystem {
     Configuration conf = TEST_UTIL.getConfiguration();
 
     // Create a Region
-    HRegionInfo hri = new HRegionInfo(Bytes.toBytes("TestTable"));
+    HRegionInfo hri = new HRegionInfo(FullyQualifiedTableName.valueOf("TestTable"));
     HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(conf, fs, rootDir, hri);
     assertTrue(fs.exists(regionFs.getRegionDir()));
 
@@ -215,7 +216,7 @@ public class TestHRegionFileSystem {
 
     // Create a Region
     String familyName = "cf";
-    HRegionInfo hri = new HRegionInfo(Bytes.toBytes("TestTable"));
+    HRegionInfo hri = new HRegionInfo(FullyQualifiedTableName.valueOf("TestTable"));
     HRegionFileSystem regionFs = HRegionFileSystem.createRegionOnFileSystem(conf, fs, rootDir, hri);
 
     // New region, no store files

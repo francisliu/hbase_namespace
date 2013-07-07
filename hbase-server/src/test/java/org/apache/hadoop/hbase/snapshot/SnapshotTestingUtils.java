@@ -34,6 +34,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -77,14 +78,15 @@ public class SnapshotTestingUtils {
    * name and table match the passed in parameters.
    */
   public static List<SnapshotDescription> assertExistsMatchingSnapshot(
-      HBaseAdmin admin, String snapshotName, String tableName)
+      HBaseAdmin admin, String snapshotName, FullyQualifiedTableName tableName)
       throws IOException {
     // list the snapshot
     List<SnapshotDescription> snapshots = admin.listSnapshots();
 
     List<SnapshotDescription> returnedSnapshots = new ArrayList<SnapshotDescription>();
     for (SnapshotDescription sd : snapshots) {
-      if (snapshotName.equals(sd.getName()) && tableName.equals(sd.getTable())) {
+      if (snapshotName.equals(sd.getName()) && tableName.equals(FullyQualifiedTableName.valueOf(
+          sd.getTable()))) {
         returnedSnapshots.add(sd);
       }
     }
@@ -98,7 +100,8 @@ public class SnapshotTestingUtils {
    */
   public static void assertOneSnapshotThatMatches(HBaseAdmin admin,
       SnapshotDescription snapshot) throws IOException {
-    assertOneSnapshotThatMatches(admin, snapshot.getName(), snapshot.getTable());
+    assertOneSnapshotThatMatches(admin, snapshot.getName(),
+        FullyQualifiedTableName.valueOf(snapshot.getTable()));
   }
 
   /**
@@ -106,14 +109,14 @@ public class SnapshotTestingUtils {
    * name and table match the passed in parameters.
    */
   public static List<SnapshotDescription> assertOneSnapshotThatMatches(
-      HBaseAdmin admin, String snapshotName, String tableName)
+      HBaseAdmin admin, String snapshotName, FullyQualifiedTableName tableName)
       throws IOException {
     // list the snapshot
     List<SnapshotDescription> snapshots = admin.listSnapshots();
 
     assertEquals("Should only have 1 snapshot", 1, snapshots.size());
     assertEquals(snapshotName, snapshots.get(0).getName());
-    assertEquals(tableName, snapshots.get(0).getTable());
+    assertEquals(tableName.getNameAsString(), snapshots.get(0).getTable());
 
     return snapshots;
   }
@@ -123,16 +126,16 @@ public class SnapshotTestingUtils {
    * name and table match the passed in parameters.
    */
   public static List<SnapshotDescription> assertOneSnapshotThatMatches(
-      HBaseAdmin admin, byte[] snapshot, byte[] tableName) throws IOException {
+      HBaseAdmin admin, byte[] snapshot, FullyQualifiedTableName tableName) throws IOException {
     return assertOneSnapshotThatMatches(admin, Bytes.toString(snapshot),
-        Bytes.toString(tableName));
+        tableName);
   }
 
   /**
    * Multi-family version of the confirmSnapshotValid function
    */
   public static void confirmSnapshotValid(
-      SnapshotDescription snapshotDescriptor, byte[] tableName,
+      SnapshotDescription snapshotDescriptor, FullyQualifiedTableName tableName,
       List<byte[]> nonEmptyTestFamilies, List<byte[]> emptyTestFamilies,
       Path rootDir, HBaseAdmin admin, FileSystem fs, boolean requireLogs,
       Path logsDir, Set<String> snapshotServers) throws IOException {
@@ -156,7 +159,7 @@ public class SnapshotTestingUtils {
    * be in the snapshot.
    */
   public static void confirmSnapshotValid(
-      SnapshotDescription snapshotDescriptor, byte[] tableName,
+      SnapshotDescription snapshotDescriptor, FullyQualifiedTableName tableName,
       byte[] testFamily, Path rootDir, HBaseAdmin admin, FileSystem fs,
       boolean requireLogs, Path logsDir, Set<String> snapshotServers)
       throws IOException {
@@ -169,7 +172,7 @@ public class SnapshotTestingUtils {
    * be in the snapshot.
    */
   public static void confirmSnapshotValid(
-      SnapshotDescription snapshotDescriptor, byte[] tableName,
+      SnapshotDescription snapshotDescriptor, FullyQualifiedTableName tableName,
       byte[] testFamily, Path rootDir, HBaseAdmin admin, FileSystem fs,
       boolean requireLogs, Path logsDir, boolean familyEmpty,
       Set<String> snapshotServers) throws IOException {
@@ -349,10 +352,10 @@ public class SnapshotTestingUtils {
    * in the case of an offline snapshot.
    */
   public static void createOfflineSnapshotAndValidate(HBaseAdmin admin,
-      String tableNameString, String familyName, String snapshotNameString,
+      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs, boolean familyEmpty) throws Exception {
 
-    createSnapshotAndValidate(admin, tableNameString, familyName,
+    createSnapshotAndValidate(admin, tableName, familyName,
         snapshotNameString, rootDir, fs, familyEmpty, false);
   }
 
@@ -362,29 +365,28 @@ public class SnapshotTestingUtils {
    * in the case of an offline snapshot.
    */
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      String tableNameString, String familyName, String snapshotNameString,
+      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs, boolean familyEmpty, boolean onlineSnapshot)
       throws Exception {
-    byte[] tableName = Bytes.toBytes(tableNameString);
 
     if (!onlineSnapshot) {
       try {
-        admin.disableTable(tableNameString);
+        admin.disableTable(tableName);
       } catch (TableNotEnabledException tne) {
-        LOG.info("In attempting to disable " + tableNameString
+        LOG.info("In attempting to disable " + tableName
             + " it turns out that this table is already disabled.");
       }
     }
 
-    admin.snapshot(snapshotNameString, tableNameString);
+    admin.snapshot(snapshotNameString, tableName);
 
     List<SnapshotDescription> snapshots = SnapshotTestingUtils
         .assertExistsMatchingSnapshot(admin, snapshotNameString,
-            tableNameString);
+            tableName);
 
     if (snapshots == null || snapshots.size() != 1) {
       Assert.fail("Incorrect number of snapshots for table "
-          + String.valueOf(tableNameString));
+          + tableName);
     }
 
     SnapshotTestingUtils.confirmSnapshotValid(snapshots.get(0), tableName,
@@ -392,9 +394,9 @@ public class SnapshotTestingUtils {
             HConstants.HREGION_LOGDIR_NAME), familyEmpty, null);
   }
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      String tableNameString, String familyName, String snapshotNameString,
+      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs) throws Exception {
-    createSnapshotAndValidate(admin, tableNameString, familyName,
+    createSnapshotAndValidate(admin, tableName, familyName,
         snapshotNameString, rootDir, fs, false, false);
   }
 
@@ -405,30 +407,30 @@ public class SnapshotTestingUtils {
    *
    */
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      String tableNameString, String familyName, String snapshotNameString,
+      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs, boolean online) throws Exception {
-    createSnapshotAndValidate(admin, tableNameString, familyName,
+    createSnapshotAndValidate(admin, tableName, familyName,
         snapshotNameString, rootDir, fs, false, online);
   }
 
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      String tableNameString, List<byte[]> nonEmptyFamilyNames, List<byte[]> emptyFamilyNames,
+      FullyQualifiedTableName tableName, List<byte[]> nonEmptyFamilyNames, List<byte[]> emptyFamilyNames,
       String snapshotNameString, Path rootDir, FileSystem fs) throws Exception {
 
-    byte[] tableName = Bytes.toBytes(tableNameString);
     try {
-      admin.disableTable(tableNameString);
+      admin.disableTable(tableName);
     } catch (TableNotEnabledException tne) {
-      LOG.info("In attempting to disable " + tableNameString + " it turns out that the this table is already disabled.");
+      LOG.info("In attempting to disable " + tableName + " it turns out that the this table is " +
+          "already disabled.");
     }
-    admin.snapshot(snapshotNameString, tableNameString);
+    admin.snapshot(snapshotNameString, tableName);
 
     List<SnapshotDescription> snapshots = SnapshotTestingUtils.assertExistsMatchingSnapshot(admin,
-      snapshotNameString, tableNameString);
+      snapshotNameString, tableName);
 
     // Create test-timestamp-clone
     if (snapshots == null || snapshots.size() != 1) {
-      Assert.fail("Incorrect number of snapshots for table " + String.valueOf(tableNameString));
+      Assert.fail("Incorrect number of snapshots for table " + tableName);
     }
 
     SnapshotTestingUtils.confirmSnapshotValid(snapshots.get(0), tableName, nonEmptyFamilyNames, emptyFamilyNames,

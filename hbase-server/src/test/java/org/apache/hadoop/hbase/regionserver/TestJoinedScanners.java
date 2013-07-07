@@ -183,7 +183,7 @@ public class TestJoinedScanners {
       hcd.setDataBlockEncoding(DataBlockEncoding.FAST_DIFF);
       htd.addFamily(hcd);
     }
-    HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), startKey, stopKey, false);
     Path path = new Path(DIR + callingMethod);
     FileSystem fs = FileSystem.get(conf);
     if (fs.exists(path)) {

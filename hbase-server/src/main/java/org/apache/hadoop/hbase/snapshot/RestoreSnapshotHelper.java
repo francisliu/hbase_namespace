@@ -37,6 +37,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -500,9 +501,10 @@ public class RestoreSnapshotHelper {
   private void restoreReferenceFile(final Path familyDir, final HRegionInfo regionInfo,
       final String hfileName) throws IOException {
     // Extract the referred information (hfile name and parent region)
-    String tableName = snapshotDesc.getTable();
-    Path refPath = StoreFileInfo.getReferredToFile(new Path(new Path(new Path(tableName,
-        regionInfo.getEncodedName()), familyDir.getName()), hfileName));
+    FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(snapshotDesc.getTable());
+    Path refPath = StoreFileInfo.getReferredToFile(new Path(new Path(new Path(
+        tableName.getNameAsString(), regionInfo.getEncodedName()), familyDir.getName()),
+        hfileName));
     String snapshotRegionName = refPath.getParent().getParent().getName();
     String fileName = refPath.getName();
 
@@ -534,7 +536,7 @@ public class RestoreSnapshotHelper {
    * @return the new HRegion instance
    */
   public HRegionInfo cloneRegionInfo(final HRegionInfo snapshotRegionInfo) {
-    return new HRegionInfo(tableDesc.getName(),
+    return new HRegionInfo(tableDesc.getFullyQualifiedTableName(),
                       snapshotRegionInfo.getStartKey(), snapshotRegionInfo.getEndKey(),
                       snapshotRegionInfo.isSplit(), snapshotRegionInfo.getRegionId());
   }
@@ -550,7 +552,7 @@ public class RestoreSnapshotHelper {
    */
   private void restoreWALs() throws IOException {
     final SnapshotLogSplitter logSplitter = new SnapshotLogSplitter(conf, fs, tableDir,
-                                Bytes.toBytes(snapshotDesc.getTable()), regionsMap);
+                        FullyQualifiedTableName.valueOf(snapshotDesc.getTable()), regionsMap);
     try {
       // Recover.Edits
       SnapshotReferenceUtil.visitRecoveredEdits(fs, snapshotDir,
@@ -598,7 +600,7 @@ public class RestoreSnapshotHelper {
    * @throws IOException
    */
   public static HTableDescriptor cloneTableSchema(final HTableDescriptor snapshotTableDescriptor,
-      final byte[] tableName) throws IOException {
+      final FullyQualifiedTableName tableName) throws IOException {
     HTableDescriptor htd = new HTableDescriptor(tableName);
     for (HColumnDescriptor hcd: snapshotTableDescriptor.getColumnFamilies()) {
       htd.addFamily(hcd);

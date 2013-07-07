@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -187,7 +188,7 @@ public final class SnapshotInfo extends Configured implements Tool {
      */
     FileInfo addStoreFile(final String region, final String family, final String hfile)
           throws IOException {
-      String table = this.snapshot.getTable();
+      FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(this.snapshot.getTable());
       Path path = new Path(family, HFileLink.createHFileLinkName(table, region, hfile));
       HFileLink link = new HFileLink(conf, path);
       boolean inArchive = false;

@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
@@ -125,10 +126,11 @@ public class ReplicationSink {
       long totalReplicated = 0;
       // Map of table => list of Rows, we only want to flushCommits once per
       // invocation of this method per table.
-      Map<byte[], List<Row>> rows = new TreeMap<byte[], List<Row>>(Bytes.BYTES_COMPARATOR);
+      Map<FullyQualifiedTableName, List<Row>> rows =
+          new TreeMap<FullyQualifiedTableName, List<Row>>();
       for (HLog.Entry entry : entries) {
         WALEdit edit = entry.getEdit();
-        byte[] table = entry.getKey().getTablename();
+        FullyQualifiedTableName table = entry.getKey().getTablename();
         Put put = null;
         Delete del = null;
         KeyValue lastKV = null;
@@ -154,7 +156,7 @@ public class ReplicationSink {
         }
         totalReplicated++;
       }
-      for (Entry<byte[], List<Row>> entry : rows.entrySet()) {
+      for (Entry<FullyQualifiedTableName, List<Row>> entry : rows.entrySet()) {
         batch(entry.getKey(), entry.getValue());
       }
       this.metrics.setAgeOfLastAppliedOp(
@@ -212,7 +214,7 @@ public class ReplicationSink {
    * @param rows list of actions
    * @throws IOException
    */
-  private void batch(byte[] tableName, List<Row> rows) throws IOException {
+  private void batch(FullyQualifiedTableName tableName, List<Row> rows) throws IOException {
     if (rows.isEmpty()) {
       return;
     }

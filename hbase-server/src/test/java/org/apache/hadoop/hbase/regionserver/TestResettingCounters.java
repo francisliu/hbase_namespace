@@ -59,7 +59,7 @@ public class TestResettingCounters {
     HTableDescriptor htd = new HTableDescriptor(table);
     for (byte [] family : families) htd.addFamily(new HColumnDescriptor(family));
 
-    HRegionInfo hri = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     String testDir = htu.getDataTestDir() + "/TestResettingCounters/";
     Path path = new Path(testDir);
     if (fs.exists(path)) {

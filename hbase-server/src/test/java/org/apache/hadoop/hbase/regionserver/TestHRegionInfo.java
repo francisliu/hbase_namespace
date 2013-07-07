@@ -29,6 +29,7 @@ import java.io.IOException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -82,9 +83,9 @@ public class TestHRegionInfo {
   @Test
   public void testCreateHRegionInfoName() throws Exception {
     String tableName = "tablename";
-    final byte [] tn = Bytes.toBytes(tableName);
+    final FullyQualifiedTableName tn = FullyQualifiedTableName.valueOf(tableName);
     String startKey = "startkey";
-    final byte [] sk = Bytes.toBytes(startKey);
+    final byte[] sk = Bytes.toBytes(startKey);
     String id = "id";
 
     // old format region name
@@ -107,7 +108,7 @@ public class TestHRegionInfo {
   public void testContainsRange() {
     HTableDescriptor tableDesc = new HTableDescriptor("testtable");
     HRegionInfo hri = new HRegionInfo(
-        tableDesc.getName(), Bytes.toBytes("a"), Bytes.toBytes("g"));
+        tableDesc.getFullyQualifiedTableName(), Bytes.toBytes("a"), Bytes.toBytes("g"));
     // Single row range at start of region
     assertTrue(hri.containsRange(Bytes.toBytes("a"), Bytes.toBytes("a")));
     // Fully contained range
@@ -135,9 +136,9 @@ public class TestHRegionInfo {
   public void testLastRegionCompare() {
     HTableDescriptor tableDesc = new HTableDescriptor("testtable");
     HRegionInfo hrip = new HRegionInfo(
-        tableDesc.getName(), Bytes.toBytes("a"), new byte[0]);
+        tableDesc.getFullyQualifiedTableName(), Bytes.toBytes("a"), new byte[0]);
     HRegionInfo hric = new HRegionInfo(
-        tableDesc.getName(), Bytes.toBytes("a"), Bytes.toBytes("b"));
+        tableDesc.getFullyQualifiedTableName(), Bytes.toBytes("a"), Bytes.toBytes("b"));
     assertTrue(hrip.compareTo(hric) > 0);
   }
 
@@ -148,7 +149,7 @@ public class TestHRegionInfo {
 
   @Test
   public void testComparator() {
-    byte[] tablename = Bytes.toBytes("comparatorTablename");
+    FullyQualifiedTableName tablename = FullyQualifiedTableName.valueOf("comparatorTablename");
     byte[] empty = new byte[0];
     HRegionInfo older = new HRegionInfo(tablename, empty, empty, false, 0L); 
     HRegionInfo newer = new HRegionInfo(tablename, empty, empty, false, 1L); 

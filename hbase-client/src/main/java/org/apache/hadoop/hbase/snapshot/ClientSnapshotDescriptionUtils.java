@@ -20,6 +20,7 @@
 package org.apache.hadoop.hbase.snapshot;
 
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -40,13 +41,13 @@ public class ClientSnapshotDescriptionUtils {
       throws IllegalArgumentException {
     // FIXME these method names is really bad - trunk will probably change
     // .META. and -ROOT- snapshots are not allowed
-    if (HTableDescriptor.isSystemTable(Bytes.toBytes(snapshot.getTable()))) {
+    if (HTableDescriptor.isSystemTable(FullyQualifiedTableName.valueOf(snapshot.getTable()))) {
       throw new IllegalArgumentException("System table snapshots are not allowed");
     }
     // make sure the snapshot name is valid
-    HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshot.getName()));
+    FullyQualifiedTableName.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshot.getName()));
     // make sure the table name is valid
-    HTableDescriptor.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshot.getTable()));
+    FullyQualifiedTableName.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshot.getTable()));
   }
 
   /**

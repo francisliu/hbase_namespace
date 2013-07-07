@@ -97,7 +97,7 @@ public class TestRegionRebalancing {
     HBaseAdmin admin = new HBaseAdmin(UTIL.getConfiguration());
     admin.createTable(this.desc, Arrays.copyOfRange(HBaseTestingUtility.KEYS,
         1, HBaseTestingUtility.KEYS.length));
-    this.table = new HTable(UTIL.getConfiguration(), this.desc.getName());
+    this.table = new HTable(UTIL.getConfiguration(), this.desc.getFullyQualifiedTableName());
     CatalogTracker ct = new CatalogTracker(UTIL.getConfiguration());
     ct.start();
     try {

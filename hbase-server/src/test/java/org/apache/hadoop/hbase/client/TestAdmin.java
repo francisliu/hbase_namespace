@@ -38,11 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.exceptions.InvalidFamilyOperationException;
 import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
 import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
@@ -52,8 +50,6 @@ import org.apache.hadoop.hbase.exceptions.TableNotEnabledException;
 import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
 import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.executor.EventHandler;
-import org.apache.hadoop.hbase.ipc.RpcClient;
-import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -64,7 +60,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.zookeeper.ZKTableReadOnly;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
-import org.apache.log4j.Level;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
@@ -191,7 +186,7 @@ public class TestAdmin {
     exception = null;
     try {
       HTableDescriptor htd = new HTableDescriptor(nonexistent);
-      this.admin.modifyTable(htd.getName(), htd);
+      this.admin.modifyTable(htd.getFullyQualifiedTableName(), htd);
     } catch (IOException e) {
       exception = e;
     }
@@ -207,7 +202,7 @@ public class TestAdmin {
     try {
       exception = null;
       try {
-        this.admin.deleteColumn(htd.getName(), nonexistentHcd.getName());
+        this.admin.deleteColumn(htd.getFullyQualifiedTableName(), nonexistentHcd.getName());
       } catch (IOException e) {
         exception = e;
       }
@@ -216,7 +211,7 @@ public class TestAdmin {
 
       exception = null;
       try {
-        this.admin.modifyColumn(htd.getName(), nonexistentHcd);
+        this.admin.modifyColumn(htd.getFullyQualifiedTableName(), nonexistentHcd);
       } catch (IOException e) {
         exception = e;
       }
@@ -242,10 +237,10 @@ public class TestAdmin {
     get.addColumn(HConstants.CATALOG_FAMILY, qualifier);
     ht.get(get);
 
-    this.admin.disableTable(table);
+    this.admin.disableTable(ht.getFullyQualifiedTableName());
     assertTrue("Table must be disabled.", TEST_UTIL.getHBaseCluster()
         .getMaster().getAssignmentManager().getZKTable().isDisabledTable(
-            Bytes.toString(table)));
+            ht.getFullyQualifiedTableName()));
 
     // Test that table is disabled
     get = new Get(row);
@@ -260,7 +255,7 @@ public class TestAdmin {
     this.admin.enableTable(table);
     assertTrue("Table must be enabled.", TEST_UTIL.getHBaseCluster()
         .getMaster().getAssignmentManager().getZKTable().isEnabledTable(
-            Bytes.toString(table)));
+            ht.getFullyQualifiedTableName()));
 
     // Test that table is enabled
     try {
@@ -333,7 +328,7 @@ public class TestAdmin {
     assertEquals(numTables + 1, tables.length);
     assertTrue("Table must be enabled.", TEST_UTIL.getHBaseCluster()
         .getMaster().getAssignmentManager().getZKTable().isEnabledTable(
-            "testCreateTable"));
+            FullyQualifiedTableName.valueOf("testCreateTable")));
   }
 
   @Test
@@ -369,7 +364,8 @@ public class TestAdmin {
    */
   @Test
   public void testOnlineChangeTableSchema() throws IOException, InterruptedException {
-    final byte [] tableName = Bytes.toBytes("changeTableSchemaOnline");
+    final FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("changeTableSchemaOnline");
     TEST_UTIL.getMiniHBaseCluster().getMaster().getConfiguration().setBoolean(
         "hbase.online.schema.update.enable", true);
     HTableDescriptor [] tables = admin.listTables();
@@ -931,7 +927,7 @@ public class TestAdmin {
 
   void splitTest(byte[] splitPoint, byte[][] familyNames, int[] rowCounts,
     int numVersions, int blockSize) throws Exception {
-    byte [] tableName = Bytes.toBytes("testForceSplit");
+    FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("testForceSplit");
     assertFalse(admin.tableExists(tableName));
     final HTable table = TEST_UTIL.createTable(tableName, familyNames,
       numVersions, blockSize);
@@ -1002,7 +998,7 @@ public class TestAdmin {
     };
     t.start();
     // Split the table
-    this.admin.split(tableName, splitPoint);
+    this.admin.split(tableName.getName(), splitPoint);
     t.join();
 
     // Verify row count
@@ -1067,9 +1063,10 @@ public class TestAdmin {
   @Test(timeout=36000)
   public void testEnableDisableAddColumnDeleteColumn() throws Exception {
     ZooKeeperWatcher zkw = HBaseTestingUtility.getZooKeeperWatcher(TEST_UTIL);
-    byte [] tableName = Bytes.toBytes("testMasterAdmin");
+    FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("testMasterAdmin");
     TEST_UTIL.createTable(tableName, HConstants.CATALOG_FAMILY).close();
-    while (!ZKTableReadOnly.isEnabledTable(zkw, "testMasterAdmin")) {
+    while (!ZKTableReadOnly.isEnabledTable(zkw,
+        FullyQualifiedTableName.valueOf("testMasterAdmin"))) {
       Thread.sleep(10);
     }
     this.admin.disableTable(tableName);
@@ -1283,7 +1280,8 @@ public class TestAdmin {
   @Test
   public void testShouldCloseTheRegionBasedOnTheEncodedRegionName()
       throws Exception {
-    byte[] TABLENAME = Bytes.toBytes("TestHBACloseRegion");
+    FullyQualifiedTableName TABLENAME =
+        FullyQualifiedTableName.valueOf("TestHBACloseRegion");
     createTableWithDefaultConf(TABLENAME);
 
     HRegionInfo info = null;
@@ -1330,7 +1328,8 @@ public class TestAdmin {
 
   @Test
   public void testCloseRegionThatFetchesTheHRIFromMeta() throws Exception {
-    byte[] TABLENAME = Bytes.toBytes("TestHBACloseRegion2");
+    FullyQualifiedTableName TABLENAME =
+        FullyQualifiedTableName.valueOf("TestHBACloseRegion2");
     createTableWithDefaultConf(TABLENAME);
 
     HRegionInfo info = null;
@@ -1446,6 +1445,10 @@ public class TestAdmin {
   }
 
   private void createTableWithDefaultConf(byte[] TABLENAME) throws IOException {
+    createTableWithDefaultConf(FullyQualifiedTableName.valueOf(TABLENAME));
+  }
+
+  private void createTableWithDefaultConf(FullyQualifiedTableName TABLENAME) throws IOException {
     HTableDescriptor htd = new HTableDescriptor(TABLENAME);
     HColumnDescriptor hcd = new HColumnDescriptor("value");
     htd.addFamily(hcd);

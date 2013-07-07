@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -87,7 +88,8 @@ public class TestEndToEndSplitTransaction {
 
   @Test
   public void testMasterOpsWhileSplitting() throws Exception {
-    byte[] tableName = Bytes.toBytes("TestSplit");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("TestSplit");
     byte[] familyName = Bytes.toBytes("fam");
     HTable ht = TEST_UTIL.createTable(tableName, familyName);
     TEST_UTIL.loadTable(ht, familyName);
@@ -146,7 +148,7 @@ public class TestEndToEndSplitTransaction {
    * attempt to locate the region and perform a get and scan
    * @return True if successful, False otherwise.
    */
-  private boolean test(HConnection con, byte[] tableName, byte[] row,
+  private boolean test(HConnection con, FullyQualifiedTableName tableName, byte[] row,
       HRegionServer server) {
     // not using HTable to avoid timeouts and retries
     try {
@@ -173,7 +175,8 @@ public class TestEndToEndSplitTransaction {
   @Test
   public void testFromClientSideWhileSplitting() throws Throwable {
     LOG.info("Starting testFromClientSideWhileSplitting");
-    final byte[] TABLENAME = Bytes.toBytes("testFromClientSideWhileSplitting");
+    final FullyQualifiedTableName TABLENAME =
+        FullyQualifiedTableName.valueOf("testFromClientSideWhileSplitting");
     final byte[] FAMILY = Bytes.toBytes("family");
 
     //SplitTransaction will update the meta table by offlining the parent region, and adding info
@@ -206,13 +209,14 @@ public class TestEndToEndSplitTransaction {
   static class RegionSplitter extends Thread {
     Throwable ex;
     HTable table;
-    byte[] tableName, family;
+    FullyQualifiedTableName tableName;
+    byte[] family;
     HBaseAdmin admin;
     HRegionServer rs;
 
     RegionSplitter(HTable table) throws IOException {
       this.table = table;
-      this.tableName = table.getTableName();
+      this.tableName = table.getFullyQualifiedTableName();
       this.family = table.getTableDescriptor().getFamiliesKeys().iterator().next();
       admin = TEST_UTIL.getHBaseAdmin();
       rs = TEST_UTIL.getMiniHBaseCluster().getRegionServer(0);
@@ -280,10 +284,10 @@ public class TestEndToEndSplitTransaction {
    */
   static class RegionChecker extends Chore {
     Configuration conf;
-    byte[] tableName;
+    FullyQualifiedTableName tableName;
     Throwable ex;
 
-    RegionChecker(Configuration conf, Stoppable stopper, byte[] tableName) {
+    RegionChecker(Configuration conf, Stoppable stopper, FullyQualifiedTableName tableName) {
       super("RegionChecker", 10, stopper);
       this.conf = conf;
       this.tableName = tableName;
@@ -475,7 +479,7 @@ public class TestEndToEndSplitTransaction {
       throws IOException, InterruptedException {
     log("blocking until region is opened for reading:" + hri.getRegionNameAsString());
     long start = System.currentTimeMillis();
-    HTable table = new HTable(conf, hri.getTableName());
+    HTable table = new HTable(conf, hri.getFullyQualifiedTableName());
 
     try {
       byte [] row = hri.getStartKey();

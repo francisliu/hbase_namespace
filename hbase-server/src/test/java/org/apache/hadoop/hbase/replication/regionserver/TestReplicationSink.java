@@ -240,7 +240,7 @@ public class TestReplicationSink {
             now, KeyValue.Type.DeleteFamily);
     }
 
-    HLogKey key = new HLogKey(table, table, now, now,
+    HLogKey key = new HLogKey(table, FullyQualifiedTableName.valueOf(table), now, now,
         HConstants.DEFAULT_CLUSTER_ID);
 
     WALEdit edit = new WALEdit();

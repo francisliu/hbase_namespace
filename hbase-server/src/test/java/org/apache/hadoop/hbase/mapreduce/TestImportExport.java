@@ -179,7 +179,7 @@ public class TestImportExport {
    */
   @Test
   public void testMetaExport() throws Exception {
-    String EXPORT_TABLE = HConstants.META_TABLE_NAME_STR;
+    String EXPORT_TABLE = HConstants.META_TABLE_NAME.getNameAsString();
     String[] args = new String[] { EXPORT_TABLE, FQ_OUTPUT_DIR, "1", "0", "0" };
     assertTrue(runExport(args));
   }

@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hbase.ClusterId;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -569,8 +570,8 @@ public class MasterFileSystem {
     HFileArchiver.archiveRegion(conf, fs, region);
   }
 
-  public void deleteTable(byte[] tableName) throws IOException {
-    fs.delete(FSUtils.getTableDir(rootdir, Bytes.toString(tableName)), true);
+  public void deleteTable(FullyQualifiedTableName tableName) throws IOException {
+    fs.delete(FSUtils.getTableDir(rootdir, tableName), true);
   }
 
   /**
@@ -579,7 +580,7 @@ public class MasterFileSystem {
    * @return The temp location of the table moved
    * @throws IOException in case of file-system failure
    */
-  public Path moveTableToTemp(byte[] tableName) throws IOException {
+  public Path moveTableToTemp(FullyQualifiedTableName tableName) throws IOException {
     Path srcPath = FSUtils.getTableDir(rootdir, tableName);
     Path tempPath = FSUtils.getTableDir(this.tempdir, tableName);
 
@@ -604,7 +605,7 @@ public class MasterFileSystem {
   public void deleteFamilyFromFS(HRegionInfo region, byte[] familyName)
       throws IOException {
     // archive family store files
-    Path tableDir = FSUtils.getTableDir(rootdir, region.getTableNameAsString());
+    Path tableDir = FSUtils.getTableDir(rootdir, region.getFullyQualifiedTableName());
     HFileArchiver.archiveFamily(fs, conf, region, tableDir, familyName);
 
     // delete the family folder
@@ -641,9 +642,9 @@ public class MasterFileSystem {
    * @return Modified HTableDescriptor with requested column deleted.
    * @throws IOException
    */
-  public HTableDescriptor deleteColumn(byte[] tableName, byte[] familyName)
+  public HTableDescriptor deleteColumn(FullyQualifiedTableName tableName, byte[] familyName)
       throws IOException {
-    LOG.info("DeleteColumn. Table = " + Bytes.toString(tableName)
+    LOG.info("DeleteColumn. Table = " + tableName
         + " family = " + Bytes.toString(familyName));
     HTableDescriptor htd = this.services.getTableDescriptors().get(tableName);
     htd.removeFamily(familyName);
@@ -658,9 +659,9 @@ public class MasterFileSystem {
    * @return Modified HTableDescriptor with the column modified.
    * @throws IOException
    */
-  public HTableDescriptor modifyColumn(byte[] tableName, HColumnDescriptor hcd)
+  public HTableDescriptor modifyColumn(FullyQualifiedTableName tableName, HColumnDescriptor hcd)
       throws IOException {
-    LOG.info("AddModifyColumn. Table = " + Bytes.toString(tableName)
+    LOG.info("AddModifyColumn. Table = " + tableName
         + " HCD = " + hcd.toString());
 
     HTableDescriptor htd = this.services.getTableDescriptors().get(tableName);
@@ -681,9 +682,9 @@ public class MasterFileSystem {
    * @return Modified HTableDescriptor with new column added.
    * @throws IOException
    */
-  public HTableDescriptor addColumn(byte[] tableName, HColumnDescriptor hcd)
+  public HTableDescriptor addColumn(FullyQualifiedTableName tableName, HColumnDescriptor hcd)
       throws IOException {
-    LOG.info("AddColumn. Table = " + Bytes.toString(tableName) + " HCD = " +
+    LOG.info("AddColumn. Table = " + tableName + " HCD = " +
       hcd.toString());
     HTableDescriptor htd = this.services.getTableDescriptors().get(tableName);
     if (htd == null) {

@@ -52,6 +52,7 @@ import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.exceptions.ConstraintException;
@@ -967,7 +968,7 @@ MasterServices, Server {
         this.catalogTracker.getMetaLocation());
     }
 
-    enableCatalogTables(HConstants.META_TABLE_NAME_STR);
+    enableCatalogTables(HConstants.META_TABLE_NAME);
     LOG.info(".META. assigned=" + assigned + ", rit=" + rit +
       ", location=" + catalogTracker.getMetaLocation());
     status.setStatus("META assigned.");
@@ -1000,14 +1001,14 @@ MasterServices, Server {
     // Skip assignment for regions of tables in DISABLING state because during clean cluster startup
     // no RS is alive and regions map also doesn't have any information about the regions.
     // See HBASE-6281.
-    Set<String> disabledOrDisablingOrEnabling = ZKTable.getDisabledOrDisablingTables(zooKeeper);
+    Set<FullyQualifiedTableName> disabledOrDisablingOrEnabling = ZKTable.getDisabledOrDisablingTables(zooKeeper);
     disabledOrDisablingOrEnabling.addAll(ZKTable.getEnablingTables(zooKeeper));
     // Scan META for all system regions, skipping any disabled tables
     Map<HRegionInfo, ServerName> allRegions =
         MetaReader.fullScan(catalogTracker, disabledOrDisablingOrEnabling, true);
     for(Iterator<HRegionInfo> iter = allRegions.keySet().iterator();
         iter.hasNext();) {
-      if (!HTableDescriptor.isSystemTable(iter.next().getTableName())) {
+      if (!HTableDescriptor.isSystemTable(iter.next().getFullyQualifiedTableName())) {
         iter.remove();
       }
     }
@@ -1126,9 +1127,9 @@ MasterServices, Server {
     return false;
   }
 
-  private void enableCatalogTables(String catalogTableName) {
-    if (!this.assignmentManager.getZKTable().isEnabledTable(catalogTableName)) {
-      this.assignmentManager.setEnabledTable(catalogTableName);
+  private void enableCatalogTables(FullyQualifiedTableName catalogTable) {
+    if (!this.assignmentManager.getZKTable().isEnabledTable(catalogTable)) {
+      this.assignmentManager.setEnabledTable(catalogTable);
     }
   }
 
@@ -1488,7 +1489,7 @@ MasterServices, Server {
         }
       }
 
-      Map<String, Map<ServerName, List<HRegionInfo>>> assignmentsByTable =
+      Map<FullyQualifiedTableName, Map<ServerName, List<HRegionInfo>>> assignmentsByTable =
         this.assignmentManager.getRegionStates().getAssignmentsByTable();
 
       List<RegionPlan> plans = new ArrayList<RegionPlan>();
@@ -1734,7 +1735,7 @@ MasterServices, Server {
       throw new MasterNotRunningException();
     }
 
-    String namespace = hTableDescriptor.getTableName().getNamespaceAsString();
+    String namespace = hTableDescriptor.getFullyQualifiedTableName().getNamespaceAsString();
     if (getNamespaceDescriptor(namespace) == null) {
       throw new ConstraintException("Namespace " + namespace + " does not exist");
     }
@@ -1788,7 +1789,7 @@ MasterServices, Server {
     HRegionInfo[] hRegionInfos = null;
     if (splitKeys == null || splitKeys.length == 0) {
       hRegionInfos = new HRegionInfo[]{
-          new HRegionInfo(hTableDescriptor.getName(), null, null)};
+          new HRegionInfo(hTableDescriptor.getFullyQualifiedTableName(), null, null)};
     } else {
       int numRegions = splitKeys.length + 1;
       hRegionInfos = new HRegionInfo[numRegions];
@@ -1797,19 +1798,19 @@ MasterServices, Server {
       for (int i = 0; i < numRegions; i++) {
         endKey = (i == splitKeys.length) ? null : splitKeys[i];
         hRegionInfos[i] =
-            new HRegionInfo(hTableDescriptor.getName(), startKey, endKey);
+            new HRegionInfo(hTableDescriptor.getFullyQualifiedTableName(), startKey, endKey);
         startKey = endKey;
       }
     }
     return hRegionInfos;
   }
 
-  private static boolean isCatalogTable(final byte [] tableName) {
-    return Bytes.equals(tableName, HConstants.META_TABLE_NAME);
+  private static boolean isCatalogTable(final FullyQualifiedTableName tableName) {
+    return tableName.equals(HConstants.META_TABLE_NAME);
   }
 
   @Override
-  public void deleteTable(final byte[] tableName) throws IOException {
+  public void deleteTable(final FullyQualifiedTableName tableName) throws IOException {
     checkInitialized();
     if (cpHost != null) {
       cpHost.preDeleteTable(tableName);
@@ -1824,7 +1825,7 @@ MasterServices, Server {
   public DeleteTableResponse deleteTable(RpcController controller, DeleteTableRequest request)
   throws ServiceException {
     try {
-      deleteTable(request.getTableName().toByteArray());
+      deleteTable(FullyQualifiedTableName.valueOf(request.getTableName().toByteArray()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -1849,7 +1850,8 @@ MasterServices, Server {
     byte [] tableName = req.getTableName().toByteArray();
 
     try {
-      Pair<Integer,Integer> pair = this.assignmentManager.getReopenStatus(tableName);
+      Pair<Integer,Integer> pair = this.assignmentManager.getReopenStatus(
+          FullyQualifiedTableName.valueOf(tableName));
       GetSchemaAlterStatusResponse.Builder ret = GetSchemaAlterStatusResponse.newBuilder();
       ret.setYetToUpdateRegions(pair.getFirst());
       ret.setTotalRegions(pair.getSecond());
@@ -1860,7 +1862,7 @@ MasterServices, Server {
   }
 
   @Override
-  public void addColumn(final byte[] tableName, final HColumnDescriptor column)
+  public void addColumn(final FullyQualifiedTableName tableName, final HColumnDescriptor column)
       throws IOException {
     checkInitialized();
     if (cpHost != null) {
@@ -1880,7 +1882,7 @@ MasterServices, Server {
   public AddColumnResponse addColumn(RpcController controller, AddColumnRequest req)
   throws ServiceException {
     try {
-      addColumn(req.getTableName().toByteArray(),
+      addColumn(FullyQualifiedTableName.valueOf(req.getTableName().toByteArray()),
         HColumnDescriptor.convert(req.getColumnFamilies()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -1889,7 +1891,7 @@ MasterServices, Server {
   }
 
   @Override
-  public void modifyColumn(byte[] tableName, HColumnDescriptor descriptor)
+  public void modifyColumn(FullyQualifiedTableName tableName, HColumnDescriptor descriptor)
       throws IOException {
     checkInitialized();
     checkCompression(descriptor);
@@ -1909,7 +1911,7 @@ MasterServices, Server {
   public ModifyColumnResponse modifyColumn(RpcController controller, ModifyColumnRequest req)
   throws ServiceException {
     try {
-      modifyColumn(req.getTableName().toByteArray(),
+      modifyColumn(FullyQualifiedTableName.valueOf(req.getTableName().toByteArray()),
         HColumnDescriptor.convert(req.getColumnFamilies()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -1918,7 +1920,7 @@ MasterServices, Server {
   }
 
   @Override
-  public void deleteColumn(final byte[] tableName, final byte[] columnName)
+  public void deleteColumn(final FullyQualifiedTableName tableName, final byte[] columnName)
       throws IOException {
     checkInitialized();
     if (cpHost != null) {
@@ -1936,7 +1938,8 @@ MasterServices, Server {
   public DeleteColumnResponse deleteColumn(RpcController controller, DeleteColumnRequest req)
   throws ServiceException {
     try {
-      deleteColumn(req.getTableName().toByteArray(), req.getColumnName().toByteArray());
+      deleteColumn(FullyQualifiedTableName.valueOf(req.getTableName().toByteArray()),
+          req.getColumnName().toByteArray());
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -1944,7 +1947,7 @@ MasterServices, Server {
   }
 
   @Override
-  public void enableTable(final byte[] tableName) throws IOException {
+  public void enableTable(final FullyQualifiedTableName tableName) throws IOException {
     checkInitialized();
     if (cpHost != null) {
       cpHost.preEnableTable(tableName);
@@ -1960,7 +1963,7 @@ MasterServices, Server {
   public EnableTableResponse enableTable(RpcController controller, EnableTableRequest request)
   throws ServiceException {
     try {
-      enableTable(request.getTableName().toByteArray());
+      enableTable(FullyQualifiedTableName.valueOf(request.getTableName().toByteArray()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -1968,7 +1971,7 @@ MasterServices, Server {
   }
 
   @Override
-  public void disableTable(final byte[] tableName) throws IOException {
+  public void disableTable(final FullyQualifiedTableName tableName) throws IOException {
     checkInitialized();
     if (cpHost != null) {
       cpHost.preDisableTable(tableName);
@@ -1984,7 +1987,7 @@ MasterServices, Server {
   public DisableTableResponse disableTable(RpcController controller, DisableTableRequest request)
   throws ServiceException {
     try {
-      disableTable(request.getTableName().toByteArray());
+      disableTable(FullyQualifiedTableName.valueOf(request.getTableName().toByteArray()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -1998,7 +2001,7 @@ MasterServices, Server {
    * may be null.
    */
   Pair<HRegionInfo, ServerName> getTableRegionForRow(
-      final byte [] tableName, final byte [] rowKey)
+      final FullyQualifiedTableName tableName, final byte [] rowKey)
   throws IOException {
     final AtomicReference<Pair<HRegionInfo, ServerName>> result =
       new AtomicReference<Pair<HRegionInfo, ServerName>>(null);
@@ -2014,7 +2017,7 @@ MasterServices, Server {
           if (pair == null) {
             return false;
           }
-          if (!Bytes.equals(pair.getFirst().getTableName(), tableName)) {
+          if (!pair.getFirst().getFullyQualifiedTableName().equals(tableName)) {
             return false;
           }
           result.set(pair);
@@ -2027,7 +2030,7 @@ MasterServices, Server {
   }
 
   @Override
-  public void modifyTable(final byte[] tableName, final HTableDescriptor descriptor)
+  public void modifyTable(final FullyQualifiedTableName tableName, final HTableDescriptor descriptor)
       throws IOException {
     checkInitialized();
     checkCompression(descriptor);
@@ -2044,7 +2047,7 @@ MasterServices, Server {
   public ModifyTableResponse modifyTable(RpcController controller, ModifyTableRequest req)
   throws ServiceException {
     try {
-      modifyTable(req.getTableName().toByteArray(),
+      modifyTable(FullyQualifiedTableName.valueOf(req.getTableName().toByteArray()),
         HTableDescriptor.convert(req.getTableSchema()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -2053,17 +2056,16 @@ MasterServices, Server {
   }
 
   @Override
-  public void checkTableModifiable(final byte [] tableName)
+  public void checkTableModifiable(final FullyQualifiedTableName tableName)
       throws IOException, TableNotFoundException, TableNotDisabledException {
-    String tableNameStr = Bytes.toString(tableName);
     if (isCatalogTable(tableName)) {
       throw new IOException("Can't modify catalog tables");
     }
-    if (!MetaReader.tableExists(getCatalogTracker(), tableNameStr)) {
-      throw new TableNotFoundException(tableNameStr);
+    if (!MetaReader.tableExists(getCatalogTracker(), tableName)) {
+      throw new TableNotFoundException(tableName);
     }
     if (!getAssignmentManager().getZKTable().
-        isDisabledTable(Bytes.toString(tableName))) {
+        isDisabledTable(tableName)) {
       throw new TableNotDisabledException(tableName);
     }
   }
@@ -2553,7 +2555,7 @@ MasterServices, Server {
       for (String s: req.getTableNamesList()) {
         HTableDescriptor htd = null;
         try {
-          htd = this.tableDescriptors.get(s);
+          htd = this.tableDescriptors.get(FullyQualifiedTableName.valueOf(s));
         } catch (IOException e) {
           LOG.warn("Failed getting descriptor for " + s, e);
         }
@@ -2970,7 +2972,7 @@ MasterServices, Server {
   }
 
   public void createNamespace(NamespaceDescriptor descriptor) throws IOException {
-    NamespaceDescriptor.isLegalNamespaceName(Bytes.toBytes(descriptor.getName()));   
+    FullyQualifiedTableName.isLegalNamespaceName(Bytes.toBytes(descriptor.getName()));
     if (cpHost != null) {
       if (cpHost.preCreateNamespace(descriptor)) {
         return;
@@ -2985,7 +2987,7 @@ MasterServices, Server {
   }
 
   public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
-    NamespaceDescriptor.isLegalNamespaceName(Bytes.toBytes(descriptor.getName()));  
+    FullyQualifiedTableName.isLegalNamespaceName(Bytes.toBytes(descriptor.getName()));
     if (cpHost != null) {
       if (cpHost.preModifyNamespace(descriptor)) {
         return;

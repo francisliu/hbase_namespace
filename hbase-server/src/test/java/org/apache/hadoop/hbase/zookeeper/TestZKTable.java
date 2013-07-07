@@ -52,7 +52,8 @@ public class TestZKTable {
   @Test
   public void testTableStates()
   throws ZooKeeperConnectionException, IOException, KeeperException {
-    final String name = "testDisabled";
+    final FullyQualifiedTableName name =
+        FullyQualifiedTableName.valueOf("testDisabled");
     Abortable abortable = new Abortable() {
       @Override
       public void abort(String why, Throwable e) {
@@ -66,7 +67,7 @@ public class TestZKTable {
       
     };
     ZooKeeperWatcher zkw = new ZooKeeperWatcher(TEST_UTIL.getConfiguration(),
-      name, abortable, true);
+      name.getNameAsString(), abortable, true);
     ZKTable zkt = new ZKTable(zkw);
     assertFalse(zkt.isEnabledTable(name));
     assertFalse(zkt.isDisablingTable(name));

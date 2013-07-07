@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RegionTransition;
 import org.apache.hadoop.hbase.Server;
@@ -169,8 +168,8 @@ public class SplitTransaction {
       return false;
     }
     long rid = getDaughterRegionIdTimestamp(hri);
-    this.hri_a = new HRegionInfo(hri.getTableName(), startKey, this.splitrow, false, rid);
-    this.hri_b = new HRegionInfo(hri.getTableName(), this.splitrow, endKey, false, rid);
+    this.hri_a = new HRegionInfo(hri.getFullyQualifiedTableName(), startKey, this.splitrow, false, rid);
+    this.hri_b = new HRegionInfo(hri.getFullyQualifiedTableName(), this.splitrow, endKey, false, rid);
     return true;
   }
 

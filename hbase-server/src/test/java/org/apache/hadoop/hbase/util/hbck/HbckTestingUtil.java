@@ -30,6 +30,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.util.HBaseFsck;
 import org.apache.hadoop.hbase.util.HBaseFsck.ErrorReporter.ERROR_CODE;
 
@@ -41,14 +42,15 @@ public class HbckTestingUtil {
   }
 
   public static HBaseFsck doFsck(
-      Configuration conf, boolean fix, String table) throws Exception {
+      Configuration conf, boolean fix, FullyQualifiedTableName table) throws Exception {
     return doFsck(conf, fix, fix, fix, fix,fix, fix, fix, fix, fix, fix, table);
   }
 
   public static HBaseFsck doFsck(Configuration conf, boolean fixAssignments,
       boolean fixMeta, boolean fixHdfsHoles, boolean fixHdfsOverlaps,
       boolean fixHdfsOrphans, boolean fixTableOrphans, boolean fixVersionFile,
-      boolean fixReferenceFiles, boolean fixEmptyMetaRegionInfo, boolean fixTableLocks, String table) throws Exception {
+      boolean fixReferenceFiles, boolean fixEmptyMetaRegionInfo, boolean fixTableLocks,
+      FullyQualifiedTableName table) throws Exception {
     HBaseFsck fsck = new HBaseFsck(conf, exec);
     fsck.connect();
     fsck.setDisplayFullReport(); // i.e. -details
@@ -77,8 +79,8 @@ public class HbckTestingUtil {
    * @return <returncode, hbckInstance>
    * @throws Exception
    */
-  public static HBaseFsck doHFileQuarantine(Configuration conf, String table) throws Exception {
-    String[] args = {"-sidelineCorruptHFiles", "-ignorePreCheckPermission", table};
+  public static HBaseFsck doHFileQuarantine(Configuration conf, FullyQualifiedTableName table) throws Exception {
+    String[] args = {"-sidelineCorruptHFiles", "-ignorePreCheckPermission", table.getNameAsString()};
     HBaseFsck hbck = new HBaseFsck(conf, exec);
     hbck.exec(exec, args);
     return hbck;

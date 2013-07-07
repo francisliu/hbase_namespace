@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -115,7 +116,7 @@ public class TestMetaMigrationConvertingToPB {
     //name under windows. So we rename it back. See src/test/data//TestMetaMigrationConvertingToPB.README and
     //https://issues.apache.org/jira/browse/HBASE-6821
     doFsCommand(shell, new String [] {"-mv", new Path(hbaseRootDir, "-META-").toString(),
-      new Path(hbaseRootDir, HConstants.META_TABLE_NAME_STR).toString()});
+      new Path(hbaseRootDir, HConstants.META_TABLE_NAME.getNameAsString()).toString()});
     // See whats in minihdfs.
     doFsCommand(shell, new String [] {"-lsr", "/"});
     TEST_UTIL.startMiniHBaseCluster(1, 1);
@@ -190,7 +191,9 @@ public class TestMetaMigrationConvertingToPB {
         HConstants.EMPTY_START_ROW,
         Bytes.toBytes("region_a"),
         Bytes.toBytes("region_b")};
-    createMultiRegionsWithWritableSerialization(conf, htd.getName(), regionNames);
+    createMultiRegionsWithWritableSerialization(conf,
+        htd.getFullyQualifiedTableName().getName(),
+        regionNames);
     CatalogTracker ct =
       TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker();
     // Erase the current version of root meta for this test.
@@ -233,9 +236,10 @@ public class TestMetaMigrationConvertingToPB {
       htd.addFamily(hcd);
     Configuration conf = TEST_UTIL.getConfiguration();
     // Create 10 New regions.
-    createMultiRegionsWithPBSerialization(conf, htd.getName(), 10);
+    createMultiRegionsWithPBSerialization(conf, htd.getFullyQualifiedTableName().getName(), 10);
     // Create 10 Legacy regions.
-    createMultiRegionsWithWritableSerialization(conf, htd.getName(), 10);
+    createMultiRegionsWithWritableSerialization(conf,
+        htd.getFullyQualifiedTableName().getName(), 10);
     CatalogTracker ct =
       TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker();
     // Erase the current version of root meta for this test.
@@ -315,11 +319,18 @@ public class TestMetaMigrationConvertingToPB {
     return createMultiRegionsWithWritableSerialization(c, tableName, regionStartKeys);
   }
 
+  public int createMultiRegionsWithWritableSerialization(final Configuration c,
+      final byte[] tableName, byte [][] startKeys)
+  throws IOException {
+    return createMultiRegionsWithWritableSerialization(c,
+        FullyQualifiedTableName.valueOf(tableName), startKeys);
+  }
+
   /**
    * Inserts multiple regions into META using Writable serialization instead of PB
    */
   public int createMultiRegionsWithWritableSerialization(final Configuration c,
-      final byte[] tableName, byte [][] startKeys)
+      final FullyQualifiedTableName tableName, byte [][] startKeys)
   throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
     HTable meta = new HTable(c, HConstants.META_TABLE_NAME);
@@ -387,6 +398,13 @@ public class TestMetaMigrationConvertingToPB {
    * Inserts multiple regions into META using PB serialization
    */
   int createMultiRegionsWithPBSerialization(final Configuration c, final byte[] tableName,
+      byte [][] startKeys) throws IOException {
+    return createMultiRegionsWithPBSerialization(c,
+        FullyQualifiedTableName.valueOf(tableName), startKeys);
+  }
+
+  int createMultiRegionsWithPBSerialization(final Configuration c,
+      final FullyQualifiedTableName tableName,
       byte [][] startKeys) throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
     HTable meta = new HTable(c, HConstants.META_TABLE_NAME);

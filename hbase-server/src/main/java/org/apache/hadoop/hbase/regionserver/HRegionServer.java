@@ -62,6 +62,7 @@ import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -2308,15 +2309,15 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
    * closed during a disable, etc., it will not be included in the returned list.
    * So, the returned list may not necessarily be ALL regions in this table, its
    * all the ONLINE regions in the table.
-   * @param tableName
+   * @param fqtn
    * @return Online regions from <code>tableName</code>
    */
-   public List<HRegion> getOnlineRegions(byte[] tableName) {
+   public List<HRegion> getOnlineRegions(FullyQualifiedTableName fqtn) {
      List<HRegion> tableRegions = new ArrayList<HRegion>();
      synchronized (this.onlineRegions) {
        for (HRegion region: this.onlineRegions.values()) {
          HRegionInfo regionInfo = region.getRegionInfo();
-         if(Bytes.equals(regionInfo.getTableName(), tableName)) {
+         if(regionInfo.getFullyQualifiedTableName().equals(fqtn)) {
            tableRegions.add(region);
          }
        }
@@ -3379,7 +3380,8 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     requestCount.increment();
     OpenRegionResponse.Builder builder = OpenRegionResponse.newBuilder();
     final int regionCount = request.getOpenInfoCount();
-    final Map<String, HTableDescriptor> htds = new HashMap<String, HTableDescriptor>(regionCount);
+    final Map<FullyQualifiedTableName, HTableDescriptor> htds =
+        new HashMap<FullyQualifiedTableName, HTableDescriptor>(regionCount);
     final boolean isBulkAssign = regionCount > 1;
     for (RegionOpenInfo regionOpenInfo : request.getOpenInfoList()) {
       final HRegionInfo region = HRegionInfo.convert(regionOpenInfo.getRegion());
@@ -3413,10 +3415,10 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
         }
         LOG.info("Received request to open region: " + region.getRegionNameAsString() + " on "
             + this.serverNameFromMasterPOV);
-        htd = htds.get(region.getTableNameAsString());
+        htd = htds.get(region.getFullyQualifiedTableName());
         if (htd == null) {
-          htd = this.tableDescriptors.get(region.getTableName());
-          htds.put(region.getTableNameAsString(), htd);
+          htd = this.tableDescriptors.get(region.getFullyQualifiedTableName());
+          htds.put(region.getFullyQualifiedTableName(), htd);
         }
 
         final Boolean previous = this.regionsInTransitionInRS.putIfAbsent(

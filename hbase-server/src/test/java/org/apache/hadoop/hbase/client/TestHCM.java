@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -72,11 +73,16 @@ import com.google.common.collect.Lists;
 public class TestHCM {
   private static final Log LOG = LogFactory.getLog(TestHCM.class);
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static final byte[] TABLE_NAME = Bytes.toBytes("test");
-  private static final byte[] TABLE_NAME1 = Bytes.toBytes("test1");
-  private static final byte[] TABLE_NAME2 = Bytes.toBytes("test2");
-  private static final byte[] TABLE_NAME3 = Bytes.toBytes("test3");
-  private static final byte[] TABLE_NAME4 = Bytes.toBytes("test4");
+  private static final FullyQualifiedTableName TABLE_NAME =
+      FullyQualifiedTableName.valueOf("test");
+  private static final FullyQualifiedTableName TABLE_NAME1 =
+      FullyQualifiedTableName.valueOf("test1");
+  private static final FullyQualifiedTableName TABLE_NAME2 =
+      FullyQualifiedTableName.valueOf("test2");
+  private static final FullyQualifiedTableName TABLE_NAME3 =
+      FullyQualifiedTableName.valueOf("test3");
+  private static final FullyQualifiedTableName TABLE_NAME4 =
+      FullyQualifiedTableName.valueOf("test4");
   private static final byte[] FAM_NAM = Bytes.toBytes("f");
   private static final byte[] ROW = Bytes.toBytes("bbb");
   private static final byte[] ROW_X = Bytes.toBytes("xxx");
@@ -129,7 +135,8 @@ public class TestHCM {
 
   @Test(expected = RegionServerStoppedException.class)
   public void testClusterStatus() throws Exception {
-    byte[] tn = "testClusterStatus".getBytes();
+    FullyQualifiedTableName tn =
+        FullyQualifiedTableName.valueOf("testClusterStatus");
     byte[] cf = "cf".getBytes();
     byte[] rk = "rk1".getBytes();
 
@@ -138,7 +145,7 @@ public class TestHCM {
     final ServerName sn = rs.getRegionServer().getServerName();
 
     HTable t = TEST_UTIL.createTable(tn, cf);
-    TEST_UTIL.waitTableAvailable(tn);
+    TEST_UTIL.waitTableAvailable(tn.getName());
 
     while(TEST_UTIL.getHBaseCluster().getMaster().getAssignmentManager().
         getRegionStates().isRegionsInTransition()){
@@ -220,9 +227,6 @@ public class TestHCM {
       (HConnectionManager.HConnectionImplementation)table.getConnection();
 
     assertNotNull(conn.getCachedLocation(TABLE_NAME, ROW));
-    assertNotNull(conn.getCachedLocation(TABLE_NAME.clone(), ROW.clone()));
-    assertNotNull(conn.getCachedLocation(
-      Bytes.toString(TABLE_NAME).getBytes() , Bytes.toString(ROW).getBytes()));
 
     final int nextPort = conn.getCachedLocation(TABLE_NAME, ROW).getPort() + 1;
     HRegionLocation loc = conn.getCachedLocation(TABLE_NAME, ROW);
@@ -230,7 +234,7 @@ public class TestHCM {
       HConstants.LATEST_TIMESTAMP), HConstants.LATEST_TIMESTAMP);
     Assert.assertEquals(conn.getCachedLocation(TABLE_NAME, ROW).getPort(), nextPort);
 
-    conn.forceDeleteCachedLocation(TABLE_NAME.clone(), ROW.clone());
+    conn.forceDeleteCachedLocation(TABLE_NAME, ROW.clone());
     HRegionLocation rl = conn.getCachedLocation(TABLE_NAME, ROW);
     assertNull("What is this location?? " + rl, rl);
 

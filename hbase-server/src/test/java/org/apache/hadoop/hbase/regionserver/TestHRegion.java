@@ -41,6 +41,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellComparator;
 import org.apache.hadoop.hbase.CompatibilitySingletonFactory;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestCase;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
@@ -246,7 +247,8 @@ public class TestHRegion extends HBaseTestCase {
 
   public void testSkipRecoveredEditsReplay() throws Exception {
     String method = "testSkipRecoveredEditsReplay";
-    byte[] tableName = Bytes.toBytes(method);
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf(method);
     byte[] family = Bytes.toBytes("family");
     this.region = initHRegion(tableName, method, conf, family);
     try {
@@ -296,7 +298,8 @@ public class TestHRegion extends HBaseTestCase {
 
   public void testSkipRecoveredEditsReplaySomeIgnored() throws Exception {
     String method = "testSkipRecoveredEditsReplaySomeIgnored";
-    byte[] tableName = Bytes.toBytes(method);
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf(method);
     byte[] family = Bytes.toBytes("family");
     this.region = initHRegion(tableName, method, conf, family);
     try {
@@ -389,7 +392,8 @@ public class TestHRegion extends HBaseTestCase {
   @Test
   public void testRecoveredEditsReplayCompaction() throws Exception {
     String method = "testRecoveredEditsReplayCompaction";
-    byte[] tableName = Bytes.toBytes(method);
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf(method);
     byte[] family = Bytes.toBytes("family");
     this.region = initHRegion(tableName, method, conf, family);
     try {
@@ -455,8 +459,6 @@ public class TestHRegion extends HBaseTestCase {
       HTableDescriptor htd = region.getTableDesc();
       HRegionInfo info = region.getRegionInfo();
       region.close();
-      LOG.info("-->"+DIR);
-      LOG.info("-->"+regiondir);
       region = HRegion.openHRegion(conf, fs, new Path(DIR+method),info, htd, null);
 
       //now check whether we have only one store file, the compacted one
@@ -3340,7 +3342,7 @@ public class TestHRegion extends HBaseTestCase {
 
     HTableDescriptor htd = new HTableDescriptor(tableName);
     htd.addFamily(hcd);
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     Path path = new Path(DIR + "testBloomFilterSize");
     this.region = HRegion.createHRegion(info, path, conf, htd);
     try {
@@ -3399,7 +3401,7 @@ public class TestHRegion extends HBaseTestCase {
         .setBloomFilterType(BloomType.ROWCOL);
     HTableDescriptor htd = new HTableDescriptor(TABLE);
     htd.addFamily(hcd);
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     Path path = new Path(DIR + "testAllColumnsWithBloomFilter");
     this.region = HRegion.createHRegion(info, path, conf, htd);
     try {
@@ -3449,7 +3451,7 @@ public class TestHRegion extends HBaseTestCase {
 
     HTableDescriptor htd = new HTableDescriptor(tableName);
     htd.addFamily(hcd);
-    HRegionInfo info = new HRegionInfo(htd.getName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
     Path path = new Path(DIR + "TestDeleteRowWithBloomFilter");
     this.region = HRegion.createHRegion(info, path, conf, htd);
     try {
@@ -3505,7 +3507,7 @@ public class TestHRegion extends HBaseTestCase {
       ht.put(put);
 
       HRegion firstRegion = htu.getHBaseCluster().
-          getRegions(Bytes.toBytes(this.getName())).get(0);
+          getRegions(FullyQualifiedTableName.valueOf(this.getName())).get(0);
       firstRegion.flushcache();
       HDFSBlocksDistribution blocksDistribution1 =
           firstRegion.getHDFSBlocksDistribution();
@@ -3553,7 +3555,7 @@ public class TestHRegion extends HBaseTestCase {
       Mockito.when(fs.exists((Path) Mockito.anyObject())).thenThrow(new IOException());
       HTableDescriptor htd = new HTableDescriptor(tableName);
       htd.addFamily(new HColumnDescriptor("cf"));
-      info = new HRegionInfo(htd.getName(), HConstants.EMPTY_BYTE_ARRAY,
+      info = new HRegionInfo(htd.getFullyQualifiedTableName(), HConstants.EMPTY_BYTE_ARRAY,
           HConstants.EMPTY_BYTE_ARRAY, false);
       Path path = new Path(DIR + "testStatusSettingToAbortIfAnyExceptionDuringRegionInitilization");
       region = HRegion.newHRegion(path, null, fs, conf, info, htd, null);
@@ -3586,7 +3588,7 @@ public class TestHRegion extends HBaseTestCase {
     HTableDescriptor htd = new HTableDescriptor("testtb");
     htd.addFamily(new HColumnDescriptor("cf"));
 
-    HRegionInfo hri = new HRegionInfo(htd.getName());
+    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName());
 
     // Create a region and skip the initialization (like CreateTableHandler)
     HRegion region = HRegion.createHRegion(hri, rootDir, conf, htd, null, false, true);
@@ -3978,6 +3980,20 @@ public class TestHRegion extends HBaseTestCase {
    * @throws IOException
    * @return A region on which you must call {@link HRegion#closeHRegion(HRegion)} when done.
    */
+  public static HRegion initHRegion (FullyQualifiedTableName tableName, String callingMethod,
+      Configuration conf, byte [] ... families)
+    throws IOException{
+    return initHRegion(tableName.getName(), null, null, callingMethod, conf, false, families);
+  }
+
+  /**
+   * @param tableName
+   * @param callingMethod
+   * @param conf
+   * @param families
+   * @throws IOException
+   * @return A region on which you must call {@link HRegion#closeHRegion(HRegion)} when done.
+   */
   public static HRegion initHRegion (byte [] tableName, String callingMethod,
       Configuration conf, byte [] ... families)
     throws IOException{
@@ -4021,7 +4037,7 @@ public class TestHRegion extends HBaseTestCase {
       hcd.setMaxVersions(Integer.MAX_VALUE);
       htd.addFamily(hcd);
     }
-    HRegionInfo info = new HRegionInfo(htd.getName(), startKey, stopKey, false);
+    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), startKey, stopKey, false);
     Path path = new Path(DIR + callingMethod);
     FileSystem fs = FileSystem.get(conf);
     if (fs.exists(path)) {

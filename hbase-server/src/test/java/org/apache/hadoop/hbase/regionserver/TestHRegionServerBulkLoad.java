@@ -142,7 +142,7 @@ public class TestHRegionServerBulkLoad {
 
       // bulk load HFiles
       HConnection conn = UTIL.getHBaseAdmin().getConnection();
-      byte[] tbl = Bytes.toBytes(tableName);
+      FullyQualifiedTableName tbl = FullyQualifiedTableName.valueOf(tableName);
       new ServerCallable<Void>(conn, tbl, Bytes
           .toBytes("aaa")) {
         @Override

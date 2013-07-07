@@ -52,7 +52,7 @@ public class TestIntraRowPagination {
     byte [][] QUALIFIERS = HTestConst.makeNAscii(HTestConst.DEFAULT_QUALIFIER_BYTES, 10);
 
     HTableDescriptor htd = new HTableDescriptor(HTestConst.DEFAULT_TABLE_BYTES);
-    HRegionInfo info = new HRegionInfo(HTestConst.DEFAULT_TABLE_BYTES, null, null, false);
+    HRegionInfo info = new HRegionInfo(HTestConst.DEFAULT_TABLE, null, null, false);
     for (byte[] family : FAMILIES) {
       HColumnDescriptor hcd = new HColumnDescriptor(family);
       htd.addFamily(hcd);

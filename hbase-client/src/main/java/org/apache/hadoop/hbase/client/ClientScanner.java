@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
@@ -62,7 +63,7 @@ public class ClientScanner extends AbstractClientScanner {
     private ScanMetrics scanMetrics = null;
     private final long maxScannerResultSize;
     private final HConnection connection;
-    private final byte[] tableName;
+    private final FullyQualifiedTableName tableName;
     private final int scannerTimeout;
 
     /**
@@ -76,7 +77,7 @@ public class ClientScanner extends AbstractClientScanner {
      * @throws IOException
      */
     public ClientScanner(final Configuration conf, final Scan scan,
-        final byte[] tableName) throws IOException {
+        final FullyQualifiedTableName tableName) throws IOException {
       this(conf, scan, tableName, HConnectionManager.getConnection(conf));
     }
 
@@ -91,9 +92,9 @@ public class ClientScanner extends AbstractClientScanner {
      * @throws IOException
      */
     public ClientScanner(final Configuration conf, final Scan scan,
-      final byte[] tableName, HConnection connection) throws IOException {
+      final FullyQualifiedTableName tableName, HConnection connection) throws IOException {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Scan table=" + Bytes.toString(tableName)
+        LOG.debug("Scan table=" + tableName
             + ", startRow=" + Bytes.toStringBinary(scan.getStartRow()));
       }
       this.scan = scan;
@@ -134,7 +135,7 @@ public class ClientScanner extends AbstractClientScanner {
       return this.connection;
     }
 
-    protected byte[] getTableName() {
+    protected FullyQualifiedTableName getFullyQualifiedTableName() {
       return this.tableName;
     }
 
@@ -227,7 +228,7 @@ public class ClientScanner extends AbstractClientScanner {
     protected ScannerCallable getScannerCallable(byte [] localStartKey) {
       scan.setStartRow(localStartKey);
       ScannerCallable s = new ScannerCallable(getConnection(),
-        getTableName(), scan, this.scanMetrics);
+        getFullyQualifiedTableName(), scan, this.scanMetrics);
       s.setCaching(this.caching);
       return s;
     }

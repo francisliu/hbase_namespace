@@ -27,6 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -57,8 +58,9 @@ public class TestHLogRecordReader {
   private static Configuration conf;
   private static FileSystem fs;
   private static Path hbaseDir;
-  private static final byte [] tableName = Bytes.toBytes(getName());
-  private static final byte [] rowName = tableName;
+  private static final FullyQualifiedTableName tableName =
+      FullyQualifiedTableName.valueOf(getName());
+  private static final byte [] rowName = tableName.getName();
   private static final HRegionInfo info = new HRegionInfo(tableName,
       Bytes.toBytes(""), Bytes.toBytes(""), false);
   private static final byte [] family = Bytes.toBytes("column");

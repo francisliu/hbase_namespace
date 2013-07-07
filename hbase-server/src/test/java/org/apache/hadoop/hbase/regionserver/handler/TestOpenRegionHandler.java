@@ -71,7 +71,7 @@ public class TestOpenRegionHandler {
    */
   @Before
   public void setupHRI() {
-    TEST_HRI = new HRegionInfo(TEST_HTD.getName(),
+    TEST_HRI = new HRegionInfo(TEST_HTD.getFullyQualifiedTableName(),
       Bytes.toBytes(testIndex),
       Bytes.toBytes(testIndex + 1));
     testIndex++;

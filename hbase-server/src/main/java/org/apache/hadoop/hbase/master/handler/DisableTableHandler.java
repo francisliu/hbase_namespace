@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.exceptions.TableNotEnabledException;
@@ -50,20 +51,18 @@ import org.cloudera.htrace.Trace;
 @InterfaceAudience.Private
 public class DisableTableHandler extends EventHandler {
   private static final Log LOG = LogFactory.getLog(DisableTableHandler.class);
-  private final byte [] tableName;
-  private final String tableNameStr;
+  private final FullyQualifiedTableName tableName;
   private final AssignmentManager assignmentManager;
   private final TableLockManager tableLockManager;
   private final CatalogTracker catalogTracker;
   private final boolean skipTableStateCheck;
   private TableLock tableLock;
 
-  public DisableTableHandler(Server server, byte [] tableName,
+  public DisableTableHandler(Server server, FullyQualifiedTableName tableName,
       CatalogTracker catalogTracker, AssignmentManager assignmentManager,
       TableLockManager tableLockManager, boolean skipTableStateCheck) {
     super(server, EventType.C_M_DISABLE_TABLE);
     this.tableName = tableName;
-    this.tableNameStr = Bytes.toString(this.tableName);
     this.assignmentManager = assignmentManager;
     this.catalogTracker = catalogTracker;
     this.tableLockManager = tableLockManager;
@@ -80,8 +79,8 @@ public class DisableTableHandler extends EventHandler {
     boolean success = false;
     try {
       // Check if table exists
-      if (!MetaReader.tableExists(catalogTracker, this.tableNameStr)) {
-        throw new TableNotFoundException(this.tableNameStr);
+      if (!MetaReader.tableExists(catalogTracker, tableName)) {
+        throw new TableNotFoundException(tableName);
       }
 
       // There could be multiple client requests trying to disable or enable
@@ -92,9 +91,9 @@ public class DisableTableHandler extends EventHandler {
       if (!skipTableStateCheck) {
         try {
           if (!this.assignmentManager.getZKTable().checkEnabledAndSetDisablingTable
-            (this.tableNameStr)) {
-            LOG.info("Table " + tableNameStr + " isn't enabled; skipping disable");
-            throw new TableNotEnabledException(this.tableNameStr);
+            (this.tableName)) {
+            LOG.info("Table " + tableName + " isn't enabled; skipping disable");
+            throw new TableNotEnabledException(this.tableName);
           }
         } catch (KeeperException e) {
           throw new IOException("Unable to ensure that the table will be" +
@@ -118,13 +117,13 @@ public class DisableTableHandler extends EventHandler {
       name = server.getServerName().toString();
     }
     return getClass().getSimpleName() + "-" + name + "-" + getSeqid() + "-" +
-      tableNameStr;
+        tableName;
   }
 
   @Override
   public void process() {
     try {
-      LOG.info("Attempting to disable table " + this.tableNameStr);
+      LOG.info("Attempting to disable table " + this.tableName);
       MasterCoprocessorHost cpHost = ((HMaster) this.server)
           .getCoprocessorHost();
       if (cpHost != null) {
@@ -135,9 +134,9 @@ public class DisableTableHandler extends EventHandler {
         cpHost.postDisableTableHandler(this.tableName);
       }
     } catch (IOException e) {
-      LOG.error("Error trying to disable table " + this.tableNameStr, e);
+      LOG.error("Error trying to disable table " + this.tableName, e);
     } catch (KeeperException e) {
-      LOG.error("Error trying to disable table " + this.tableNameStr, e);
+      LOG.error("Error trying to disable table " + this.tableName, e);
     } finally {
       releaseTableLock();
     }
@@ -155,7 +154,7 @@ public class DisableTableHandler extends EventHandler {
 
   private void handleDisableTable() throws IOException, KeeperException {
     // Set table disabling flag up in zk.
-    this.assignmentManager.getZKTable().setDisablingTable(this.tableNameStr);
+    this.assignmentManager.getZKTable().setDisablingTable(this.tableName);
     boolean done = false;
     while (true) {
       // Get list of online regions that are of this table.  Regions that are
@@ -183,7 +182,7 @@ public class DisableTableHandler extends EventHandler {
       }
     }
     // Flip the table to disabled if success.
-    if (done) this.assignmentManager.getZKTable().setDisabledTable(this.tableNameStr);
+    if (done) this.assignmentManager.getZKTable().setDisabledTable(this.tableName);
     LOG.info("Disabled table is done=" + done);
   }
 

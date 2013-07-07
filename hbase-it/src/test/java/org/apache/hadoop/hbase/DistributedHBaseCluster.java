@@ -196,7 +196,7 @@ public class DistributedHBaseCluster extends HBaseCluster {
     HRegionLocation regionLoc = connection.locateRegion(regionName);
     if (regionLoc == null) {
       LOG.warn("Cannot find region server holding region " + Bytes.toString(regionName)
-          + " for table " + HRegionInfo.getTableName(regionName) + ", start key [" +
+          + " for table " + HRegionInfo.getFullyQualifiedTableName(regionName) + ", start key [" +
           Bytes.toString(HRegionInfo.getStartKey(regionName)) + "]");
       return null;
     }

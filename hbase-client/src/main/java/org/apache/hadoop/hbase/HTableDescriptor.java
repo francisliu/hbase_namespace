@@ -22,7 +22,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,7 +73,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   private static final byte TABLE_DESCRIPTOR_VERSION = 7;
 
-  private TableName name = TableName.valueOf("","");
+  private FullyQualifiedTableName name = null;
 
   /**
    * A map which holds the metadata information of the table. This metadata
@@ -224,12 +223,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * <em> INTERNAL </em> Private constructor used internally creating table descriptors for
    * catalog tables, <code>.META.</code> and <code>-ROOT-</code>.
    */
-  protected HTableDescriptor(final byte[] name, HColumnDescriptor[] families) {
-    this(TableName.valueOf(name),
-        families);
-  }
-
-  protected HTableDescriptor(final TableName name, HColumnDescriptor[] families) {
+  protected HTableDescriptor(final FullyQualifiedTableName name, HColumnDescriptor[] families) {
     setName(name);
     for(HColumnDescriptor descriptor : families) {
       this.families.put(descriptor.getName(), descriptor);
@@ -240,14 +234,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * <em> INTERNAL </em>Private constructor used internally creating table descriptors for
    * catalog tables, <code>.META.</code> and <code>-ROOT-</code>.
    */
-  protected HTableDescriptor(final byte[] name, HColumnDescriptor[] families,
-      Map<ImmutableBytesWritable,ImmutableBytesWritable> values) {
-    this(TableName.valueOf(name),
-        families,
-        values);
-  }
-
-  protected HTableDescriptor(final TableName name, HColumnDescriptor[] families,
+  protected HTableDescriptor(final FullyQualifiedTableName name, HColumnDescriptor[] families,
       Map<ImmutableBytesWritable,ImmutableBytesWritable> values) {
     setName(name);
     for(HColumnDescriptor descriptor : families) {
@@ -262,7 +249,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   /**
    * Default constructor which constructs an empty object.
    * For deserializing an HTableDescriptor instance only.
-   * @see #HTableDescriptor(byte[])
    * @deprecated Used by Writables and Writables are going away.
    */
   @Deprecated
@@ -271,29 +257,42 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Construct a table descriptor specifying table name.
-   * @param name Table name.
-   * @throws IllegalArgumentException if passed a table name
-   * that is made of other than 'word' characters, underscore or period: i.e.
-   * <code>[a-zA-Z_0-9.].
-   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
-   */
-  public HTableDescriptor(final String name) {
-    this(Bytes.toBytes(name));
-  }
-
-  /**
    * Construct a table descriptor specifying a byte array table name
-   * @param name - Table name as a byte array.
+   * @param name Table name.
    * @throws IllegalArgumentException if passed a table name
    * that is made of other than 'word' characters, underscore or period: i.e.
    * <code>[a-zA-Z_0-9-.].
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
-  public HTableDescriptor(final byte [] name) {
+  public HTableDescriptor(final FullyQualifiedTableName name) {
     super();
+    this.name = name;
     setMetaFlags(this.name);
-    setName(this.isMetaRegion()? name: isLegalFullyQualifiedTableName(name));
+    setName(name);
+  }
+
+  /**
+   * Construct a table descriptor specifying a byte array table name
+   * @param name Table name.
+   * @throws IllegalArgumentException if passed a table name
+   * that is made of other than 'word' characters, underscore or period: i.e.
+   * <code>[a-zA-Z_0-9-.].
+   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
+   */
+  public HTableDescriptor(final byte[] name) {
+    this(FullyQualifiedTableName.valueOf(name));
+  }
+
+  /**
+   * Construct a table descriptor specifying a byte array table name
+   * @param name Table name.
+   * @throws IllegalArgumentException if passed a table name
+   * that is made of other than 'word' characters, underscore or period: i.e.
+   * <code>[a-zA-Z_0-9-.].
+   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
+   */
+  public HTableDescriptor(final String name) {
+    this(FullyQualifiedTableName.valueOf(name));
   }
 
   /**
@@ -326,9 +325,9 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * Called by constructors.
    * @param name
    */
-  private void setMetaFlags(final TableName name) {
+  private void setMetaFlags(final FullyQualifiedTableName name) {
     setMetaRegion(isRootRegion() ||
-      Bytes.equals(name.getName(), HConstants.META_TABLE_NAME));
+      name.equals(HConstants.META_TABLE_NAME));
   }
 
   /**
@@ -412,71 +411,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @return true if a tablesName is either <code> -ROOT- </code>
    * or <code> .META. </code>
    */
-  public static boolean isSystemTable(final byte [] tableName) {
-    return Bytes.toString(tableName)
+  public static boolean isSystemTable(final FullyQualifiedTableName fqtn) {
+    return fqtn.getNameAsString()
         .startsWith(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
-            TableName.NAMESPACE_DELIM);
-  }
-
-  // A non-capture group so that this can be embedded.
-  // regex is a bit more complicated to support nuance of tables
-  // in default namespace
-  public static final String VALID_USER_TABLE_REGEX =
-      "(?:(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.+)+(?:[a-zA-Z_0-9-]+\\.*))|" +
-         "(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.*)))";
-
-  /**
-   * Check passed byte buffer, "tableName", is legal user-space table name.
-   * @return Returns passed <code>tableName</code> param
-   * @throws NullPointerException If passed <code>tableName</code> is null
-   * @throws IllegalArgumentException if passed a tableName
-   * that is made of other than 'word' characters or underscores: i.e.
-   * <code>[a-zA-Z_0-9.]</code>. '.' are used to delimit the namespace
-   * from the table name. A namespace name can contain '.' though it is
-   * not recommended and left valid for backwards compatibility.
-   *
-   * Valid fully qualified table names:
-   * foo.bar, namespace=>foo, table=>bar
-   * org.foo.bar, namespace=org.foo, table=>bar
-   */
-  public static byte [] isLegalFullyQualifiedTableName(final byte [] tableName) {
-    if (tableName == null || tableName.length <= 0) {
-      throw new IllegalArgumentException("Name is null or empty");
-    }
-    int namespaceDelimIndex = com.google.common.primitives.Bytes.lastIndexOf(tableName,
-        (byte)TableName.NAMESPACE_DELIM);
-    if (namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
-      NamespaceDescriptor.isLegalNamespaceName(tableName);
-      isLegalTableQualifierName(tableName);
-    } else {
-      NamespaceDescriptor.isLegalNamespaceName(tableName, 0, namespaceDelimIndex);
-      isLegalTableQualifierName(tableName, namespaceDelimIndex + 1, tableName.length);
-    }
-    return tableName;
-  }
-
-  private static void isLegalTableQualifierName(final byte[] qualifierName){
-    isLegalTableQualifierName(qualifierName, 0, qualifierName.length);
-  }
-
-  private static void isLegalTableQualifierName(final byte[] qualifierName,
-                                                int offset,
-                                                int length){
-    boolean foundDot = false;
-    for (int i = offset; i < length; i++) {
-      if ((Character.isLetterOrDigit(qualifierName[i]) || qualifierName[i] == '_' ||
-           qualifierName[i] == '-') && !foundDot) {
-        continue;
-      }
-      if (qualifierName[i] == '.') {
-        foundDot = true;
-        continue;
-      }
-      throw new IllegalArgumentException("Illegal character <" + qualifierName[i] +
-        "> at " + i + ". User-space table qualifiers can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " +
-          Bytes.toString(qualifierName, offset, length));
-    }
+            FullyQualifiedTableName.NAMESPACE_DELIM);
   }
 
   /**
@@ -647,8 +585,8 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    *
    * @return name of table
    */
-  public byte [] getName() {
-    return name.getName();
+  public FullyQualifiedTableName getFullyQualifiedTableName() {
+    return name;
   }
 
   /**
@@ -658,10 +596,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   public String getNameAsString() {
     return name.getNameAsString();
-  }
-
-  public TableName getTableName() {
-    return name;
   }
 
   /**
@@ -682,10 +616,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @param name name of table
    */
   public void setName(byte[] name) {
-    setName(TableName.valueOf(name));
+    setName(FullyQualifiedTableName.valueOf(name));
   }
 
-  public void setName(TableName name) {
+  public void setName(FullyQualifiedTableName name) {
     this.name = name;
     setMetaFlags(this.name);
   }
@@ -942,7 +876,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     if (version < 3)
       throw new IOException("versions < 3 are not supported (and never existed!?)");
     // version 3+
-    name = TableName.valueOf(Bytes.readByteArray(in));
+    name = FullyQualifiedTableName.valueOf(Bytes.readByteArray(in));
     setRootRegion(in.readBoolean());
     setMetaRegion(in.readBoolean());
     values.clear();
@@ -1287,7 +1221,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for <core>-ROOT-</code> catalog table */
   public static final HTableDescriptor ROOT_TABLEDESC = new HTableDescriptor(
-      TableName.valueOf(HConstants.ROOT_TABLE_NAME),
+      HConstants.ROOT_TABLE_NAME,
       new HColumnDescriptor[] {
           new HColumnDescriptor(HConstants.CATALOG_FAMILY)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1300,7 +1234,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for <code>.META.</code> catalog table */
   public static final HTableDescriptor META_TABLEDESC = new HTableDescriptor(
-      TableName.valueOf(HConstants.META_TABLE_NAME),
+      HConstants.META_TABLE_NAME,
       new HColumnDescriptor[] {
           new HColumnDescriptor(HConstants.CATALOG_FAMILY)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1329,7 +1263,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for namespace table */
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(
-      TableName.valueOf(HConstants.NAMESPACE_TABLE_NAME),
+      HConstants.NAMESPACE_TABLE_NAME,
       new HColumnDescriptor[] {
           new HColumnDescriptor(NAMESPACE_FAMILY_INFO)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1401,7 +1335,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   public TableSchema convert() {
     TableSchema.Builder builder = TableSchema.newBuilder();
-    builder.setName(ByteString.copyFrom(getName()));
+    builder.setName(ByteString.copyFrom(getFullyQualifiedTableName().getName()));
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e: this.values.entrySet()) {
       BytesBytesPair.Builder aBuilder = BytesBytesPair.newBuilder();
       aBuilder.setFirst(ByteString.copyFrom(e.getKey().get()));
@@ -1431,7 +1365,9 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     for (ColumnFamilySchema cfs: list) {
       hcds[index++] = HColumnDescriptor.convert(cfs);
     }
-    HTableDescriptor htd = new HTableDescriptor(ts.getName().toByteArray(), hcds);
+    HTableDescriptor htd = new HTableDescriptor(
+        FullyQualifiedTableName.valueOf(ts.getName().toByteArray()),
+        hcds);
     for (BytesBytesPair a: ts.getAttributesList()) {
       htd.setValue(a.getFirst().toByteArray(), a.getSecond().toByteArray());
     }

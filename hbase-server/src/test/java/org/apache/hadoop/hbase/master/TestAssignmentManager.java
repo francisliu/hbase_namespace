@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.hadoop.hbase.CellScannable;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -103,7 +104,7 @@ public class TestAssignmentManager {
   private static final ServerName SERVERNAME_B =
     new ServerName("example.org", 0, 5678);
   private static final HRegionInfo REGIONINFO =
-    new HRegionInfo(Bytes.toBytes("t"),
+    new HRegionInfo(FullyQualifiedTableName.valueOf("t"),
       HConstants.EMPTY_START_ROW, HConstants.EMPTY_START_ROW);
   private static int assignmentCount;
   private static boolean enabling = false;
@@ -498,7 +499,7 @@ public class TestAssignmentManager {
     // adding region in pending close.
     am.getRegionStates().updateRegionState(
       REGIONINFO, State.SPLITTING, SERVERNAME_A);
-    am.getZKTable().setEnabledTable(REGIONINFO.getTableNameAsString());
+    am.getZKTable().setEnabledTable(REGIONINFO.getFullyQualifiedTableName());
     RegionTransition data = RegionTransition.createRegionTransition(EventType.RS_ZK_REGION_SPLITTING,
         REGIONINFO.getRegionName(), SERVERNAME_A);
     String node = ZKAssign.getNodeName(this.watcher, REGIONINFO.getEncodedName());
@@ -547,9 +548,9 @@ public class TestAssignmentManager {
     // adding region in pending close.
     am.getRegionStates().updateRegionState(REGIONINFO, State.PENDING_CLOSE);
     if (state == Table.State.DISABLING) {
-      am.getZKTable().setDisablingTable(REGIONINFO.getTableNameAsString());
+      am.getZKTable().setDisablingTable(REGIONINFO.getFullyQualifiedTableName());
     } else {
-      am.getZKTable().setDisabledTable(REGIONINFO.getTableNameAsString());
+      am.getZKTable().setDisabledTable(REGIONINFO.getFullyQualifiedTableName());
     }
     RegionTransition data = RegionTransition.createRegionTransition(EventType.M_ZK_REGION_CLOSING,
         REGIONINFO.getRegionName(), SERVERNAME_A);
@@ -573,7 +574,7 @@ public class TestAssignmentManager {
             am.getRegionStates().isRegionsInTransition());
       }
     } finally {
-      am.setEnabledTable(REGIONINFO.getTableNameAsString());
+      am.setEnabledTable(REGIONINFO.getFullyQualifiedTableName());
       executor.shutdown();
       am.shutdown();
       // Clean up all znodes
@@ -887,7 +888,7 @@ public class TestAssignmentManager {
     }
     try{
       // set table in disabling state.
-      am.getZKTable().setDisablingTable(REGIONINFO.getTableNameAsString());
+      am.getZKTable().setDisablingTable(REGIONINFO.getFullyQualifiedTableName());
       am.joinCluster();
       // should not call retainAssignment if we get empty regions in assignAllUserRegions.
       assertFalse(
@@ -895,12 +896,12 @@ public class TestAssignmentManager {
           gate.get());
       // need to change table state from disabling to disabled.
       assertTrue("Table should be disabled.",
-          am.getZKTable().isDisabledTable(REGIONINFO.getTableNameAsString()));
+          am.getZKTable().isDisabledTable(REGIONINFO.getFullyQualifiedTableName()));
     } finally {
       this.server.getConfiguration().setClass(
         HConstants.HBASE_MASTER_LOADBALANCER_CLASS, DefaultLoadBalancer.class,
         LoadBalancer.class);
-      am.getZKTable().setEnabledTable(REGIONINFO.getTableNameAsString());
+      am.getZKTable().setEnabledTable(REGIONINFO.getFullyQualifiedTableName());
       am.shutdown();
     }
   }
@@ -926,17 +927,17 @@ public class TestAssignmentManager {
         this.serverManager);
     try {
       // set table in enabling state.
-      am.getZKTable().setEnablingTable(REGIONINFO.getTableNameAsString());
-      new EnableTableHandler(server, REGIONINFO.getTableName(), am.getCatalogTracker(),
-          am, new NullTableLockManager(), true).prepare()
+      am.getZKTable().setEnablingTable(REGIONINFO.getFullyQualifiedTableName());
+      new EnableTableHandler(server, REGIONINFO.getFullyQualifiedTableName(),
+          am.getCatalogTracker(), am, new NullTableLockManager(), true).prepare()
           .process();
       assertEquals("Number of assignments should be 1.", 1, assignmentCount);
       assertTrue("Table should be enabled.",
-          am.getZKTable().isEnabledTable(REGIONINFO.getTableNameAsString()));
+          am.getZKTable().isEnabledTable(REGIONINFO.getFullyQualifiedTableName()));
     } finally {
       enabling = false;
       assignmentCount = 0;
-      am.getZKTable().setEnabledTable(REGIONINFO.getTableNameAsString());
+      am.getZKTable().setEnabledTable(REGIONINFO.getFullyQualifiedTableName());
       am.shutdown();
       ZKAssign.deleteAllNodes(this.watcher);
     }
@@ -963,7 +964,7 @@ public class TestAssignmentManager {
     // adding region plan
     am.regionPlans.put(REGIONINFO.getEncodedName(),
       new RegionPlan(REGIONINFO, SERVERNAME_B, SERVERNAME_A));
-    am.getZKTable().setEnabledTable(REGIONINFO.getTableNameAsString());
+    am.getZKTable().setEnabledTable(REGIONINFO.getFullyQualifiedTableName());
 
     try {
       am.assignInvoked = false;

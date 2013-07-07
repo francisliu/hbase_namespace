@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.ServerCallable;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -47,11 +48,11 @@ public class RegionCoprocessorRpcChannel extends CoprocessorRpcChannel{
   private static Log LOG = LogFactory.getLog(RegionCoprocessorRpcChannel.class);
 
   private final HConnection connection;
-  private final byte[] table;
+  private final FullyQualifiedTableName table;
   private final byte[] row;
   private byte[] lastRegion;
 
-  public RegionCoprocessorRpcChannel(HConnection conn, byte[] table, byte[] row) {
+  public RegionCoprocessorRpcChannel(HConnection conn, FullyQualifiedTableName table, byte[] row) {
     this.connection = conn;
     this.table = table;
     this.row = row;

@@ -722,7 +722,7 @@ public class HRegion implements HeapSize { // , Writable{
   public static HDFSBlocksDistribution computeHDFSBlocksDistribution(final Configuration conf,
       final HTableDescriptor tableDescriptor, final HRegionInfo regionInfo) throws IOException {
     HDFSBlocksDistribution hdfsBlocksDistribution = new HDFSBlocksDistribution();
-    Path tablePath = FSUtils.getTableDir(FSUtils.getRootDir(conf), tableDescriptor.getName());
+    Path tablePath = FSUtils.getTableDir(FSUtils.getRootDir(conf), tableDescriptor.getFullyQualifiedTableName());
     FileSystem fs = tablePath.getFileSystem(conf);
 
     HRegionFileSystem regionFs = new HRegionFileSystem(conf, fs, tablePath, regionInfo);
@@ -2197,7 +2197,7 @@ public class HRegion implements HeapSize { // , Writable{
       // STEP 5. Append the edit to WAL. Do not sync wal.
       // -------------------------
       Mutation first = batchOp.operations[firstIndex].getFirst();
-      txid = this.log.appendNoSync(this.getRegionInfo(), this.htableDescriptor.getName(),
+      txid = this.log.appendNoSync(this.getRegionInfo(), this.htableDescriptor.getFullyQualifiedTableName(),
                walEdit, first.getClusterId(), now, this.htableDescriptor);
 
       // -------------------------------
@@ -3045,7 +3045,6 @@ public class HRegion implements HeapSize { // , Writable{
    * Call to complete a compaction. Its for the case where we find in the WAL a compaction
    * that was not finished.  We could find one recovering a WAL after a regionserver crash.
    * See HBASE-2331.
-   * @param fs
    * @param compaction
    */
   void completeCompactionMarker(CompactionDescriptor compaction)
@@ -3975,11 +3974,11 @@ public class HRegion implements HeapSize { // , Writable{
                                       final HLog hlog,
                                       final boolean initialize, final boolean ignoreHLog)
       throws IOException {
-    LOG.info("creating HRegion " + info.getTableNameAsString()
+    LOG.info("creating HRegion " + info.getFullyQualifiedTableName().getNameAsString()
         + " HTD == " + hTableDescriptor + " RootDir = " + rootDir +
-        " Table name == " + info.getTableNameAsString());
+        " Table name == " + info.getFullyQualifiedTableName().getNameAsString());
 
-    Path tableDir = FSUtils.getTableDir(rootDir, info.getTableName());
+    Path tableDir = FSUtils.getTableDir(rootDir, info.getFullyQualifiedTableName());
     FileSystem fs = FileSystem.get(conf);
     HRegionFileSystem rfs = HRegionFileSystem.createRegionOnFileSystem(conf, fs, tableDir, info);
     HLog effectiveHLog = hlog;
@@ -4140,7 +4139,7 @@ public class HRegion implements HeapSize { // , Writable{
     if (LOG.isDebugEnabled()) {
       LOG.debug("Opening region: " + info);
     }
-    Path dir = FSUtils.getTableDir(rootDir, info.getTableName());
+    Path dir = FSUtils.getTableDir(rootDir, info.getFullyQualifiedTableName());
     HRegion r = HRegion.newHRegion(dir, wal, fs, conf, info, htd, rsServices);
     return r.openHRegion(reporter);
   }
@@ -4269,7 +4268,7 @@ public class HRegion implements HeapSize { // , Writable{
   @Deprecated
   public static Path getRegionDir(final Path rootdir, final HRegionInfo info) {
     return new Path(
-      FSUtils.getTableDir(rootdir, info.getTableName()),
+      FSUtils.getTableDir(rootdir, info.getFullyQualifiedTableName()),
                                    info.getEncodedName());
   }
 
@@ -4329,8 +4328,8 @@ public class HRegion implements HeapSize { // , Writable{
    * @throws IOException
    */
   public static HRegion merge(final HRegion a, final HRegion b) throws IOException {
-    if (!a.getRegionInfo().getTableNameAsString().equals(
-        b.getRegionInfo().getTableNameAsString())) {
+    if (!a.getRegionInfo().getFullyQualifiedTableName().equals(
+        b.getRegionInfo().getFullyQualifiedTableName())) {
       throw new IOException("Regions do not belong to the same table");
     }
 
@@ -4591,7 +4590,7 @@ public class HRegion implements HeapSize { // , Writable{
           // 7. Append no sync
           if (!walEdit.isEmpty()) {
             txid = this.log.appendNoSync(this.getRegionInfo(),
-                this.htableDescriptor.getName(), walEdit,
+                this.htableDescriptor.getFullyQualifiedTableName(), walEdit,
                 processor.getClusterId(), now, this.htableDescriptor);
           }
           // 8. Release region lock
@@ -4823,7 +4822,7 @@ public class HRegion implements HeapSize { // , Writable{
           // cluster. A slave cluster receives the final value (not the delta)
           // as a Put.
           txid = this.log.appendNoSync(this.getRegionInfo(),
-              this.htableDescriptor.getName(), walEdits,
+              this.htableDescriptor.getFullyQualifiedTableName(), walEdits,
               HConstants.DEFAULT_CLUSTER_ID, EnvironmentEdgeManager.currentTimeMillis(),
               this.htableDescriptor);
         }
@@ -4967,7 +4966,7 @@ public class HRegion implements HeapSize { // , Writable{
           // Using default cluster id, as this can only happen in the orginating
           // cluster. A slave cluster receives the final value (not the delta)
           // as a Put.
-          txid = this.log.appendNoSync(this.getRegionInfo(), this.htableDescriptor.getName(),
+          txid = this.log.appendNoSync(this.getRegionInfo(), this.htableDescriptor.getFullyQualifiedTableName(),
               walEdits, HConstants.DEFAULT_CLUSTER_ID, EnvironmentEdgeManager.currentTimeMillis(),
               this.htableDescriptor);
         }
@@ -5173,9 +5172,8 @@ public class HRegion implements HeapSize { // , Writable{
       final boolean majorCompact)
   throws IOException {
     HRegion region = null;
-    String metaStr = HConstants.META_TABLE_NAME_STR;
     // Currently expects tables have one region only.
-    if (p.getName().startsWith(metaStr)) {
+    if (p.getName().startsWith(HConstants.META_TABLE_NAME.getNameAsString())) {
       region = HRegion.newHRegion(p, log, fs, c,
         HRegionInfo.FIRST_META_REGIONINFO, HTableDescriptor.META_TABLEDESC, null);
     } else {

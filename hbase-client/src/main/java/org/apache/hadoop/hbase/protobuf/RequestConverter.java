@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.CellScannable;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -899,14 +900,14 @@ public final class RequestConverter {
   /**
    * Create a protocol buffer AddColumnRequest
    *
-   * @param tableName
+   * @param fqtn
    * @param column
    * @return an AddColumnRequest
    */
   public static AddColumnRequest buildAddColumnRequest(
-      final byte [] tableName, final HColumnDescriptor column) {
+      final FullyQualifiedTableName fqtn, final HColumnDescriptor column) {
     AddColumnRequest.Builder builder = AddColumnRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     builder.setColumnFamilies(column.convert());
     return builder.build();
   }
@@ -914,14 +915,14 @@ public final class RequestConverter {
   /**
    * Create a protocol buffer DeleteColumnRequest
    *
-   * @param tableName
+   * @param fqtn
    * @param columnName
    * @return a DeleteColumnRequest
    */
   public static DeleteColumnRequest buildDeleteColumnRequest(
-      final byte [] tableName, final byte [] columnName) {
+      final FullyQualifiedTableName fqtn, final byte [] columnName) {
     DeleteColumnRequest.Builder builder = DeleteColumnRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     builder.setColumnName(ByteString.copyFrom(columnName));
     return builder.build();
   }
@@ -929,14 +930,14 @@ public final class RequestConverter {
   /**
    * Create a protocol buffer ModifyColumnRequest
    *
-   * @param tableName
+   * @param fqtn
    * @param column
    * @return an ModifyColumnRequest
    */
   public static ModifyColumnRequest buildModifyColumnRequest(
-      final byte [] tableName, final HColumnDescriptor column) {
+      final FullyQualifiedTableName fqtn, final HColumnDescriptor column) {
     ModifyColumnRequest.Builder builder = ModifyColumnRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     builder.setColumnFamilies(column.convert());
     return builder.build();
   }
@@ -1016,36 +1017,36 @@ public final class RequestConverter {
   /**
    * Creates a protocol buffer DeleteTableRequest
    *
-   * @param tableName
+   * @param fqtn
    * @return a DeleteTableRequest
    */
-  public static DeleteTableRequest buildDeleteTableRequest(final byte [] tableName) {
+  public static DeleteTableRequest buildDeleteTableRequest(final FullyQualifiedTableName fqtn) {
     DeleteTableRequest.Builder builder = DeleteTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     return builder.build();
   }
 
   /**
    * Creates a protocol buffer EnableTableRequest
    *
-   * @param tableName
+   * @param fqtn
    * @return an EnableTableRequest
    */
-  public static EnableTableRequest buildEnableTableRequest(final byte [] tableName) {
+  public static EnableTableRequest buildEnableTableRequest(final FullyQualifiedTableName fqtn) {
     EnableTableRequest.Builder builder = EnableTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     return builder.build();
   }
 
   /**
    * Creates a protocol buffer DisableTableRequest
    *
-   * @param tableName
+   * @param fqtn
    * @return a DisableTableRequest
    */
-  public static DisableTableRequest buildDisableTableRequest(final byte [] tableName) {
+  public static DisableTableRequest buildDisableTableRequest(final FullyQualifiedTableName fqtn) {
     DisableTableRequest.Builder builder = DisableTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     return builder.build();
   }
 
@@ -1077,9 +1078,9 @@ public final class RequestConverter {
    * @return a ModifyTableRequest
    */
   public static ModifyTableRequest buildModifyTableRequest(
-      final byte [] table, final HTableDescriptor hTableDesc) {
+      final FullyQualifiedTableName fqtn, final HTableDescriptor hTableDesc) {
     ModifyTableRequest.Builder builder = ModifyTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(table));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     builder.setTableSchema(hTableDesc.convert());
     return builder.build();
   }
@@ -1091,9 +1092,9 @@ public final class RequestConverter {
    * @return a GetSchemaAlterStatusRequest
    */
   public static GetSchemaAlterStatusRequest buildGetSchemaAlterStatusRequest(
-      final byte [] tableName) {
+      final FullyQualifiedTableName fqtn) {
     GetSchemaAlterStatusRequest.Builder builder = GetSchemaAlterStatusRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName));
+    builder.setTableName(ByteString.copyFrom(fqtn.getName()));
     return builder.build();
   }
 
@@ -1104,11 +1105,11 @@ public final class RequestConverter {
    * @return a GetTableDescriptorsRequest
    */
   public static GetTableDescriptorsRequest buildGetTableDescriptorsRequest(
-      final List<String> tableNames) {
+      final List<FullyQualifiedTableName> tableNames) {
     GetTableDescriptorsRequest.Builder builder = GetTableDescriptorsRequest.newBuilder();
     if (tableNames != null) {
-      for (String str : tableNames) {
-        builder.addTableNames(str);
+      for (FullyQualifiedTableName fqtn : tableNames) {
+        builder.addTableNames(fqtn.getNameAsString());
       }
     }
     return builder.build();
@@ -1191,22 +1192,22 @@ public final class RequestConverter {
    * Create a request to grant user permissions.
    *
    * @param username the short user name who to grant permissions
-   * @param table optional table name the permissions apply
+   * @param fqtn optional table name the permissions apply
    * @param family optional column family
    * @param qualifier optional qualifier
    * @param actions the permissions to be granted
    * @return A {@link AccessControlProtos} GrantRequest
    */
   public static AccessControlProtos.GrantRequest buildGrantRequest(
-      String username, byte[] table, byte[] family, byte[] qualifier,
+      String username, FullyQualifiedTableName fqtn, byte[] family, byte[] qualifier,
       AccessControlProtos.Permission.Action... actions) {
     AccessControlProtos.Permission.Builder permissionBuilder =
         AccessControlProtos.Permission.newBuilder();
     for (AccessControlProtos.Permission.Action a : actions) {
       permissionBuilder.addAction(a);
     }
-    if (table != null) {
-      permissionBuilder.setTable(ByteString.copyFrom(table));
+    if (fqtn != null) {
+      permissionBuilder.setTable(ByteString.copyFrom(fqtn.getName()));
     }
     if (family != null) {
       permissionBuilder.setFamily(ByteString.copyFrom(family));
@@ -1227,22 +1228,22 @@ public final class RequestConverter {
    * Create a request to revoke user permissions.
    *
    * @param username the short user name whose permissions to be revoked
-   * @param table optional table name the permissions apply
+   * @param fqtn optional table name the permissions apply
    * @param family optional column family
    * @param qualifier optional qualifier
    * @param actions the permissions to be revoked
    * @return A {@link AccessControlProtos} RevokeRequest
    */
   public static AccessControlProtos.RevokeRequest buildRevokeRequest(
-      String username, byte[] table, byte[] family, byte[] qualifier,
+      String username, FullyQualifiedTableName fqtn, byte[] family, byte[] qualifier,
       AccessControlProtos.Permission.Action... actions) {
     AccessControlProtos.Permission.Builder permissionBuilder =
         AccessControlProtos.Permission.newBuilder();
     for (AccessControlProtos.Permission.Action a : actions) {
       permissionBuilder.addAction(a);
     }
-    if (table != null) {
-      permissionBuilder.setTable(ByteString.copyFrom(table));
+    if (fqtn != null) {
+      permissionBuilder.setTable(ByteString.copyFrom(fqtn.getName()));
     }
     if (family != null) {
       permissionBuilder.setFamily(ByteString.copyFrom(family));

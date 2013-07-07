@@ -22,9 +22,9 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HStore;
 
@@ -39,15 +39,16 @@ public class HFileArchiveUtil {
   /**
    * Get the directory to archive a store directory
    * @param conf {@link Configuration} to read for the archive directory name
-   * @param tableName table name under which the store currently lives
+   * @param fqtn table name under which the store currently lives
    * @param regionName region encoded name under which the store currently lives
    * @param familyName name of the family in the store
    * @return {@link Path} to the directory to archive the given store or
    *         <tt>null</tt> if it should not be archived
    */
-  public static Path getStoreArchivePath(final Configuration conf, final String tableName,
+  public static Path getStoreArchivePath(final Configuration conf,
+                                         final FullyQualifiedTableName fqtn,
       final String regionName, final String familyName) throws IOException {
-    Path tableArchiveDir = getTableArchivePath(conf, tableName);
+    Path tableArchiveDir = getTableArchivePath(conf, fqtn);
     return HStore.getStoreHomedir(tableArchiveDir, regionName, Bytes.toBytes(familyName));
   }
 
@@ -60,24 +61,29 @@ public class HFileArchiveUtil {
    * @return {@link Path} to the directory to archive the given store or <tt>null</tt> if it should
    *         not be archived
    */
-  public static Path getStoreArchivePath(Configuration conf, HRegionInfo region, Path tabledir,
+  public static Path getStoreArchivePath(Configuration conf,
+                                         HRegionInfo region,
+                                         Path tabledir,
       byte[] family) throws IOException {
-    TableName tableName = TableName.valueOf(tabledir.getName());
+    FullyQualifiedTableName fullyQualifiedTableName =
+        FullyQualifiedTableName.valueOf(tabledir.getName());
     Path rootDir = FSUtils.getRootDir(conf);
-    Path tableArchiveDir = getTableArchivePath(rootDir, tableName.getNameAsString());
+    Path tableArchiveDir = getTableArchivePath(rootDir, fullyQualifiedTableName);
     return HStore.getStoreHomedir(tableArchiveDir, region, family);
   }
 
   /**
    * Get the archive directory for a given region under the specified table
-   * @param tableName the table name. Cannot be null.
+   * @param fqtn the table name. Cannot be null.
    * @param regiondir the path to the region directory. Cannot be null.
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */
-  public static Path getRegionArchiveDir(Path rootDir, String tableName, Path regiondir) {
+  public static Path getRegionArchiveDir(Path rootDir,
+                                         FullyQualifiedTableName fqtn,
+                                         Path regiondir) {
     // get the archive directory for a table
-    Path archiveDir = getTableArchivePath(rootDir, tableName);
+    Path archiveDir = getTableArchivePath(rootDir, fqtn);
 
     // then add on the region path under the archive
     String encodedRegionName = regiondir.getName();
@@ -88,13 +94,14 @@ public class HFileArchiveUtil {
    * Get the archive directory for a given region under the specified table
    * @param rootDir {@link Path} to the root directory where hbase files are stored (for building
    *          the archive path)
-   * @param tablename name of the table to archive. Cannot be null.
+   * @param fqtn name of the table to archive. Cannot be null.
    * @return {@link Path} to the directory to archive the given region, or <tt>null</tt> if it
    *         should not be archived
    */
-  public static Path getRegionArchiveDir(Path rootDir, String tablename, String encodedRegionName) {
+  public static Path getRegionArchiveDir(Path rootDir,
+                                         FullyQualifiedTableName fqtn, String encodedRegionName) {
     // get the archive directory for a table
-    Path archiveDir = getTableArchivePath(rootDir, tablename);
+    Path archiveDir = getTableArchivePath(rootDir, fqtn);
     return HRegion.getRegionDir(archiveDir, encodedRegionName);
   }
 
@@ -106,11 +113,11 @@ public class HFileArchiveUtil {
    * Generally of the form: /hbase/.archive/[tablename]
    * @param rootdir {@link Path} to the root directory where hbase files are stored (for building
    *          the archive path)
-   * @param tableName Name of the table to be archived. Cannot be null.
+   * @param fqtn Name of the table to be archived. Cannot be null.
    * @return {@link Path} to the archive directory for the table
    */
-  public static Path getTableArchivePath(final Path rootdir, final String tableName) {
-    return FSUtils.getTableDir(getArchivePath(rootdir), tableName);
+  public static Path getTableArchivePath(final Path rootdir, final FullyQualifiedTableName fqtn) {
+    return FSUtils.getTableDir(getArchivePath(rootdir), fqtn);
   }
 
   /**
@@ -118,12 +125,13 @@ public class HFileArchiveUtil {
    * <p>
    * Assumed that the table should already be archived.
    * @param conf {@link Configuration} to read the archive directory property. Can be null
-   * @param tableName Name of the table to be archived. Cannot be null.
+   * @param fqtn Name of the table to be archived. Cannot be null.
    * @return {@link Path} to the archive directory for the table
    */
-  public static Path getTableArchivePath(final Configuration conf, final String tableName)
+  public static Path getTableArchivePath(final Configuration conf,
+                                         final FullyQualifiedTableName fqtn)
       throws IOException {
-    return FSUtils.getTableDir(getArchivePath(conf), tableName);
+    return FSUtils.getTableDir(getArchivePath(conf), fqtn);
   }
 
   /**

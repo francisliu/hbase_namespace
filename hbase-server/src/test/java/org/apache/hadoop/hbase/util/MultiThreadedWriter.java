@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.client.HTable;
@@ -85,7 +86,7 @@ public class MultiThreadedWriter extends MultiThreadedAction {
   private boolean trackInsertedKeys;
 
   public MultiThreadedWriter(LoadTestDataGenerator dataGen, Configuration conf,
-    byte[] tableName) {
+    FullyQualifiedTableName tableName) {
     super(dataGen, conf, tableName, "W");
   }
 

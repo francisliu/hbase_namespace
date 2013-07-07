@@ -44,7 +44,7 @@ message DelegationTokenProto {
 }
 
 message PrepareBulkLoadRequest {
-  required bytes tableName = 1;
+  required bytes fqtn = 1;
 }
 
 message PrepareBulkLoadResponse {

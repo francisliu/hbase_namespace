@@ -573,7 +573,7 @@ public class ThriftServerRunner implements Runnable {
         HTableDescriptor[] tables = this.getHBaseAdmin().listTables();
         ArrayList<ByteBuffer> list = new ArrayList<ByteBuffer>(tables.length);
         for (int i = 0; i < tables.length; i++) {
-          list.add(ByteBuffer.wrap(tables[i].getName()));
+          list.add(ByteBuffer.wrap(tables[i].getFullyQualifiedTableName().getName()));
         }
         return list;
       } catch (IOException e) {
@@ -1358,13 +1358,13 @@ public class ThriftServerRunner implements Runnable {
     @Override
     public TRegionInfo getRegionInfo(ByteBuffer searchRow) throws IOError {
       try {
-        HTable table = getTable(HConstants.META_TABLE_NAME);
+        HTable table = getTable(HConstants.META_TABLE_NAME.getName());
         byte[] row = getBytes(searchRow);
         Result startRowResult = table.getRowOrBefore(
           row, HConstants.CATALOG_FAMILY);
 
         if (startRowResult == null) {
-          throw new IOException("Cannot find row in "+HConstants.META_TABLE_NAME_STR+", row="
+          throw new IOException("Cannot find row in "+HConstants.META_TABLE_NAME+", row="
                                 + Bytes.toStringBinary(row));
         }
 

@@ -30,6 +30,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -79,7 +80,7 @@ class HMerge {
    * @throws IOException
    */
   public static void merge(Configuration conf, FileSystem fs,
-    final byte [] tableName)
+    final FullyQualifiedTableName tableName)
   throws IOException {
     merge(conf, fs, tableName, true);
   }
@@ -100,7 +101,7 @@ class HMerge {
    * @throws IOException
    */
   public static void merge(Configuration conf, FileSystem fs,
-    final byte [] tableName, final boolean testMasterRunning)
+    final FullyQualifiedTableName tableName, final boolean testMasterRunning)
   throws IOException {
     boolean masterIsRunning = false;
     if (testMasterRunning) {
@@ -112,7 +113,7 @@ class HMerge {
             }
           });
     }
-    if (Bytes.equals(tableName, HConstants.META_TABLE_NAME)) {
+    if (tableName.equals(HConstants.META_TABLE_NAME)) {
       if (masterIsRunning) {
         throw new IllegalStateException(
             "Can not compact META table if instance is on-line");
@@ -140,7 +141,7 @@ class HMerge {
     private final long maxFilesize;
 
 
-    protected Merger(Configuration conf, FileSystem fs, final byte [] tableName)
+    protected Merger(Configuration conf, FileSystem fs, final FullyQualifiedTableName tableName)
     throws IOException {
       this.conf = conf;
       this.fs = fs;
@@ -225,13 +226,13 @@ class HMerge {
 
   /** Instantiated to compact a normal user table */
   private static class OnlineMerger extends Merger {
-    private final byte [] tableName;
+    private final FullyQualifiedTableName tableName;
     private final HTable table;
     private final ResultScanner metaScanner;
     private HRegionInfo latestRegion;
 
     OnlineMerger(Configuration conf, FileSystem fs,
-      final byte [] tableName)
+      final FullyQualifiedTableName tableName)
     throws IOException {
       super(conf, fs, tableName);
       this.tableName = tableName;
@@ -253,7 +254,7 @@ class HMerge {
               Bytes.toString(HConstants.CATALOG_FAMILY) + ":" +
               Bytes.toString(HConstants.REGIONINFO_QUALIFIER));
         }
-        if (!Bytes.equals(region.getTableName(), this.tableName)) {
+        if (!region.getFullyQualifiedTableName().equals(this.tableName)) {
           return null;
         }
         return region;
@@ -282,7 +283,7 @@ class HMerge {
           continue;
         }
         HRegionInfo region = HRegionInfo.getHRegionInfo(currentRow);
-        if (!Bytes.equals(region.getTableName(), this.tableName)) {
+        if (!region.getFullyQualifiedTableName().equals(this.tableName)) {
           currentRow = metaScanner.next();
           continue;
         }

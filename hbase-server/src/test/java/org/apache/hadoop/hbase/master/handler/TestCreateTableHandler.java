@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -75,7 +76,7 @@ public class TestCreateTableHandler {
     final HMaster m = cluster.getMaster();
     final HTableDescriptor desc = new HTableDescriptor(TABLENAME);
     desc.addFamily(new HColumnDescriptor(FAMILYNAME));
-    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getName(), null,
+    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getFullyQualifiedTableName(), null,
         null) };
     CustomCreateTableHandler handler = new CustomCreateTableHandler(m, m.getMasterFileSystem(),
         desc, cluster.getConfiguration(), hRegionInfos, m);
@@ -103,7 +104,7 @@ public class TestCreateTableHandler {
     final HMaster m = cluster.getMaster();
     final HTableDescriptor desc = new HTableDescriptor(tableName);
     desc.addFamily(new HColumnDescriptor(FAMILYNAME));
-    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getName(), null,
+    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getFullyQualifiedTableName(), null,
         null) };
     CustomCreateTableHandler handler = new CustomCreateTableHandler(m, m.getMasterFileSystem(),
         desc, cluster.getConfiguration(), hRegionInfos, m);
@@ -132,8 +133,8 @@ public class TestCreateTableHandler {
     }
 
     @Override
-    protected List<HRegionInfo> handleCreateHdfsRegions(Path tableRootDir, String tableName)
-        throws IOException {
+    protected List<HRegionInfo> handleCreateHdfsRegions(Path tableRootDir,
+        FullyQualifiedTableName tableName) throws IOException {
       if (throwException) {
         throw new IOException("Test throws exceptions.");
       }

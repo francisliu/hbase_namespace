@@ -420,7 +420,7 @@ public class RegionMergeTransaction {
     }
 
     // Merged region is sorted between two merging regions in META
-    HRegionInfo mergedRegionInfo = new HRegionInfo(a.getTableName(), startKey,
+    HRegionInfo mergedRegionInfo = new HRegionInfo(a.getFullyQualifiedTableName(), startKey,
         endKey, false, rid);
     return mergedRegionInfo;
   }

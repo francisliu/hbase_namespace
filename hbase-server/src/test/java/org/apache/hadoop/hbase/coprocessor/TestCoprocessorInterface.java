@@ -33,6 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HBaseTestCase;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -263,7 +264,8 @@ public class TestCoprocessorInterface extends HBaseTestCase {
   }
 
   public void testSharedData() throws IOException {
-    byte [] tableName = Bytes.toBytes("testtable");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testtable");
     byte [][] families = { fam1, fam2, fam3 };
 
     Configuration hc = initSplit();
@@ -340,7 +342,8 @@ public class TestCoprocessorInterface extends HBaseTestCase {
   }
 
   public void testCoprocessorInterface() throws IOException {
-    byte [] tableName = Bytes.toBytes("testtable");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testtable");
     byte [][] families = { fam1, fam2, fam3 };
 
     Configuration hc = initSplit();
@@ -417,7 +420,7 @@ public class TestCoprocessorInterface extends HBaseTestCase {
     return r;
   }
 
-  HRegion initHRegion (byte [] tableName, String callingMethod,
+  HRegion initHRegion (FullyQualifiedTableName tableName, String callingMethod,
       Configuration conf, Class<?> [] implClasses, byte [][] families)
       throws IOException {
     HTableDescriptor htd = new HTableDescriptor(tableName);

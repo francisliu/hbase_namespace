@@ -50,7 +50,8 @@ import static org.junit.Assert.*;
 public class TestMaster {
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static final Log LOG = LogFactory.getLog(TestMaster.class);
-  private static final byte[] TABLENAME = Bytes.toBytes("TestMaster");
+  private static final FullyQualifiedTableName TABLENAME =
+      FullyQualifiedTableName.valueOf("TestMaster");
   private static final byte[] FAMILYNAME = Bytes.toBytes("fam");
   private static HBaseAdmin admin;
 
@@ -72,14 +73,12 @@ public class TestMaster {
     HMaster m = cluster.getMaster();
 
     HTable ht = TEST_UTIL.createTable(TABLENAME, FAMILYNAME);
-    assertTrue(m.assignmentManager.getZKTable().isEnabledTable
-        (Bytes.toString(TABLENAME)));
+    assertTrue(m.assignmentManager.getZKTable().isEnabledTable(TABLENAME));
     TEST_UTIL.loadTable(ht, FAMILYNAME);
     ht.close();
 
     List<Pair<HRegionInfo, ServerName>> tableRegions =
-      MetaReader.getTableRegionsAndLocations(m.getCatalogTracker(),
-          Bytes.toString(TABLENAME));
+      MetaReader.getTableRegionsAndLocations(m.getCatalogTracker(), TABLENAME);
     LOG.info("Regions after load: " + Joiner.on(',').join(tableRegions));
     assertEquals(1, tableRegions.size());
     assertArrayEquals(HConstants.EMPTY_START_ROW,
@@ -95,7 +94,7 @@ public class TestMaster {
       registerListener(EventType.RS_ZK_REGION_SPLIT, list);
 
     LOG.info("Splitting table");
-    TEST_UTIL.getHBaseAdmin().split(TABLENAME);
+    TEST_UTIL.getHBaseAdmin().split(TABLENAME.getName());
     LOG.info("Waiting for split result to be about to open");
     split.await(60, TimeUnit.SECONDS);
     try {
@@ -137,7 +136,8 @@ public class TestMaster {
 
   @Test
   public void testMoveThrowsUnknownRegionException() throws IOException {
-    byte[] tableName = Bytes.toBytes("testMoveThrowsUnknownRegionException");
+    FullyQualifiedTableName tableName =
+        FullyQualifiedTableName.valueOf("testMoveThrowsUnknownRegionException");
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor hcd = new HColumnDescriptor("value");
     htd.addFamily(hcd);

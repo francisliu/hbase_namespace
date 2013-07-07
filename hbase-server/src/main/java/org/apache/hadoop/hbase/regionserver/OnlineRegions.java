@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
 
@@ -58,9 +59,9 @@ interface OnlineRegions extends Server {
 
    /**
     * Get all online regions of a table in this RS.
-    * @param tableName
+    * @param fqtn
     * @return List of HRegion
     * @throws java.io.IOException
     */
-   public List<HRegion> getOnlineRegions(byte[] tableName) throws IOException;
+   public List<HRegion> getOnlineRegions(FullyQualifiedTableName fqtn) throws IOException;
 }

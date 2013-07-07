@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -72,7 +73,7 @@ public class MetaReader {
    * @throws IOException
    */
   public static Map<HRegionInfo, ServerName> fullScan(
-      CatalogTracker catalogTracker, final Set<String> disabledTables)
+      CatalogTracker catalogTracker, final Set<FullyQualifiedTableName> disabledTables)
   throws IOException {
     return fullScan(catalogTracker, disabledTables, false);
   }
@@ -90,7 +91,7 @@ public class MetaReader {
    * @throws IOException
    */
   public static Map<HRegionInfo, ServerName> fullScan(
-      CatalogTracker catalogTracker, final Set<String> disabledTables,
+      CatalogTracker catalogTracker, final Set<FullyQualifiedTableName> disabledTables,
       final boolean excludeOfflinedSplitParents)
   throws IOException {
     final Map<HRegionInfo, ServerName> regions =
@@ -102,9 +103,9 @@ public class MetaReader {
         Pair<HRegionInfo, ServerName> region = HRegionInfo.getHRegionInfoAndServerName(r);
         HRegionInfo hri = region.getFirst();
         if (hri  == null) return true;
-        if (hri.getTableNameAsString() == null) return true;
+        if (hri.getFullyQualifiedTableName() == null) return true;
         if (disabledTables.contains(
-            hri.getTableNameAsString())) return true;
+            hri.getFullyQualifiedTableName())) return true;
         // Are we to include split parents in the list?
         if (excludeOfflinedSplitParents && hri.isSplitParent()) return true;
         regions.put(hri, region.getSecond());
@@ -154,18 +155,18 @@ public class MetaReader {
   /**
    * Callers should call close on the returned {@link HTable} instance.
    * @param catalogTracker We'll use this catalogtracker's connection
-   * @param tableName Table to get an {@link HTable} against.
+   * @param fqtn Table to get an {@link HTable} against.
    * @return An {@link HTable} for <code>tableName</code>
    * @throws IOException
    */
   private static HTable getHTable(final CatalogTracker catalogTracker,
-      final byte [] tableName)
+      final FullyQualifiedTableName fqtn)
   throws IOException {
     // Passing the CatalogTracker's connection configuration ensures this
     // HTable instance uses the CatalogTracker's connection.
     org.apache.hadoop.hbase.client.HConnection c = catalogTracker.getConnection();
     if (c == null) throw new NullPointerException("No connection");
-    return new HTable(catalogTracker.getConnection().getConfiguration(), tableName);
+    return new HTable(catalogTracker.getConnection().getConfiguration(), fqtn);
   }
 
   /**
@@ -269,18 +270,17 @@ public class MetaReader {
    * Checks if the specified table exists.  Looks at the META table hosted on
    * the specified server.
    * @param catalogTracker
-   * @param tableName table to check
+   * @param fqtn table to check
    * @return true if the table exists in meta, false if not
    * @throws IOException
    */
   public static boolean tableExists(CatalogTracker catalogTracker,
-      String tableName)
+      final FullyQualifiedTableName fqtn)
   throws IOException {
-    if (tableName.equals(HTableDescriptor.META_TABLEDESC.getNameAsString())) {
+    if (fqtn.equals(HTableDescriptor.META_TABLEDESC.getFullyQualifiedTableName())) {
       // Catalog tables always exist.
       return true;
     }
-    final byte [] tableNameBytes = Bytes.toBytes(tableName);
     // Make a version of ResultCollectingVisitor that only collects the first
     CollectingVisitor<HRegionInfo> visitor = new CollectingVisitor<HRegionInfo>() {
       private HRegionInfo current = null;
@@ -293,7 +293,7 @@ public class MetaReader {
           LOG.warn("No serialized HRegionInfo in " + r);
           return true;
         }
-        if (!isInsideTable(this.current, tableNameBytes)) return false;
+        if (!isInsideTable(this.current, fqtn)) return false;
         // Else call super and add this Result to the collection.
         super.visit(r);
         // Stop collecting regions from table after we get one.
@@ -306,7 +306,7 @@ public class MetaReader {
         this.results.add(this.current);
       }
     };
-    fullScan(catalogTracker, visitor, getTableStartRowForMeta(tableNameBytes));
+    fullScan(catalogTracker, visitor, getTableStartRowForMeta(fqtn));
     // If visitor has results >= 1 then table exists.
     return visitor.getResults().size() >= 1;
   }
@@ -314,31 +314,31 @@ public class MetaReader {
   /**
    * Gets all of the regions of the specified table.
    * @param catalogTracker
-   * @param tableName
+   * @param fqtn
    * @return Ordered list of {@link HRegionInfo}.
    * @throws IOException
    */
   public static List<HRegionInfo> getTableRegions(CatalogTracker catalogTracker,
-      byte [] tableName)
+      FullyQualifiedTableName fqtn)
   throws IOException {
-    return getTableRegions(catalogTracker, tableName, false);
+    return getTableRegions(catalogTracker, fqtn, false);
   }
 
   /**
    * Gets all of the regions of the specified table.
    * @param catalogTracker
-   * @param tableName
+   * @param fqtn
    * @param excludeOfflinedSplitParents If true, do not include offlined split
    * parents in the return.
    * @return Ordered list of {@link HRegionInfo}.
    * @throws IOException
    */
   public static List<HRegionInfo> getTableRegions(CatalogTracker catalogTracker,
-      byte [] tableName, final boolean excludeOfflinedSplitParents)
+      FullyQualifiedTableName fqtn, final boolean excludeOfflinedSplitParents)
   throws IOException {
     List<Pair<HRegionInfo, ServerName>> result = null;
     try {
-      result = getTableRegionsAndLocations(catalogTracker, tableName,
+      result = getTableRegionsAndLocations(catalogTracker, fqtn,
         excludeOfflinedSplitParents);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);
@@ -357,22 +357,22 @@ public class MetaReader {
 
   /**
    * @param current
-   * @param tableName
+   * @param fqtn
    * @return True if <code>current</code> tablename is equal to
    * <code>tableName</code>
    */
-  static boolean isInsideTable(final HRegionInfo current, final byte [] tableName) {
-    return Bytes.equals(tableName, current.getTableName());
+  static boolean isInsideTable(final HRegionInfo current, final FullyQualifiedTableName fqtn) {
+    return fqtn.equals(current.getFullyQualifiedTableName());
   }
 
   /**
-   * @param tableName
+   * @param fqtn
    * @return Place to start Scan in <code>.META.</code> when passed a
    * <code>tableName</code>; returns &lt;tableName&rt; &lt;,&rt; &lt;,&rt;
    */
-  static byte [] getTableStartRowForMeta(final byte [] tableName) {
-    byte [] startRow = new byte[tableName.length + 2];
-    System.arraycopy(tableName, 0, startRow, 0, tableName.length);
+  static byte [] getTableStartRowForMeta(FullyQualifiedTableName fqtn) {
+    byte [] startRow = new byte[fqtn.getName().length + 2];
+    System.arraycopy(fqtn.getName(), 0, startRow, 0, fqtn.getName().length);
     startRow[startRow.length - 2] = HConstants.DELIMITER;
     startRow[startRow.length - 1] = HConstants.DELIMITER;
     return startRow;
@@ -384,11 +384,11 @@ public class MetaReader {
    * This is a better alternative to just using a start row and scan until
    * it hits a new table since that requires parsing the HRI to get the table
    * name.
-   * @param tableName bytes of table's name
+   * @param fqtn bytes of table's name
    * @return configured Scan object
    */
-  public static Scan getScanForTableName(byte[] tableName) {
-    String strName = Bytes.toString(tableName);
+  public static Scan getScanForTableName(FullyQualifiedTableName fqtn) {
+    String strName = fqtn.getNameAsString();
     // Start key is just the table name with delimiters
     byte[] startKey = Bytes.toBytes(strName + ",,");
     // Stop key appends the smallest possible char to the table name
@@ -401,30 +401,30 @@ public class MetaReader {
 
   /**
    * @param catalogTracker
-   * @param tableName
+   * @param fqtn
    * @return Return list of regioninfos and server.
    * @throws IOException
    * @throws InterruptedException
    */
   public static List<Pair<HRegionInfo, ServerName>>
-  getTableRegionsAndLocations(CatalogTracker catalogTracker, String tableName)
+  getTableRegionsAndLocations(CatalogTracker catalogTracker, FullyQualifiedTableName fqtn)
   throws IOException, InterruptedException {
-    return getTableRegionsAndLocations(catalogTracker, Bytes.toBytes(tableName),
+    return getTableRegionsAndLocations(catalogTracker, fqtn,
       true);
   }
 
   /**
    * @param catalogTracker
-   * @param tableName
+   * @param fqtn
    * @return Return list of regioninfos and server addresses.
    * @throws IOException
    * @throws InterruptedException
    */
   public static List<Pair<HRegionInfo, ServerName>>
   getTableRegionsAndLocations(final CatalogTracker catalogTracker,
-      final byte [] tableName, final boolean excludeOfflinedSplitParents)
+      final FullyQualifiedTableName fqtn, final boolean excludeOfflinedSplitParents)
   throws IOException, InterruptedException {
-    if (Bytes.equals(tableName, HConstants.META_TABLE_NAME)) {
+    if (fqtn.equals(HConstants.META_TABLE_NAME)) {
       // If meta, do a bit of special handling.
       ServerName serverName = catalogTracker.getMetaLocation();
       List<Pair<HRegionInfo, ServerName>> list =
@@ -446,7 +446,7 @@ public class MetaReader {
           LOG.warn("No serialized HRegionInfo in " + r);
           return true;
         }
-        if (!isInsideTable(hri, tableName)) return false;
+        if (!isInsideTable(hri, fqtn)) return false;
         if (excludeOfflinedSplitParents && hri.isSplitParent()) return true;
         ServerName sn = HRegionInfo.getServerName(r);
         // Populate this.current so available when we call #add
@@ -460,7 +460,7 @@ public class MetaReader {
         this.results.add(this.current);
       }
     };
-    fullScan(catalogTracker, visitor, getTableStartRowForMeta(tableName));
+    fullScan(catalogTracker, visitor, getTableStartRowForMeta(fqtn));
     return visitor.getResults();
   }
 

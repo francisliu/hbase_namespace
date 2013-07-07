@@ -351,24 +351,17 @@ public final class HConstants {
   // should go down.
 
   /** The root table's name.*/
-  public static final byte [] ROOT_TABLE_NAME =
-      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root").getName();
-
-  public static final String ROOT_TABLE_NAME_STR =
-      Bytes.toString(ROOT_TABLE_NAME);
+  public static final FullyQualifiedTableName ROOT_TABLE_NAME =
+      FullyQualifiedTableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root");
 
   /** The META table's name. */
-  public static final byte [] META_TABLE_NAME =
-      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta").getName();
-
-  public static final String META_TABLE_NAME_STR =
-      Bytes.toString(META_TABLE_NAME);
+  public static final FullyQualifiedTableName META_TABLE_NAME =
+      FullyQualifiedTableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta");
 
   /** The Namespace table's name. */
-  public static final byte [] NAMESPACE_TABLE_NAME =
-      Bytes.toBytes(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+TableName.NAMESPACE_DELIM+"namespace");
-  public static final String NAMESPACE_TABLE_NAME_STR =
-      Bytes.toString(NAMESPACE_TABLE_NAME);
+  public static final FullyQualifiedTableName NAMESPACE_TABLE_NAME =
+      FullyQualifiedTableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+
+          FullyQualifiedTableName.NAMESPACE_DELIM+"namespace");
 
   public static final String BASE_NAMESPACE_DIR = ".data";
 
@@ -824,7 +817,7 @@ public final class HConstants {
   /** Directories that are not HBase user table directories */
   public static final List<String> HBASE_NON_USER_TABLE_DIRS =
     Collections.unmodifiableList(Arrays.asList((String[])ArrayUtils.addAll(
-      new String[] { Bytes.toString(META_TABLE_NAME), Bytes.toString(ROOT_TABLE_NAME) },
+      new String[] { META_TABLE_NAME.getNameAsString(), ROOT_TABLE_NAME.getNameAsString() },
       HBASE_NON_TABLE_DIRS.toArray())));
 
   /** Health script related settings. */

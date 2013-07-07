@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HDFSBlocksDistribution;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -122,7 +123,7 @@ class RegionLocationFinder {
   protected List<ServerName> internalGetTopBlockLocation(HRegionInfo region) {
     List<ServerName> topServerNames = null;
     try {
-      HTableDescriptor tableDescriptor = getTableDescriptor(region.getTableName());
+      HTableDescriptor tableDescriptor = getTableDescriptor(region.getFullyQualifiedTableName());
       if (tableDescriptor != null) {
         HDFSBlocksDistribution blocksDistribution =
             HRegion.computeHDFSBlocksDistribution(getConf(), tableDescriptor, region);
@@ -144,15 +145,15 @@ class RegionLocationFinder {
    * @return HTableDescriptor
    * @throws IOException
    */
-  protected HTableDescriptor getTableDescriptor(byte[] tableName) throws IOException {
+  protected HTableDescriptor getTableDescriptor(FullyQualifiedTableName tableName) throws IOException {
     HTableDescriptor tableDescriptor = null;
     try {
       if (this.services != null) {
-        tableDescriptor = this.services.getTableDescriptors().get(Bytes.toString(tableName));
+        tableDescriptor = this.services.getTableDescriptors().get(tableName);
       }
     } catch (FileNotFoundException fnfe) {
       LOG.debug("FileNotFoundException during getTableDescriptors." + " Current table name = "
-          + Bytes.toStringBinary(tableName), fnfe);
+          + tableName, fnfe);
     }
 
     return tableDescriptor;

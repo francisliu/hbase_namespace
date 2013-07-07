@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
@@ -95,15 +96,14 @@ class ZooKeeperRegistry implements Registry {
   }
 
   @Override
-  public boolean isTableOnlineState(byte [] tableName, boolean enabled)
+  public boolean isTableOnlineState(FullyQualifiedTableName fqtn, boolean enabled)
   throws IOException {
-    String tableNameStr = Bytes.toString(tableName);
     ZooKeeperKeepAliveConnection zkw = hci.getKeepAliveZooKeeperWatcher();
     try {
       if (enabled) {
-        return ZKTableReadOnly.isEnabledTable(zkw, tableNameStr);
+        return ZKTableReadOnly.isEnabledTable(zkw, fqtn);
       }
-      return ZKTableReadOnly.isDisabledTable(zkw, tableNameStr);
+      return ZKTableReadOnly.isDisabledTable(zkw, fqtn);
     } catch (KeeperException e) {
       throw new IOException("Enable/Disable failed", e);
     } finally {

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.ServerName;
@@ -253,7 +254,7 @@ public class TestFavoredNodeAssignmentHelper {
     // create regions
     List<HRegionInfo> regions = new ArrayList<HRegionInfo>(regionCount);
     for (int i = 0; i < regionCount; i++) {
-      HRegionInfo region = new HRegionInfo(("foobar"+i).getBytes());
+      HRegionInfo region = new HRegionInfo(FullyQualifiedTableName.valueOf("foobar" + i));
       regions.add(region);
     }
     // place the regions
@@ -281,7 +282,7 @@ public class TestFavoredNodeAssignmentHelper {
     // create some regions
     List<HRegionInfo> regions = new ArrayList<HRegionInfo>(regionCount);
     for (int i = 0; i < regionCount; i++) {
-      HRegionInfo region = new HRegionInfo(("foobar" + i).getBytes());
+      HRegionInfo region = new HRegionInfo(FullyQualifiedTableName.valueOf("foobar" + i));
       regions.add(region);
     }
     // place those regions in primary RSs

@@ -262,7 +262,7 @@ policy implementations, perhaps) ahead of observers.
     "TestClassloading.jar");
 
   // create a table that references the jar
-  HTableDescriptor htd = new HTableDescriptor(getClass().getName());
+  HTableDescriptor htd = new HTableDescriptor(getClass().getFullyQualifiedTableName());
   htd.addFamily(new HColumnDescriptor("test"));
   htd.setValue("Coprocessor$1",
     path.toString() +
