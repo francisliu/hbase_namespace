@@ -1042,7 +1042,8 @@ public abstract class FSUtils {
         }
       }
       // compute percentage per table and store in result list
-      frags.put(d.getName(), Math.round((float) cfFrag / cfCount * 100));
+      frags.put(FSUtils.getTableName(d).getNameAsString(),
+          Math.round((float) cfFrag / cfCount * 100));
     }
     // set overall percentage for all tables
     frags.put("-TOTAL-", Math.round((float) cfFragTotal / cfCountTotal * 100));
@@ -1139,7 +1140,20 @@ public abstract class FSUtils {
    */
   public static Path getTableDir(Path rootdir, final TableName tableName) {
     return new Path(getNamespaceDir(rootdir, tableName.getNamespaceAsString()),
-        tableName.getNameAsString());
+        tableName.getQualifierAsString());
+  }
+
+  /**
+   * Returns the {@link org.apache.hadoop.hbase.TableName} object representing
+   * the table directory under
+   * path rootdir
+   *
+   * @param rootdir qualified path of HBase root directory
+   * @param tablePath path of table
+   * @return {@link org.apache.hadoop.fs.Path} for table
+   */
+  public static TableName getTableName(Path tablePath) {
+    return TableName.valueOf(tablePath.getParent().getName(), tablePath.getName());
   }
 
   /**
@@ -1532,7 +1546,7 @@ public abstract class FSUtils {
     // only include the directory paths to tables
     for (Path tableDir : FSUtils.getTableDirs(fs, hbaseRootDir)) {
       getTableStoreFilePathMap(map, fs, hbaseRootDir,
-          TableName.valueOf(tableDir.getName()));
+          FSUtils.getTableName(tableDir));
     }
     return map;
   }

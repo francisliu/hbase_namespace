@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.regionserver.wal.HLogFactory;
 import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
 import org.apache.hadoop.hbase.regionserver.wal.HLogUtil;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
 
 /**
  * If the snapshot has references to one or more log files,
@@ -110,7 +111,7 @@ class SnapshotLogSplitter implements Closeable {
       final Map<byte[], byte[]> regionsMap) {
     this.regionsMap = regionsMap;
     this.snapshotTableName = snapshotTableName;
-    this.tableName = TableName.valueOf(tableDir.getName());
+    this.tableName = FSUtils.getTableName(tableDir);
     this.tableDir = tableDir;
     this.conf = conf;
     this.fs = fs;

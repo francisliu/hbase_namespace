@@ -99,7 +99,7 @@ public class TestSnapshotLogSplitter {
    */
   private void splitTestLogs(final TableName tableName,
                              final Map<byte[], byte[]> regionsMap) throws IOException {
-    Path tableDir = new Path(TEST_UTIL.getDataTestDir(), tableName.getNameAsString());
+    Path tableDir = FSUtils.getTableDir(TEST_UTIL.getDataTestDir(), tableName);
     SnapshotLogSplitter logSplitter = new SnapshotLogSplitter(conf, fs, tableDir,
       tableName, regionsMap);
     try {

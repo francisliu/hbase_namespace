@@ -33,13 +33,17 @@ public final class TableName implements Comparable<TableName> {
 
   /** Namespace delimiter */
   //this should always be only 1 byte long
-  public final static char NAMESPACE_DELIM = '.';
+  public final static char NAMESPACE_DELIM = ':';
   // A non-capture group so that this can be embedded.
   // regex is a bit more complicated to support nuance of tables
   // in default namespace
+  public static final String VALID_NAMESPACE_REGEX =
+      "(?:[a-zA-Z_0-9]+)";
+  public static final String VALID_TABLE_QUALIFIER_REGEX =
+      "(?:[a-zA-Z_0-9][a-zA-Z_0-9-.]*)";
   public static final String VALID_USER_TABLE_REGEX =
-      "(?:(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.+)+(?:[a-zA-Z_0-9-]+\\.*))|" +
-         "(?:(?:[a-zA-Z_0-9][a-zA-Z_0-9-]*\\.*)))";
+      "(?:(?:(?:"+VALID_NAMESPACE_REGEX+"\\"+NAMESPACE_DELIM+")?)" +
+         "(?:"+VALID_TABLE_QUALIFIER_REGEX+"))";
 
   private byte[] name;
   private String nameAsString;
@@ -71,7 +75,6 @@ public final class TableName implements Comparable<TableName> {
     int namespaceDelimIndex = com.google.common.primitives.Bytes.lastIndexOf(tableName,
         (byte) NAMESPACE_DELIM);
     if (namespaceDelimIndex == 0 || namespaceDelimIndex == -1){
-      isLegalNamespaceName(tableName);
       isLegalTableQualifierName(tableName);
     } else {
       isLegalNamespaceName(tableName, 0, namespaceDelimIndex);
@@ -87,19 +90,21 @@ public final class TableName implements Comparable<TableName> {
   private static void isLegalTableQualifierName(final byte[] qualifierName,
                                                 int offset,
                                                 int length){
-    boolean foundDot = false;
+    if (qualifierName[offset] == '.' || qualifierName[offset] == '-') {
+      throw new IllegalArgumentException("Illegal first character <" + qualifierName[0] +
+          "> at 0. Namespaces can only start with alphanumeric " +
+          "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(qualifierName));
+    }
     for (int i = offset; i < length; i++) {
-      if ((Character.isLetterOrDigit(qualifierName[i]) || qualifierName[i] == '_' ||
-           qualifierName[i] == '-') && !foundDot) {
-        continue;
-      }
-      if (qualifierName[i] == '.') {
-        foundDot = true;
+      if (Character.isLetterOrDigit(qualifierName[i]) ||
+          qualifierName[i] == '_' ||
+          qualifierName[i] == '-' ||
+          qualifierName[i] == '.') {
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + qualifierName[i] +
         "> at " + i + ". User-space table qualifiers can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9-]: " +
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " +
           Bytes.toString(qualifierName, offset, length));
     }
   }
@@ -116,20 +121,13 @@ public final class TableName implements Comparable<TableName> {
    * @param length
    */
   public static void isLegalNamespaceName(byte[] namespaceName, int offset, int length) {
-    if (namespaceName[offset] == '.' || namespaceName[offset] == '-') {
-      throw new IllegalArgumentException("Illegal first character <" + namespaceName[0] +
-          "> at 0. Namespaces can only start with alphanumeric " +
-          "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName));
-    }
     for (int i = offset; i < length; i++) {
-      if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_' ||
-          namespaceName[i] == '-' ||
-          namespaceName[i] == '.') {
+      if (Character.isLetterOrDigit(namespaceName[i])|| namespaceName[i] == '_') {
         continue;
       }
       throw new IllegalArgumentException("Illegal character <" + namespaceName[i] +
         "> at " + i + ". Namespaces can only contain " +
-        "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " + Bytes.toString(namespaceName,
+        "'alphanumeric characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(namespaceName,
           offset, length));
     }
   }

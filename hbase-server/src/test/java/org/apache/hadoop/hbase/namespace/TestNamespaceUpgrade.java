@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.AfterClass;
@@ -103,8 +104,7 @@ public class TestNamespaceUpgrade {
       }
       Assert.assertEquals(currentKeys.length, count);
     }
-    assertNotNull(TEST_UTIL.getHBaseAdmin().getNamespaceDescriptor("ns1"));
-    assertNotNull(TEST_UTIL.getHBaseAdmin().getNamespaceDescriptor("ns.two"));
+    assertEquals(2, TEST_UTIL.getHBaseAdmin().listNamespaceDescriptors().size());
   }
 
   private static File untar(final File testdir) throws IOException {
@@ -166,7 +166,8 @@ public class TestNamespaceUpgrade {
     TEST_UTIL.getHBaseAdmin().createNamespace(NamespaceDescriptor.create(newNS).build());
     for(String table: tables) {
       TEST_UTIL.getHBaseAdmin().snapshot(table+"_snapshot3", table);
-      String newTableName = newNS+"."+table.replaceAll("[.]","_")+"_clone3";
+      final String newTableName =
+          newNS+TableName.NAMESPACE_DELIM+table.replaceAll("[.]", "_")+"_clone3";
       TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot3", newTableName);
       int count = 0;
       for(Result res: new HTable(TEST_UTIL.getConfiguration(), newTableName).getScanner(new
@@ -174,7 +175,36 @@ public class TestNamespaceUpgrade {
         assertEquals(currentKeys[count++], Bytes.toString(res.getRow()));
       }
       Assert.assertEquals(newTableName, currentKeys.length, count);
+      TEST_UTIL.getHBaseAdmin().flush(newTableName);
+      TEST_UTIL.getHBaseAdmin().majorCompact(newTableName);
+      TEST_UTIL.waitFor(2000, new Waiter.Predicate<IOException>() {
+        @Override
+        public boolean evaluate() throws IOException {
+          try {
+            return TEST_UTIL.getHBaseAdmin().getCompactionState(newTableName) ==
+                AdminProtos.GetRegionInfoResponse.CompactionState.NONE;
+          } catch (InterruptedException e) {
+            throw new IOException(e);
+          }
+        }
+      });
     }
+
+    String nextNS = "nextNS";
+    TEST_UTIL.getHBaseAdmin().createNamespace(NamespaceDescriptor.create(nextNS).build());
+    for(String table: tables) {
+      String srcTable = newNS+TableName.NAMESPACE_DELIM+table.replaceAll("[.]","_")+"_clone3";
+      TEST_UTIL.getHBaseAdmin().snapshot(table+"_snapshot4", srcTable);
+      String newTableName = nextNS+TableName.NAMESPACE_DELIM+table.replaceAll("[.]","_")+"_clone4";
+      TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot4", newTableName);
+      int count = 0;
+      for(Result res: new HTable(TEST_UTIL.getConfiguration(), newTableName).getScanner(new
+          Scan())) {
+        assertEquals(currentKeys[count++], Bytes.toString(res.getRow()));
+      }
+      Assert.assertEquals(newTableName, currentKeys.length, count);
+    }
+
   }
 }
 

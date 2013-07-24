@@ -18,6 +18,8 @@
 package org.apache.hadoop.hbase.snapshot;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Collections;
 
 import org.apache.commons.logging.Log;

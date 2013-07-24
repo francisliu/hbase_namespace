@@ -66,12 +66,14 @@ public class HFileLink extends FileLink {
    * and the bulk loaded (_SeqId_[0-9]+_) hfiles.
    */
   public static final String LINK_NAME_REGEX =
-    String.format("%s=%s-%s", TableName.VALID_USER_TABLE_REGEX,
+    String.format("(?:(?:%s,)?)%s=%s-%s",
+      TableName.VALID_NAMESPACE_REGEX, TableName.VALID_TABLE_QUALIFIER_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX, StoreFileInfo.HFILE_NAME_REGEX);
 
   /** Define the HFile Link name parser in the form of: table=region-hfile */
   private static final Pattern LINK_NAME_PATTERN =
-    Pattern.compile(String.format("^(%s)=(%s)-(%s)$", TableName.VALID_USER_TABLE_REGEX,
+    Pattern.compile(String.format("^((?:%s,)?%s)=(%s)-(%s)$",
+      TableName.VALID_NAMESPACE_REGEX, TableName.VALID_TABLE_QUALIFIER_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX, StoreFileInfo.HFILE_NAME_REGEX));
 
   /**
@@ -79,8 +81,17 @@ public class HFileLink extends FileLink {
    * that can be found in /hbase/table/region/family/
    */
   private static final Pattern REF_OR_HFILE_LINK_PATTERN =
-    Pattern.compile(String.format("^(%s)=(%s)-(.+)$", TableName.VALID_USER_TABLE_REGEX,
+    Pattern.compile(String.format("^((?:%s,)?%s)=(%s)-(.+)$",
+      TableName.VALID_NAMESPACE_REGEX, TableName.VALID_TABLE_QUALIFIER_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX));
+
+  /**
+   * HFileLink FS delimiter for namespace
+   * HFileLink is the only place where table name is written as part of a file/directory name
+   * fully qualified. Since the chosen delimiter is ':' and it is not a valid filesystem
+   * character on windows we had to pick a different delimiter for table names in HFileLinks.
+   */
+  private static final String NAMESPACE_DELIM = ",";
 
   private final Path archivePath;
   private final Path originPath;
@@ -159,7 +170,7 @@ public class HFileLink extends FileLink {
     }
 
     // Convert the HFileLink name into a real table/region/cf/hfile path.
-    TableName tableName = TableName.valueOf(m.group(1));
+    TableName tableName = TableName.valueOf(fromFsTableName(m.group(1)));
     String regionName = m.group(2);
     String hfileName = m.group(3);
     String familyName = path.getParent().getName();
@@ -233,7 +244,10 @@ public class HFileLink extends FileLink {
    */
   public static String createHFileLinkName(final TableName tableName,
       final String regionName, final String hfileName) {
-    return String.format("%s=%s-%s", tableName.getNameAsString(), regionName, hfileName);
+    String s = String.format("%s=%s-%s",
+        toFsTableName(tableName.getNameAsString()),
+        regionName, hfileName);
+    return s;
   }
 
   /**
@@ -278,7 +292,8 @@ public class HFileLink extends FileLink {
       final String hfileName) throws IOException {
     String familyName = dstFamilyPath.getName();
     String regionName = dstFamilyPath.getParent().getName();
-    String tableName = dstFamilyPath.getParent().getParent().getName();
+    String tableName = FSUtils.getTableName(dstFamilyPath.getParent().getParent())
+        .getNameAsString();
 
     String name = createHFileLinkName(linkedTable, linkedRegion, hfileName);
     String refName = createBackReferenceName(tableName, regionName);
@@ -333,7 +348,7 @@ public class HFileLink extends FileLink {
    * Create the back reference name
    */
   private static String createBackReferenceName(final String tableName, final String regionName) {
-    return regionName + "." + tableName;
+    return regionName + "." + toFsTableName(tableName);
   }
 
   /**
@@ -347,8 +362,8 @@ public class HFileLink extends FileLink {
   public static Path getHFileFromBackReference(final Path rootDir, final Path linkRefPath) {
     int separatorIndex = linkRefPath.getName().indexOf('.');
     String linkRegionName = linkRefPath.getName().substring(0, separatorIndex);
-    TableName linkTableName = TableName.valueOf(linkRefPath.getName()
-        .substring(separatorIndex + 1));
+    String tableSubstr = fromFsTableName(linkRefPath.getName().substring(separatorIndex + 1));
+    TableName linkTableName = TableName.valueOf(tableSubstr);
     String hfileName = getBackReferenceFileName(linkRefPath.getParent());
     Path familyPath = linkRefPath.getParent().getParent();
     Path regionPath = familyPath.getParent();
@@ -372,5 +387,14 @@ public class HFileLink extends FileLink {
   public static Path getHFileFromBackReference(final Configuration conf, final Path linkRefPath)
       throws IOException {
     return getHFileFromBackReference(FSUtils.getRootDir(conf), linkRefPath);
+  }
+
+  private static String toFsTableName(String tableName) {
+    return tableName.replaceAll("["+TableName.NAMESPACE_DELIM+"]",
+            NAMESPACE_DELIM);
+  }
+
+  private static String fromFsTableName(String fsTableName) {
+    return fsTableName.replaceAll("["+NAMESPACE_DELIM+"]", TableName.NAMESPACE_DELIM+"");
   }
 }

@@ -240,7 +240,7 @@ public class TestStoreFile extends HBaseTestCase {
     // create link to store file. <root>/clone/region/<cf>/<hfile>-<region>-<table>
     HRegionInfo hriClone = new HRegionInfo(TableName.valueOf("clone"));
     HRegionFileSystem cloneRegionFs = HRegionFileSystem.createRegionOnFileSystem(
-      testConf, fs, new Path(this.testDir, hri.getTableName().getNameAsString()),
+      testConf, fs, FSUtils.getTableDir(this.testDir, hri.getTableName()),
         hriClone);
     Path dstPath = cloneRegionFs.getStoreDir(TEST_FAMILY);
     HFileLink.create(testConf, this.fs, dstPath, hri, storeFilePath.getName());

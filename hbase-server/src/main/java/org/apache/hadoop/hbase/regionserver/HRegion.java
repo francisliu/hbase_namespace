@@ -5190,7 +5190,7 @@ public class HRegion implements HeapSize { // , Writable{
   throws IOException {
     HRegion region = null;
     // Currently expects tables have one region only.
-    if (p.getName().startsWith(HConstants.META_TABLE_NAME.getNameAsString())) {
+    if (FSUtils.getTableName(p).equals(HConstants.META_TABLE_NAME)) {
       region = HRegion.newHRegion(p, log, fs, c,
         HRegionInfo.FIRST_META_REGIONINFO, HTableDescriptor.META_TABLEDESC, null);
     } else {
@@ -5554,7 +5554,7 @@ public class HRegion implements HeapSize { // , Writable{
     final Configuration c = HBaseConfiguration.create();
     final FileSystem fs = FileSystem.get(c);
     final Path logdir = new Path(c.get("hbase.tmp.dir"));
-    final String logname = "hlog" + tableDir.getName()
+    final String logname = "hlog" + FSUtils.getTableName(tableDir)
       + EnvironmentEdgeManager.currentTimeMillis();
 
     final HLog log = HLogFactory.createHLog(fs, logdir, logname, c);

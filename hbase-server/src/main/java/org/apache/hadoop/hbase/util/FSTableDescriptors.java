@@ -188,7 +188,7 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-        htd = get(TableName.valueOf(d.getName()));
+        htd = get(FSUtils.getTableName(d));
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
@@ -211,13 +211,13 @@ public class FSTableDescriptors implements TableDescriptors {
     for (Path d: tableDirs) {
       HTableDescriptor htd = null;
       try {
-        htd = get(TableName.valueOf(d.getName()));
+        htd = get(FSUtils.getTableName(d));
       } catch (FileNotFoundException fnfe) {
         // inability of retrieving one HTD shouldn't stop getting the remaining
         LOG.warn("Trouble retrieving htd", fnfe);
       }
       if (htd == null) continue;
-      htds.put(d.getName(), htd);
+      htds.put(FSUtils.getTableName(d).getNameAsString(), htd);
     }
     return htds;
   }
@@ -419,6 +419,7 @@ public class FSTableDescriptors implements TableDescriptors {
         || tableName.compareTo(HConstants.META_TABLE_NAME) == 0) {
       return null;
     }
+    LOG.info("-->modTime:"+FSUtils.getTableDir(hbaseRootDir, tableName));
     return getTableDescriptorModtime(fs,
         FSUtils.getTableDir(hbaseRootDir, tableName));
   }
@@ -447,7 +448,7 @@ public class FSTableDescriptors implements TableDescriptors {
     }
     if (!ProtobufUtil.isPBMagicPrefix(content)) {
       // Convert the file over to be pb before leaving here.
-      createTableDescriptor(fs, tableDir.getParent(), htd, true);
+      createTableDescriptor(fs, FSUtils.getRootDir(fs.getConf()), htd, true);
     }
     return new TableDescriptorModtime(status.getModificationTime(), htd);
   }

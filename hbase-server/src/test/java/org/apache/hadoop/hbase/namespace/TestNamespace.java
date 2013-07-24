@@ -172,29 +172,6 @@ public class TestNamespace {
   }
 
   @Test
-  public void createDottedNS() throws Exception {
-    String testName = "createDottedNS";
-    String nsName = prefix+"_"+testName+".dot2.dot3";
-    LOG.info(testName);
-
-    //create namespace and verify
-    admin.createNamespace(NamespaceDescriptor.create(nsName).build());
-    assertEquals(3, admin.listNamespaceDescriptors().size());
-    TEST_UTIL.waitFor(60000, new Waiter.Predicate<Exception>() {
-      @Override
-      public boolean evaluate() throws Exception {
-        return zkNamespaceManager.list().size() == 3;
-      }
-    });
-    assertNotNull(zkNamespaceManager.get(nsName));
-    //remove namespace and verify
-    admin.deleteNamespace(nsName);
-    assertEquals(2, admin.listNamespaceDescriptors().size());
-    assertEquals(2, zkNamespaceManager.list().size());
-    assertNull(zkNamespaceManager.get(nsName));
-  }
-
-  @Test
   public void createDoubleTest() throws IOException, InterruptedException {
     String testName = "createDoubleTest";
     String nsName = prefix+"_"+testName;
@@ -223,7 +200,7 @@ public class TestNamespace {
     String nsName = prefix+"_"+testName;
     LOG.info(testName);
 
-    HTableDescriptor desc = new HTableDescriptor(nsName+".my_table");
+    HTableDescriptor desc = new HTableDescriptor(nsName+":my_table");
     HColumnDescriptor colDesc = new HColumnDescriptor("my_cf");
     desc.addFamily(colDesc);
     try {
@@ -237,7 +214,8 @@ public class TestNamespace {
     TEST_UTIL.waitTableAvailable(desc.getTableName().getName(), 10000);
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
     assertTrue(fs.exists(new Path(master.getMasterFileSystem().getRootDir(),
-        new Path(HConstants.BASE_NAMESPACE_DIR, new Path(nsName, desc.getNameAsString())))));
+        new Path(HConstants.BASE_NAMESPACE_DIR,
+            new Path(nsName, desc.getTableName().getQualifierAsString())))));
     assertEquals(1, admin.listTables().length);
 
     //verify non-empty namespace can't be removed
@@ -276,7 +254,7 @@ public class TestNamespace {
 
   @Test
   public void createTableInSystemNamespace() throws Exception {
-    String tableName = "hbase.createTableInSystemNamespace";
+    String tableName = "hbase:createTableInSystemNamespace";
     HTableDescriptor desc = new HTableDescriptor(tableName);
     HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
     desc.addFamily(colDesc);
