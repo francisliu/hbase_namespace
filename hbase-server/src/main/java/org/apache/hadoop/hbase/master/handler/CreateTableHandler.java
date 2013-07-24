@@ -28,7 +28,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
@@ -79,7 +79,7 @@ public class CreateTableHandler extends EventHandler {
     this.assignmentManager = masterServices.getAssignmentManager();
     this.tableLockManager = masterServices.getTableLockManager();
 
-    this.tableLock = this.tableLockManager.writeLock(this.hTableDescriptor.getFullyQualifiedTableName()
+    this.tableLock = this.tableLockManager.writeLock(this.hTableDescriptor.getTableName()
         , EventType.C_M_CREATE_TABLE.toString());
   }
 
@@ -102,7 +102,7 @@ public class CreateTableHandler extends EventHandler {
     this.tableLock.acquire();
     boolean success = false;
     try {
-      FullyQualifiedTableName tableName = this.hTableDescriptor.getFullyQualifiedTableName();
+      TableName tableName = this.hTableDescriptor.getTableName();
       if (MetaReader.tableExists(catalogTracker, tableName)) {
         throw new TableExistsException(tableName);
       }
@@ -144,7 +144,7 @@ public class CreateTableHandler extends EventHandler {
 
   @Override
   public void process() {
-    FullyQualifiedTableName tableName = this.hTableDescriptor.getFullyQualifiedTableName();
+    TableName tableName = this.hTableDescriptor.getTableName();
     LOG.info("Create table " + tableName);
 
     try {
@@ -176,7 +176,7 @@ public class CreateTableHandler extends EventHandler {
       // It will block the creation saying TableAlreadyExists.
       try {
         this.assignmentManager.getZKTable().removeEnablingTable(
-            this.hTableDescriptor.getFullyQualifiedTableName(), false);
+            this.hTableDescriptor.getTableName(), false);
       } catch (KeeperException e) {
         // Keeper exception should not happen here
         LOG.error("Got a keeper exception while removing the ENABLING table znode "
@@ -199,7 +199,7 @@ public class CreateTableHandler extends EventHandler {
    *   [If something fails here: we still have the table in disabled state]
    * - Update ZooKeeper with the enabled state
    */
-  private void handleCreateTable(FullyQualifiedTableName tableName)
+  private void handleCreateTable(TableName tableName)
       throws IOException, KeeperException {
     Path tempdir = fileSystemManager.getTempDir();
     FileSystem fs = fileSystemManager.getFileSystem();
@@ -207,7 +207,7 @@ public class CreateTableHandler extends EventHandler {
     // 1. Create Table Descriptor
     FSTableDescriptors.createTableDescriptor(fs, tempdir, this.hTableDescriptor);
     Path tempTableDir = FSUtils.getTableDir(tempdir,
-        this.hTableDescriptor.getFullyQualifiedTableName());
+        this.hTableDescriptor.getTableName());
     Path tableDir = FSUtils.getTableDir(fileSystemManager.getRootDir(), tableName);
 
     // 2. Create Regions
@@ -260,7 +260,7 @@ public class CreateTableHandler extends EventHandler {
    * @return the list of regions created
    */
   protected List<HRegionInfo> handleCreateHdfsRegions(final Path tableRootDir,
-    final FullyQualifiedTableName tableName)
+    final TableName tableName)
       throws IOException {
     return ModifyRegionUtils.createRegions(conf, tableRootDir,
         hTableDescriptor, newRegions, null);

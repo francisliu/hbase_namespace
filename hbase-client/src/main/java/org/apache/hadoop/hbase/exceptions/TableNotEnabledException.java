@@ -20,8 +20,7 @@ package org.apache.hadoop.hbase.exceptions;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.TableName;
 
 import java.io.IOException;
 
@@ -48,7 +47,7 @@ public class TableNotEnabledException extends IOException {
   /**
    * @param tableName Name of table that is not enabled
    */
-  public TableNotEnabledException(FullyQualifiedTableName tableName) {
+  public TableNotEnabledException(TableName tableName) {
     this(tableName.getNameAsString());
   }
 }

@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -50,8 +50,8 @@ import org.junit.experimental.categories.Category;
 public class TestTableDescriptorModification {
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("table");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("table");
   private static final byte[] FAMILY_0 = Bytes.toBytes("cf0");
   private static final byte[] FAMILY_1 = Bytes.toBytes("cf1");
 
@@ -134,7 +134,7 @@ public class TestTableDescriptorModification {
     }
   }
 
-  private void verifyTableDescriptor(final FullyQualifiedTableName tableName,
+  private void verifyTableDescriptor(final TableName tableName,
                                      final byte[]... families) throws IOException {
     HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
 
@@ -150,9 +150,9 @@ public class TestTableDescriptorModification {
   }
 
   private void verifyTableDescriptor(final HTableDescriptor htd,
-      final FullyQualifiedTableName tableName, final byte[]... families) {
+      final TableName tableName, final byte[]... families) {
     Set<byte[]> htdFamilies = htd.getFamiliesKeys();
-    assertEquals(tableName, htd.getFullyQualifiedTableName());
+    assertEquals(tableName, htd.getTableName());
     assertEquals(families.length, htdFamilies.size());
     for (byte[] familyName: families) {
       assertTrue("Expected family " + Bytes.toString(familyName), htdFamilies.contains(familyName));

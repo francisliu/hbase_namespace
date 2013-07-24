@@ -67,7 +67,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellScanner;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.Operation;
@@ -2196,9 +2196,9 @@ public class RpcServer implements RpcServerInterface {
         params[1] instanceof Operation) {
       // if the slow process is a query, we want to log its table as well
       // as its own fingerprint
-      FullyQualifiedTableName fqtn = FullyQualifiedTableName.valueOf(
+      TableName tableName = TableName.valueOf(
           HRegionInfo.parseRegionName((byte[]) params[0])[0]);
-      responseInfo.put("table", fqtn.getNameAsString());
+      responseInfo.put("table", tableName.getNameAsString());
       // annotate the response map with operation details
       responseInfo.putAll(((Operation) params[1]).toMap());
       // report to the log file

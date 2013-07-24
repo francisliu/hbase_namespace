@@ -52,8 +52,8 @@ public class TestZKTable {
   @Test
   public void testTableStates()
   throws ZooKeeperConnectionException, IOException, KeeperException {
-    final FullyQualifiedTableName name =
-        FullyQualifiedTableName.valueOf("testDisabled");
+    final TableName name =
+        TableName.valueOf("testDisabled");
     Abortable abortable = new Abortable() {
       @Override
       public void abort(String why, Throwable e) {

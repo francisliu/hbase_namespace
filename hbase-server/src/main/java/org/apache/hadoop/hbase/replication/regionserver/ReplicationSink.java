@@ -37,7 +37,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValueUtil;
@@ -52,7 +52,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.WALEntry;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Threads;
 
 /**
@@ -130,11 +129,11 @@ public class ReplicationSink {
       long totalReplicated = 0;
       // Map of table => list of Rows, we only want to flushCommits once per
       // invocation of this method per table.
-      Map<FullyQualifiedTableName, List<Row>> rows =
-          new TreeMap<FullyQualifiedTableName, List<Row>>();
+      Map<TableName, List<Row>> rows =
+          new TreeMap<TableName, List<Row>>();
       for (WALEntry entry : entries) {
-        FullyQualifiedTableName table =
-            FullyQualifiedTableName.valueOf(entry.getKey().getTableName().toByteArray());
+        TableName table =
+            TableName.valueOf(entry.getKey().getTableName().toByteArray());
         Cell previousCell = null;
         Mutation m = null;
         java.util.UUID uuid = toUUID(entry.getKey().getClusterId());
@@ -162,7 +161,7 @@ public class ReplicationSink {
         }
         totalReplicated++;
       }
-      for (Entry<FullyQualifiedTableName, List<Row>> entry : rows.entrySet()) {
+      for (Entry<TableName, List<Row>> entry : rows.entrySet()) {
         batch(entry.getKey(), entry.getValue());
       }
       int size = entries.size();
@@ -234,7 +233,7 @@ public class ReplicationSink {
    * @param rows list of actions
    * @throws IOException
    */
-  private void batch(FullyQualifiedTableName tableName, List<Row> rows) throws IOException {
+  private void batch(TableName tableName, List<Row> rows) throws IOException {
     if (rows.isEmpty()) {
       return;
     }

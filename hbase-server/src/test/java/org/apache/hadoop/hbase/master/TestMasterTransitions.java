@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -62,7 +62,7 @@ public class TestMasterTransitions {
     TEST_UTIL.getConfiguration().setBoolean("dfs.support.append", true);
     TEST_UTIL.startMiniCluster(2);
     // Create a table of three families.  This will assign a region.
-    FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(TABLENAME);
+    TableName tableName = TableName.valueOf(TABLENAME);
     TEST_UTIL.createTable(tableName, FAMILIES);
     HTable t = new HTable(TEST_UTIL.getConfiguration(), TABLENAME);
     int countOfRegions = TEST_UTIL.createMultiRegions(t, getTestFamily());
@@ -489,12 +489,12 @@ public class TestMasterTransitions {
     for (Result r = null; (r = s.next()) != null;) {
       HRegionInfo hri = HRegionInfo.getHRegionInfo(r);
       if (hri == null) break;
-      if (!hri.getFullyQualifiedTableName().getNameAsString().equals(TABLENAME)) {
+      if (!hri.getTableName().getNameAsString().equals(TABLENAME)) {
         continue;
       }
 
       // If start key, add 'aaa'.
-      if(!hri.getFullyQualifiedTableName().getNameAsString().equals(TABLENAME)) {
+      if(!hri.getTableName().getNameAsString().equals(TABLENAME)) {
         continue;
       }
       byte [] row = getStartKey(hri);

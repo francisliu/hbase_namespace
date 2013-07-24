@@ -29,7 +29,7 @@ import org.apache.hadoop.hbase.util.Bytes;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
-public final class FullyQualifiedTableName implements Comparable<FullyQualifiedTableName> {
+public final class TableName implements Comparable<TableName> {
 
   /** Namespace delimiter */
   //this should always be only 1 byte long
@@ -48,7 +48,7 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
   private byte[] qualifier;
   private String qualifierAsString;
 
-  private FullyQualifiedTableName() {}
+  private TableName() {}
 
   /**
    * Check passed byte buffer, "tableName", is legal user-space table name.
@@ -167,8 +167,8 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
     return nameAsString;
   }
 
-  public static FullyQualifiedTableName valueOf(byte[] namespace, byte[] qualifier) {
-    FullyQualifiedTableName ret = new FullyQualifiedTableName();
+  public static TableName valueOf(byte[] namespace, byte[] qualifier) {
+    TableName ret = new TableName();
     ret.namespace = namespace;
     ret.namespaceAsString = Bytes.toString(namespace);
     ret.qualifier = qualifier;
@@ -182,8 +182,8 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
     return ret;
   }
 
-  public static FullyQualifiedTableName valueOf(String namespaceAsString, String qualifierAsString) {
-    FullyQualifiedTableName ret = new FullyQualifiedTableName();
+  public static TableName valueOf(String namespaceAsString, String qualifierAsString) {
+    TableName ret = new TableName();
     ret.namespace = Bytes.toBytes(namespaceAsString);
     ret.namespaceAsString = namespaceAsString;
     ret.qualifier = Bytes.toBytes(qualifierAsString);
@@ -197,11 +197,11 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
     return ret;
   }
 
-  public static FullyQualifiedTableName valueOf(byte[] name) {
+  public static TableName valueOf(byte[] name) {
     return valueOf(Bytes.toString(name));
   }
 
-  public static FullyQualifiedTableName valueOf(String name) {
+  public static TableName valueOf(String name) {
     //TODO we should need to convert it to bytes again
     isLegalFullyQualifiedTableName(Bytes.toBytes(name));
     int index = -1;
@@ -215,9 +215,9 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
       }
     }
     if (index != -1) {
-      return FullyQualifiedTableName.valueOf(name.substring(0, index), name.substring(index + 1));
+      return TableName.valueOf(name.substring(0, index), name.substring(index + 1));
     }
-    return FullyQualifiedTableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
+    return TableName.valueOf(NamespaceDescriptor.DEFAULT_NAMESPACE.getName(), name);
   }
 
   private static String createFullyQualified(String namespace, String tableQualifier) {
@@ -232,9 +232,9 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    FullyQualifiedTableName fullyQualifiedTableName = (FullyQualifiedTableName) o;
+    TableName tableName = (TableName) o;
 
-    if (!nameAsString.equals(fullyQualifiedTableName.nameAsString)) return false;
+    if (!nameAsString.equals(tableName.nameAsString)) return false;
 
     return true;
   }
@@ -246,7 +246,7 @@ public final class FullyQualifiedTableName implements Comparable<FullyQualifiedT
   }
 
   @Override
-  public int compareTo(FullyQualifiedTableName fullyQualifiedTableName) {
-    return this.nameAsString.compareTo(fullyQualifiedTableName.getNameAsString());
+  public int compareTo(TableName tableName) {
+    return this.nameAsString.compareTo(tableName.getNameAsString());
   }
 }

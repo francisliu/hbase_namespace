@@ -16,7 +16,7 @@ package org.apache.hadoop.hbase.exceptions;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 
 import java.io.IOException;
 
@@ -41,7 +41,7 @@ public class TableExistsException extends IOException {
     super(s);
   }
 
-  public TableExistsException(FullyQualifiedTableName t) {
+  public TableExistsException(TableName t) {
     this(t.getNameAsString());
   }
 }

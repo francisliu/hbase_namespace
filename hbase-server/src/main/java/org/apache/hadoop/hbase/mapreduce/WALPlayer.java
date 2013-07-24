@@ -28,7 +28,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Delete;
@@ -109,8 +109,8 @@ public class WALPlayer extends Configured implements Tool {
    */
   static class HLogMapper
   extends Mapper<HLogKey, WALEdit, ImmutableBytesWritable, Mutation> {
-    private Map<FullyQualifiedTableName, FullyQualifiedTableName> tables =
-        new TreeMap<FullyQualifiedTableName, FullyQualifiedTableName>();
+    private Map<TableName, TableName> tables =
+        new TreeMap<TableName, TableName>();
 
     @Override
     public void map(HLogKey key, WALEdit value,
@@ -118,7 +118,7 @@ public class WALPlayer extends Configured implements Tool {
     throws IOException {
       try {
         if (tables.isEmpty() || tables.containsKey(key.getTablename())) {
-          FullyQualifiedTableName targetTable = tables.isEmpty() ?
+          TableName targetTable = tables.isEmpty() ?
                 key.getTablename() :
                 tables.get(key.getTablename());
           ImmutableBytesWritable tableOut = new ImmutableBytesWritable(targetTable.getName());
@@ -170,8 +170,8 @@ public class WALPlayer extends Configured implements Tool {
       }
       int i = 0;
       for (String table : tablesToUse) {
-        tables.put(FullyQualifiedTableName.valueOf(table),
-            FullyQualifiedTableName.valueOf(tableMap[i++]));
+        tables.put(TableName.valueOf(table),
+            TableName.valueOf(tableMap[i++]));
       }
     }
   }

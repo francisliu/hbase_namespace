@@ -28,7 +28,7 @@ import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
@@ -135,7 +135,7 @@ public class TestWALPlayer {
     configuration.set(WALPlayer.TABLES_KEY, "table");
     HLogKeyValueMapper mapper = new HLogKeyValueMapper();
     HLogKey key = mock(HLogKey.class);
-    when(key.getTablename()).thenReturn(FullyQualifiedTableName.valueOf("table"));
+    when(key.getTablename()).thenReturn(TableName.valueOf("table"));
     @SuppressWarnings("unchecked")
     Mapper<HLogKey, WALEdit, ImmutableBytesWritable, KeyValue>.Context context =
         mock(Context.class);

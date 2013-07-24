@@ -28,7 +28,7 @@ import java.io.IOException;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -47,8 +47,8 @@ import org.junit.experimental.categories.Category;
 public class TestTableDeleteFamilyHandler {
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static final FullyQualifiedTableName TABLENAME =
-      FullyQualifiedTableName.valueOf("column_family_handlers");
+  private static final TableName TABLENAME =
+      TableName.valueOf("column_family_handlers");
   private static final byte[][] FAMILIES = new byte[][] { Bytes.toBytes("cf1"),
       Bytes.toBytes("cf2"), Bytes.toBytes("cf3") };
 

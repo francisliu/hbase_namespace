@@ -49,8 +49,8 @@ public class TestBigDecimalColumnInterpreter {
   /**
    * Creating the test infrastructure.
    */
-  private static final FullyQualifiedTableName TEST_TABLE =
-      FullyQualifiedTableName.valueOf("TestTable");
+  private static final TableName TEST_TABLE =
+      TableName.valueOf("TestTable");
   private static final byte[] TEST_FAMILY = Bytes.toBytes("TestFamily");
   private static final byte[] TEST_QUALIFIER = Bytes.toBytes("TestQualifier");
   private static final byte[] TEST_MULTI_CQ = Bytes.toBytes("TestMultiCQ");

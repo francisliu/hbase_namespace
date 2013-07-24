@@ -22,7 +22,7 @@ import java.util.Arrays;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -44,7 +44,7 @@ public class LoadTestTool extends AbstractHBaseTool {
   private static final Log LOG = LogFactory.getLog(LoadTestTool.class);
 
   /** Table name for the test */
-  private FullyQualifiedTableName tableName;
+  private TableName tableName;
 
   /** Table name to use of not overridden on the command line */
   private static final String DEFAULT_TABLE_NAME = "cluster_test";
@@ -160,7 +160,7 @@ public class LoadTestTool extends AbstractHBaseTool {
    * Apply column family options such as Bloom filters, compression, and data
    * block encoding.
    */
-  private void applyColumnFamilyOptions(FullyQualifiedTableName tableName,
+  private void applyColumnFamilyOptions(TableName tableName,
       byte[][] columnFamilies) throws IOException {
     HBaseAdmin admin = new HBaseAdmin(conf);
     HTableDescriptor tableDesc = admin.getTableDescriptor(tableName);
@@ -230,7 +230,7 @@ public class LoadTestTool extends AbstractHBaseTool {
   protected void processOptions(CommandLine cmd) {
     this.cmd = cmd;
 
-    tableName = FullyQualifiedTableName.valueOf(cmd.getOptionValue(OPT_TABLE_NAME,
+    tableName = TableName.valueOf(cmd.getOptionValue(OPT_TABLE_NAME,
         DEFAULT_TABLE_NAME));
 
     isWrite = cmd.hasOption(OPT_WRITE);

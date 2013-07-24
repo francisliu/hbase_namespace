@@ -51,7 +51,7 @@ public class TestMultipleColumnPrefixFilter {
     hcd.setMaxVersions(3);
     htd.addFamily(hcd);
     // HRegionInfo info = new HRegionInfo(htd, null, null, false);
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     HRegion region = HRegion.createHRegion(info, TEST_UTIL.
       getDataTestDir(), TEST_UTIL.getConfiguration(), htd);
 
@@ -117,7 +117,7 @@ public class TestMultipleColumnPrefixFilter {
     HColumnDescriptor hcd2 = new HColumnDescriptor(family2);
     hcd2.setMaxVersions(3);
     htd.addFamily(hcd2);
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     HRegion region = HRegion.createHRegion(info, TEST_UTIL.
       getDataTestDir(), TEST_UTIL.getConfiguration(), htd);
 
@@ -183,7 +183,7 @@ public class TestMultipleColumnPrefixFilter {
     String family = "Family";
     HTableDescriptor htd = new HTableDescriptor("TestMultipleColumnPrefixFilter");
     htd.addFamily(new HColumnDescriptor(family));
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     HRegion region = HRegion.createHRegion(info, TEST_UTIL.
       getDataTestDir(), TEST_UTIL.getConfiguration(),htd);
 

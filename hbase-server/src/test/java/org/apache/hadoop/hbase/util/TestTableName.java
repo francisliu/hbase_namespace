@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.hbase.util;
 
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
@@ -25,17 +25,17 @@ import org.junit.runner.Description;
  * Returns a {@code byte[]} containing the name of the currently running test method.
  */
 public class TestTableName extends TestWatcher {
-  private FullyQualifiedTableName tableName;
+  private TableName tableName;
 
   /**
    * Invoked when a test is about to start
    */
   @Override
   protected void starting(Description description) {
-    tableName = FullyQualifiedTableName.valueOf(description.getMethodName());
+    tableName = TableName.valueOf(description.getMethodName());
   }
 
-  public FullyQualifiedTableName getTableName() {
+  public TableName getTableName() {
     return tableName;
   }
 }

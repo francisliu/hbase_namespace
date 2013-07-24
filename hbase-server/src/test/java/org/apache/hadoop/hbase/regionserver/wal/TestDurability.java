@@ -154,7 +154,7 @@ public class TestDurability {
       htd.setDeferredLogFlush(isDeferredLogFlush);
       HColumnDescriptor hcd = new HColumnDescriptor(FAMILY);
       htd.addFamily(hcd);
-      HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+      HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
       Path path = new Path(DIR + callingMethod);
       if (FS.exists(path)) {
         if (!FS.delete(path, true)) {

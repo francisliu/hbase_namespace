@@ -105,7 +105,7 @@ public class TestBlocksRead extends HBaseTestCase {
       htd.addFamily(familyDesc);
     }
 
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     Path path = new Path(DIR + callingMethod);
     HRegion r = HRegion.createHRegion(info, path, conf, htd);
     blockCache = new CacheConfig(conf).getBlockCache();

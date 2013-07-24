@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.client;
 
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -49,8 +49,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 @Category(MediumTests.class)
 public class TestAsyncProcess {
-  private static final FullyQualifiedTableName DUMMY_TABLE =
-      FullyQualifiedTableName.valueOf("DUMMY_TABLE");
+  private static final TableName DUMMY_TABLE =
+      TableName.valueOf("DUMMY_TABLE");
   private static final byte[] DUMMY_BYTES_1 = "DUMMY_BYTES_1".getBytes();
   private static final byte[] DUMMY_BYTES_2 = "DUMMY_BYTES_2".getBytes();
   private static final byte[] FAILS = "FAILS".getBytes();
@@ -123,7 +123,7 @@ public class TestAsyncProcess {
     }
 
     @Override
-    protected <R> AsyncProcess createAsyncProcess(FullyQualifiedTableName tableName,
+    protected <R> AsyncProcess createAsyncProcess(TableName tableName,
                                                   ExecutorService pool,
                                                   AsyncProcess.AsyncProcessCallback<R> callback,
                                                   Configuration conf) {
@@ -132,7 +132,7 @@ public class TestAsyncProcess {
     }
 
     @Override
-    public HRegionLocation locateRegion(final FullyQualifiedTableName tableName,
+    public HRegionLocation locateRegion(final TableName tableName,
                                         final byte[] row) {
       return loc1;
     }

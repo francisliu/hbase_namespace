@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
@@ -48,7 +48,6 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptio
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotHelper;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 
 /**
@@ -73,7 +72,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
   public RestoreSnapshotHandler(final MasterServices masterServices,
       final SnapshotDescription snapshot, final HTableDescriptor htd,
       final MetricsMaster metricsMaster) throws IOException {
-    super(EventType.C_M_RESTORE_SNAPSHOT, htd.getFullyQualifiedTableName(), masterServices, masterServices);
+    super(EventType.C_M_RESTORE_SNAPSHOT, htd.getTableName(), masterServices, masterServices);
     this.metricsMaster = metricsMaster;
 
     // Snapshot information
@@ -111,7 +110,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
     CatalogTracker catalogTracker = masterServices.getCatalogTracker();
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
-    FullyQualifiedTableName tableName = hTableDescriptor.getFullyQualifiedTableName();
+    TableName tableName = hTableDescriptor.getTableName();
     Path tableDir = FSUtils.getTableDir(rootDir, tableName);
 
     try {

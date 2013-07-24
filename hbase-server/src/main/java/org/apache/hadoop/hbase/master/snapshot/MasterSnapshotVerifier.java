@@ -27,7 +27,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
@@ -38,7 +38,6 @@ import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.exceptions.CorruptedSnapshotException;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.TakeSnapshotUtils;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
@@ -78,7 +77,7 @@ public final class MasterSnapshotVerifier {
   private SnapshotDescription snapshot;
   private FileSystem fs;
   private Path rootDir;
-  private FullyQualifiedTableName tableName;
+  private TableName tableName;
   private MasterServices services;
 
   /**
@@ -91,7 +90,7 @@ public final class MasterSnapshotVerifier {
     this.services = services;
     this.snapshot = snapshot;
     this.rootDir = rootDir;
-    this.tableName = FullyQualifiedTableName.valueOf(snapshot.getTable());
+    this.tableName = TableName.valueOf(snapshot.getTable());
   }
 
   /**

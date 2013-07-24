@@ -36,7 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -192,7 +192,7 @@ public class TestMetaMigrationConvertingToPB {
         Bytes.toBytes("region_a"),
         Bytes.toBytes("region_b")};
     createMultiRegionsWithWritableSerialization(conf,
-        htd.getFullyQualifiedTableName().getName(),
+        htd.getTableName().getName(),
         regionNames);
     CatalogTracker ct =
       TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker();
@@ -236,10 +236,10 @@ public class TestMetaMigrationConvertingToPB {
       htd.addFamily(hcd);
     Configuration conf = TEST_UTIL.getConfiguration();
     // Create 10 New regions.
-    createMultiRegionsWithPBSerialization(conf, htd.getFullyQualifiedTableName().getName(), 10);
+    createMultiRegionsWithPBSerialization(conf, htd.getTableName().getName(), 10);
     // Create 10 Legacy regions.
     createMultiRegionsWithWritableSerialization(conf,
-        htd.getFullyQualifiedTableName().getName(), 10);
+        htd.getTableName().getName(), 10);
     CatalogTracker ct =
       TEST_UTIL.getMiniHBaseCluster().getMaster().getCatalogTracker();
     // Erase the current version of root meta for this test.
@@ -323,14 +323,14 @@ public class TestMetaMigrationConvertingToPB {
       final byte[] tableName, byte [][] startKeys)
   throws IOException {
     return createMultiRegionsWithWritableSerialization(c,
-        FullyQualifiedTableName.valueOf(tableName), startKeys);
+        TableName.valueOf(tableName), startKeys);
   }
 
   /**
    * Inserts multiple regions into META using Writable serialization instead of PB
    */
   public int createMultiRegionsWithWritableSerialization(final Configuration c,
-      final FullyQualifiedTableName tableName, byte [][] startKeys)
+      final TableName tableName, byte [][] startKeys)
   throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
     HTable meta = new HTable(c, HConstants.META_TABLE_NAME);
@@ -400,11 +400,11 @@ public class TestMetaMigrationConvertingToPB {
   int createMultiRegionsWithPBSerialization(final Configuration c, final byte[] tableName,
       byte [][] startKeys) throws IOException {
     return createMultiRegionsWithPBSerialization(c,
-        FullyQualifiedTableName.valueOf(tableName), startKeys);
+        TableName.valueOf(tableName), startKeys);
   }
 
   int createMultiRegionsWithPBSerialization(final Configuration c,
-      final FullyQualifiedTableName tableName,
+      final TableName tableName,
       byte [][] startKeys) throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
     HTable meta = new HTable(c, HConstants.META_TABLE_NAME);

@@ -99,7 +99,7 @@ public class TestMultiVersions {
     hcd.setMaxVersions(3);
     desc.addFamily(hcd);
     this.admin.createTable(desc);
-    HTable table = new HTable(UTIL.getConfiguration(), desc.getFullyQualifiedTableName());
+    HTable table = new HTable(UTIL.getConfiguration(), desc.getTableName());
     // TODO: Remove these deprecated classes or pull them in here if this is
     // only test using them.
     Incommon incommon = new HTableIncommon(table);

@@ -23,7 +23,7 @@ import com.google.protobuf.ServiceException;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
@@ -53,7 +53,7 @@ public interface HTableInterface extends Closeable {
   /**
    * Gets the fully qualified table name instance of this table.
    */
-  FullyQualifiedTableName getFullyQualifiedTableName();
+  TableName getTableNameAsPOJO();
 
   /**
    * Returns the {@link Configuration} object used by this instance.

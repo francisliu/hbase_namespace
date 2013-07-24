@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.security.access;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperListener;
@@ -93,7 +93,7 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
   public void nodeDataChanged(String path) {
     if (aclZNode.equals(ZKUtil.getParent(path))) {
       // update cache on an existing table node
-      FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(ZKUtil.getNodeName(path));
+      TableName table = TableName.valueOf(ZKUtil.getNodeName(path));
       try {
         byte[] data = ZKUtil.getDataAndWatch(watcher, path);
         authManager.refreshCacheFromWritable(table, data);
@@ -126,7 +126,7 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
     for (ZKUtil.NodeAndData n : nodes) {
       if (n.isEmpty()) continue;
       String path = n.getNode();
-      FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(ZKUtil.getNodeName(path));
+      TableName table = TableName.valueOf(ZKUtil.getNodeName(path));
       try {
         byte[] nodeData = n.getData();
         if (LOG.isDebugEnabled()) {
@@ -146,7 +146,7 @@ public class ZKPermissionWatcher extends ZooKeeperListener {
    * @param tableName
    * @param permsData
    */
-  public void writeToZookeeper(FullyQualifiedTableName tableName, byte[] permsData) {
+  public void writeToZookeeper(TableName tableName, byte[] permsData) {
     String zkNode = ZKUtil.joinZNode(watcher.baseZNode, ACL_NODE);
     zkNode = ZKUtil.joinZNode(zkNode, tableName.getNameAsString());
 

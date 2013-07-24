@@ -62,7 +62,7 @@ import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HConstants.OperationStatusCode;
@@ -119,7 +119,6 @@ import org.apache.hadoop.hbase.ipc.ServerRpcController;
 import org.apache.hadoop.hbase.master.SplitLogManager;
 import org.apache.hadoop.hbase.master.TableLockManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.ReplicationProtbufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
@@ -2322,15 +2321,15 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
    * closed during a disable, etc., it will not be included in the returned list.
    * So, the returned list may not necessarily be ALL regions in this table, its
    * all the ONLINE regions in the table.
-   * @param fqtn
+   * @param tableName
    * @return Online regions from <code>tableName</code>
    */
-   public List<HRegion> getOnlineRegions(FullyQualifiedTableName fqtn) {
+   public List<HRegion> getOnlineRegions(TableName tableName) {
      List<HRegion> tableRegions = new ArrayList<HRegion>();
      synchronized (this.onlineRegions) {
        for (HRegion region: this.onlineRegions.values()) {
          HRegionInfo regionInfo = region.getRegionInfo();
-         if(regionInfo.getFullyQualifiedTableName().equals(fqtn)) {
+         if(regionInfo.getTableName().equals(tableName)) {
            tableRegions.add(region);
          }
        }
@@ -3393,8 +3392,8 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
     requestCount.increment();
     OpenRegionResponse.Builder builder = OpenRegionResponse.newBuilder();
     final int regionCount = request.getOpenInfoCount();
-    final Map<FullyQualifiedTableName, HTableDescriptor> htds =
-        new HashMap<FullyQualifiedTableName, HTableDescriptor>(regionCount);
+    final Map<TableName, HTableDescriptor> htds =
+        new HashMap<TableName, HTableDescriptor>(regionCount);
     final boolean isBulkAssign = regionCount > 1;
     for (RegionOpenInfo regionOpenInfo : request.getOpenInfoList()) {
       final HRegionInfo region = HRegionInfo.convert(regionOpenInfo.getRegion());
@@ -3427,10 +3426,10 @@ public class HRegionServer implements ClientProtos.ClientService.BlockingInterfa
           }
         }
         LOG.info("Open " + region.getRegionNameAsString());
-        htd = htds.get(region.getFullyQualifiedTableName());
+        htd = htds.get(region.getTableName());
         if (htd == null) {
-          htd = this.tableDescriptors.get(region.getFullyQualifiedTableName());
-          htds.put(region.getFullyQualifiedTableName(), htd);
+          htd = this.tableDescriptors.get(region.getTableName());
+          htds.put(region.getTableName(), htd);
         }
 
         final Boolean previous = this.regionsInTransitionInRS.putIfAbsent(

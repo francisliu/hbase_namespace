@@ -39,7 +39,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.exceptions.ExportSnapshotException;
@@ -151,8 +151,8 @@ public final class ExportSnapshot extends Configured implements Tool {
       Path path;
       if (HFileLink.isHFileLink(inputPath) || StoreFileInfo.isReference(inputPath)) {
         String family = inputPath.getParent().getName();
-        FullyQualifiedTableName table =
-            FullyQualifiedTableName.valueOf(HFileLink.getReferencedTableName(inputPath.getName()));
+        TableName table =
+            TableName.valueOf(HFileLink.getReferencedTableName(inputPath.getName()));
         String region = HFileLink.getReferencedRegionName(inputPath.getName());
         String hfile = HFileLink.getReferencedHFileName(inputPath.getName());
         path = new Path(FSUtils.getTableDir(new Path("./"), table),
@@ -374,8 +374,8 @@ public final class ExportSnapshot extends Configured implements Tool {
     SnapshotDescription snapshotDesc = SnapshotDescriptionUtils.readSnapshotInfo(fs, snapshotDir);
 
     final List<Pair<Path, Long>> files = new ArrayList<Pair<Path, Long>>();
-    final FullyQualifiedTableName table =
-        FullyQualifiedTableName.valueOf(snapshotDesc.getTable());
+    final TableName table =
+        TableName.valueOf(snapshotDesc.getTable());
     final Configuration conf = getConf();
 
     // Get snapshot files

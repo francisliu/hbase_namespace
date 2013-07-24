@@ -36,7 +36,6 @@ import org.apache.hadoop.hbase.RegionLoad;
 
 import java.io.*;
 import java.util.*;
-import java.util.jar.*;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -161,7 +160,7 @@ public class TestClassLoading {
     byte[] startKey = {10, 63};
     byte[] endKey = {12, 43};
     admin.createTable(htd, startKey, endKey, 4);
-    waitForTable(htd.getFullyQualifiedTableName());
+    waitForTable(htd.getTableName());
 
     // verify that the coprocessors were loaded
     boolean foundTableRegion=false;
@@ -239,7 +238,7 @@ public class TestClassLoading {
       Coprocessor.PRIORITY_USER);
     HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
     admin.createTable(htd);
-    waitForTable(htd.getFullyQualifiedTableName());
+    waitForTable(htd.getTableName());
 
     // verify that the coprocessor was loaded
     boolean found = false;
@@ -265,7 +264,7 @@ public class TestClassLoading {
       Coprocessor.PRIORITY_USER);
     HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
     admin.createTable(htd);
-    waitForTable(htd.getFullyQualifiedTableName());
+    waitForTable(htd.getTableName());
 
     // verify that the coprocessor was loaded correctly
     boolean found = false;
@@ -333,7 +332,7 @@ public class TestClassLoading {
       admin.deleteTable(tableName);
     }
     admin.createTable(htd);
-    waitForTable(htd.getFullyQualifiedTableName());
+    waitForTable(htd.getTableName());
 
     // verify that the coprocessor was loaded
     boolean found_2 = false, found_1 = false, found_3 = false,
@@ -425,7 +424,7 @@ public class TestClassLoading {
       admin.deleteTable(tableName);
     }
     admin.createTable(htd);
-    waitForTable(htd.getFullyQualifiedTableName());
+    waitForTable(htd.getTableName());
 
     // verify that the coprocessors were loaded
     boolean found1 = false, found2 = false, found2_k1 = false,
@@ -542,7 +541,7 @@ public class TestClassLoading {
     assertEquals(loadedMasterCoprocessorsVerify, loadedMasterCoprocessors);
   }
 
-  private void waitForTable(FullyQualifiedTableName name) throws InterruptedException, IOException {
+  private void waitForTable(TableName name) throws InterruptedException, IOException {
     // First wait until all regions are online
     TEST_UTIL.waitTableEnabled(name.getName());
     // Now wait a bit longer for the coprocessor hosts to load the CPs

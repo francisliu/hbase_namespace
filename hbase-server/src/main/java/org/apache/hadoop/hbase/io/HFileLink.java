@@ -28,7 +28,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.regionserver.HRegion;
@@ -66,12 +66,12 @@ public class HFileLink extends FileLink {
    * and the bulk loaded (_SeqId_[0-9]+_) hfiles.
    */
   public static final String LINK_NAME_REGEX =
-    String.format("%s=%s-%s", FullyQualifiedTableName.VALID_USER_TABLE_REGEX,
+    String.format("%s=%s-%s", TableName.VALID_USER_TABLE_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX, StoreFileInfo.HFILE_NAME_REGEX);
 
   /** Define the HFile Link name parser in the form of: table=region-hfile */
   private static final Pattern LINK_NAME_PATTERN =
-    Pattern.compile(String.format("^(%s)=(%s)-(%s)$", FullyQualifiedTableName.VALID_USER_TABLE_REGEX,
+    Pattern.compile(String.format("^(%s)=(%s)-(%s)$", TableName.VALID_USER_TABLE_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX, StoreFileInfo.HFILE_NAME_REGEX));
 
   /**
@@ -79,7 +79,7 @@ public class HFileLink extends FileLink {
    * that can be found in /hbase/table/region/family/
    */
   private static final Pattern REF_OR_HFILE_LINK_PATTERN =
-    Pattern.compile(String.format("^(%s)=(%s)-(.+)$", FullyQualifiedTableName.VALID_USER_TABLE_REGEX,
+    Pattern.compile(String.format("^(%s)=(%s)-(.+)$", TableName.VALID_USER_TABLE_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX));
 
   private final Path archivePath;
@@ -159,11 +159,11 @@ public class HFileLink extends FileLink {
     }
 
     // Convert the HFileLink name into a real table/region/cf/hfile path.
-    FullyQualifiedTableName fqtn = FullyQualifiedTableName.valueOf(m.group(1));
+    TableName tableName = TableName.valueOf(m.group(1));
     String regionName = m.group(2);
     String hfileName = m.group(3);
     String familyName = path.getParent().getName();
-    Path tableDir = FSUtils.getTableDir(new Path("./"), fqtn);
+    Path tableDir = FSUtils.getTableDir(new Path("./"), tableName);
     return new Path(tableDir, new Path(regionName, new Path(familyName,
         hfileName)));
   }
@@ -219,21 +219,21 @@ public class HFileLink extends FileLink {
    */
   public static String createHFileLinkName(final HRegionInfo hfileRegionInfo,
       final String hfileName) {
-    return createHFileLinkName(hfileRegionInfo.getFullyQualifiedTableName(),
+    return createHFileLinkName(hfileRegionInfo.getTableName(),
                       hfileRegionInfo.getEncodedName(), hfileName);
   }
 
   /**
    * Create a new HFileLink name
    *
-   * @param fqtn - Linked HFile table name
+   * @param tableName - Linked HFile table name
    * @param regionName - Linked HFile region name
    * @param hfileName - Linked HFile name
    * @return file name of the HFile Link
    */
-  public static String createHFileLinkName(final FullyQualifiedTableName fqtn,
+  public static String createHFileLinkName(final TableName tableName,
       final String regionName, final String hfileName) {
-    return String.format("%s=%s-%s", fqtn.getNameAsString(), regionName, hfileName);
+    return String.format("%s=%s-%s", tableName.getNameAsString(), regionName, hfileName);
   }
 
   /**
@@ -253,7 +253,7 @@ public class HFileLink extends FileLink {
   public static boolean create(final Configuration conf, final FileSystem fs,
       final Path dstFamilyPath, final HRegionInfo hfileRegionInfo,
       final String hfileName) throws IOException {
-    FullyQualifiedTableName linkedTable = hfileRegionInfo.getFullyQualifiedTableName();
+    TableName linkedTable = hfileRegionInfo.getTableName();
     String linkedRegion = hfileRegionInfo.getEncodedName();
     return create(conf, fs, dstFamilyPath, linkedTable, linkedRegion, hfileName);
   }
@@ -274,7 +274,7 @@ public class HFileLink extends FileLink {
    * @throws IOException on file or parent directory creation failure
    */
   public static boolean create(final Configuration conf, final FileSystem fs,
-      final Path dstFamilyPath, final FullyQualifiedTableName linkedTable, final String linkedRegion,
+      final Path dstFamilyPath, final TableName linkedTable, final String linkedRegion,
       final String hfileName) throws IOException {
     String familyName = dstFamilyPath.getName();
     String regionName = dstFamilyPath.getParent().getName();
@@ -325,7 +325,7 @@ public class HFileLink extends FileLink {
     if (!m.matches()) {
       throw new IllegalArgumentException(hfileLinkName + " is not a valid HFileLink name!");
     }
-    return create(conf, fs, dstFamilyPath, FullyQualifiedTableName.valueOf(m.group(1)),
+    return create(conf, fs, dstFamilyPath, TableName.valueOf(m.group(1)),
         m.group(2), m.group(3));
   }
 
@@ -347,14 +347,14 @@ public class HFileLink extends FileLink {
   public static Path getHFileFromBackReference(final Path rootDir, final Path linkRefPath) {
     int separatorIndex = linkRefPath.getName().indexOf('.');
     String linkRegionName = linkRefPath.getName().substring(0, separatorIndex);
-    FullyQualifiedTableName linkTableName = FullyQualifiedTableName.valueOf(linkRefPath.getName()
+    TableName linkTableName = TableName.valueOf(linkRefPath.getName()
         .substring(separatorIndex + 1));
     String hfileName = getBackReferenceFileName(linkRefPath.getParent());
     Path familyPath = linkRefPath.getParent().getParent();
     Path regionPath = familyPath.getParent();
     Path tablePath = regionPath.getParent();
 
-    String linkName = createHFileLinkName(FullyQualifiedTableName.valueOf(tablePath.getName()),
+    String linkName = createHFileLinkName(TableName.valueOf(tablePath.getName()),
         regionPath.getName(), hfileName);
     Path linkTableDir = FSUtils.getTableDir(rootDir, linkTableName);
     Path regionDir = HRegion.getRegionDir(linkTableDir, linkRegionName);

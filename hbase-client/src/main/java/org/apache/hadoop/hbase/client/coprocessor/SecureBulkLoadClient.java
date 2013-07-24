@@ -20,7 +20,7 @@ package org.apache.hadoop.hbase.client.coprocessor;
 
 import com.google.protobuf.ByteString;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.ipc.BlockingRpcCallback;
@@ -46,7 +46,7 @@ public class SecureBulkLoadClient {
     this.table = table;
   }
 
-  public String prepareBulkLoad(final FullyQualifiedTableName tableName) throws IOException {
+  public String prepareBulkLoad(final TableName tableName) throws IOException {
     try {
       return
         table.coprocessorService(SecureBulkLoadProtos.SecureBulkLoadService.class,

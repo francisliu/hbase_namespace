@@ -23,11 +23,10 @@ package org.apache.hadoop.hbase.client;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.Pair;
 
@@ -87,7 +86,7 @@ class AsyncProcess<CResult> {
   private static final Log LOG = LogFactory.getLog(AsyncProcess.class);
 
   protected final HConnection hConnection;
-  protected final FullyQualifiedTableName tableName;
+  protected final TableName tableName;
   protected final ExecutorService pool;
   protected final AsyncProcessCallback<CResult> callback;
   protected final BatchErrors errors = new BatchErrors();
@@ -168,7 +167,7 @@ class AsyncProcess<CResult> {
     }
   }
 
-  public AsyncProcess(HConnection hc, FullyQualifiedTableName tableName, ExecutorService pool,
+  public AsyncProcess(HConnection hc, TableName tableName, ExecutorService pool,
                       AsyncProcessCallback<CResult> callback, Configuration conf) {
     this.hConnection = hc;
     this.tableName = tableName;

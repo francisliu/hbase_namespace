@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -68,8 +68,8 @@ import org.mockito.internal.util.reflection.Whitebox;
 public class TestZKBasedOpenCloseRegion {
   private static final Log LOG = LogFactory.getLog(TestZKBasedOpenCloseRegion.class);
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static final FullyQualifiedTableName TABLENAME =
-      FullyQualifiedTableName.valueOf("TestZKBasedOpenCloseRegion");
+  private static final TableName TABLENAME =
+      TableName.valueOf("TestZKBasedOpenCloseRegion");
   private static final byte [][] FAMILIES = new byte [][] {Bytes.toBytes("a"),
     Bytes.toBytes("b"), Bytes.toBytes("c")};
   private static int countOfRegions;
@@ -326,13 +326,13 @@ public class TestZKBasedOpenCloseRegion {
    */
   @Test
   public void testRegionOpenFailsDueToIOException() throws Exception {
-    HRegionInfo REGIONINFO = new HRegionInfo(FullyQualifiedTableName.valueOf("t"),
+    HRegionInfo REGIONINFO = new HRegionInfo(TableName.valueOf("t"),
         HConstants.EMPTY_START_ROW, HConstants.EMPTY_START_ROW);
     HRegionServer regionServer = TEST_UTIL.getHBaseCluster().getRegionServer(0);
     TableDescriptors htd = Mockito.mock(TableDescriptors.class);
     Object orizinalState = Whitebox.getInternalState(regionServer,"tableDescriptors");
     Whitebox.setInternalState(regionServer, "tableDescriptors", htd);
-    Mockito.doThrow(new IOException()).when(htd).get((FullyQualifiedTableName) Mockito.any());
+    Mockito.doThrow(new IOException()).when(htd).get((TableName) Mockito.any());
     try {
       ProtobufUtil.openRegion(regionServer, REGIONINFO);
       fail("It should throw IOException ");
@@ -389,7 +389,7 @@ public class TestZKBasedOpenCloseRegion {
     for (Result r = null; (r = s.next()) != null;) {
       HRegionInfo hri = HRegionInfo.getHRegionInfo(r);
       if (hri == null) break;
-      if(!hri.getFullyQualifiedTableName().equals(TABLENAME)) {
+      if(!hri.getTableName().equals(TABLENAME)) {
         continue;
       }
       // If start key, add 'aaa'.

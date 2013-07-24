@@ -33,7 +33,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Chore;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -130,7 +130,7 @@ public class CatalogJanitor extends Chore {
    * @throws IOException
    */
   Triple<Integer, Map<HRegionInfo, Result>, Map<HRegionInfo, Result>> getMergedRegionsAndSplitParents(
-      final FullyQualifiedTableName tableName) throws IOException {
+      final TableName tableName) throws IOException {
     final boolean isTableSpecified = (tableName != null);
     // TODO: Only works with single .META. region currently.  Fix.
     final AtomicInteger count = new AtomicInteger(0);
@@ -149,7 +149,7 @@ public class CatalogJanitor extends Chore {
         HRegionInfo info = HRegionInfo.getHRegionInfo(r);
         if (info == null) return true; // Keep scanning
         if (isTableSpecified
-            && info.getFullyQualifiedTableName().compareTo(tableName) > 0) {
+            && info.getTableName().compareTo(tableName) > 0) {
           // Another table, stop scanning
           return false;
         }
@@ -185,8 +185,8 @@ public class CatalogJanitor extends Chore {
     FileSystem fs = this.services.getMasterFileSystem().getFileSystem();
     Path rootdir = this.services.getMasterFileSystem().getRootDir();
     Path tabledir = FSUtils.getTableDir(rootdir,
-        mergedRegion.getFullyQualifiedTableName());
-    HTableDescriptor htd = getTableDescriptor(mergedRegion.getFullyQualifiedTableName());
+        mergedRegion.getTableName());
+    HTableDescriptor htd = getTableDescriptor(mergedRegion.getTableName());
     HRegionFileSystem regionFs = null;
     try {
       regionFs = HRegionFileSystem.openRegionFromFileSystem(
@@ -290,8 +290,8 @@ public class CatalogJanitor extends Chore {
       if (left == null) return -1;
       if (right == null) return 1;
       // Same table name.
-      int result = left.getFullyQualifiedTableName().compareTo(
-          right.getFullyQualifiedTableName());
+      int result = left.getTableName().compareTo(
+          right.getTableName());
       if (result != 0) return result;
       // Compare start keys.
       result = Bytes.compareTo(left.getStartKey(), right.getStartKey());
@@ -375,7 +375,7 @@ public class CatalogJanitor extends Chore {
 
     FileSystem fs = this.services.getMasterFileSystem().getFileSystem();
     Path rootdir = this.services.getMasterFileSystem().getRootDir();
-    Path tabledir = FSUtils.getTableDir(rootdir, daughter.getFullyQualifiedTableName());
+    Path tabledir = FSUtils.getTableDir(rootdir, daughter.getTableName());
 
     HRegionFileSystem regionFs = null;
     try {
@@ -387,7 +387,7 @@ public class CatalogJanitor extends Chore {
     }
 
     boolean references = false;
-    HTableDescriptor parentDescriptor = getTableDescriptor(parent.getFullyQualifiedTableName());
+    HTableDescriptor parentDescriptor = getTableDescriptor(parent.getTableName());
     for (HColumnDescriptor family: parentDescriptor.getFamilies()) {
       if ((references = regionFs.hasReferences(family.getNameAsString()))) {
         break;
@@ -396,7 +396,7 @@ public class CatalogJanitor extends Chore {
     return new Pair<Boolean, Boolean>(Boolean.TRUE, Boolean.valueOf(references));
   }
 
-  private HTableDescriptor getTableDescriptor(final FullyQualifiedTableName tableName)
+  private HTableDescriptor getTableDescriptor(final TableName tableName)
       throws FileNotFoundException, IOException {
     return this.services.getTableDescriptors().get(tableName);
   }

@@ -28,7 +28,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.client.Delete;
@@ -56,8 +56,8 @@ public class TestHLogFiltering {
   private static final int NUM_MASTERS = 1;
   private static final int NUM_RS = 4;
 
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("TestHLogFiltering");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("TestHLogFiltering");
   private static final byte[] CF1 = Bytes.toBytes("MyCF1");
   private static final byte[] CF2 = Bytes.toBytes("MyCF2");
   private static final byte[][] FAMILIES = { CF1, CF2 };

@@ -24,14 +24,13 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.LargeTests;
@@ -63,8 +62,8 @@ public class TestSnapshotFromClient {
   private static final int NUM_RS = 2;
   private static final String STRING_TABLE_NAME = "test";
   private static final byte[] TEST_FAM = Bytes.toBytes("fam");
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf(STRING_TABLE_NAME);
+  private static final TableName TABLE_NAME =
+      TableName.valueOf(STRING_TABLE_NAME);
 
   /**
    * Setup the config for the cluster

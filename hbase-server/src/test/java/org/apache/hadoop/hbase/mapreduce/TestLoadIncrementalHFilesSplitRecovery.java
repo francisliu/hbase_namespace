@@ -35,7 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -158,7 +158,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
           .toBytes(table));
 
       for (HRegionInfo hri : ProtobufUtil.getOnlineRegions(hrs)) {
-        if (Bytes.equals(hri.getFullyQualifiedTableName().getName(), Bytes.toBytes(table))) {
+        if (Bytes.equals(hri.getTableName().getName(), Bytes.toBytes(table))) {
           // splitRegion doesn't work if startkey/endkey are null
           ProtobufUtil.split(hrs, hri, rowkey(ROWCOUNT / 2)); // hard code split
         }
@@ -169,7 +169,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
       do {
         regions = 0;
         for (HRegionInfo hri : ProtobufUtil.getOnlineRegions(hrs)) {
-          if (Bytes.equals(hri.getFullyQualifiedTableName().getName(), Bytes.toBytes(table))) {
+          if (Bytes.equals(hri.getTableName().getName(), Bytes.toBytes(table))) {
             regions++;
           }
         }
@@ -240,7 +240,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
         util.getConfiguration(), useSecure) {
 
       protected List<LoadQueueItem> tryAtomicRegionLoad(final HConnection conn,
-          FullyQualifiedTableName tableName, final byte[] first, Collection<LoadQueueItem> lqis)
+          TableName tableName, final byte[] first, Collection<LoadQueueItem> lqis)
       throws IOException {
         int i = attmptedCalls.incrementAndGet();
         if (i == 1) {
@@ -275,10 +275,10 @@ public class TestLoadIncrementalHFilesSplitRecovery {
     // Make it so we return a particular location when asked.
     final HRegionLocation loc = new HRegionLocation(HRegionInfo.FIRST_META_REGIONINFO,
         new ServerName("example.org", 1234, 0));
-    Mockito.when(c.getRegionLocation((FullyQualifiedTableName) Mockito.any(),
+    Mockito.when(c.getRegionLocation((TableName) Mockito.any(),
         (byte[]) Mockito.any(), Mockito.anyBoolean())).
       thenReturn(loc);
-    Mockito.when(c.locateRegion((FullyQualifiedTableName) Mockito.any(), (byte[]) Mockito.any())).
+    Mockito.when(c.locateRegion((TableName) Mockito.any(), (byte[]) Mockito.any())).
       thenReturn(loc);
     ClientProtos.ClientService.BlockingInterface hri =
       Mockito.mock(ClientProtos.ClientService.BlockingInterface.class);

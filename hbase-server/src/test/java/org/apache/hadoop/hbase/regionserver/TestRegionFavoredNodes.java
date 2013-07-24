@@ -31,7 +31,7 @@ import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.client.HTable;
@@ -53,8 +53,8 @@ public class TestRegionFavoredNodes {
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static HTable table;
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("table");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("table");
   private static final byte[] COLUMN_FAMILY = Bytes.toBytes("family");
   private static final int FAVORED_NODES_NUM = 3;
   private static final int REGION_SERVERS = 6;

@@ -33,7 +33,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MediumTests;
@@ -85,8 +85,8 @@ public class TestSnapshotFromMaster {
   // for hfile archiving test.
   private static Path archiveDir;
   private static final byte[] TEST_FAM = Bytes.toBytes("fam");
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("test");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("test");
   // refresh the cache every 1/2 second
   private static final long cacheRefreshPeriod = 500;
 
@@ -377,7 +377,7 @@ public class TestSnapshotFromMaster {
    * @throws IOException on expected failure
    */
   private final Collection<String> getArchivedHFiles(Path archiveDir, Path rootDir,
-      FileSystem fs, FullyQualifiedTableName tableName) throws IOException {
+      FileSystem fs, TableName tableName) throws IOException {
     Path tableArchive = FSUtils.getTableDir(archiveDir, tableName);
     FileStatus[] archivedHFiles = SnapshotTestingUtils.listHFiles(fs, tableArchive);
     List<String> files = new ArrayList<String>(archivedHFiles.length);

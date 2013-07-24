@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -54,7 +54,7 @@ import org.junit.runners.Parameterized.Parameters;
 @Category(SmallTests.class)
 public class TestScannerSelectionUsingKeyRange {
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static FullyQualifiedTableName TABLE = FullyQualifiedTableName.valueOf("myTable");
+  private static TableName TABLE = TableName.valueOf("myTable");
   private static String FAMILY = "myCF";
   private static byte[] FAMILY_BYTES = Bytes.toBytes(FAMILY);
   private static final int NUM_ROWS = 8;

@@ -55,8 +55,8 @@ import org.junit.experimental.categories.Category;
  */
 @Category(IntegrationTests.class)
 public class IntegrationTestLazyCfLoading {
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf(IntegrationTestLazyCfLoading.class.getSimpleName());
+  private static final TableName TABLE_NAME =
+      TableName.valueOf(IntegrationTestLazyCfLoading.class.getSimpleName());
   private static final String TIMEOUT_KEY = "hbase.%s.timeout";
   private static final String ENCODING_KEY = "hbase.%s.datablock.encoding";
 

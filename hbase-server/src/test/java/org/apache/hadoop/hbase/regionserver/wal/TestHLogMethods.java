@@ -42,8 +42,8 @@ import static org.mockito.Mockito.mock;
 @Category(SmallTests.class)
 public class TestHLogMethods {
   private static final byte[] TEST_REGION = Bytes.toBytes("test_region");;
-  private static final FullyQualifiedTableName TEST_TABLE =
-      FullyQualifiedTableName.valueOf("test_table");
+  private static final TableName TEST_TABLE =
+      TableName.valueOf("test_table");
   
   private final HBaseTestingUtility util = new HBaseTestingUtility();
 

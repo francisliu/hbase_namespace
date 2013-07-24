@@ -110,8 +110,8 @@ public class PerformanceEvaluation extends Configured implements Tool {
   private static final int ROWS_PER_GB = ONE_GB / VALUE_LENGTH;
 
   public static final byte[] COMPRESSION = Bytes.toBytes("NONE");
-  public static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("TestTable");
+  public static final TableName TABLE_NAME =
+      TableName.valueOf("TestTable");
   public static final byte[] FAMILY_NAME = Bytes.toBytes("info");
   public static final byte[] QUALIFIER_NAME = Bytes.toBytes("data");
 
@@ -124,7 +124,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
   private int rowPrefixLength = DEFAULT_ROW_PREFIX_LENGTH;
   private int N = 1;
   private int R = ROWS_PER_GB;
-  private FullyQualifiedTableName tableName = TABLE_NAME;
+  private TableName tableName = TABLE_NAME;
   private Compression.Algorithm compression = Compression.Algorithm.NONE;
   private DataBlockEncoding blockEncoding = DataBlockEncoding.NONE;
   private boolean flushCommits = true;
@@ -480,9 +480,9 @@ public class PerformanceEvaluation extends Configured implements Tool {
     HTableDescriptor tableDescriptor = getTableDescriptor();
     if (this.presplitRegions > 0) {
       // presplit requested
-      if (admin.tableExists(tableDescriptor.getFullyQualifiedTableName())) {
-        admin.disableTable(tableDescriptor.getFullyQualifiedTableName());
-        admin.deleteTable(tableDescriptor.getFullyQualifiedTableName());
+      if (admin.tableExists(tableDescriptor.getTableName())) {
+        admin.disableTable(tableDescriptor.getTableName());
+        admin.deleteTable(tableDescriptor.getTableName());
       }
 
       byte[][] splits = getSplits();
@@ -493,13 +493,13 @@ public class PerformanceEvaluation extends Configured implements Tool {
       LOG.info ("Table created with " + this.presplitRegions + " splits");
     }
     else {
-      boolean tableExists = admin.tableExists(tableDescriptor.getFullyQualifiedTableName());
+      boolean tableExists = admin.tableExists(tableDescriptor.getTableName());
       if (!tableExists) {
         admin.createTable(tableDescriptor);
         LOG.info("Table " + tableDescriptor + " created");
       }
     }
-    boolean tableExists = admin.tableExists(tableDescriptor.getFullyQualifiedTableName());
+    boolean tableExists = admin.tableExists(tableDescriptor.getTableName());
     return tableExists;
   }
 
@@ -561,7 +561,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     final List<Thread> threads = new ArrayList<Thread>(this.N);
     final long[] timings = new long[this.N];
     final int perClientRows = R/N;
-    final FullyQualifiedTableName tableName = this.tableName;
+    final TableName tableName = this.tableName;
     final DataBlockEncoding encoding = this.blockEncoding;
     final boolean flushCommits = this.flushCommits;
     final Compression.Algorithm compression = this.compression;
@@ -744,7 +744,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     private int perClientRunRows;
     private int totalRows;
     private int numClientThreads;
-    private FullyQualifiedTableName tableName;
+    private TableName tableName;
     private boolean flushCommits;
     private boolean writeToWAL = true;
 
@@ -752,7 +752,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     }
 
     TestOptions(int startRow, int perClientRunRows, int totalRows,
-                int numClientThreads, FullyQualifiedTableName tableName,
+                int numClientThreads, TableName tableName,
                 boolean flushCommits, boolean writeToWAL) {
       this.startRow = startRow;
       this.perClientRunRows = perClientRunRows;
@@ -779,7 +779,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
       return numClientThreads;
     }
 
-    public FullyQualifiedTableName getTableName() {
+    public TableName getTableName() {
       return tableName;
     }
 
@@ -810,7 +810,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
     protected final int perClientRunRows;
     protected final int totalRows;
     private final Status status;
-    protected FullyQualifiedTableName tableName;
+    protected TableName tableName;
     protected HTable table;
     protected volatile Configuration conf;
     protected boolean flushCommits;
@@ -1368,7 +1368,7 @@ public class PerformanceEvaluation extends Configured implements Tool {
 
         final String table = "--table=";
         if (cmd.startsWith(table)) {
-          this.tableName = FullyQualifiedTableName.valueOf(cmd.substring(table.length()));
+          this.tableName = TableName.valueOf(cmd.substring(table.length()));
           continue;
         }
 

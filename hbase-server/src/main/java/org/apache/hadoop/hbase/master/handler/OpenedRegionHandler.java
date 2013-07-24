@@ -22,7 +22,6 @@ package org.apache.hadoop.hbase.master.handler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.Server;
@@ -70,7 +69,7 @@ public class OpenedRegionHandler extends EventHandler implements TotesHRegionInf
     this.expectedVersion = expectedVersion;
     if(regionInfo.isMetaRegion()) {
       priority = OpenedPriority.META;
-    } else if(regionInfo.getFullyQualifiedTableName()
+    } else if(regionInfo.getTableName()
         .getNamespaceAsString().equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
       priority = OpenedPriority.SYSTEM;
     } else {
@@ -115,7 +114,7 @@ public class OpenedRegionHandler extends EventHandler implements TotesHRegionInf
     }
     if (!openedNodeDeleted) {
       if (this.assignmentManager.getZKTable().isDisablingOrDisabledTable(
-          regionInfo.getFullyQualifiedTableName())) {
+          regionInfo.getTableName())) {
         debugLog(regionInfo, "Opened region "
             + regionInfo.getShortNameToLog() + " but "
             + "this table is disabled, triggering close of region");

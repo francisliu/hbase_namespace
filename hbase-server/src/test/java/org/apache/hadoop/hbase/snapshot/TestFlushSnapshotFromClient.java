@@ -33,7 +33,7 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -80,8 +80,8 @@ public class TestFlushSnapshotFromClient {
   private static final int NUM_RS = 2;
   private static final String STRING_TABLE_NAME = "test";
   private static final byte[] TEST_FAM = Bytes.toBytes("fam");
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf(STRING_TABLE_NAME);
+  private static final TableName TABLE_NAME =
+      TableName.valueOf(STRING_TABLE_NAME);
 
   /**
    * Setup the config for the cluster
@@ -320,8 +320,8 @@ public class TestFlushSnapshotFromClient {
   @Test(timeout=60000)
   public void testConcurrentSnapshottingAttempts() throws IOException, InterruptedException {
     final String STRING_TABLE2_NAME = STRING_TABLE_NAME + "2";
-    final FullyQualifiedTableName TABLE2_NAME =
-        FullyQualifiedTableName.valueOf(STRING_TABLE2_NAME);
+    final TableName TABLE2_NAME =
+        TableName.valueOf(STRING_TABLE2_NAME);
 
     int ssNum = 20;
     HBaseAdmin admin = UTIL.getHBaseAdmin();
@@ -430,7 +430,7 @@ public class TestFlushSnapshotFromClient {
     FSUtils.logFileSystemState(UTIL.getDFSCluster().getFileSystem(), root, LOG);
   }
 
-  private void waitForTableToBeOnline(final FullyQualifiedTableName tableName) throws IOException {
+  private void waitForTableToBeOnline(final TableName tableName) throws IOException {
     HRegionServer rs = UTIL.getRSForFirstRegionInTable(tableName);
     List<HRegion> onlineRegions = rs.getOnlineRegions(tableName);
     for (HRegion region : onlineRegions) {

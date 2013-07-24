@@ -80,9 +80,9 @@ public class TestMultipleTimestamps {
 
   @Test
   public void testReseeksWithOneColumnMiltipleTimestamp() throws IOException {
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testReseeksWithOne" +
-    "ColumnMiltipleTimestamps");
+    TableName TABLE =
+        TableName.valueOf("testReseeksWithOne" +
+            "ColumnMiltipleTimestamps");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -122,9 +122,9 @@ public class TestMultipleTimestamps {
   @Test
   public void testReseeksWithMultipleColumnOneTimestamp() throws IOException {
     LOG.info("testReseeksWithMultipleColumnOneTimestamp");
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testReseeksWithMultiple" +
-    "ColumnOneTimestamps");
+    TableName TABLE =
+        TableName.valueOf("testReseeksWithMultiple" +
+            "ColumnOneTimestamps");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -164,8 +164,8 @@ public class TestMultipleTimestamps {
   IOException {
     LOG.info("testReseeksWithMultipleColumnMultipleTimestamp");
 
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testReseeksWithMultipleColumnMiltipleTimestamps");
+    TableName TABLE =
+        TableName.valueOf("testReseeksWithMultipleColumnMiltipleTimestamps");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -217,8 +217,8 @@ public class TestMultipleTimestamps {
   @Test
   public void testReseeksWithMultipleFiles() throws IOException {
     LOG.info("testReseeksWithMultipleFiles");
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testReseeksWithMultipleFiles");
+    TableName TABLE =
+        TableName.valueOf("testReseeksWithMultipleFiles");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -286,9 +286,9 @@ public class TestMultipleTimestamps {
 
   public void testWithVersionDeletes(boolean flushTables) throws IOException {
     LOG.info("testWithVersionDeletes_"+ (flushTables ? "flush" : "noflush"));
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testWithVersionDeletes_" + (flushTables ?
-        "flush" : "noflush"));
+    TableName TABLE =
+        TableName.valueOf("testWithVersionDeletes_" + (flushTables ?
+            "flush" : "noflush"));
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -321,8 +321,8 @@ public class TestMultipleTimestamps {
   public void testWithMultipleVersionDeletes() throws IOException {
     LOG.info("testWithMultipleVersionDeletes");
 
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testWithMultipleVersionDeletes");
+    TableName TABLE =
+        TableName.valueOf("testWithMultipleVersionDeletes");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -347,8 +347,8 @@ public class TestMultipleTimestamps {
 
   @Test
   public void testWithColumnDeletes() throws IOException {
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testWithColumnDeletes");
+    TableName TABLE =
+        TableName.valueOf("testWithColumnDeletes");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 
@@ -373,8 +373,8 @@ public class TestMultipleTimestamps {
 
   @Test
   public void testWithFamilyDeletes() throws IOException {
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf("testWithFamilyDeletes");
+    TableName TABLE =
+        TableName.valueOf("testWithFamilyDeletes");
     byte [] FAMILY = Bytes.toBytes("event_log");
     byte [][] FAMILIES = new byte[][] { FAMILY };
 

@@ -29,7 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -100,8 +100,8 @@ public class TestRegionMergeTransactionOnCluster {
   @Test
   public void testWholesomeMerge() throws Exception {
     LOG.info("Starting testWholesomeMerge");
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testWholesomeMerge");
+    final TableName tableName =
+        TableName.valueOf("testWholesomeMerge");
 
     // Create table and load data.
     HTable table = createTableAndLoadData(master, tableName);
@@ -123,8 +123,8 @@ public class TestRegionMergeTransactionOnCluster {
     LOG.info("Starting testCleanMergeReference");
     admin.enableCatalogJanitor(false);
     try {
-      final FullyQualifiedTableName tableName =
-          FullyQualifiedTableName.valueOf("testCleanMergeReference");
+      final TableName tableName =
+          TableName.valueOf("testCleanMergeReference");
       // Create table and load data.
       HTable table = createTableAndLoadData(master, tableName);
       // Merge 1st and 2nd region
@@ -156,7 +156,7 @@ public class TestRegionMergeTransactionOnCluster {
       FileSystem fs = master.getMasterFileSystem().getFileSystem();
       Path rootDir = master.getMasterFileSystem().getRootDir();
 
-      Path tabledir = FSUtils.getTableDir(rootDir, mergedRegionInfo.getFullyQualifiedTableName());
+      Path tabledir = FSUtils.getTableDir(rootDir, mergedRegionInfo.getTableName());
       Path regionAdir = new Path(tabledir, regionA.getEncodedName());
       Path regionBdir = new Path(tabledir, regionB.getEncodedName());
       assertTrue(fs.exists(regionAdir));
@@ -194,13 +194,13 @@ public class TestRegionMergeTransactionOnCluster {
     }
   }
 
-  private void mergeRegionsAndVerifyRegionNum(HMaster master, FullyQualifiedTableName tablename,
+  private void mergeRegionsAndVerifyRegionNum(HMaster master, TableName tablename,
       int regionAnum, int regionBnum, int expectedRegionNum) throws Exception {
     requestMergeRegion(master, tablename, regionAnum, regionBnum);
     waitAndVerifyRegionNum(master, tablename, expectedRegionNum);
   }
 
-  private void requestMergeRegion(HMaster master, FullyQualifiedTableName tablename,
+  private void requestMergeRegion(HMaster master, TableName tablename,
       int regionAnum, int regionBnum) throws Exception {
     List<Pair<HRegionInfo, ServerName>> tableRegions = MetaReader
         .getTableRegionsAndLocations(master.getCatalogTracker(),
@@ -210,7 +210,7 @@ public class TestRegionMergeTransactionOnCluster {
         tableRegions.get(regionBnum).getFirst().getEncodedNameAsBytes(), false);
   }
 
-  private void waitAndVerifyRegionNum(HMaster master, FullyQualifiedTableName tablename,
+  private void waitAndVerifyRegionNum(HMaster master, TableName tablename,
       int expectedRegionNum) throws Exception {
     List<Pair<HRegionInfo, ServerName>> tableRegionsInMeta;
     List<HRegionInfo> tableRegionsInMaster;
@@ -233,12 +233,12 @@ public class TestRegionMergeTransactionOnCluster {
     assertEquals(expectedRegionNum, tableRegionsInMeta.size());
   }
 
-  private HTable createTableAndLoadData(HMaster master, FullyQualifiedTableName tablename)
+  private HTable createTableAndLoadData(HMaster master, TableName tablename)
       throws Exception {
     return createTableAndLoadData(master, tablename, INITIAL_REGION_NUM);
   }
 
-  private HTable createTableAndLoadData(HMaster master, FullyQualifiedTableName tablename,
+  private HTable createTableAndLoadData(HMaster master, TableName tablename,
       int numRegions) throws Exception {
     assertTrue("ROWSIZE must > numregions:" + numRegions, ROWSIZE > numRegions);
     byte[][] splitRows = new byte[numRegions - 1][];

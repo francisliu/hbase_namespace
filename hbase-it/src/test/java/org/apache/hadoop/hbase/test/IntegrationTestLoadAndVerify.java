@@ -30,7 +30,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -350,7 +350,7 @@ public class IntegrationTestLoadAndVerify  extends Configured implements Tool {
 
   @Test
   public void testLoadAndVerify() throws Exception {
-    HTableDescriptor htd = new HTableDescriptor(FullyQualifiedTableName.valueOf(TEST_NAME));
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(TEST_NAME));
     htd.addFamily(new HColumnDescriptor(TEST_FAMILY));
 
     HBaseAdmin admin = getTestingUtil().getHBaseAdmin();
@@ -369,19 +369,19 @@ public class IntegrationTestLoadAndVerify  extends Configured implements Tool {
     throws IOException, InterruptedException {
     // Use disableTestAsync because disable can take a long time to complete
     System.out.print("Disabling table " + htd.getNameAsString() +" ");
-    admin.disableTableAsync(htd.getFullyQualifiedTableName());
+    admin.disableTableAsync(htd.getTableName());
 
     long start = System.currentTimeMillis();
     // NOTE tables can be both admin.isTableEnabled=false and
     // isTableDisabled=false, when disabling must use isTableDisabled!
-    while (!admin.isTableDisabled(htd.getFullyQualifiedTableName())) {
+    while (!admin.isTableDisabled(htd.getTableName())) {
       System.out.print(".");
       Thread.sleep(1000);
     }
     long delta = System.currentTimeMillis() - start;
     System.out.println(" " + delta +" ms");
     System.out.println("Deleting table " + htd.getNameAsString() +" ");
-    admin.deleteTable(htd.getFullyQualifiedTableName());
+    admin.deleteTable(htd.getTableName());
   }
 
   public void usage() {
@@ -425,7 +425,7 @@ public class IntegrationTestLoadAndVerify  extends Configured implements Tool {
 
     // create HTableDescriptor for specified table
     String table = getConf().get(TABLE_NAME_KEY, TEST_NAME);
-    HTableDescriptor htd = new HTableDescriptor(FullyQualifiedTableName.valueOf(table));
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
     htd.addFamily(new HColumnDescriptor(TEST_FAMILY));
 
     HBaseAdmin admin = new HBaseAdmin(getConf());

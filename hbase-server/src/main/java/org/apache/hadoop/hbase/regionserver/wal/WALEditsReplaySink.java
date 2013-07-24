@@ -29,7 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -37,13 +37,8 @@ import org.apache.hadoop.hbase.client.Action;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.ServerCallable;
-import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
-import org.apache.hadoop.hbase.exceptions.NoSuchColumnFamilyException;
-import org.apache.hadoop.hbase.ipc.RpcClient;
-import org.apache.hadoop.hbase.master.SplitLogManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
-import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ActionResult;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MultiRequest;
@@ -67,7 +62,7 @@ public class WALEditsReplaySink {
 
   private final Configuration conf;
   private final HConnection conn;
-  private final FullyQualifiedTableName tableName;
+  private final TableName tableName;
   private final MetricsWALEditsReplay metrics;
   private final AtomicLong totalReplayedEdits = new AtomicLong();
   private final boolean skipErrors;
@@ -80,7 +75,7 @@ public class WALEditsReplaySink {
    * @param conn
    * @throws IOException
    */
-  public WALEditsReplaySink(Configuration conf, FullyQualifiedTableName tableName, HConnection conn)
+  public WALEditsReplaySink(Configuration conf, TableName tableName, HConnection conn)
       throws IOException {
     this.conf = conf;
     this.metrics = new MetricsWALEditsReplay();
@@ -188,7 +183,7 @@ public class WALEditsReplaySink {
 
     private Map<HRegionLocation, Map<HRegionInfo, List<Action<Row>>>> retryActions = null;
 
-    ReplayServerCallable(final HConnection connection, final FullyQualifiedTableName tableName,
+    ReplayServerCallable(final HConnection connection, final TableName tableName,
         final HRegionLocation regionLoc, final HRegionInfo regionInfo,
         final List<Action<Row>> actions) {
       super(connection, tableName, null, replayTimeout);

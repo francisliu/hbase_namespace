@@ -22,13 +22,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -39,14 +38,9 @@ import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.master.MasterServices;
-import org.apache.hadoop.hbase.master.TestMaster;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.zookeeper.ZKTable;
-import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -76,7 +70,7 @@ public class TestCreateTableHandler {
     final HMaster m = cluster.getMaster();
     final HTableDescriptor desc = new HTableDescriptor(TABLENAME);
     desc.addFamily(new HColumnDescriptor(FAMILYNAME));
-    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getFullyQualifiedTableName(), null,
+    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getTableName(), null,
         null) };
     CustomCreateTableHandler handler = new CustomCreateTableHandler(m, m.getMasterFileSystem(),
         desc, cluster.getConfiguration(), hRegionInfos, m);
@@ -104,7 +98,7 @@ public class TestCreateTableHandler {
     final HMaster m = cluster.getMaster();
     final HTableDescriptor desc = new HTableDescriptor(tableName);
     desc.addFamily(new HColumnDescriptor(FAMILYNAME));
-    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getFullyQualifiedTableName(), null,
+    final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getTableName(), null,
         null) };
     CustomCreateTableHandler handler = new CustomCreateTableHandler(m, m.getMasterFileSystem(),
         desc, cluster.getConfiguration(), hRegionInfos, m);
@@ -134,7 +128,7 @@ public class TestCreateTableHandler {
 
     @Override
     protected List<HRegionInfo> handleCreateHdfsRegions(Path tableRootDir,
-        FullyQualifiedTableName tableName) throws IOException {
+        TableName tableName) throws IOException {
       if (throwException) {
         throw new IOException("Test throws exceptions.");
       }

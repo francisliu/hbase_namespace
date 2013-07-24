@@ -27,7 +27,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -63,7 +63,7 @@ public class TestRestoreSnapshotFromClient {
   private byte[] snapshotName2;
   private int snapshot0Rows;
   private int snapshot1Rows;
-  private FullyQualifiedTableName tableName;
+  private TableName tableName;
   private HBaseAdmin admin;
 
   @BeforeClass
@@ -95,7 +95,7 @@ public class TestRestoreSnapshotFromClient {
 
     long tid = System.currentTimeMillis();
     tableName =
-        FullyQualifiedTableName.valueOf("testtb-" + tid);
+        TableName.valueOf("testtb-" + tid);
     emptySnapshot = Bytes.toBytes("emptySnaptb-" + tid);
     snapshotName0 = Bytes.toBytes("snaptb0-" + tid);
     snapshotName1 = Bytes.toBytes("snaptb1-" + tid);
@@ -230,8 +230,8 @@ public class TestRestoreSnapshotFromClient {
 
   @Test
   public void testRestoreSnapshotOfCloned() throws IOException, InterruptedException {
-    FullyQualifiedTableName clonedTableName =
-        FullyQualifiedTableName.valueOf("clonedtb-" + System.currentTimeMillis());
+    TableName clonedTableName =
+        TableName.valueOf("clonedtb-" + System.currentTimeMillis());
     admin.cloneSnapshot(snapshotName0, clonedTableName);
     verifyRowCount(clonedTableName, snapshot0Rows);
     admin.disableTable(clonedTableName);
@@ -248,7 +248,7 @@ public class TestRestoreSnapshotFromClient {
   // ==========================================================================
   //  Helpers
   // ==========================================================================
-  private void createTable(final FullyQualifiedTableName tableName,
+  private void createTable(final TableName tableName,
                            final byte[]... families) throws IOException {
     HTableDescriptor htd = new HTableDescriptor(tableName);
     for (byte[] family: families) {
@@ -283,7 +283,7 @@ public class TestRestoreSnapshotFromClient {
     TEST_UTIL.getMiniHBaseCluster().getMaster().getHFileCleaner().choreForTesting();
   }
 
-  private Set<String> getFamiliesFromFS(final FullyQualifiedTableName tableName) throws IOException {
+  private Set<String> getFamiliesFromFS(final TableName tableName) throws IOException {
     MasterFileSystem mfs = TEST_UTIL.getMiniHBaseCluster().getMaster().getMasterFileSystem();
     Set<String> families = new HashSet<String>();
     Path tableDir = FSUtils.getTableDir(mfs.getRootDir(), tableName);
@@ -295,7 +295,7 @@ public class TestRestoreSnapshotFromClient {
     return families;
   }
 
-  private void verifyRowCount(final FullyQualifiedTableName tableName,
+  private void verifyRowCount(final TableName tableName,
                               long expectedRows) throws IOException {
     HTable table = new HTable(TEST_UTIL.getConfiguration(), tableName);
     assertEquals(expectedRows, TEST_UTIL.countRows(table));

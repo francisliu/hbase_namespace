@@ -51,7 +51,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -318,8 +318,8 @@ public class TestFromClientSide {
   @Test
   public void testRegionCachePreWarm() throws Exception {
     LOG.info("Starting testRegionCachePreWarm");
-    final FullyQualifiedTableName TABLENAME =
-        FullyQualifiedTableName.valueOf("testCachePrewarm");
+    final TableName TABLENAME =
+        TableName.valueOf("testCachePrewarm");
     Configuration conf = TEST_UTIL.getConfiguration();
 
     // Set up test table:
@@ -1214,7 +1214,7 @@ public class TestFromClientSide {
 
     // Null table name (should NOT work)
     try {
-      TEST_UTIL.createTable((FullyQualifiedTableName)null, FAMILY);
+      TEST_UTIL.createTable((TableName)null, FAMILY);
       fail("Creating a table with null name passed, should have failed");
     } catch(Exception e) {}
 
@@ -3929,7 +3929,7 @@ public class TestFromClientSide {
     for (int i = 0; i < tables.length && i < size; i++) {
       boolean found = false;
       for (int j = 0; j < ts.length; j++) {
-        if (Bytes.equals(ts[j].getFullyQualifiedTableName().getName(), tables[i])) {
+        if (Bytes.equals(ts[j].getTableName().getName(), tables[i])) {
           found = true;
           break;
         }
@@ -4065,7 +4065,7 @@ public class TestFromClientSide {
     // Test that attribute changes were applied
     desc = a.getTableDescriptor();
     assertTrue("wrong table descriptor returned",
-      Bytes.compareTo(desc.getFullyQualifiedTableName().getName(), tableAname) == 0);
+      Bytes.compareTo(desc.getTableName().getName(), tableAname) == 0);
     // check HTD attribute
     value = desc.getValue(attrName);
     assertFalse("missing HTD attribute value", value == null);
@@ -4240,8 +4240,8 @@ public class TestFromClientSide {
   @Test
   public void testIncrementWithDeletes() throws Exception {
     LOG.info("Starting testIncrementWithDeletes");
-    final FullyQualifiedTableName TABLENAME =
-        FullyQualifiedTableName.valueOf("testIncrementWithDeletes");
+    final TableName TABLENAME =
+        TableName.valueOf("testIncrementWithDeletes");
     HTable ht = TEST_UTIL.createTable(TABLENAME, FAMILY);
     final byte[] COLUMN = Bytes.toBytes("column");
 

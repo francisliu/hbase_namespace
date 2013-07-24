@@ -27,7 +27,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -77,7 +77,7 @@ implements Writable, Comparable<TableSplit> {
   }
   
   private static final Version VERSION = Version.INITIAL;
-  private FullyQualifiedTableName tableName;
+  private TableName tableName;
   private byte [] startRow;
   private byte [] endRow;
   private String regionLocation;
@@ -98,7 +98,7 @@ implements Writable, Comparable<TableSplit> {
    * @param endRow  The end row of the split.
    * @param location  The location of the region.
    */
-  public TableSplit(FullyQualifiedTableName tableName, Scan scan, byte [] startRow, byte [] endRow,
+  public TableSplit(TableName tableName, Scan scan, byte [] startRow, byte [] endRow,
       final String location) {
     this.tableName = tableName;
     try {
@@ -120,7 +120,7 @@ implements Writable, Comparable<TableSplit> {
    * @param endRow The end row of the split.
    * @param location The location of the region.
    */
-  public TableSplit(FullyQualifiedTableName tableName, byte[] startRow, byte[] endRow,
+  public TableSplit(TableName tableName, byte[] startRow, byte[] endRow,
       final String location) {
     this(tableName, null, startRow, endRow, location);
   }
@@ -140,7 +140,7 @@ implements Writable, Comparable<TableSplit> {
    *
    * @return The table name.
    */
-  public FullyQualifiedTableName getTableName() {
+  public TableName getTableName() {
     return tableName;
   }
 
@@ -219,7 +219,7 @@ implements Writable, Comparable<TableSplit> {
     }
     byte[] tableNameBytes = new byte[len];
     in.readFully(tableNameBytes);
-    tableName = FullyQualifiedTableName.valueOf(tableNameBytes);
+    tableName = TableName.valueOf(tableNameBytes);
     startRow = Bytes.readByteArray(in);
     endRow = Bytes.readByteArray(in);
     regionLocation = Bytes.toString(Bytes.readByteArray(in));

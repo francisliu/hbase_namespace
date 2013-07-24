@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.zookeeper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
 import org.apache.zookeeper.KeeperException;
@@ -57,8 +57,8 @@ public class ZKTable {
    * for every query.  Synchronize access rather than use concurrent Map because
    * synchronization needs to span query of zk.
    */
-  private final Map<FullyQualifiedTableName, ZooKeeperProtos.Table.State> cache =
-    new HashMap<FullyQualifiedTableName, ZooKeeperProtos.Table.State>();
+  private final Map<TableName, ZooKeeperProtos.Table.State> cache =
+    new HashMap<TableName, ZooKeeperProtos.Table.State>();
 
   // TODO: Make it so always a table znode. Put table schema here as well as table state.
   // Have watcher on table znode so all are notified of state or schema change.
@@ -79,7 +79,7 @@ public class ZKTable {
       List<String> children = ZKUtil.listChildrenNoWatch(this.watcher, this.watcher.tableZNode);
       if (children == null) return;
       for (String child: children) {
-        FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(child);
+        TableName tableName = TableName.valueOf(child);
         ZooKeeperProtos.Table.State state = ZKTableReadOnly.getTableState(this.watcher, tableName);
         if (state != null) this.cache.put(tableName, state);
       }
@@ -89,68 +89,68 @@ public class ZKTable {
   /**
    * Sets the specified table as DISABLED in zookeeper.  Fails silently if the
    * table is already disabled in zookeeper.  Sets no watches.
-   * @param fqtn
+   * @param tableName
    * @throws KeeperException unexpected zookeeper exception
    */
-  public void setDisabledTable(FullyQualifiedTableName fqtn)
+  public void setDisabledTable(TableName tableName)
   throws KeeperException {
     synchronized (this.cache) {
-      if (!isDisablingOrDisabledTable(fqtn)) {
-        LOG.warn("Moving table " + fqtn.getNameAsString() + " state to disabled but was " +
-          "not first in disabling state: " + this.cache.get(fqtn));
+      if (!isDisablingOrDisabledTable(tableName)) {
+        LOG.warn("Moving table " + tableName.getNameAsString() + " state to disabled but was " +
+          "not first in disabling state: " + this.cache.get(tableName));
       }
-      setTableState(fqtn, ZooKeeperProtos.Table.State.DISABLED);
+      setTableState(tableName, ZooKeeperProtos.Table.State.DISABLED);
     }
   }
 
   /**
    * Sets the specified table as DISABLING in zookeeper.  Fails silently if the
    * table is already disabled in zookeeper.  Sets no watches.
-   * @param fqtn
+   * @param tableName
    * @throws KeeperException unexpected zookeeper exception
    */
-  public void setDisablingTable(final FullyQualifiedTableName fqtn)
+  public void setDisablingTable(final TableName tableName)
   throws KeeperException {
     synchronized (this.cache) {
-      if (!isEnabledOrDisablingTable(fqtn)) {
-        LOG.warn("Moving table " + fqtn.getNameAsString() + " state to disabling but was " +
-          "not first in enabled state: " + this.cache.get(fqtn));
+      if (!isEnabledOrDisablingTable(tableName)) {
+        LOG.warn("Moving table " + tableName.getNameAsString() + " state to disabling but was " +
+          "not first in enabled state: " + this.cache.get(tableName));
       }
-      setTableState(fqtn, ZooKeeperProtos.Table.State.DISABLING);
+      setTableState(tableName, ZooKeeperProtos.Table.State.DISABLING);
     }
   }
 
   /**
    * Sets the specified table as ENABLING in zookeeper.  Fails silently if the
    * table is already disabled in zookeeper.  Sets no watches.
-   * @param fqtn
+   * @param tableName
    * @throws KeeperException unexpected zookeeper exception
    */
-  public void setEnablingTable(final FullyQualifiedTableName fqtn)
+  public void setEnablingTable(final TableName tableName)
   throws KeeperException {
     synchronized (this.cache) {
-      if (!isDisabledOrEnablingTable(fqtn)) {
-        LOG.warn("Moving table " + fqtn.getNameAsString() + " state to enabling but was " +
-          "not first in disabled state: " + this.cache.get(fqtn));
+      if (!isDisabledOrEnablingTable(tableName)) {
+        LOG.warn("Moving table " + tableName.getNameAsString() + " state to enabling but was " +
+          "not first in disabled state: " + this.cache.get(tableName));
       }
-      setTableState(fqtn, ZooKeeperProtos.Table.State.ENABLING);
+      setTableState(tableName, ZooKeeperProtos.Table.State.ENABLING);
     }
   }
 
   /**
    * Sets the specified table as ENABLING in zookeeper atomically
    * If the table is already in ENABLING state, no operation is performed
-   * @param fqtn
+   * @param tableName
    * @return if the operation succeeds or not
    * @throws KeeperException unexpected zookeeper exception
    */
-  public boolean checkAndSetEnablingTable(final FullyQualifiedTableName fqtn)
+  public boolean checkAndSetEnablingTable(final TableName tableName)
     throws KeeperException {
     synchronized (this.cache) {
-      if (isEnablingTable(fqtn)) {
+      if (isEnablingTable(tableName)) {
         return false;
       }
-      setTableState(fqtn, ZooKeeperProtos.Table.State.ENABLING);
+      setTableState(tableName, ZooKeeperProtos.Table.State.ENABLING);
       return true;
     }
   }
@@ -158,17 +158,17 @@ public class ZKTable {
   /**
    * Sets the specified table as ENABLING in zookeeper atomically
    * If the table isn't in DISABLED state, no operation is performed
-   * @param fqtn
+   * @param tableName
    * @return if the operation succeeds or not
    * @throws KeeperException unexpected zookeeper exception
    */
-  public boolean checkDisabledAndSetEnablingTable(final FullyQualifiedTableName fqtn)
+  public boolean checkDisabledAndSetEnablingTable(final TableName tableName)
     throws KeeperException {
     synchronized (this.cache) {
-      if (!isDisabledTable(fqtn)) {
+      if (!isDisabledTable(tableName)) {
         return false;
       }
-      setTableState(fqtn, ZooKeeperProtos.Table.State.ENABLING);
+      setTableState(tableName, ZooKeeperProtos.Table.State.ENABLING);
       return true;
     }
   }
@@ -176,24 +176,24 @@ public class ZKTable {
   /**
    * Sets the specified table as DISABLING in zookeeper atomically
    * If the table isn't in ENABLED state, no operation is performed
-   * @param fqtn
+   * @param tableName
    * @return if the operation succeeds or not
    * @throws KeeperException unexpected zookeeper exception
    */
-  public boolean checkEnabledAndSetDisablingTable(final FullyQualifiedTableName fqtn)
+  public boolean checkEnabledAndSetDisablingTable(final TableName tableName)
     throws KeeperException {
     synchronized (this.cache) {
-      if (this.cache.get(fqtn) != null && !isEnabledTable(fqtn)) {
+      if (this.cache.get(tableName) != null && !isEnabledTable(tableName)) {
         return false;
       }
-      setTableState(fqtn, ZooKeeperProtos.Table.State.DISABLING);
+      setTableState(tableName, ZooKeeperProtos.Table.State.DISABLING);
       return true;
     }
   }
 
-  private void setTableState(final FullyQualifiedTableName fqtn, final ZooKeeperProtos.Table.State state)
+  private void setTableState(final TableName tableName, final ZooKeeperProtos.Table.State state)
   throws KeeperException {
-    String znode = ZKUtil.joinZNode(this.watcher.tableZNode, fqtn.getNameAsString());
+    String znode = ZKUtil.joinZNode(this.watcher.tableZNode, tableName.getNameAsString());
     if (ZKUtil.checkExists(this.watcher, znode) == -1) {
       ZKUtil.createAndFailSilent(this.watcher, znode);
     }
@@ -202,47 +202,47 @@ public class ZKTable {
       builder.setState(state);
       byte [] data = ProtobufUtil.prependPBMagic(builder.build().toByteArray());
       ZKUtil.setData(this.watcher, znode, data);
-      this.cache.put(fqtn, state);
+      this.cache.put(tableName, state);
     }
   }
 
-  public boolean isDisabledTable(final FullyQualifiedTableName fqtn) {
-    return isTableState(fqtn, ZooKeeperProtos.Table.State.DISABLED);
+  public boolean isDisabledTable(final TableName tableName) {
+    return isTableState(tableName, ZooKeeperProtos.Table.State.DISABLED);
   }
 
-  public boolean isDisablingTable(final FullyQualifiedTableName fqtn) {
-    return isTableState(fqtn, ZooKeeperProtos.Table.State.DISABLING);
+  public boolean isDisablingTable(final TableName tableName) {
+    return isTableState(tableName, ZooKeeperProtos.Table.State.DISABLING);
   }
 
-  public boolean isEnablingTable(final FullyQualifiedTableName fqtn) {
-    return isTableState(fqtn, ZooKeeperProtos.Table.State.ENABLING);
+  public boolean isEnablingTable(final TableName tableName) {
+    return isTableState(tableName, ZooKeeperProtos.Table.State.ENABLING);
   }
 
-  public boolean isEnabledTable(FullyQualifiedTableName fqtn) {
-    return isTableState(fqtn, ZooKeeperProtos.Table.State.ENABLED);
+  public boolean isEnabledTable(TableName tableName) {
+    return isTableState(tableName, ZooKeeperProtos.Table.State.ENABLED);
   }
 
-  public boolean isDisablingOrDisabledTable(final FullyQualifiedTableName fqtn) {
+  public boolean isDisablingOrDisabledTable(final TableName tableName) {
     synchronized (this.cache) {
-      return isDisablingTable(fqtn) || isDisabledTable(fqtn);
+      return isDisablingTable(tableName) || isDisabledTable(tableName);
     }
   }
 
-  public boolean isEnabledOrDisablingTable(final FullyQualifiedTableName fqtn) {
+  public boolean isEnabledOrDisablingTable(final TableName tableName) {
     synchronized (this.cache) {
-      return isEnabledTable(fqtn) || isDisablingTable(fqtn);
+      return isEnabledTable(tableName) || isDisablingTable(tableName);
     }
   }
 
-  public boolean isDisabledOrEnablingTable(final FullyQualifiedTableName fqtn) {
+  public boolean isDisabledOrEnablingTable(final TableName tableName) {
     synchronized (this.cache) {
-      return isDisabledTable(fqtn) || isEnablingTable(fqtn);
+      return isDisabledTable(tableName) || isEnablingTable(tableName);
     }
   }
 
-  private boolean isTableState(final FullyQualifiedTableName fqtn, final ZooKeeperProtos.Table.State state) {
+  private boolean isTableState(final TableName tableName, final ZooKeeperProtos.Table.State state) {
     synchronized (this.cache) {
-      ZooKeeperProtos.Table.State currentState = this.cache.get(fqtn);
+      ZooKeeperProtos.Table.State currentState = this.cache.get(tableName);
       return ZKTableReadOnly.isTableState(currentState, state);
     }
   }
@@ -250,18 +250,18 @@ public class ZKTable {
   /**
    * Deletes the table in zookeeper.  Fails silently if the
    * table is not currently disabled in zookeeper.  Sets no watches.
-   * @param fqtn
+   * @param tableName
    * @throws KeeperException unexpected zookeeper exception
    */
-  public void setDeletedTable(final FullyQualifiedTableName fqtn)
+  public void setDeletedTable(final TableName tableName)
   throws KeeperException {
     synchronized (this.cache) {
-      if (this.cache.remove(fqtn) == null) {
-        LOG.warn("Moving table " + fqtn.getNameAsString() + " state to deleted but was " +
+      if (this.cache.remove(tableName) == null) {
+        LOG.warn("Moving table " + tableName.getNameAsString() + " state to deleted but was " +
           "already deleted");
       }
       ZKUtil.deleteNodeFailSilent(this.watcher,
-        ZKUtil.joinZNode(this.watcher.tableZNode, fqtn.getNameAsString()));
+        ZKUtil.joinZNode(this.watcher.tableZNode, tableName.getNameAsString()));
     }
   }
   
@@ -269,22 +269,22 @@ public class ZKTable {
    * Sets the ENABLED state in the cache and creates or force updates a node to
    * ENABLED state for the specified table
    * 
-   * @param fqtn
+   * @param tableName
    * @throws KeeperException
    */
-  public void setEnabledTable(final FullyQualifiedTableName fqtn) throws KeeperException {
-    setTableState(fqtn, ZooKeeperProtos.Table.State.ENABLED);
+  public void setEnabledTable(final TableName tableName) throws KeeperException {
+    setTableState(tableName, ZooKeeperProtos.Table.State.ENABLED);
   }
 
   /**
    * check if table is present .
    * 
-   * @param fqtn
+   * @param tableName
    * @return true if the table is present
    */
-  public boolean isTablePresent(final FullyQualifiedTableName fqtn) {
+  public boolean isTablePresent(final TableName tableName) {
     synchronized (this.cache) {
-      ZooKeeperProtos.Table.State state = this.cache.get(fqtn);
+      ZooKeeperProtos.Table.State state = this.cache.get(tableName);
       return !(state == null);
     }
   }
@@ -293,11 +293,11 @@ public class ZKTable {
    * Gets a list of all the tables set as disabled in zookeeper.
    * @return Set of disabled tables, empty Set if none
    */
-  public Set<FullyQualifiedTableName> getDisabledTables() {
-    Set<FullyQualifiedTableName> disabledTables = new HashSet<FullyQualifiedTableName>();
+  public Set<TableName> getDisabledTables() {
+    Set<TableName> disabledTables = new HashSet<TableName>();
     synchronized (this.cache) {
-      Set<FullyQualifiedTableName> tables = this.cache.keySet();
-      for (FullyQualifiedTableName table: tables) {
+      Set<TableName> tables = this.cache.keySet();
+      for (TableName table: tables) {
         if (isDisabledTable(table)) disabledTables.add(table);
       }
     }
@@ -309,7 +309,7 @@ public class ZKTable {
    * @return Set of disabled tables, empty Set if none
    * @throws KeeperException
    */
-  public static Set<FullyQualifiedTableName> getDisabledTables(ZooKeeperWatcher zkw)
+  public static Set<TableName> getDisabledTables(ZooKeeperWatcher zkw)
       throws KeeperException {
     return getAllTables(zkw, ZooKeeperProtos.Table.State.DISABLED);
   }
@@ -319,7 +319,7 @@ public class ZKTable {
    * @return Set of disabling tables, empty Set if none
    * @throws KeeperException
    */
-  public static Set<FullyQualifiedTableName> getDisablingTables(ZooKeeperWatcher zkw)
+  public static Set<TableName> getDisablingTables(ZooKeeperWatcher zkw)
       throws KeeperException {
     return getAllTables(zkw, ZooKeeperProtos.Table.State.DISABLING);
   }
@@ -329,7 +329,7 @@ public class ZKTable {
    * @return Set of enabling tables, empty Set if none
    * @throws KeeperException
    */
-  public static Set<FullyQualifiedTableName> getEnablingTables(ZooKeeperWatcher zkw)
+  public static Set<TableName> getEnablingTables(ZooKeeperWatcher zkw)
       throws KeeperException {
     return getAllTables(zkw, ZooKeeperProtos.Table.State.ENABLING);
   }
@@ -339,7 +339,7 @@ public class ZKTable {
    * @return Set of disabled tables, empty Set if none
    * @throws KeeperException
    */
-  public static Set<FullyQualifiedTableName> getDisabledOrDisablingTables(ZooKeeperWatcher zkw)
+  public static Set<TableName> getDisabledOrDisablingTables(ZooKeeperWatcher zkw)
       throws KeeperException {
     return getAllTables(zkw, ZooKeeperProtos.Table.State.DISABLED,
       ZooKeeperProtos.Table.State.DISABLING);
@@ -350,18 +350,18 @@ public class ZKTable {
    * helps in cases where CreateTable is to be retried by the client incase of
    * failures.  If deleteZNode is true - the znode is also deleted
    * 
-   * @param fqtn
+   * @param tableName
    * @param deleteZNode
    * @throws KeeperException
    */
-  public void removeEnablingTable(final FullyQualifiedTableName fqtn, boolean deleteZNode)
+  public void removeEnablingTable(final TableName tableName, boolean deleteZNode)
       throws KeeperException {
     synchronized (this.cache) {
-      if (isEnablingTable(fqtn)) {
-        this.cache.remove(fqtn);
+      if (isEnablingTable(tableName)) {
+        this.cache.remove(tableName);
         if (deleteZNode) {
           ZKUtil.deleteNodeFailSilent(this.watcher,
-              ZKUtil.joinZNode(this.watcher.tableZNode, fqtn.getNameAsString()));
+              ZKUtil.joinZNode(this.watcher.tableZNode, tableName.getNameAsString()));
         }
       }
     }
@@ -373,14 +373,14 @@ public class ZKTable {
    * @return Set of tables of specified states, empty Set if none
    * @throws KeeperException
    */
-  static Set<FullyQualifiedTableName> getAllTables(final ZooKeeperWatcher zkw,
+  static Set<TableName> getAllTables(final ZooKeeperWatcher zkw,
       final ZooKeeperProtos.Table.State... states) throws KeeperException {
-    Set<FullyQualifiedTableName> allTables = new HashSet<FullyQualifiedTableName>();
+    Set<TableName> allTables = new HashSet<TableName>();
     List<String> children =
       ZKUtil.listChildrenNoWatch(zkw, zkw.tableZNode);
     if(children == null) return allTables;
     for (String child: children) {
-      FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(child);
+      TableName tableName = TableName.valueOf(child);
       ZooKeeperProtos.Table.State state = ZKTableReadOnly.getTableState(zkw, tableName);
       for (ZooKeeperProtos.Table.State expectedState: states) {
         if (state == expectedState) {

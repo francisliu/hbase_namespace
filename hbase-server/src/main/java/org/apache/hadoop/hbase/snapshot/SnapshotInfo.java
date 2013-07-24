@@ -21,8 +21,6 @@ package org.apache.hadoop.hbase.snapshot;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.Date;
 
 import org.apache.commons.logging.Log;
@@ -33,7 +31,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -44,9 +42,6 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.io.HFileLink;
 import org.apache.hadoop.hbase.io.HLogLink;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
-import org.apache.hadoop.hbase.snapshot.SnapshotReferenceUtil;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 
@@ -188,7 +183,7 @@ public final class SnapshotInfo extends Configured implements Tool {
      */
     FileInfo addStoreFile(final String region, final String family, final String hfile)
           throws IOException {
-      FullyQualifiedTableName table = FullyQualifiedTableName.valueOf(this.snapshot.getTable());
+      TableName table = TableName.valueOf(this.snapshot.getTable());
       Path path = new Path(family, HFileLink.createHFileLinkName(table, region, hfile));
       HFileLink link = new HFileLink(conf, path);
       boolean inArchive = false;

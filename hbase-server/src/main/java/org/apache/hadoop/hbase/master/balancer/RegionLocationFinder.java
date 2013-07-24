@@ -31,14 +31,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HDFSBlocksDistribution;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -123,7 +122,7 @@ class RegionLocationFinder {
   protected List<ServerName> internalGetTopBlockLocation(HRegionInfo region) {
     List<ServerName> topServerNames = null;
     try {
-      HTableDescriptor tableDescriptor = getTableDescriptor(region.getFullyQualifiedTableName());
+      HTableDescriptor tableDescriptor = getTableDescriptor(region.getTableName());
       if (tableDescriptor != null) {
         HDFSBlocksDistribution blocksDistribution =
             HRegion.computeHDFSBlocksDistribution(getConf(), tableDescriptor, region);
@@ -145,7 +144,7 @@ class RegionLocationFinder {
    * @return HTableDescriptor
    * @throws IOException
    */
-  protected HTableDescriptor getTableDescriptor(FullyQualifiedTableName tableName) throws IOException {
+  protected HTableDescriptor getTableDescriptor(TableName tableName) throws IOException {
     HTableDescriptor tableDescriptor = null;
     try {
       if (this.services != null) {

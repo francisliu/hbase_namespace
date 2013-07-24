@@ -29,7 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -59,7 +59,7 @@ public class Merge extends Configured implements Tool {
   static final Log LOG = LogFactory.getLog(Merge.class);
   private Path rootdir;
   private volatile MetaUtils utils;
-  private FullyQualifiedTableName tableName;               // Name of table
+  private TableName tableName;               // Name of table
   private volatile byte [] region1;        // Name of region 1
   private volatile byte [] region2;        // Name of region 2
   private volatile boolean isMetaTable;
@@ -246,7 +246,7 @@ public class Merge extends Configured implements Tool {
       usage();
       return -1;
     }
-    tableName = FullyQualifiedTableName.valueOf(Bytes.toBytes(remainingArgs[0]));
+    tableName = TableName.valueOf(Bytes.toBytes(remainingArgs[0]));
     isMetaTable = tableName.compareTo(HConstants.META_TABLE_NAME) == 0;
 
     region1 = Bytes.toBytesBinary(remainingArgs[1]);
@@ -261,7 +261,7 @@ public class Merge extends Configured implements Tool {
     return status;
   }
 
-  private boolean notInTable(final FullyQualifiedTableName tn, final byte [] rn) {
+  private boolean notInTable(final TableName tn, final byte [] rn) {
     if (WritableComparator.compareBytes(tn.getName(), 0, tn.getName().length,
         rn, 0, tn.getName().length) != 0) {
       LOG.error("Region " + Bytes.toStringBinary(rn) + " does not belong to table " +

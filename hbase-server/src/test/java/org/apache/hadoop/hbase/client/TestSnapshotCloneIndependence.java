@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -198,8 +198,8 @@ public class TestSnapshotCloneIndependence {
 
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     final long startTime = System.currentTimeMillis();
-    final FullyQualifiedTableName localTableName =
-        FullyQualifiedTableName.valueOf(STRING_TABLE_NAME + startTime);
+    final TableName localTableName =
+        TableName.valueOf(STRING_TABLE_NAME + startTime);
 
     HTable original = UTIL.createTable(localTableName, TEST_FAM);
     try {
@@ -276,8 +276,8 @@ public class TestSnapshotCloneIndependence {
     // Create a table
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     final long startTime = System.currentTimeMillis();
-    final FullyQualifiedTableName localTableName =
-        FullyQualifiedTableName.valueOf(STRING_TABLE_NAME + startTime);
+    final TableName localTableName =
+        TableName.valueOf(STRING_TABLE_NAME + startTime);
     HTable original = UTIL.createTable(localTableName, TEST_FAM);
     UTIL.loadTable(original, TEST_FAM);
     final int loadedTableCount = UTIL.countRows(original);
@@ -332,8 +332,8 @@ public class TestSnapshotCloneIndependence {
     // Create a table
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     final long startTime = System.currentTimeMillis();
-    final FullyQualifiedTableName localTableName =
-        FullyQualifiedTableName.valueOf(STRING_TABLE_NAME + startTime);
+    final TableName localTableName =
+        TableName.valueOf(STRING_TABLE_NAME + startTime);
     HTable original = UTIL.createTable(localTableName, TEST_FAM);
     UTIL.loadTable(original, TEST_FAM);
 

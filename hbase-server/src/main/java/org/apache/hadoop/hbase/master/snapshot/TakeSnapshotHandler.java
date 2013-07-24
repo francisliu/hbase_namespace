@@ -30,7 +30,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
@@ -52,7 +52,6 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptio
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.TableInfoCopyTask;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.zookeeper.KeeperException;
 
@@ -107,7 +106,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
 
     this.tableLockManager = master.getTableLockManager();
     this.tableLock = this.tableLockManager.writeLock(
-        FullyQualifiedTableName.valueOf(snapshot.getTable()),
+        TableName.valueOf(snapshot.getTable()),
         EventType.C_M_SNAPSHOT_TABLE.toString());
 
     // prepare the verify
@@ -121,7 +120,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
       throws FileNotFoundException, IOException {
     final String name = snapshot.getTable();
     HTableDescriptor htd =
-      this.master.getTableDescriptors().get(FullyQualifiedTableName.valueOf(name));
+      this.master.getTableDescriptors().get(TableName.valueOf(name));
     if (htd == null) {
       throw new IOException("HTableDescriptor missing for " + name);
     }
@@ -166,7 +165,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
 
       List<Pair<HRegionInfo, ServerName>> regionsAndLocations =
           MetaReader.getTableRegionsAndLocations(this.server.getCatalogTracker(),
-            FullyQualifiedTableName.valueOf(snapshot.getTable()), true);
+            TableName.valueOf(snapshot.getTable()), true);
 
       // run the snapshot
       snapshotRegions(regionsAndLocations);

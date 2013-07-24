@@ -73,7 +73,7 @@ public class TestScanner extends HBaseTestCase {
   }
   /** HRegionInfo for root region */
   public static final HRegionInfo REGION_INFO =
-    new HRegionInfo(TESTTABLEDESC.getFullyQualifiedTableName(), HConstants.EMPTY_BYTE_ARRAY,
+    new HRegionInfo(TESTTABLEDESC.getTableName(), HConstants.EMPTY_BYTE_ARRAY,
     HConstants.EMPTY_BYTE_ARRAY);
 
   private static final byte [] ROW_KEY = REGION_INFO.getRegionName();

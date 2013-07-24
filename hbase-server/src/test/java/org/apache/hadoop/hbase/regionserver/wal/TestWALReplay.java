@@ -37,7 +37,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -151,8 +151,8 @@ public class TestWALReplay {
    */
   @Test
   public void testReplayEditsAfterRegionMovedWithMultiCF() throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testReplayEditsAfterRegionMovedWithMultiCF");
+    final TableName tableName =
+        TableName.valueOf("testReplayEditsAfterRegionMovedWithMultiCF");
     byte[] family1 = Bytes.toBytes("cf1");
     byte[] family2 = Bytes.toBytes("cf2");
     byte[] qualifier = Bytes.toBytes("q");
@@ -252,8 +252,8 @@ public class TestWALReplay {
   public void test2727() throws Exception {
     // Test being able to have > 1 set of edits in the recovered.edits directory.
     // Ensure edits are replayed properly.
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("test2727");
+    final TableName tableName =
+        TableName.valueOf("test2727");
     HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     Path basedir = FSUtils.getTableDir(hbaseRootDir, tableName);
     deleteDir(basedir);
@@ -313,8 +313,8 @@ public class TestWALReplay {
   public void testRegionMadeOfBulkLoadedFilesOnly()
   throws IOException, SecurityException, IllegalArgumentException,
       NoSuchFieldException, IllegalAccessException, InterruptedException {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testReplayEditsWrittenViaHRegion");
+    final TableName tableName =
+        TableName.valueOf("testReplayEditsWrittenViaHRegion");
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     final Path basedir = new Path(this.hbaseRootDir, tableName.getNameAsString());
     deleteDir(basedir);
@@ -373,8 +373,8 @@ public class TestWALReplay {
   public void testReplayEditsWrittenViaHRegion()
   throws IOException, SecurityException, IllegalArgumentException,
       NoSuchFieldException, IllegalAccessException, InterruptedException {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testReplayEditsWrittenViaHRegion");
+    final TableName tableName =
+        TableName.valueOf("testReplayEditsWrittenViaHRegion");
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     final Path basedir = FSUtils.getTableDir(this.hbaseRootDir, tableName);
     deleteDir(basedir);
@@ -491,8 +491,8 @@ public class TestWALReplay {
   public void testReplayEditsAfterPartialFlush()
   throws IOException, SecurityException, IllegalArgumentException,
       NoSuchFieldException, IllegalAccessException, InterruptedException {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testReplayEditsWrittenViaHRegion");
+    final TableName tableName =
+        TableName.valueOf("testReplayEditsWrittenViaHRegion");
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     final Path basedir = FSUtils.getTableDir(this.hbaseRootDir, tableName);
     deleteDir(basedir);
@@ -582,8 +582,8 @@ public class TestWALReplay {
    */
   @Test
   public void testReplayEditsAfterAbortingFlush() throws IOException {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testReplayEditsAfterAbortingFlush");
+    final TableName tableName =
+        TableName.valueOf("testReplayEditsAfterAbortingFlush");
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     final Path basedir = FSUtils.getTableDir(this.hbaseRootDir, tableName);
     deleteDir(basedir);
@@ -688,8 +688,8 @@ public class TestWALReplay {
    */
   @Test
   public void testReplayEditsWrittenIntoWAL() throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testReplayEditsWrittenIntoWAL");
+    final TableName tableName =
+        TableName.valueOf("testReplayEditsWrittenIntoWAL");
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     final Path basedir = FSUtils.getTableDir(hbaseRootDir, tableName);
     deleteDir(basedir);
@@ -781,8 +781,8 @@ public class TestWALReplay {
   @Test
   // the following test is for HBASE-6065
   public void testSequentialEditLogSeqNum() throws IOException {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testSequentialEditLogSeqNum");
+    final TableName tableName =
+        TableName.valueOf("testSequentialEditLogSeqNum");
     final HRegionInfo hri = createBasic3FamilyHRegionInfo(tableName);
     final Path basedir =
         FSUtils.getTableDir(this.hbaseRootDir, tableName);
@@ -850,7 +850,7 @@ public class TestWALReplay {
     }
   }
 
-  private HTableDescriptor createBasic1FamilyHTD(final FullyQualifiedTableName tableName) {
+  private HTableDescriptor createBasic1FamilyHTD(final TableName tableName) {
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor a = new HColumnDescriptor(Bytes.toBytes("a"));
     htd.addFamily(a);
@@ -886,7 +886,7 @@ public class TestWALReplay {
     }
   }
 
-  private void addWALEdits (final FullyQualifiedTableName tableName, final HRegionInfo hri,
+  private void addWALEdits (final TableName tableName, final HRegionInfo hri,
       final byte [] rowName, final byte [] family,
       final int count, EnvironmentEdge ee, final HLog wal, final HTableDescriptor htd)
   throws IOException {
@@ -918,7 +918,7 @@ public class TestWALReplay {
    * column families named 'a','b', and 'c'.
    * @param tableName Name of table to use when we create HTableDescriptor.
    */
-   private HRegionInfo createBasic3FamilyHRegionInfo(final FullyQualifiedTableName tableName) {
+   private HRegionInfo createBasic3FamilyHRegionInfo(final TableName tableName) {
     return new HRegionInfo(tableName, null, null, false);
    }
 
@@ -955,7 +955,7 @@ public class TestWALReplay {
     return wal;
   }
 
-  private HTableDescriptor createBasic3FamilyHTD(final FullyQualifiedTableName tableName) {
+  private HTableDescriptor createBasic3FamilyHTD(final TableName tableName) {
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor a = new HColumnDescriptor(Bytes.toBytes("a"));
     htd.addFamily(a);

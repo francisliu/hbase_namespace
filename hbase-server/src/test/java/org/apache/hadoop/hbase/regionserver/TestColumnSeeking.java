@@ -52,7 +52,7 @@ public class TestColumnSeeking {
   public void testDuplicateVersions() throws IOException {
     String family = "Family";
     byte[] familyBytes = Bytes.toBytes("Family");
-    FullyQualifiedTableName table = FullyQualifiedTableName.valueOf("TestDuplicateVersions");
+    TableName table = TableName.valueOf("TestDuplicateVersions");
 
     HColumnDescriptor hcd =
         new HColumnDescriptor(familyBytes).setMaxVersions(1000);
@@ -166,8 +166,8 @@ public class TestColumnSeeking {
   public void testReseeking() throws IOException {
     String family = "Family";
     byte[] familyBytes = Bytes.toBytes("Family");
-    FullyQualifiedTableName table =
-        FullyQualifiedTableName.valueOf("TestSingleVersions");
+    TableName table =
+        TableName.valueOf("TestSingleVersions");
 
     HTableDescriptor htd = new HTableDescriptor(table);
     HColumnDescriptor hcd = new HColumnDescriptor(family);

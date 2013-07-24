@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.test.MetricsAssertHelper;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.MasterThread;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
@@ -537,11 +536,11 @@ public class MiniHBaseCluster extends HBaseCluster {
    * Call flushCache on all regions of the specified table.
    * @throws IOException
    */
-  public void flushcache(FullyQualifiedTableName tableName) throws IOException {
+  public void flushcache(TableName tableName) throws IOException {
     for (JVMClusterUtil.RegionServerThread t:
         this.hbaseCluster.getRegionServers()) {
       for(HRegion r: t.getRegionServer().getOnlineRegionsLocalContext()) {
-        if(r.getTableDesc().getFullyQualifiedTableName().equals(tableName)) {
+        if(r.getTableDesc().getTableName().equals(tableName)) {
           r.flushcache();
         }
       }
@@ -565,11 +564,11 @@ public class MiniHBaseCluster extends HBaseCluster {
    * Call flushCache on all regions of the specified table.
    * @throws IOException
    */
-  public void compact(FullyQualifiedTableName tableName, boolean major) throws IOException {
+  public void compact(TableName tableName, boolean major) throws IOException {
     for (JVMClusterUtil.RegionServerThread t:
         this.hbaseCluster.getRegionServers()) {
       for(HRegion r: t.getRegionServer().getOnlineRegionsLocalContext()) {
-        if(r.getTableDesc().getFullyQualifiedTableName().equals(tableName)) {
+        if(r.getTableDesc().getTableName().equals(tableName)) {
           r.compactStores(major);
         }
       }
@@ -600,15 +599,15 @@ public class MiniHBaseCluster extends HBaseCluster {
   }
 
   public List<HRegion> getRegions(byte[] tableName) {
-    return getRegions(FullyQualifiedTableName.valueOf(tableName));
+    return getRegions(TableName.valueOf(tableName));
   }
 
-  public List<HRegion> getRegions(FullyQualifiedTableName tableName) {
+  public List<HRegion> getRegions(TableName tableName) {
     List<HRegion> ret = new ArrayList<HRegion>();
     for (JVMClusterUtil.RegionServerThread rst : getRegionServerThreads()) {
       HRegionServer hrs = rst.getRegionServer();
       for (HRegion region : hrs.getOnlineRegionsLocalContext()) {
-        if (region.getTableDesc().getFullyQualifiedTableName().equals(tableName)) {
+        if (region.getTableDesc().getTableName().equals(tableName)) {
           ret.add(region);
         }
       }
@@ -687,12 +686,12 @@ public class MiniHBaseCluster extends HBaseCluster {
     this.hbaseCluster.join();
   }
 
-  public List<HRegion> findRegionsForTable(FullyQualifiedTableName tableName) {
+  public List<HRegion> findRegionsForTable(TableName tableName) {
     ArrayList<HRegion> ret = new ArrayList<HRegion>();
     for (JVMClusterUtil.RegionServerThread rst : getRegionServerThreads()) {
       HRegionServer hrs = rst.getRegionServer();
       for (HRegion region : hrs.getOnlineRegions(tableName)) {
-        if (region.getTableDesc().getFullyQualifiedTableName().equals(tableName)) {
+        if (region.getTableDesc().getTableName().equals(tableName)) {
           ret.add(region);
         }
       }

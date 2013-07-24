@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.OrphanHLogAfterSplitException;
 import org.apache.log4j.Level;
 import org.apache.hadoop.hdfs.server.datanode.DataNode;
@@ -117,8 +117,8 @@ public class TestHLogSplit {
   private static final int NUM_WRITERS = 10;
   private static final int ENTRIES = 10; // entries per writer per region
 
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("t1");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("t1");
   private static final byte[] FAMILY = "f1".getBytes();
   private static final byte[] QUALIFIER = "q1".getBytes();
   private static final byte[] VALUE = "v1".getBytes();
@@ -1135,8 +1135,8 @@ public class TestHLogSplit {
 
     try {
       // put some entries in an HLog
-      FullyQualifiedTableName tableName =
-          FullyQualifiedTableName.valueOf(this.getClass().getName());
+      TableName tableName =
+          TableName.valueOf(this.getClass().getName());
       HRegionInfo regioninfo = new HRegionInfo(tableName,
           HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW);
       log = HLogFactory.createHLog(fs, HBASEDIR, logName, conf);
@@ -1223,7 +1223,7 @@ public class TestHLogSplit {
         fs.mkdirs(new Path(tableDir, region));
         HLog.Writer writer = HLogFactory.createWriter(fs,
             julietLog, conf);
-        appendEntry(writer, FullyQualifiedTableName.valueOf("juliet"), ("juliet").getBytes(),
+        appendEntry(writer, TableName.valueOf("juliet"), ("juliet").getBytes(),
             ("r").getBytes(), FAMILY, QUALIFIER, VALUE, 0);
         writer.close();
         LOG.info("Juliet file creator: created file " + julietLog);
@@ -1446,7 +1446,7 @@ public class TestHLogSplit {
     return ws;
   }
 
-  private Path getLogForRegion(Path rootdir, FullyQualifiedTableName table, String region)
+  private Path getLogForRegion(Path rootdir, TableName table, String region)
   throws IOException {
     Path tdir = FSUtils.getTableDir(rootdir, table);
     @SuppressWarnings("deprecation")
@@ -1556,7 +1556,7 @@ public class TestHLogSplit {
   }
 
 
-  public static long appendEntry(HLog.Writer writer, FullyQualifiedTableName table, byte[] region,
+  public static long appendEntry(HLog.Writer writer, TableName table, byte[] region,
                           byte[] row, byte[] family, byte[] qualifier,
                           byte[] value, long seq)
           throws IOException {
@@ -1568,7 +1568,7 @@ public class TestHLogSplit {
   }
 
   private static HLog.Entry createTestEntry(
-      FullyQualifiedTableName table, byte[] region,
+      TableName table, byte[] region,
       byte[] row, byte[] family, byte[] qualifier,
       byte[] value, long seq) {
     long time = System.nanoTime();

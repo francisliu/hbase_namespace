@@ -32,7 +32,7 @@ import java.util.TreeSet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -91,8 +91,8 @@ public class AccessControlLists {
   /** Internal storage table for access control lists */
   public static final String ACL_TABLE_NAME_STR = "_acl_";
   public static final byte[] ACL_TABLE_NAME = Bytes.toBytes(ACL_TABLE_NAME_STR);
-  public static final FullyQualifiedTableName ACL_TABLE =
-      FullyQualifiedTableName.valueOf(ACL_TABLE_NAME);
+  public static final TableName ACL_TABLE =
+      TableName.valueOf(ACL_TABLE_NAME);
   public static final byte[] ACL_GLOBAL_NAME = ACL_TABLE_NAME;
   /** Column family used to store ACL grants */
   public static final String ACL_LIST_FAMILY_STR = "l";
@@ -204,7 +204,7 @@ public class AccessControlLists {
   /**
    * Remove specified table from the _acl_ table.
    */
-  static void removeTablePermissions(Configuration conf, FullyQualifiedTableName tableName)
+  static void removeTablePermissions(Configuration conf, TableName tableName)
       throws IOException{
     Delete d = new Delete(tableName.getName());
 
@@ -224,7 +224,7 @@ public class AccessControlLists {
   /**
    * Remove specified table column from the _acl_ table.
    */
-  static void removeTablePermissions(Configuration conf, FullyQualifiedTableName tableName, byte[] column)
+  static void removeTablePermissions(Configuration conf, TableName tableName, byte[] column)
       throws IOException{
 
     if (LOG.isDebugEnabled()) {
@@ -295,14 +295,14 @@ public class AccessControlLists {
    * metadata table.
    */
   static boolean isAclRegion(HRegion region) {
-    return ACL_TABLE.equals(region.getTableDesc().getFullyQualifiedTableName());
+    return ACL_TABLE.equals(region.getTableDesc().getTableName());
   }
 
   /**
    * Returns {@code true} if the given table is {@code _acl_} metadata table.
    */
   static boolean isAclTable(HTableDescriptor desc) {
-    return ACL_TABLE.equals(desc.getFullyQualifiedTableName());
+    return ACL_TABLE.equals(desc.getTableName());
   }
 
   /**
@@ -313,7 +313,7 @@ public class AccessControlLists {
    * @return a map of the permissions for this table.
    * @throws IOException
    */
-  static Map<FullyQualifiedTableName,ListMultimap<String,TablePermission>> loadAll(
+  static Map<TableName,ListMultimap<String,TablePermission>> loadAll(
       HRegion aclRegion)
     throws IOException {
 
@@ -321,8 +321,8 @@ public class AccessControlLists {
       throw new IOException("Can only load permissions from "+ACL_TABLE_NAME_STR);
     }
 
-    Map<FullyQualifiedTableName,ListMultimap<String,TablePermission>> allPerms =
-        new TreeMap<FullyQualifiedTableName,ListMultimap<String,TablePermission>>();
+    Map<TableName,ListMultimap<String,TablePermission>> allPerms =
+        new TreeMap<TableName,ListMultimap<String,TablePermission>>();
 
     // do a full scan of _acl_ table
 
@@ -338,10 +338,10 @@ public class AccessControlLists {
 
         boolean hasNext = iScanner.next(row);
         ListMultimap<String,TablePermission> perms = ArrayListMultimap.create();
-        FullyQualifiedTableName table = null;
+        TableName table = null;
         for (KeyValue kv : row) {
           if (table == null) {
-            table = FullyQualifiedTableName.valueOf(kv.getRow());
+            table = TableName.valueOf(kv.getRow());
           }
           Pair<String,TablePermission> permissionsOfUserOnTable =
               parseTablePermissionRecord(table, kv);
@@ -371,10 +371,10 @@ public class AccessControlLists {
    * Load all permissions from the region server holding {@code _acl_},
    * primarily intended for testing purposes.
    */
-  static Map<FullyQualifiedTableName,ListMultimap<String,TablePermission>> loadAll(
+  static Map<TableName,ListMultimap<String,TablePermission>> loadAll(
       Configuration conf) throws IOException {
-    Map<FullyQualifiedTableName,ListMultimap<String,TablePermission>> allPerms =
-        new TreeMap<FullyQualifiedTableName,ListMultimap<String,TablePermission>>();
+    Map<TableName,ListMultimap<String,TablePermission>> allPerms =
+        new TreeMap<TableName,ListMultimap<String,TablePermission>>();
 
     // do a full scan of _acl_, filtering on only first table region rows
 
@@ -387,7 +387,7 @@ public class AccessControlLists {
       acls = new HTable(conf, ACL_TABLE_NAME);
       scanner = acls.getScanner(scan);
       for (Result row : scanner) {
-        FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(row.getRow());
+        TableName tableName = TableName.valueOf(row.getRow());
         ListMultimap<String,TablePermission> resultPerms =
             parseTablePermissions(tableName, row);
         allPerms.put(tableName, resultPerms);
@@ -410,7 +410,7 @@ public class AccessControlLists {
    * </p>
    */
   static ListMultimap<String, TablePermission> getTablePermissions(Configuration conf,
-      FullyQualifiedTableName tableName) throws IOException {
+      TableName tableName) throws IOException {
     if (tableName == null) tableName = ACL_TABLE;
 
     // for normal user tables, we just read the table row from _acl_
@@ -439,7 +439,7 @@ public class AccessControlLists {
    * user plus associated permissions.
    */
   static List<UserPermission> getUserPermissions(
-      Configuration conf, FullyQualifiedTableName tableName)
+      Configuration conf, TableName tableName)
   throws IOException {
     ListMultimap<String,TablePermission> allPerms = getTablePermissions(
       conf, tableName);
@@ -456,7 +456,7 @@ public class AccessControlLists {
   }
 
   private static ListMultimap<String,TablePermission> parseTablePermissions(
-      FullyQualifiedTableName table, Result result) {
+      TableName table, Result result) {
     ListMultimap<String,TablePermission> perms = ArrayListMultimap.create();
     if (result != null && result.size() > 0) {
       for (KeyValue kv : result.raw()) {
@@ -475,7 +475,7 @@ public class AccessControlLists {
   }
 
   private static Pair<String,TablePermission> parseTablePermissionRecord(
-      FullyQualifiedTableName table, KeyValue kv) {
+      TableName table, KeyValue kv) {
     // return X given a set of permissions encoded in the permissionRecord kv.
     byte[] family = kv.getFamily();
 

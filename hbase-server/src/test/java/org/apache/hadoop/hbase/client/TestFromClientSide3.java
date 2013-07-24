@@ -31,7 +31,7 @@ import java.util.Random;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionLocation;
@@ -151,8 +151,8 @@ public class TestFromClientSide3 {
     TEST_UTIL.getConfiguration().setInt("hbase.hstore.compaction.min", 3);
 
     String tableName = "testAdvancedConfigOverride";
-    FullyQualifiedTableName TABLE =
-        FullyQualifiedTableName.valueOf(tableName);
+    TableName TABLE =
+        TableName.valueOf(tableName);
     HTable hTable = TEST_UTIL.createTable(TABLE, FAMILY, 10);
     HBaseAdmin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
     HConnection connection = HConnectionManager.getConnection(TEST_UTIL

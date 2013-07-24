@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.exceptions.TableNotEnabledException;
@@ -41,7 +41,6 @@ import org.apache.hadoop.hbase.master.MasterCoprocessorHost;
 import org.apache.hadoop.hbase.master.RegionStates;
 import org.apache.hadoop.hbase.master.TableLockManager;
 import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.zookeeper.KeeperException;
 import org.cloudera.htrace.Trace;
 
@@ -51,14 +50,14 @@ import org.cloudera.htrace.Trace;
 @InterfaceAudience.Private
 public class DisableTableHandler extends EventHandler {
   private static final Log LOG = LogFactory.getLog(DisableTableHandler.class);
-  private final FullyQualifiedTableName tableName;
+  private final TableName tableName;
   private final AssignmentManager assignmentManager;
   private final TableLockManager tableLockManager;
   private final CatalogTracker catalogTracker;
   private final boolean skipTableStateCheck;
   private TableLock tableLock;
 
-  public DisableTableHandler(Server server, FullyQualifiedTableName tableName,
+  public DisableTableHandler(Server server, TableName tableName,
       CatalogTracker catalogTracker, AssignmentManager assignmentManager,
       TableLockManager tableLockManager, boolean skipTableStateCheck) {
     super(server, EventType.C_M_DISABLE_TABLE);

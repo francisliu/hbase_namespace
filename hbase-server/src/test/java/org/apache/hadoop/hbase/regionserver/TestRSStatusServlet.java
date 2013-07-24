@@ -93,8 +93,8 @@ public class TestRSStatusServlet {
   public void testWithRegions() throws IOException, ServiceException {
     HTableDescriptor htd = new HTableDescriptor("mytable");
     List<HRegionInfo> regions = Lists.newArrayList(
-        new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("a"), Bytes.toBytes("d")),
-        new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("d"), Bytes.toBytes("z"))
+        new HRegionInfo(htd.getTableName(), Bytes.toBytes("a"), Bytes.toBytes("d")),
+        new HRegionInfo(htd.getTableName(), Bytes.toBytes("d"), Bytes.toBytes("z"))
         );
     Mockito.doReturn(ResponseConverter.buildGetOnlineRegionResponse(
       regions)).when(rs).getOnlineRegion((RpcController)Mockito.any(),

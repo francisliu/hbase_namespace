@@ -24,7 +24,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.security.User;
@@ -93,8 +93,8 @@ public class TableAuthManager {
   /** Cache of global permissions */
   private volatile PermissionCache<Permission> globalCache;
 
-  private ConcurrentSkipListMap<FullyQualifiedTableName, PermissionCache<TablePermission>> tableCache =
-      new ConcurrentSkipListMap<FullyQualifiedTableName, PermissionCache<TablePermission>>();
+  private ConcurrentSkipListMap<TableName, PermissionCache<TablePermission>> tableCache =
+      new ConcurrentSkipListMap<TableName, PermissionCache<TablePermission>>();
 
   private Configuration conf;
   private ZKPermissionWatcher zkperms;
@@ -147,7 +147,7 @@ public class TableAuthManager {
     return this.zkperms;
   }
 
-  public void refreshCacheFromWritable(FullyQualifiedTableName table,
+  public void refreshCacheFromWritable(TableName table,
                                        byte[] data) throws IOException {
     if (data != null && data.length > 0) {
       ListMultimap<String,TablePermission> perms;
@@ -201,7 +201,7 @@ public class TableAuthManager {
    * @param table
    * @param tablePerms
    */
-  private void updateTableCache(FullyQualifiedTableName table,
+  private void updateTableCache(TableName table,
                                 ListMultimap<String,TablePermission> tablePerms) {
     PermissionCache<TablePermission> newTablePerms = new PermissionCache<TablePermission>();
 
@@ -216,7 +216,7 @@ public class TableAuthManager {
     tableCache.put(table, newTablePerms);
   }
 
-  private PermissionCache<TablePermission> getTablePermissions(FullyQualifiedTableName table) {
+  private PermissionCache<TablePermission> getTablePermissions(TableName table) {
     if (!tableCache.containsKey(table)) {
       tableCache.putIfAbsent(table, new PermissionCache<TablePermission>());
     }
@@ -271,13 +271,13 @@ public class TableAuthManager {
   }
 
   private boolean authorize(List<TablePermission> perms,
-                            FullyQualifiedTableName table, byte[] family,
+                            TableName table, byte[] family,
                             Permission.Action action) {
     return authorize(perms, table, family, null, action);
   }
 
   private boolean authorize(List<TablePermission> perms,
-                            FullyQualifiedTableName table, byte[] family,
+                            TableName table, byte[] family,
                             byte[] qualifier, Permission.Action action) {
     if (perms != null) {
       for (TablePermission p : perms) {
@@ -291,7 +291,7 @@ public class TableAuthManager {
     return false;
   }
 
-  public boolean authorize(User user, FullyQualifiedTableName table, KeyValue kv,
+  public boolean authorize(User user, TableName table, KeyValue kv,
       Permission.Action action) {
     PermissionCache<TablePermission> tablePerms = tableCache.get(table);
     if (tablePerms != null) {
@@ -313,7 +313,7 @@ public class TableAuthManager {
     return false;
   }
 
-  private boolean authorize(List<TablePermission> perms, FullyQualifiedTableName table, KeyValue kv,
+  private boolean authorize(List<TablePermission> perms, TableName table, KeyValue kv,
       Permission.Action action) {
     if (perms != null) {
       for (TablePermission p : perms) {
@@ -347,12 +347,12 @@ public class TableAuthManager {
    * @param action
    * @return true if known and authorized, false otherwise
    */
-  public boolean authorizeUser(String username, FullyQualifiedTableName table, byte[] family,
+  public boolean authorizeUser(String username, TableName table, byte[] family,
       Permission.Action action) {
     return authorizeUser(username, table, family, null, action);
   }
 
-  public boolean authorizeUser(String username, FullyQualifiedTableName table, byte[] family,
+  public boolean authorizeUser(String username, TableName table, byte[] family,
       byte[] qualifier, Permission.Action action) {
     // global authorization supercedes table level
     if (authorizeUser(username, action)) {
@@ -381,7 +381,7 @@ public class TableAuthManager {
    * @param action
    * @return true if known and authorized, false otherwise
    */
-  public boolean authorizeGroup(String groupName, FullyQualifiedTableName table, byte[] family,
+  public boolean authorizeGroup(String groupName, TableName table, byte[] family,
       Permission.Action action) {
     // global authorization supercedes table level
     if (authorizeGroup(groupName, action)) {
@@ -391,7 +391,7 @@ public class TableAuthManager {
     return authorize(getTablePermissions(table).getGroup(groupName), table, family, action);
   }
 
-  public boolean authorize(User user, FullyQualifiedTableName table, byte[] family,
+  public boolean authorize(User user, TableName table, byte[] family,
       byte[] qualifier, Permission.Action action) {
     if (authorizeUser(user.getShortName(), table, family, qualifier, action)) {
       return true;
@@ -408,7 +408,7 @@ public class TableAuthManager {
     return false;
   }
 
-  public boolean authorize(User user, FullyQualifiedTableName table, byte[] family,
+  public boolean authorize(User user, TableName table, byte[] family,
       Permission.Action action) {
     return authorize(user, table, family, null, action);
   }
@@ -420,7 +420,7 @@ public class TableAuthManager {
    * authorize() on the same column family would return true.
    */
   public boolean matchPermission(User user,
-      FullyQualifiedTableName table, byte[] family, Permission.Action action) {
+      TableName table, byte[] family, Permission.Action action) {
     PermissionCache<TablePermission> tablePerms = tableCache.get(table);
     if (tablePerms != null) {
       List<TablePermission> userPerms = tablePerms.getUser(user.getShortName());
@@ -451,7 +451,7 @@ public class TableAuthManager {
   }
 
   public boolean matchPermission(User user,
-      FullyQualifiedTableName table, byte[] family, byte[] qualifier,
+      TableName table, byte[] family, byte[] qualifier,
       Permission.Action action) {
     PermissionCache<TablePermission> tablePerms = tableCache.get(table);
     if (tablePerms != null) {
@@ -492,7 +492,7 @@ public class TableAuthManager {
    * @param table
    * @param perms
    */
-  public void setUserPermissions(String username, FullyQualifiedTableName table,
+  public void setUserPermissions(String username, TableName table,
       List<TablePermission> perms) {
     PermissionCache<TablePermission> tablePerms = getTablePermissions(table);
     tablePerms.replaceUser(username, perms);
@@ -506,14 +506,14 @@ public class TableAuthManager {
    * @param table
    * @param perms
    */
-  public void setGroupPermissions(String group, FullyQualifiedTableName table,
+  public void setGroupPermissions(String group, TableName table,
       List<TablePermission> perms) {
     PermissionCache<TablePermission> tablePerms = getTablePermissions(table);
     tablePerms.replaceGroup(group, perms);
     writeToZooKeeper(table, tablePerms);
   }
 
-  public void writeToZooKeeper(FullyQualifiedTableName table,
+  public void writeToZooKeeper(TableName table,
       PermissionCache<TablePermission> tablePerms) {
     byte[] serialized = new byte[0];
     if (tablePerms != null) {

@@ -38,7 +38,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.LargeTests;
@@ -81,10 +81,10 @@ public class TestTablePermissions {
     }
   };
 
-  private static FullyQualifiedTableName TEST_TABLE =
-      FullyQualifiedTableName.valueOf("perms_test");
-  private static FullyQualifiedTableName TEST_TABLE2 =
-      FullyQualifiedTableName.valueOf("perms_test2");
+  private static TableName TEST_TABLE =
+      TableName.valueOf("perms_test");
+  private static TableName TEST_TABLE2 =
+      TableName.valueOf("perms_test2");
   private static byte[] TEST_FAMILY = Bytes.toBytes("f1");
   private static byte[] TEST_QUALIFIER = Bytes.toBytes("col1");
 
@@ -240,7 +240,7 @@ public class TestTablePermissions {
             TablePermission.Action.READ, TablePermission.Action.WRITE));
 
     // check full load
-    Map<FullyQualifiedTableName,ListMultimap<String,TablePermission>> allPerms =
+    Map<TableName,ListMultimap<String,TablePermission>> allPerms =
         AccessControlLists.loadAll(conf);
     assertEquals("Full permission map should have entries for both test tables",
         2, allPerms.size());

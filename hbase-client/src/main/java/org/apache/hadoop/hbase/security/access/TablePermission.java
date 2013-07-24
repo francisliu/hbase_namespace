@@ -20,7 +20,7 @@ package org.apache.hadoop.hbase.security.access;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -37,7 +37,7 @@ import java.io.IOException;
 public class TablePermission extends Permission {
   private static Log LOG = LogFactory.getLog(TablePermission.class);
 
-  private FullyQualifiedTableName table;
+  private TableName table;
   private byte[] family;
   private byte[] qualifier;
 
@@ -53,7 +53,7 @@ public class TablePermission extends Permission {
    * @param family the family, can be null if a global permission on the table
    * @param assigned the list of allowed actions
    */
-  public TablePermission(FullyQualifiedTableName table, byte[] family, Action... assigned) {
+  public TablePermission(TableName table, byte[] family, Action... assigned) {
     this(table, family, null, assigned);
   }
 
@@ -64,7 +64,7 @@ public class TablePermission extends Permission {
    * @param family the family, can be null if a global permission on the table
    * @param assigned the list of allowed actions
    */
-  public TablePermission(FullyQualifiedTableName table, byte[] family, byte[] qualifier,
+  public TablePermission(TableName table, byte[] family, byte[] qualifier,
       Action... assigned) {
     super(assigned);
     this.table = table;
@@ -79,7 +79,7 @@ public class TablePermission extends Permission {
    * @param family the family, can be null if a global permission on the table
    * @param actionCodes the list of allowed action codes
    */
-  public TablePermission(FullyQualifiedTableName table, byte[] family, byte[] qualifier,
+  public TablePermission(TableName table, byte[] family, byte[] qualifier,
       byte[] actionCodes) {
     super(actionCodes);
     this.table = table;
@@ -91,7 +91,7 @@ public class TablePermission extends Permission {
     return table != null;
   }
 
-  public FullyQualifiedTableName getTable() {
+  public TableName getTable() {
     return table;
   }
 
@@ -124,7 +124,7 @@ public class TablePermission extends Permission {
    * @return <code>true</code> if the action within the given scope is allowed
    *   by this permission, <code>false</code>
    */
-  public boolean implies(FullyQualifiedTableName table, byte[] family, byte[] qualifier,
+  public boolean implies(TableName table, byte[] family, byte[] qualifier,
       Action action) {
     if (!this.table.equals(table)) {
       return false;
@@ -155,7 +155,7 @@ public class TablePermission extends Permission {
    * @return <code>true</code> if the action is allowed over the given scope
    *   by this permission, otherwise <code>false</code>
    */
-  public boolean implies(FullyQualifiedTableName table, KeyValue kv, Action action) {
+  public boolean implies(TableName table, KeyValue kv, Action action) {
     if (!this.table.equals(table)) {
       return false;
     }
@@ -184,7 +184,7 @@ public class TablePermission extends Permission {
    * column-qualifier specific permission, for example, implies() would still
    * return false.
    */
-  public boolean matchesFamily(FullyQualifiedTableName table, byte[] family, Action action) {
+  public boolean matchesFamily(TableName table, byte[] family, Action action) {
     if (!this.table.equals(table)) {
       return false;
     }
@@ -209,7 +209,7 @@ public class TablePermission extends Permission {
    * @return <code>true</code> if the table, family and qualifier match,
    *   otherwise <code>false</code>
    */
-  public boolean matchesFamilyQualifier(FullyQualifiedTableName table, byte[] family, byte[] qualifier,
+  public boolean matchesFamilyQualifier(TableName table, byte[] family, byte[] qualifier,
                                 Action action) {
     if (!matchesFamily(table, family, action)) {
       return false;
@@ -284,7 +284,7 @@ public class TablePermission extends Permission {
   public void readFields(DataInput in) throws IOException {
     super.readFields(in);
     byte[] tableBytes = Bytes.readByteArray(in);
-    table = FullyQualifiedTableName.valueOf(tableBytes);
+    table = TableName.valueOf(tableBytes);
     if (in.readBoolean()) {
       family = Bytes.readByteArray(in);
     }

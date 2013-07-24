@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -49,7 +49,6 @@ import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.client.HConnectionManager.HConnectionImplementation;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.exceptions.RegionServerStoppedException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
 import org.apache.hadoop.hbase.master.ClusterStatusPublisher;
@@ -77,16 +76,16 @@ import com.google.common.collect.Lists;
 public class TestHCM {
   private static final Log LOG = LogFactory.getLog(TestHCM.class);
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("test");
-  private static final FullyQualifiedTableName TABLE_NAME1 =
-      FullyQualifiedTableName.valueOf("test1");
-  private static final FullyQualifiedTableName TABLE_NAME2 =
-      FullyQualifiedTableName.valueOf("test2");
-  private static final FullyQualifiedTableName TABLE_NAME3 =
-      FullyQualifiedTableName.valueOf("test3");
-  private static final FullyQualifiedTableName TABLE_NAME4 =
-      FullyQualifiedTableName.valueOf("test4");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("test");
+  private static final TableName TABLE_NAME1 =
+      TableName.valueOf("test1");
+  private static final TableName TABLE_NAME2 =
+      TableName.valueOf("test2");
+  private static final TableName TABLE_NAME3 =
+      TableName.valueOf("test3");
+  private static final TableName TABLE_NAME4 =
+      TableName.valueOf("test4");
   private static final byte[] FAM_NAM = Bytes.toBytes("f");
   private static final byte[] ROW = Bytes.toBytes("bbb");
   private static final byte[] ROW_X = Bytes.toBytes("xxx");
@@ -113,8 +112,8 @@ public class TestHCM {
 
   @Test(expected = RegionServerStoppedException.class)
   public void testClusterStatus() throws Exception {
-    FullyQualifiedTableName tn =
-        FullyQualifiedTableName.valueOf("testClusterStatus");
+    TableName tn =
+        TableName.valueOf("testClusterStatus");
     byte[] cf = "cf".getBytes();
     byte[] rk = "rk1".getBytes();
 
@@ -289,7 +288,7 @@ public class TestHCM {
     HTable table = new HTable(conf, TABLE_NAME);
 
     TEST_UTIL.createMultiRegions(table, FAM_NAM);
-    TEST_UTIL.waitUntilAllRegionsAssigned(table.getFullyQualifiedTableName());
+    TEST_UTIL.waitUntilAllRegionsAssigned(table.getTableNameAsPOJO());
     Put put = new Put(ROW);
     put.add(FAM_NAM, ROW, ROW);
     table.put(put);

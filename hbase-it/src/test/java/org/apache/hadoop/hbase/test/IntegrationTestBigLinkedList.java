@@ -21,8 +21,6 @@ package org.apache.hadoop.hbase.test;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -431,7 +429,7 @@ public class IntegrationTestBigLinkedList extends Configured implements Tool {
 
     protected void createSchema() throws IOException {
       HBaseAdmin admin = new HBaseAdmin(getConf());
-      FullyQualifiedTableName tableName = getTableName(getConf());
+      TableName tableName = getTableName(getConf());
       if (!admin.tableExists(tableName)) {
         HTableDescriptor htd = new HTableDescriptor(getTableName(getConf()));
         htd.addFamily(new HColumnDescriptor(FAMILY_NAME));
@@ -942,8 +940,8 @@ public class IntegrationTestBigLinkedList extends Configured implements Tool {
     }
   }
 
-  private static FullyQualifiedTableName getTableName(Configuration conf) {
-    return FullyQualifiedTableName.valueOf(conf.get(TABLE_NAME_KEY, DEFAULT_TABLE_NAME));
+  private static TableName getTableName(Configuration conf) {
+    return TableName.valueOf(conf.get(TABLE_NAME_KEY, DEFAULT_TABLE_NAME));
   }
 
   private static CINode getCINode(Result result, CINode node) {

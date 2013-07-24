@@ -35,7 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -92,8 +92,8 @@ public class TestReplicationSourceManager {
 
   private static final byte[] f1 = Bytes.toBytes("f1");
 
-  private static final FullyQualifiedTableName test =
-      FullyQualifiedTableName.valueOf("test");
+  private static final TableName test =
+      TableName.valueOf("test");
 
   private static final String slaveId = "1";
 
@@ -150,7 +150,7 @@ public class TestReplicationSourceManager {
     col.setScope(HConstants.REPLICATION_SCOPE_LOCAL);
     htd.addFamily(col);
 
-    hri = new HRegionInfo(htd.getFullyQualifiedTableName(), r1, r2);
+    hri = new HRegionInfo(htd.getTableName(), r1, r2);
   }
 
   @AfterClass

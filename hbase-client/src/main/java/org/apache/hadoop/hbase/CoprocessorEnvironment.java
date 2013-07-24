@@ -51,5 +51,5 @@ public interface CoprocessorEnvironment {
    * @return an interface for accessing the given table
    * @throws IOException
    */
-  public HTableInterface getTable(FullyQualifiedTableName fqtn) throws IOException;
+  public HTableInterface getTable(TableName tableName) throws IOException;
 }

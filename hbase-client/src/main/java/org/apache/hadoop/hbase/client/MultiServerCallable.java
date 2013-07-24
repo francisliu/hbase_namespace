@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import org.apache.hadoop.hbase.CellScannable;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -45,9 +45,9 @@ class MultiServerCallable<R> extends ServerCallable<MultiResponse> {
   private final MultiAction<R> multi;
   private final HRegionLocation loc;
 
-  MultiServerCallable(final HConnection connection, final FullyQualifiedTableName fqtn,
+  MultiServerCallable(final HConnection connection, final TableName tableName,
       final HRegionLocation loc, final MultiAction<R> multi) {
-    super(connection, fqtn, null);
+    super(connection, tableName, null);
     this.multi = multi;
     this.loc = loc;
   }

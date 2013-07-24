@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -38,7 +37,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -140,8 +139,8 @@ public class TestSplitTransactionOnCluster {
 
   @Test(timeout = 60000)
   public void testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack() throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack");
+    final TableName tableName =
+        TableName.valueOf("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack");
     try {
       // Create table then get the single region for our new table.
       HTable t = createTableAndWait(tableName.getName(), Bytes.toBytes("cf"));
@@ -194,11 +193,11 @@ public class TestSplitTransactionOnCluster {
       RegionStates regionStates = cluster.getMaster().getAssignmentManager().getRegionStates();
       Map<String, RegionState> rit = regionStates.getRegionsInTransition();
 
-      for (int i=0; rit.containsKey(hri.getFullyQualifiedTableName()) && i<100; i++) {
+      for (int i=0; rit.containsKey(hri.getTableName()) && i<100; i++) {
         Thread.sleep(100);
       }
       assertFalse("region still in transition", rit.containsKey(
-          rit.containsKey(hri.getFullyQualifiedTableName())));
+          rit.containsKey(hri.getTableName())));
 
       List<HRegion> onlineRegions = regionServer.getOnlineRegions(tableName);
       // Region server side split is successful.
@@ -439,8 +438,8 @@ public class TestSplitTransactionOnCluster {
   public void testSplitShouldNotThrowNPEEvenARegionHasEmptySplitFiles() throws Exception {
     Configuration conf = TESTING_UTIL.getConfiguration();
     ZooKeeperWatcher zkw = HBaseTestingUtility.getZooKeeperWatcher(TESTING_UTIL);
-    FullyQualifiedTableName userTableName =
-        FullyQualifiedTableName.valueOf("testSplitShouldNotThrowNPEEvenARegionHasEmptySplitFiles");
+    TableName userTableName =
+        TableName.valueOf("testSplitShouldNotThrowNPEEvenARegionHasEmptySplitFiles");
     HTableDescriptor htd = new HTableDescriptor(userTableName);
     HColumnDescriptor hcd = new HColumnDescriptor("col");
     htd.addFamily(hcd);
@@ -681,8 +680,8 @@ public class TestSplitTransactionOnCluster {
   @Test(timeout = 60000)
   public void testTableExistsIfTheSpecifiedTableRegionIsSplitParent() throws Exception {
     ZooKeeperWatcher zkw = HBaseTestingUtility.getZooKeeperWatcher(TESTING_UTIL);
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testTableExistsIfTheSpecifiedTableRegionIsSplitParent");
+    final TableName tableName =
+        TableName.valueOf("testTableExistsIfTheSpecifiedTableRegionIsSplitParent");
     // Create table then get the single region for our new table.
     HTable t = createTableAndWait(tableName.getName(), Bytes.toBytes("cf"));
     List<HRegion> regions = null;
@@ -746,8 +745,8 @@ public class TestSplitTransactionOnCluster {
   @Test
   public void testSplitRegionWithNoStoreFiles()
       throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testSplitRegionWithNoStoreFiles");
+    final TableName tableName =
+        TableName.valueOf("testSplitRegionWithNoStoreFiles");
     // Create table then get the single region for our new table.
     createTableAndWait(tableName.getName(), HConstants.CATALOG_FAMILY);
     List<HRegion> regions = cluster.getRegions(tableName);
@@ -865,7 +864,7 @@ public class TestSplitTransactionOnCluster {
     @Override
     void transitionZKNode(Server server, RegionServerServices services, HRegion a, HRegion b)
         throws IOException {
-      if (this.currentRegion.getRegionInfo().getFullyQualifiedTableName().getNameAsString()
+      if (this.currentRegion.getRegionInfo().getTableName().getNameAsString()
           .equals("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack")) {
         try {
           if (!secondSplit){
@@ -877,14 +876,14 @@ public class TestSplitTransactionOnCluster {
 
       }
       super.transitionZKNode(server, services, a, b);
-      if (this.currentRegion.getRegionInfo().getFullyQualifiedTableName().getNameAsString()
+      if (this.currentRegion.getRegionInfo().getTableName().getNameAsString()
           .equals("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack")) {
         firstSplitCompleted = true;
       }
     }
     @Override
     public boolean rollback(Server server, RegionServerServices services) throws IOException {
-      if (this.currentRegion.getRegionInfo().getFullyQualifiedTableName().getNameAsString()
+      if (this.currentRegion.getRegionInfo().getTableName().getNameAsString()
           .equals("testShouldFailSplitIfZNodeDoesNotExistDueToPrevRollBack")) {
         if(secondSplit){
           super.rollback(server, services);

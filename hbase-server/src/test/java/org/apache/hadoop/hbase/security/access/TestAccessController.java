@@ -39,7 +39,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -125,8 +125,8 @@ public class TestAccessController {
   // user with no permissions
   private static User USER_NONE;
 
-  private static FullyQualifiedTableName TEST_TABLE2 =
-      FullyQualifiedTableName.valueOf("testtable2");
+  private static TableName TEST_TABLE2 =
+      TableName.valueOf("testtable2");
   private static byte[] TEST_FAMILY = Bytes.toBytes("f1");
 
   private static MasterCoprocessorEnvironment CP_ENV;
@@ -872,7 +872,7 @@ public class TestAccessController {
     }
 
     private void bulkLoadHFile(
-        FullyQualifiedTableName tableName,
+        TableName tableName,
         byte[] family,
         byte[] qualifier,
         byte[][][] hfileRanges,
@@ -1001,8 +1001,8 @@ public class TestAccessController {
 
   @Test
   public void testPostGrantRevoke() throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("TempTable");
+    final TableName tableName =
+        TableName.valueOf("TempTable");
     final byte[] family1 = Bytes.toBytes("f1");
     final byte[] family2 = Bytes.toBytes("f2");
     final byte[] qualifier = Bytes.toBytes("q");
@@ -1316,8 +1316,8 @@ public class TestAccessController {
 
   @Test
   public void testPostGrantRevokeAtQualifierLevel() throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testGrantRevokeAtQualifierLevel");
+    final TableName tableName =
+        TableName.valueOf("testGrantRevokeAtQualifierLevel");
     final byte[] family1 = Bytes.toBytes("f1");
     final byte[] family2 = Bytes.toBytes("f2");
     final byte[] qualifier = Bytes.toBytes("q");
@@ -1473,8 +1473,8 @@ public class TestAccessController {
 
   @Test
   public void testPermissionList() throws Exception {
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testPermissionList");
+    final TableName tableName =
+        TableName.valueOf("testPermissionList");
     final byte[] family1 = Bytes.toBytes("f1");
     final byte[] family2 = Bytes.toBytes("f2");
     final byte[] qualifier = Bytes.toBytes("q");
@@ -1649,7 +1649,7 @@ public class TestAccessController {
     }
   }
 
-  public void checkTablePerms(FullyQualifiedTableName table, byte[] family, byte[] column,
+  public void checkTablePerms(TableName table, byte[] family, byte[] column,
       Permission.Action... actions) throws IOException {
     Permission[] perms = new Permission[actions.length];
     for (int i = 0; i < actions.length; i++) {
@@ -1659,7 +1659,7 @@ public class TestAccessController {
     checkTablePerms(table, perms);
   }
 
-  public void checkTablePerms(FullyQualifiedTableName table, Permission... perms) throws IOException {
+  public void checkTablePerms(TableName table, Permission... perms) throws IOException {
     CheckPermissionsRequest.Builder request = CheckPermissionsRequest.newBuilder();
     for (Permission p : perms) {
       request.addPermission(ProtobufUtil.toPermission(p));

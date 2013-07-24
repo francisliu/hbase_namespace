@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -347,8 +347,8 @@ public class TestRegionMergeTransaction {
 
   @Test
   public void testMeregedRegionBoundary() {
-    FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testMeregedRegionBoundary");
+    TableName tableName =
+        TableName.valueOf("testMeregedRegionBoundary");
     byte[] a = Bytes.toBytes("a");
     byte[] b = Bytes.toBytes("b");
     byte[] z = Bytes.toBytes("z");
@@ -401,7 +401,7 @@ public class TestRegionMergeTransaction {
     HTableDescriptor htd = new HTableDescriptor("table");
     HColumnDescriptor hcd = new HColumnDescriptor(CF);
     htd.addFamily(hcd);
-    HRegionInfo hri = new HRegionInfo(htd.getFullyQualifiedTableName(), startrow, endrow);
+    HRegionInfo hri = new HRegionInfo(htd.getTableName(), startrow, endrow);
     HRegion a = HRegion.createHRegion(hri, testdir,
         TEST_UTIL.getConfiguration(), htd);
     HRegion.closeHRegion(a);

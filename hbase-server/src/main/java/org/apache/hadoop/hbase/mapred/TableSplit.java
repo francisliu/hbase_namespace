@@ -22,7 +22,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapred.InputSplit;
@@ -32,7 +32,7 @@ import org.apache.hadoop.mapred.InputSplit;
  */
 @Deprecated
 public class TableSplit implements InputSplit, Comparable<TableSplit> {
-  private FullyQualifiedTableName m_tableName;
+  private TableName m_tableName;
   private byte [] m_startRow;
   private byte [] m_endRow;
   private String m_regionLocation;
@@ -50,7 +50,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
    * @param endRow
    * @param location
    */
-  public TableSplit(FullyQualifiedTableName tableName, byte [] startRow, byte [] endRow,
+  public TableSplit(TableName tableName, byte [] startRow, byte [] endRow,
       final String location) {
     this.m_tableName = tableName;
     this.m_startRow = startRow;
@@ -59,7 +59,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
   }
 
   /** @return table name */
-  public FullyQualifiedTableName getTableName() {
+  public TableName getTableName() {
     return this.m_tableName;
   }
 
@@ -88,7 +88,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
   }
 
   public void readFields(DataInput in) throws IOException {
-    this.m_tableName = FullyQualifiedTableName.valueOf(Bytes.readByteArray(in));
+    this.m_tableName = TableName.valueOf(Bytes.readByteArray(in));
     this.m_startRow = Bytes.readByteArray(in);
     this.m_endRow = Bytes.readByteArray(in);
     this.m_regionLocation = Bytes.toString(Bytes.readByteArray(in));

@@ -20,7 +20,7 @@
 package org.apache.hadoop.hbase.zookeeper;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ZooKeeperProtos;
@@ -51,7 +51,7 @@ public class ZKTableReadOnly {
    * @throws KeeperException
    */
   public static boolean isDisabledTable(final ZooKeeperWatcher zkw,
-      final FullyQualifiedTableName tableName)
+      final TableName tableName)
   throws KeeperException {
     ZooKeeperProtos.Table.State state = getTableState(zkw, tableName);
     return isTableState(ZooKeeperProtos.Table.State.DISABLED, state);
@@ -67,7 +67,7 @@ public class ZKTableReadOnly {
    * @throws KeeperException
    */
   public static boolean isEnabledTable(final ZooKeeperWatcher zkw,
-      final FullyQualifiedTableName tableName)
+      final TableName tableName)
   throws KeeperException {
     return getTableState(zkw, tableName) == ZooKeeperProtos.Table.State.ENABLED;
   }
@@ -83,7 +83,7 @@ public class ZKTableReadOnly {
    * @throws KeeperException
    */
   public static boolean isDisablingOrDisabledTable(final ZooKeeperWatcher zkw,
-      final FullyQualifiedTableName tableName)
+      final TableName tableName)
   throws KeeperException {
     ZooKeeperProtos.Table.State state = getTableState(zkw, tableName);
     return isTableState(ZooKeeperProtos.Table.State.DISABLING, state) ||
@@ -95,14 +95,14 @@ public class ZKTableReadOnly {
    * @return Set of disabled tables, empty Set if none
    * @throws KeeperException
    */
-  public static Set<FullyQualifiedTableName> getDisabledTables(ZooKeeperWatcher zkw)
+  public static Set<TableName> getDisabledTables(ZooKeeperWatcher zkw)
   throws KeeperException {
-    Set<FullyQualifiedTableName> disabledTables = new HashSet<FullyQualifiedTableName>();
+    Set<TableName> disabledTables = new HashSet<TableName>();
     List<String> children =
       ZKUtil.listChildrenNoWatch(zkw, zkw.tableZNode);
     for (String child: children) {
-      FullyQualifiedTableName tableName =
-          FullyQualifiedTableName.valueOf(child);
+      TableName tableName =
+          TableName.valueOf(child);
       ZooKeeperProtos.Table.State state = getTableState(zkw, tableName);
       if (state == ZooKeeperProtos.Table.State.DISABLED) disabledTables.add(tableName);
     }
@@ -114,14 +114,14 @@ public class ZKTableReadOnly {
    * @return Set of disabled tables, empty Set if none
    * @throws KeeperException
    */
-  public static Set<FullyQualifiedTableName> getDisabledOrDisablingTables(ZooKeeperWatcher zkw)
+  public static Set<TableName> getDisabledOrDisablingTables(ZooKeeperWatcher zkw)
   throws KeeperException {
-    Set<FullyQualifiedTableName> disabledTables = new HashSet<FullyQualifiedTableName>();
+    Set<TableName> disabledTables = new HashSet<TableName>();
     List<String> children =
       ZKUtil.listChildrenNoWatch(zkw, zkw.tableZNode);
     for (String child: children) {
-      FullyQualifiedTableName tableName =
-          FullyQualifiedTableName.valueOf(child);
+      TableName tableName =
+          TableName.valueOf(child);
       ZooKeeperProtos.Table.State state = getTableState(zkw, tableName);
       if (state == ZooKeeperProtos.Table.State.DISABLED ||
           state == ZooKeeperProtos.Table.State.DISABLING)
@@ -142,7 +142,7 @@ public class ZKTableReadOnly {
    * @throws KeeperException
    */
   static ZooKeeperProtos.Table.State getTableState(final ZooKeeperWatcher zkw,
-      final FullyQualifiedTableName tableName)
+      final TableName tableName)
   throws KeeperException {
     String znode = ZKUtil.joinZNode(zkw.tableZNode, tableName.getNameAsString());
     byte [] data = ZKUtil.getData(zkw, znode);

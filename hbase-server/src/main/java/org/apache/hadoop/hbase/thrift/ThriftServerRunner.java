@@ -573,7 +573,7 @@ public class ThriftServerRunner implements Runnable {
         HTableDescriptor[] tables = this.getHBaseAdmin().listTables();
         ArrayList<ByteBuffer> list = new ArrayList<ByteBuffer>(tables.length);
         for (int i = 0; i < tables.length; i++) {
-          list.add(ByteBuffer.wrap(tables[i].getFullyQualifiedTableName().getName()));
+          list.add(ByteBuffer.wrap(tables[i].getTableName().getName()));
         }
         return list;
       } catch (IOException e) {

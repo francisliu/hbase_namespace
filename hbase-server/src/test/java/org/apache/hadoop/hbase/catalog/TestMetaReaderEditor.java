@@ -31,7 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -99,8 +99,8 @@ public class TestMetaReaderEditor {
    */
   @Test public void testRetrying()
   throws IOException, InterruptedException {
-    final FullyQualifiedTableName name =
-        FullyQualifiedTableName.valueOf("testRetrying");
+    final TableName name =
+        TableName.valueOf("testRetrying");
     LOG.info("Started " + name);
     HTable t = UTIL.createTable(name, HConstants.CATALOG_FAMILY);
     int regionCount = UTIL.createMultiRegions(t, HConstants.CATALOG_FAMILY);
@@ -226,8 +226,8 @@ public class TestMetaReaderEditor {
   }
 
   @Test public void testTableExists() throws IOException {
-    final FullyQualifiedTableName name =
-        FullyQualifiedTableName.valueOf("testTableExists");
+    final TableName name =
+        TableName.valueOf("testTableExists");
     assertFalse(MetaReader.tableExists(CT, name));
     UTIL.createTable(name, HConstants.CATALOG_FAMILY);
     assertTrue(MetaReader.tableExists(CT, name));
@@ -252,8 +252,8 @@ public class TestMetaReaderEditor {
   // Test for the optimization made in HBASE-3650
   @Test public void testScanMetaForTable()
   throws IOException, InterruptedException {
-    final FullyQualifiedTableName name =
-        FullyQualifiedTableName.valueOf("testScanMetaForTable");
+    final TableName name =
+        TableName.valueOf("testScanMetaForTable");
     LOG.info("Started " + name);
 
     /** Create 2 tables
@@ -263,8 +263,8 @@ public class TestMetaReaderEditor {
 
     UTIL.createTable(name, HConstants.CATALOG_FAMILY);
     // name that is +1 greater than the first one (e+1=f)
-    FullyQualifiedTableName greaterName =
-        FullyQualifiedTableName.valueOf("testScanMetaForTablf");
+    TableName greaterName =
+        TableName.valueOf("testScanMetaForTablf");
     UTIL.createTable(greaterName, HConstants.CATALOG_FAMILY);
 
     // Now make sure we only get the regions from 1 of the tables at a time
@@ -274,7 +274,7 @@ public class TestMetaReaderEditor {
   }
 
   private static List<HRegionInfo> testGettingTableRegions(final CatalogTracker ct,
-      final FullyQualifiedTableName name, final int regionCount)
+      final TableName name, final int regionCount)
   throws IOException, InterruptedException {
     List<HRegionInfo> regions = MetaReader.getTableRegions(ct, name);
     assertEquals(regionCount, regions.size());

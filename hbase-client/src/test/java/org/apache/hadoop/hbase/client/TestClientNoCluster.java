@@ -25,7 +25,7 @@ import java.net.SocketTimeoutException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -81,7 +81,7 @@ public class TestClientNoCluster {
     }
 
     @Override
-    public boolean isTableOnlineState(FullyQualifiedTableName tableName, boolean enabled)
+    public boolean isTableOnlineState(TableName tableName, boolean enabled)
     throws IOException {
       return enabled;
     }

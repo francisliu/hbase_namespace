@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -38,11 +37,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
@@ -199,18 +197,18 @@ public class TestMasterFailover {
     // Write the .tableinfo
     FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdEnabled);
 
-    HRegionInfo hriEnabled = new HRegionInfo(htdEnabled.getFullyQualifiedTableName(), null, null);
+    HRegionInfo hriEnabled = new HRegionInfo(htdEnabled.getTableName(), null, null);
     createRegion(hriEnabled, rootdir, conf, htdEnabled);
 
     List<HRegionInfo> enabledRegions = TEST_UTIL.createMultiRegionsInMeta(
         TEST_UTIL.getConfiguration(), htdEnabled, SPLIT_KEYS);
 
-    FullyQualifiedTableName disabledTable = FullyQualifiedTableName.valueOf("disabledTable");
+    TableName disabledTable = TableName.valueOf("disabledTable");
     HTableDescriptor htdDisabled = new HTableDescriptor(disabledTable);
     htdDisabled.addFamily(new HColumnDescriptor(FAMILY));
     // Write the .tableinfo
     FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdDisabled);
-    HRegionInfo hriDisabled = new HRegionInfo(htdDisabled.getFullyQualifiedTableName(), null, null);
+    HRegionInfo hriDisabled = new HRegionInfo(htdDisabled.getTableName(), null, null);
     createRegion(hriDisabled, rootdir, conf, htdDisabled);
     List<HRegionInfo> disabledRegions = TEST_UTIL.createMultiRegionsInMeta(
         TEST_UTIL.getConfiguration(), htdDisabled, SPLIT_KEYS);
@@ -500,20 +498,20 @@ public class TestMasterFailover {
     Path rootdir = FSUtils.getRootDir(conf);
     // Write the .tableinfo
     FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdEnabled);
-    HRegionInfo hriEnabled = new HRegionInfo(htdEnabled.getFullyQualifiedTableName(),
+    HRegionInfo hriEnabled = new HRegionInfo(htdEnabled.getTableName(),
         null, null);
     createRegion(hriEnabled, rootdir, conf, htdEnabled);
 
     List<HRegionInfo> enabledRegions = TEST_UTIL.createMultiRegionsInMeta(
         TEST_UTIL.getConfiguration(), htdEnabled, SPLIT_KEYS);
 
-    FullyQualifiedTableName disabledTable =
-        FullyQualifiedTableName.valueOf("disabledTable");
+    TableName disabledTable =
+        TableName.valueOf("disabledTable");
     HTableDescriptor htdDisabled = new HTableDescriptor(disabledTable);
     htdDisabled.addFamily(new HColumnDescriptor(FAMILY));
     // Write the .tableinfo
     FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdDisabled);
-    HRegionInfo hriDisabled = new HRegionInfo(htdDisabled.getFullyQualifiedTableName(), null, null);
+    HRegionInfo hriDisabled = new HRegionInfo(htdDisabled.getTableName(), null, null);
     createRegion(hriDisabled, rootdir, conf, htdDisabled);
 
     List<HRegionInfo> disabledRegions = TEST_UTIL.createMultiRegionsInMeta(
@@ -560,7 +558,7 @@ public class TestMasterFailover {
     log("Assignment completed");
 
     assertTrue(" Table must be enabled.", master.getAssignmentManager()
-        .getZKTable().isEnabledTable(FullyQualifiedTableName.valueOf("enabledTable")));
+        .getZKTable().isEnabledTable(TableName.valueOf("enabledTable")));
     // we also need regions assigned out on the dead server
     List<HRegionInfo> enabledAndOnDeadRegions = new ArrayList<HRegionInfo>();
     enabledAndOnDeadRegions.addAll(enabledRegions.subList(0, 6));
@@ -624,7 +622,7 @@ public class TestMasterFailover {
     zktable.setDisabledTable(disabledTable);
 
     assertTrue(" The enabled table should be identified on master fail over.",
-        zktable.isEnabledTable(FullyQualifiedTableName.valueOf("enabledTable")));
+        zktable.isEnabledTable(TableName.valueOf("enabledTable")));
 
     /*
      * ZK = CLOSING

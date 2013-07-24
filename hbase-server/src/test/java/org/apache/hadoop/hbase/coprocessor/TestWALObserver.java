@@ -186,7 +186,7 @@ public class TestWALObserver {
 
     // it's where WAL write cp should occur.
     long now = EnvironmentEdgeManager.currentTimeMillis();
-    log.append(hri, hri.getFullyQualifiedTableName(), edit, now, htd);
+    log.append(hri, hri.getTableName(), edit, now, htd);
 
     // the edit shall have been change now by the coprocessor.
     foundFamily0 = false;
@@ -220,7 +220,7 @@ public class TestWALObserver {
   public void testWALCoprocessorReplay() throws Exception {
     // WAL replay is handled at HRegion::replayRecoveredEdits(), which is
     // ultimately called by HRegion::initialize()
-    FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("testWALCoprocessorReplay");
+    TableName tableName = TableName.valueOf("testWALCoprocessorReplay");
     final HTableDescriptor htd = getBasic3FamilyHTableDescriptor(tableName);
     // final HRegionInfo hri =
     // createBasic3FamilyHRegionInfo(Bytes.toString(tableName));
@@ -312,7 +312,7 @@ public class TestWALObserver {
       HColumnDescriptor a = new HColumnDescriptor(TEST_FAMILY[i]);
       htd.addFamily(a);
     }
-    return new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    return new HRegionInfo(htd.getTableName(), null, null, false);
   }
 
   /*
@@ -369,7 +369,7 @@ public class TestWALObserver {
     return HLogFactory.createHLog(FileSystem.get(c), hbaseRootDir, logName, c);
   }
 
-  private void addWALEdits(final FullyQualifiedTableName tableName, final HRegionInfo hri,
+  private void addWALEdits(final TableName tableName, final HRegionInfo hri,
       final byte[] rowName, final byte[] family, final int count,
       EnvironmentEdge ee, final HLog wal, final HTableDescriptor htd)
       throws IOException {
@@ -385,7 +385,7 @@ public class TestWALObserver {
   }
 
   private HTableDescriptor getBasic3FamilyHTableDescriptor(
-      final FullyQualifiedTableName tableName) {
+      final TableName tableName) {
     HTableDescriptor htd = new HTableDescriptor(tableName);
 
     for (int i = 0; i < TEST_FAMILY.length; i++) {

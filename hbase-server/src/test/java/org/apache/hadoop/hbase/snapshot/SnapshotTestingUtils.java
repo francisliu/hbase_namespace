@@ -34,7 +34,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -46,7 +46,6 @@ import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.IsSnapshotDoneRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.IsSnapshotDoneResponse;
-import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
@@ -78,14 +77,14 @@ public class SnapshotTestingUtils {
    * name and table match the passed in parameters.
    */
   public static List<SnapshotDescription> assertExistsMatchingSnapshot(
-      HBaseAdmin admin, String snapshotName, FullyQualifiedTableName tableName)
+      HBaseAdmin admin, String snapshotName, TableName tableName)
       throws IOException {
     // list the snapshot
     List<SnapshotDescription> snapshots = admin.listSnapshots();
 
     List<SnapshotDescription> returnedSnapshots = new ArrayList<SnapshotDescription>();
     for (SnapshotDescription sd : snapshots) {
-      if (snapshotName.equals(sd.getName()) && tableName.equals(FullyQualifiedTableName.valueOf(
+      if (snapshotName.equals(sd.getName()) && tableName.equals(TableName.valueOf(
           sd.getTable()))) {
         returnedSnapshots.add(sd);
       }
@@ -101,7 +100,7 @@ public class SnapshotTestingUtils {
   public static void assertOneSnapshotThatMatches(HBaseAdmin admin,
       SnapshotDescription snapshot) throws IOException {
     assertOneSnapshotThatMatches(admin, snapshot.getName(),
-        FullyQualifiedTableName.valueOf(snapshot.getTable()));
+        TableName.valueOf(snapshot.getTable()));
   }
 
   /**
@@ -109,7 +108,7 @@ public class SnapshotTestingUtils {
    * name and table match the passed in parameters.
    */
   public static List<SnapshotDescription> assertOneSnapshotThatMatches(
-      HBaseAdmin admin, String snapshotName, FullyQualifiedTableName tableName)
+      HBaseAdmin admin, String snapshotName, TableName tableName)
       throws IOException {
     // list the snapshot
     List<SnapshotDescription> snapshots = admin.listSnapshots();
@@ -126,7 +125,7 @@ public class SnapshotTestingUtils {
    * name and table match the passed in parameters.
    */
   public static List<SnapshotDescription> assertOneSnapshotThatMatches(
-      HBaseAdmin admin, byte[] snapshot, FullyQualifiedTableName tableName) throws IOException {
+      HBaseAdmin admin, byte[] snapshot, TableName tableName) throws IOException {
     return assertOneSnapshotThatMatches(admin, Bytes.toString(snapshot),
         tableName);
   }
@@ -135,7 +134,7 @@ public class SnapshotTestingUtils {
    * Multi-family version of the confirmSnapshotValid function
    */
   public static void confirmSnapshotValid(
-      SnapshotDescription snapshotDescriptor, FullyQualifiedTableName tableName,
+      SnapshotDescription snapshotDescriptor, TableName tableName,
       List<byte[]> nonEmptyTestFamilies, List<byte[]> emptyTestFamilies,
       Path rootDir, HBaseAdmin admin, FileSystem fs, boolean requireLogs,
       Path logsDir, Set<String> snapshotServers) throws IOException {
@@ -159,7 +158,7 @@ public class SnapshotTestingUtils {
    * be in the snapshot.
    */
   public static void confirmSnapshotValid(
-      SnapshotDescription snapshotDescriptor, FullyQualifiedTableName tableName,
+      SnapshotDescription snapshotDescriptor, TableName tableName,
       byte[] testFamily, Path rootDir, HBaseAdmin admin, FileSystem fs,
       boolean requireLogs, Path logsDir, Set<String> snapshotServers)
       throws IOException {
@@ -172,7 +171,7 @@ public class SnapshotTestingUtils {
    * be in the snapshot.
    */
   public static void confirmSnapshotValid(
-      SnapshotDescription snapshotDescriptor, FullyQualifiedTableName tableName,
+      SnapshotDescription snapshotDescriptor, TableName tableName,
       byte[] testFamily, Path rootDir, HBaseAdmin admin, FileSystem fs,
       boolean requireLogs, Path logsDir, boolean familyEmpty,
       Set<String> snapshotServers) throws IOException {
@@ -352,7 +351,7 @@ public class SnapshotTestingUtils {
    * in the case of an offline snapshot.
    */
   public static void createOfflineSnapshotAndValidate(HBaseAdmin admin,
-      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
+      TableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs, boolean familyEmpty) throws Exception {
 
     createSnapshotAndValidate(admin, tableName, familyName,
@@ -365,7 +364,7 @@ public class SnapshotTestingUtils {
    * in the case of an offline snapshot.
    */
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
+      TableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs, boolean familyEmpty, boolean onlineSnapshot)
       throws Exception {
 
@@ -394,7 +393,7 @@ public class SnapshotTestingUtils {
             HConstants.HREGION_LOGDIR_NAME), familyEmpty, null);
   }
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
+      TableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs) throws Exception {
     createSnapshotAndValidate(admin, tableName, familyName,
         snapshotNameString, rootDir, fs, false, false);
@@ -407,14 +406,14 @@ public class SnapshotTestingUtils {
    *
    */
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      FullyQualifiedTableName tableName, String familyName, String snapshotNameString,
+      TableName tableName, String familyName, String snapshotNameString,
       Path rootDir, FileSystem fs, boolean online) throws Exception {
     createSnapshotAndValidate(admin, tableName, familyName,
         snapshotNameString, rootDir, fs, false, online);
   }
 
   public static void createSnapshotAndValidate(HBaseAdmin admin,
-      FullyQualifiedTableName tableName, List<byte[]> nonEmptyFamilyNames, List<byte[]> emptyFamilyNames,
+      TableName tableName, List<byte[]> nonEmptyFamilyNames, List<byte[]> emptyFamilyNames,
       String snapshotNameString, Path rootDir, FileSystem fs) throws Exception {
 
     try {

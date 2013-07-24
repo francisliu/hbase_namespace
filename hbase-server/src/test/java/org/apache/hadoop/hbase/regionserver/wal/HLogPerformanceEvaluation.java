@@ -101,10 +101,10 @@ public final class HLogPerformanceEvaluation extends Configured implements Tool 
           addFamilyMapToWALEdit(put.getFamilyMap(), walEdit);
           HRegionInfo hri = region.getRegionInfo();
           if (this.noSync) {
-            hlog.appendNoSync(hri, hri.getFullyQualifiedTableName(), walEdit,
+            hlog.appendNoSync(hri, hri.getTableName(), walEdit,
                               HConstants.DEFAULT_CLUSTER_ID, now, htd);
           } else {
-            hlog.append(hri, hri.getFullyQualifiedTableName(), walEdit, now, htd);
+            hlog.append(hri, hri.getTableName(), walEdit, now, htd);
           }
         }
         long totalTime = (System.currentTimeMillis() - startTime);
@@ -296,7 +296,7 @@ public final class HLogPerformanceEvaluation extends Configured implements Tool 
   private HRegion openRegion(final FileSystem fs, final Path dir, final HTableDescriptor htd, final HLog hlog)
   throws IOException {
     // Initialize HRegion
-    HRegionInfo regionInfo = new HRegionInfo(htd.getFullyQualifiedTableName());
+    HRegionInfo regionInfo = new HRegionInfo(htd.getTableName());
     return HRegion.createHRegion(regionInfo, dir, getConf(), htd, hlog);
   }
 

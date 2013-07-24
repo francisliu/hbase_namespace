@@ -40,7 +40,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -1591,7 +1591,7 @@ public final class ProtobufUtil {
     if (proto.hasFamily()) family = proto.getFamily().toByteArray();
     if (proto.hasQualifier()) qualifier = proto.getQualifier().toByteArray();
 
-    return new TablePermission(FullyQualifiedTableName.valueOf(table), family, qualifier,
+    return new TablePermission(TableName.valueOf(table), family, qualifier,
         actions.toArray(new Permission.Action[actions.size()]));
   }
 
@@ -1729,7 +1729,7 @@ public final class ProtobufUtil {
     if (permission.hasQualifier()) qualifier = permission.getQualifier().toByteArray();
 
     return new UserPermission(proto.getUser().toByteArray(),
-        FullyQualifiedTableName.valueOf(table), family, qualifier,
+        TableName.valueOf(table), family, qualifier,
         actions.toArray(new Permission.Action[actions.size()]));
   }
 
@@ -1765,14 +1765,14 @@ public final class ProtobufUtil {
    *
    * @param protocol the AccessControlService protocol proxy
    * @param userShortName the short name of the user to grant permissions
-   * @param fqtn optional table name
+   * @param tableName optional table name
    * @param f optional column family
    * @param q optional qualifier
    * @param actions the permissions to be granted
    * @throws ServiceException
    */
   public static void grant(AccessControlService.BlockingInterface protocol,
-      String userShortName, FullyQualifiedTableName fqtn, byte[] f, byte[] q,
+      String userShortName, TableName tableName, byte[] f, byte[] q,
       Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
@@ -1780,7 +1780,7 @@ public final class ProtobufUtil {
       permActions.add(ProtobufUtil.toPermissionAction(a));
     }
     AccessControlProtos.GrantRequest request = RequestConverter.
-      buildGrantRequest(userShortName, fqtn, f, q, permActions.toArray(
+      buildGrantRequest(userShortName, tableName, f, q, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
     protocol.grant(null, request);
   }
@@ -1794,14 +1794,14 @@ public final class ProtobufUtil {
    *
    * @param protocol the AccessControlService protocol proxy
    * @param userShortName the short name of the user to revoke permissions
-   * @param fqtn optional table name
+   * @param tableName optional table name
    * @param f optional column family
    * @param q optional qualifier
    * @param actions the permissions to be revoked
    * @throws ServiceException
    */
   public static void revoke(AccessControlService.BlockingInterface protocol,
-      String userShortName, FullyQualifiedTableName fqtn, byte[] f, byte[] q,
+      String userShortName, TableName tableName, byte[] f, byte[] q,
       Permission.Action... actions) throws ServiceException {
     List<AccessControlProtos.Permission.Action> permActions =
         Lists.newArrayListWithCapacity(actions.length);
@@ -1809,7 +1809,7 @@ public final class ProtobufUtil {
       permActions.add(ProtobufUtil.toPermissionAction(a));
     }
     AccessControlProtos.RevokeRequest request = RequestConverter.
-      buildRevokeRequest(userShortName, fqtn, f, q, permActions.toArray(
+      buildRevokeRequest(userShortName, tableName, f, q, permActions.toArray(
         new AccessControlProtos.Permission.Action[actions.length]));
     protocol.revoke(null, request);
   }
@@ -1825,7 +1825,7 @@ public final class ProtobufUtil {
    */
   public static List<UserPermission> getUserPermissions(
       AccessControlService.BlockingInterface protocol,
-      FullyQualifiedTableName t) throws ServiceException {
+      TableName t) throws ServiceException {
     AccessControlProtos.UserPermissionsRequest.Builder builder =
       AccessControlProtos.UserPermissionsRequest.newBuilder();
     if (t != null) {
@@ -2054,7 +2054,7 @@ public final class ProtobufUtil {
     // input / output paths are relative to the store dir
     // store dir is relative to region dir
     CompactionDescriptor.Builder builder = CompactionDescriptor.newBuilder()
-        .setTableName(ByteString.copyFrom(info.getFullyQualifiedTableName().getName()))
+        .setTableName(ByteString.copyFrom(info.getTableName().getName()))
         .setEncodedRegionName(ByteString.copyFrom(info.getEncodedNameAsBytes()))
         .setFamilyName(ByteString.copyFrom(family))
         .setStoreHomeDir(storeDir.getName()); //make relative

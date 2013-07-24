@@ -39,7 +39,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.client.Append;
@@ -367,10 +367,10 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
      */
     class HTableWrapper implements HTableInterface {
 
-      private FullyQualifiedTableName tableName;
+      private TableName tableName;
       private HTable table;
 
-      public HTableWrapper(FullyQualifiedTableName tableName) throws IOException {
+      public HTableWrapper(TableName tableName) throws IOException {
         this.tableName = tableName;
         this.table = new HTable(conf, tableName);
         openTables.add(this);
@@ -488,8 +488,8 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
       }
 
       @Override
-      public FullyQualifiedTableName getFullyQualifiedTableName() {
-        return table.getFullyQualifiedTableName();
+      public TableName getTableNameAsPOJO() {
+        return table.getTableNameAsPOJO();
       }
 
       @Override
@@ -674,7 +674,7 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
      * @exception java.io.IOException Exception
      */
     @Override
-    public HTableInterface getTable(FullyQualifiedTableName tableName) throws IOException {
+    public HTableInterface getTable(TableName tableName) throws IOException {
       return new HTableWrapper(tableName);
     }
   }

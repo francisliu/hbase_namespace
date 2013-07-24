@@ -144,7 +144,7 @@ public class TestRegionObserverScannerOpenHook {
     for (byte[] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     Path path = new Path(DIR + callingMethod);
     HRegion r = HRegion.createHRegion(info, path, conf, htd);
     // this following piece is a hack. currently a coprocessorHost
@@ -229,7 +229,7 @@ public class TestRegionObserverScannerOpenHook {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     admin.createTable(desc);
 
-    HTable table = new HTable(conf, desc.getFullyQualifiedTableName());
+    HTable table = new HTable(conf, desc.getTableName());
 
     // put a row and flush it to disk
     Put put = new Put(ROW);
@@ -237,8 +237,8 @@ public class TestRegionObserverScannerOpenHook {
     table.put(put);
     table.flushCommits();
 
-    HRegionServer rs = UTIL.getRSForFirstRegionInTable(desc.getFullyQualifiedTableName());
-    List<HRegion> regions = rs.getOnlineRegions(desc.getFullyQualifiedTableName());
+    HRegionServer rs = UTIL.getRSForFirstRegionInTable(desc.getTableName());
+    List<HRegion> regions = rs.getOnlineRegions(desc.getTableName());
     assertEquals("More than 1 region serving test table with 1 row", 1, regions.size());
     HRegion region = regions.get(0);
     admin.flush(region.getRegionName());

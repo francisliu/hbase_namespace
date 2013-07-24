@@ -448,7 +448,7 @@ public class PerformanceEvaluation  {
   private boolean checkTable() throws IOException {
     HTableDescriptor tableDescriptor = getTableDescriptor();
     RemoteAdmin admin = new RemoteAdmin(new Client(cluster), conf);
-    if (!admin.isTableAvailable(tableDescriptor.getFullyQualifiedTableName().getName())) {
+    if (!admin.isTableAvailable(tableDescriptor.getTableName().getName())) {
       admin.createTable(tableDescriptor);
       return true;
     }
@@ -1069,7 +1069,7 @@ public class PerformanceEvaluation  {
 
     Test t = null;
     TestOptions options = new TestOptions(startRow, perClientRunRows,
-      totalRows, getTableDescriptor().getFullyQualifiedTableName().getName(), rowsPerPut);
+      totalRows, getTableDescriptor().getTableName().getName(), rowsPerPut);
     try {
       Constructor<? extends Test> constructor = cmd.getDeclaredConstructor(
           Configuration.class, TestOptions.class, Status.class);

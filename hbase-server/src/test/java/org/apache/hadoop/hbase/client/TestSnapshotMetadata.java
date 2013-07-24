@@ -24,7 +24,7 @@ import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -76,7 +76,7 @@ public class TestSnapshotMetadata {
 
   private String originalTableDescription;
   private HTableDescriptor originalTableDescriptor;
-  FullyQualifiedTableName originalTableName;
+  TableName originalTableName;
 
   private static FileSystem fs;
   private static Path rootDir;
@@ -133,7 +133,7 @@ public class TestSnapshotMetadata {
 
     final long startTime = System.currentTimeMillis();
     final String sourceTableNameAsString = STRING_TABLE_NAME + startTime;
-    originalTableName = FullyQualifiedTableName.valueOf(sourceTableNameAsString);
+    originalTableName = TableName.valueOf(sourceTableNameAsString);
 
     // enable replication on a column family
     HColumnDescriptor maxVersionsColumn = new HColumnDescriptor(MAX_VERSIONS_FAM);

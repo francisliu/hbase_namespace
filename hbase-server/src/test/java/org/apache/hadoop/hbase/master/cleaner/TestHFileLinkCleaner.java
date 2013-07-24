@@ -27,7 +27,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
@@ -35,7 +35,6 @@ import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.io.HFileLink;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -59,8 +58,8 @@ public class TestHFileLinkCleaner {
     Path rootDir = FSUtils.getRootDir(conf);
     FileSystem fs = FileSystem.get(conf);
 
-    final FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("test-table");
-    final FullyQualifiedTableName tableLinkName = FullyQualifiedTableName.valueOf("test-link");
+    final TableName tableName = TableName.valueOf("test-table");
+    final TableName tableLinkName = TableName.valueOf("test-link");
     final String hfileName = "1234567890";
     final String familyName = "cf";
 
@@ -123,7 +122,7 @@ public class TestHFileLinkCleaner {
     cleaner.interrupt();
   }
 
-  private static Path getFamilyDirPath (final Path rootDir, final FullyQualifiedTableName table,
+  private static Path getFamilyDirPath (final Path rootDir, final TableName table,
     final String region, final String family) {
     return new Path(new Path(FSUtils.getTableDir(rootDir, table), region), family);
   }

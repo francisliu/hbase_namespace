@@ -351,17 +351,17 @@ public final class HConstants {
   // should go down.
 
   /** The root table's name.*/
-  public static final FullyQualifiedTableName ROOT_TABLE_NAME =
-      FullyQualifiedTableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root");
+  public static final TableName ROOT_TABLE_NAME =
+      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root");
 
   /** The META table's name. */
-  public static final FullyQualifiedTableName META_TABLE_NAME =
-      FullyQualifiedTableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta");
+  public static final TableName META_TABLE_NAME =
+      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta");
 
   /** The Namespace table's name. */
-  public static final FullyQualifiedTableName NAMESPACE_TABLE_NAME =
-      FullyQualifiedTableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR+
-          FullyQualifiedTableName.NAMESPACE_DELIM+"namespace");
+  public static final TableName NAMESPACE_TABLE_NAME =
+      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
+          TableName.NAMESPACE_DELIM + "namespace");
 
   public static final String BASE_NAMESPACE_DIR = ".data";
 

@@ -33,7 +33,7 @@ import com.google.protobuf.ServiceException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
@@ -237,8 +237,8 @@ public class RemoteHTable implements HTableInterface {
   }
 
   @Override
-  public FullyQualifiedTableName getFullyQualifiedTableName() {
-    return FullyQualifiedTableName.valueOf(name);
+  public TableName getTableNameAsPOJO() {
+    return TableName.valueOf(name);
   }
 
   public Configuration getConfiguration() {

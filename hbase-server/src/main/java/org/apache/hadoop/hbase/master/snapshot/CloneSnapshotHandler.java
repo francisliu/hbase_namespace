@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
@@ -99,7 +99,7 @@ public class CloneSnapshotHandler extends CreateTableHandler implements Snapshot
    */
   @Override
   protected List<HRegionInfo> handleCreateHdfsRegions(final Path tableRootDir,
-      final FullyQualifiedTableName tableName) throws IOException {
+      final TableName tableName) throws IOException {
     status.setStatus("Creating regions for table: " + tableName);
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();

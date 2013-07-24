@@ -30,7 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
@@ -76,7 +76,7 @@ public class MetaScanner {
    * @throws IOException e
    */
   public static void metaScan(Configuration configuration,
-      MetaScannerVisitor visitor, FullyQualifiedTableName userTableName)
+      MetaScannerVisitor visitor, TableName userTableName)
   throws IOException {
     metaScan(configuration, visitor, userTableName, null, Integer.MAX_VALUE);
   }
@@ -97,7 +97,7 @@ public class MetaScanner {
    * @throws IOException e
    */
   public static void metaScan(Configuration configuration,
-      MetaScannerVisitor visitor, FullyQualifiedTableName userTableName, byte[] row,
+      MetaScannerVisitor visitor, TableName userTableName, byte[] row,
       int rowLimit)
   throws IOException {
     metaScan(configuration, visitor, userTableName, row, rowLimit,
@@ -121,8 +121,8 @@ public class MetaScanner {
    * @throws IOException e
    */
   public static void metaScan(Configuration configuration,
-      final MetaScannerVisitor visitor, FullyQualifiedTableName tableName,
-      final byte[] row, final int rowLimit, final FullyQualifiedTableName metaTableName)
+      final MetaScannerVisitor visitor, TableName tableName,
+      final byte[] row, final int rowLimit, final TableName metaTableName)
   throws IOException {
     int rowUpperLimit = rowLimit > 0 ? rowLimit: Integer.MAX_VALUE;
     HTable metaTable = new HTable(configuration, HConstants.META_TABLE_NAME);
@@ -270,10 +270,10 @@ public class MetaScanner {
    * @throws IOException
    */
   public static NavigableMap<HRegionInfo, ServerName> allTableRegions(Configuration conf,
-      final FullyQualifiedTableName fqtn, final boolean offlined) throws IOException {
+      final TableName tableName, final boolean offlined) throws IOException {
     final NavigableMap<HRegionInfo, ServerName> regions =
       new TreeMap<HRegionInfo, ServerName>();
-    MetaScannerVisitor visitor = new TableMetaScannerVisitor(fqtn) {
+    MetaScannerVisitor visitor = new TableMetaScannerVisitor(tableName) {
       @Override
       public boolean processRowInternal(Result rowResult) throws IOException {
         HRegionInfo info = getHRegionInfo(rowResult);
@@ -282,7 +282,7 @@ public class MetaScanner {
         return true;
       }
     };
-    metaScan(conf, visitor, fqtn);
+    metaScan(conf, visitor, tableName);
     return regions;
   }
 
@@ -342,11 +342,11 @@ public class MetaScanner {
    * META entries for daughters are available during splits.
    */
   public static abstract class TableMetaScannerVisitor extends DefaultMetaScannerVisitor {
-    private FullyQualifiedTableName fqtn;
+    private TableName tableName;
 
-    public TableMetaScannerVisitor(FullyQualifiedTableName fqtn) {
+    public TableMetaScannerVisitor(TableName tableName) {
       super();
-      this.fqtn = fqtn;
+      this.tableName = tableName;
     }
 
     @Override
@@ -355,7 +355,7 @@ public class MetaScanner {
       if (info == null) {
         return true;
       }
-      if (!(info.getFullyQualifiedTableName().equals(fqtn))) {
+      if (!(info.getTableName().equals(tableName))) {
         return false;
       }
       return super.processRow(rowResult);

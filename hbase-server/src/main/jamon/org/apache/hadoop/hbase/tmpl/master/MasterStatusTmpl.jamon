@@ -46,7 +46,7 @@ org.apache.hadoop.hbase.client.HBaseAdmin;
 org.apache.hadoop.hbase.client.HConnectionManager;
 org.apache.hadoop.hbase.HTableDescriptor;
 org.apache.hadoop.hbase.HBaseConfiguration;
-org.apache.hadoop.hbase.FullyQualifiedTableName;
+org.apache.hadoop.hbase.TableName;
 org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 org.apache.hadoop.hbase.master.DeadServer;
 </%import>
@@ -312,7 +312,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
 </tr>
 <%for HTableDescriptor systemTable : hTableList%>
 <tr>
-<%java>FullyQualifiedTableName tableName = systemTable.getFullyQualifiedTableName();</%java>
+<%java>TableName tableName = systemTable.getTableName();</%java>
     <td><a href="table.jsp?name=<% tableName %>"><% tableName %></a></td>
     <%if (frags != null)%>
         <td align="center"><% frags.get(tableName) != null ? frags.get(tableName).intValue() + "%" : "n/a" %></td>
@@ -351,7 +351,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
             <td align="center"><% frags.get(htDesc.getNameAsString()) != null ? frags.get(htDesc.getNameAsString()).intValue() + "%" : "n/a" %></td>
         </%if>
         <td><% master.getAssignmentManager().getRegionStates().getRegionsOfTable(htDesc
-        .getFullyQualifiedTableName()).size() %>
+        .getTableName()).size() %>
         <td><% htDesc.toStringCustomizedValues() %></td>
     </tr>
     </%for>

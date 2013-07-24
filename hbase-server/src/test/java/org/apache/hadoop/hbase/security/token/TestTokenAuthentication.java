@@ -38,7 +38,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.Coprocessor;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.MediumTests;
@@ -214,7 +214,7 @@ public class TestTokenAuthentication {
         public Configuration getConfiguration() { return conf; }
 
         @Override
-        public HTableInterface getTable(FullyQualifiedTableName tableName) throws IOException
+        public HTableInterface getTable(TableName tableName) throws IOException
           { return null; }
       });
 

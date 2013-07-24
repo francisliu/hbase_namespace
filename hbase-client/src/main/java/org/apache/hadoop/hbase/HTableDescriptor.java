@@ -73,7 +73,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   private static final byte TABLE_DESCRIPTOR_VERSION = 7;
 
-  private FullyQualifiedTableName name = null;
+  private TableName name = null;
 
   /**
    * A map which holds the metadata information of the table. This metadata
@@ -223,7 +223,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * <em> INTERNAL </em> Private constructor used internally creating table descriptors for
    * catalog tables, <code>.META.</code> and <code>-ROOT-</code>.
    */
-  protected HTableDescriptor(final FullyQualifiedTableName name, HColumnDescriptor[] families) {
+  protected HTableDescriptor(final TableName name, HColumnDescriptor[] families) {
     setName(name);
     for(HColumnDescriptor descriptor : families) {
       this.families.put(descriptor.getName(), descriptor);
@@ -234,7 +234,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * <em> INTERNAL </em>Private constructor used internally creating table descriptors for
    * catalog tables, <code>.META.</code> and <code>-ROOT-</code>.
    */
-  protected HTableDescriptor(final FullyQualifiedTableName name, HColumnDescriptor[] families,
+  protected HTableDescriptor(final TableName name, HColumnDescriptor[] families,
       Map<ImmutableBytesWritable,ImmutableBytesWritable> values) {
     setName(name);
     for(HColumnDescriptor descriptor : families) {
@@ -264,7 +264,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * <code>[a-zA-Z_0-9-.].
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
-  public HTableDescriptor(final FullyQualifiedTableName name) {
+  public HTableDescriptor(final TableName name) {
     super();
     this.name = name;
     setMetaFlags(this.name);
@@ -280,7 +280,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
   public HTableDescriptor(final byte[] name) {
-    this(FullyQualifiedTableName.valueOf(name));
+    this(TableName.valueOf(name));
   }
 
   /**
@@ -292,7 +292,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
   public HTableDescriptor(final String name) {
-    this(FullyQualifiedTableName.valueOf(name));
+    this(TableName.valueOf(name));
   }
 
   /**
@@ -325,7 +325,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * Called by constructors.
    * @param name
    */
-  private void setMetaFlags(final FullyQualifiedTableName name) {
+  private void setMetaFlags(final TableName name) {
     setMetaRegion(isRootRegion() ||
       name.equals(HConstants.META_TABLE_NAME));
   }
@@ -411,10 +411,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @return true if a tablesName is either <code> -ROOT- </code>
    * or <code> .META. </code>
    */
-  public static boolean isSystemTable(final FullyQualifiedTableName fqtn) {
-    return fqtn.getNameAsString()
+  public static boolean isSystemTable(final TableName tableName) {
+    return tableName.getNameAsString()
         .startsWith(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
-            FullyQualifiedTableName.NAMESPACE_DELIM);
+            TableName.NAMESPACE_DELIM);
   }
 
   /**
@@ -587,7 +587,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    *
    * @return name of table
    */
-  public FullyQualifiedTableName getFullyQualifiedTableName() {
+  public TableName getTableName() {
     return name;
   }
 
@@ -618,10 +618,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * @param name name of table
    */
   public void setName(byte[] name) {
-    setName(FullyQualifiedTableName.valueOf(name));
+    setName(TableName.valueOf(name));
   }
 
-  public void setName(FullyQualifiedTableName name) {
+  public void setName(TableName name) {
     this.name = name;
     setMetaFlags(this.name);
   }
@@ -878,7 +878,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     if (version < 3)
       throw new IOException("versions < 3 are not supported (and never existed!?)");
     // version 3+
-    name = FullyQualifiedTableName.valueOf(Bytes.readByteArray(in));
+    name = TableName.valueOf(Bytes.readByteArray(in));
     setRootRegion(in.readBoolean());
     setMetaRegion(in.readBoolean());
     values.clear();
@@ -1337,7 +1337,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   public TableSchema convert() {
     TableSchema.Builder builder = TableSchema.newBuilder();
-    builder.setName(ByteString.copyFrom(getFullyQualifiedTableName().getName()));
+    builder.setName(ByteString.copyFrom(getTableName().getName()));
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e: this.values.entrySet()) {
       BytesBytesPair.Builder aBuilder = BytesBytesPair.newBuilder();
       aBuilder.setFirst(ByteString.copyFrom(e.getKey().get()));
@@ -1368,7 +1368,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       hcds[index++] = HColumnDescriptor.convert(cfs);
     }
     HTableDescriptor htd = new HTableDescriptor(
-        FullyQualifiedTableName.valueOf(ts.getName().toByteArray()),
+        TableName.valueOf(ts.getName().toByteArray()),
         hcds);
     for (BytesBytesPair a: ts.getAttributesList()) {
       htd.setValue(a.getFirst().toByteArray(), a.getSecond().toByteArray());

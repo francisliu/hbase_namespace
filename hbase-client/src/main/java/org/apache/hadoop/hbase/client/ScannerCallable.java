@@ -27,7 +27,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellScanner;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.KeyValue;
@@ -84,14 +84,14 @@ public class ScannerCallable extends ServerCallable<Result[]> {
   
   /**
    * @param connection which connection
-   * @param fqtn table callable is on
+   * @param tableName table callable is on
    * @param scan the scan to execute
    * @param scanMetrics the ScanMetrics to used, if it is null, ScannerCallable
    * won't collect metrics
    */
-  public ScannerCallable (HConnection connection, FullyQualifiedTableName fqtn, Scan scan,
+  public ScannerCallable (HConnection connection, TableName tableName, Scan scan,
     ScanMetrics scanMetrics) {
-    super(connection, fqtn, scan.getStartRow());
+    super(connection, tableName, scan.getStartRow());
     this.scan = scan;
     this.scanMetrics = scanMetrics;
     Configuration conf = connection.getConfiguration();
@@ -199,7 +199,7 @@ public class ScannerCallable extends ServerCallable<Result[]> {
           if (logScannerActivity && (ioe instanceof UnknownScannerException)) {
             try {
               HRegionLocation location =
-                connection.relocateRegion(fqtn, scan.getStartRow());
+                connection.relocateRegion(tableName, scan.getStartRow());
               LOG.info("Scanner=" + scannerId
                 + " expired, current region location is " + location.toString()
                 + " ip:" + location.getHostnamePort());

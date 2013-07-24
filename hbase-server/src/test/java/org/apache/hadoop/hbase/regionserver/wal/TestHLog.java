@@ -155,8 +155,8 @@ public class TestHLog  {
   @Test
   public void testSplit() throws IOException {
 
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf(getName());
+    final TableName tableName =
+        TableName.valueOf(getName());
     final byte [] rowName = tableName.getName();
     Path logdir = new Path(hbaseDir, HConstants.HREGION_LOGDIR_NAME);
     HLog log = HLogFactory.createHLog(fs, hbaseDir, 
@@ -213,8 +213,8 @@ public class TestHLog  {
    */
   @Test
   public void Broken_testSync() throws Exception {
-    FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf(getName());
+    TableName tableName =
+        TableName.valueOf(getName());
     // First verify that using streams all works.
     Path p = new Path(dir, getName() + ".fsdos");
     FSDataOutputStream out = fs.create(p);
@@ -382,8 +382,8 @@ public class TestHLog  {
    */
   @Test
   public void testAppendClose() throws Exception {
-    FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf(getName());
+    TableName tableName =
+        TableName.valueOf(getName());
     HRegionInfo regioninfo = new HRegionInfo(tableName,
              HConstants.EMPTY_START_ROW, HConstants.EMPTY_END_ROW, false);
 
@@ -504,8 +504,8 @@ public class TestHLog  {
   @Test
   public void testEditAdd() throws IOException {
     final int COL_COUNT = 10;
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("tablename");
+    final TableName tableName =
+        TableName.valueOf("tablename");
     final byte [] row = Bytes.toBytes("row");
     HLog.Reader reader = null;
     HLog log = null;
@@ -564,8 +564,8 @@ public class TestHLog  {
   @Test
   public void testAppend() throws IOException {
     final int COL_COUNT = 10;
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("tablename");
+    final TableName tableName =
+        TableName.valueOf("tablename");
     final byte [] row = Bytes.toBytes("row");
     Reader reader = null;
     HLog log = HLogFactory.createHLog(fs, hbaseDir, getName(), conf);
@@ -620,8 +620,8 @@ public class TestHLog  {
   @Test
   public void testVisitors() throws Exception {
     final int COL_COUNT = 10;
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("tablename");
+    final TableName tableName =
+        TableName.valueOf("tablename");
     final byte [] row = Bytes.toBytes("row");
     HLog log = HLogFactory.createHLog(fs, hbaseDir, getName(), conf);
     try {
@@ -656,10 +656,10 @@ public class TestHLog  {
   @Test
   public void testLogCleaning() throws Exception {
     LOG.info("testLogCleaning");
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testLogCleaning");
-    final FullyQualifiedTableName tableName2 =
-        FullyQualifiedTableName.valueOf("testLogCleaning2");
+    final TableName tableName =
+        TableName.valueOf("testLogCleaning");
+    final TableName tableName2 =
+        TableName.valueOf("testLogCleaning2");
 
     HLog log = HLogFactory.createHLog(fs, hbaseDir, 
         getName(), conf);
@@ -756,7 +756,7 @@ public class TestHLog  {
     }
   }
 
-  private void addEdits(HLog log, HRegionInfo hri, FullyQualifiedTableName tableName,
+  private void addEdits(HLog log, HRegionInfo hri, TableName tableName,
                         int times) throws IOException {
     HTableDescriptor htd = new HTableDescriptor();
     htd.addFamily(new HColumnDescriptor("row"));
@@ -778,8 +778,8 @@ public class TestHLog  {
   public void testReadLegacyLog() throws IOException {
     final int columnCount = 5;
     final int recordCount = 5;
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("tablename");
+    final TableName tableName =
+        TableName.valueOf("tablename");
     final byte[] row = Bytes.toBytes("row");
     long timestamp = System.currentTimeMillis();
     Path path = new Path(dir, "temphlog");
@@ -862,8 +862,8 @@ public class TestHLog  {
   private void doRead(boolean withTrailer) throws IOException {
     final int columnCount = 5;
     final int recordCount = 5;
-    final FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("tablename");
+    final TableName tableName =
+        TableName.valueOf("tablename");
     final byte[] row = Bytes.toBytes("row");
     long timestamp = System.currentTimeMillis();
     Path path = new Path(dir, "temphlog");

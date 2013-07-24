@@ -90,12 +90,12 @@ public class TestDefaultCompactSelection extends TestCase {
 
     HTableDescriptor htd = new HTableDescriptor(Bytes.toBytes("table"));
     htd.addFamily(hcd);
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
 
     hlog = HLogFactory.createHLog(fs, basedir, logName, conf);
     region = HRegion.createHRegion(info, basedir, conf, htd);
     HRegion.closeHRegion(region);
-    Path tableDir = FSUtils.getTableDir(basedir, htd.getFullyQualifiedTableName());
+    Path tableDir = FSUtils.getTableDir(basedir, htd.getTableName());
     region = new HRegion(tableDir, hlog, fs, conf, info, htd, null);
 
     store = new HStore(region, hcd, conf);

@@ -138,7 +138,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     String encodedName;
     if (hasEncodedName(regionName)) {
       // region is in new format:
-      // <fqtn>,<startKey>,<regionIdTimeStamp>/encodedName/
+      // <tableName>,<startKey>,<regionIdTimeStamp>/encodedName/
       encodedName = Bytes.toString(regionName,
           regionName.length - MD5_HEX_LENGTH - 1,
           MD5_HEX_LENGTH);
@@ -189,7 +189,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   private byte [] encodedNameAsBytes = null;
 
   // Current TableName
-  private FullyQualifiedTableName fqtn = null;
+  private TableName tableName = null;
 
   // when a region is in recovering state, it can only accept writes not reads
   private volatile boolean recovering = false;
@@ -208,7 +208,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     result ^= Arrays.hashCode(this.startKey);
     result ^= Arrays.hashCode(this.endKey);
     result ^= Boolean.valueOf(this.offLine).hashCode();
-    result ^= Arrays.hashCode(this.fqtn.getName());
+    result ^= Arrays.hashCode(this.tableName.getName());
     this.hashCode = result;
   }
 
@@ -217,12 +217,12 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    * Private constructor used constructing HRegionInfo for the
    * first meta regions
    */
-  private HRegionInfo(long regionId, FullyQualifiedTableName fqtn) {
+  private HRegionInfo(long regionId, TableName tableName) {
     super();
     this.regionId = regionId;
-    this.fqtn = fqtn;
+    this.tableName = tableName;
     // Note: First Meta regions names are still in old format
-    this.regionName = createRegionName(fqtn, null,
+    this.regionName = createRegionName(tableName, null,
                                        regionId, false);
     this.regionNameStr = Bytes.toStringBinary(this.regionName);
     setHashCode();
@@ -236,45 +236,45 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     super();
   }
 
-  public HRegionInfo(final FullyQualifiedTableName fqtn) {
-    this(fqtn, null, null);
+  public HRegionInfo(final TableName tableName) {
+    this(tableName, null, null);
   }
 
   /**
    * Construct HRegionInfo with explicit parameters
    *
-   * @param fqtn the table name
+   * @param tableName the table name
    * @param startKey first key in region
    * @param endKey end of key range
    * @throws IllegalArgumentException
    */
-  public HRegionInfo(final FullyQualifiedTableName fqtn, final byte[] startKey, final byte[] endKey)
+  public HRegionInfo(final TableName tableName, final byte[] startKey, final byte[] endKey)
   throws IllegalArgumentException {
-    this(fqtn, startKey, endKey, false);
+    this(tableName, startKey, endKey, false);
   }
 
 
   /**
    * Construct HRegionInfo with explicit parameters
    *
-   * @param fqtn the table descriptor
+   * @param tableName the table descriptor
    * @param startKey first key in region
    * @param endKey end of key range
    * @param split true if this region has split and we have daughter regions
    * regions that may or may not hold references to this region.
    * @throws IllegalArgumentException
    */
-  public HRegionInfo(final FullyQualifiedTableName fqtn, final byte[] startKey, final byte[] endKey,
+  public HRegionInfo(final TableName tableName, final byte[] startKey, final byte[] endKey,
       final boolean split)
   throws IllegalArgumentException {
-    this(fqtn, startKey, endKey, split, System.currentTimeMillis());
+    this(tableName, startKey, endKey, split, System.currentTimeMillis());
   }
 
 
   /**
    * Construct HRegionInfo with explicit parameters
    *
-   * @param fqtn the table descriptor
+   * @param tableName the table descriptor
    * @param startKey first key in region
    * @param endKey end of key range
    * @param split true if this region has split and we have daughter regions
@@ -282,19 +282,19 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    * @param regionid Region id to use.
    * @throws IllegalArgumentException
    */
-  public HRegionInfo(final FullyQualifiedTableName fqtn, final byte[] startKey,
+  public HRegionInfo(final TableName tableName, final byte[] startKey,
                      final byte[] endKey, final boolean split, final long regionid)
   throws IllegalArgumentException {
 
     super();
-    if (fqtn == null) {
-      throw new IllegalArgumentException("FullyQualifiedTableName cannot be null");
+    if (tableName == null) {
+      throw new IllegalArgumentException("TableName cannot be null");
     }
-    this.fqtn = fqtn;
+    this.tableName = tableName;
     this.offLine = false;
     this.regionId = regionid;
 
-    this.regionName = createRegionName(this.fqtn, startKey, regionId, true);
+    this.regionName = createRegionName(this.tableName, startKey, regionId, true);
 
     this.regionNameStr = Bytes.toStringBinary(this.regionName);
     this.split = split;
@@ -321,56 +321,56 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.startKey = other.getStartKey();
     this.hashCode = other.hashCode();
     this.encodedName = other.getEncodedName();
-    this.fqtn = other.fqtn;
+    this.tableName = other.tableName;
     this.recovering = other.isRecovering();
   }
 
 
   /**
    * Make a region name of passed parameters.
-   * @param fqtn
+   * @param tableName
    * @param startKey Can be null
    * @param regionid Region id (Usually timestamp from when region was created).
    * @param newFormat should we create the region name in the new format
    *                  (such that it contains its encoded name?).
-   * @return Region name made of passed fqtn, startKey and id
+   * @return Region name made of passed tableName, startKey and id
    */
-  public static byte [] createRegionName(final FullyQualifiedTableName fqtn,
+  public static byte [] createRegionName(final TableName tableName,
       final byte [] startKey, final long regionid, boolean newFormat) {
-    return createRegionName(fqtn, startKey, Long.toString(regionid), newFormat);
+    return createRegionName(tableName, startKey, Long.toString(regionid), newFormat);
   }
 
   /**
    * Make a region name of passed parameters.
-   * @param fqtn
+   * @param tableName
    * @param startKey Can be null
    * @param id Region id (Usually timestamp from when region was created).
    * @param newFormat should we create the region name in the new format
    *                  (such that it contains its encoded name?).
-   * @return Region name made of passed fqtn, startKey and id
+   * @return Region name made of passed tableName, startKey and id
    */
-  public static byte [] createRegionName(final FullyQualifiedTableName fqtn,
+  public static byte [] createRegionName(final TableName tableName,
       final byte [] startKey, final String id, boolean newFormat) {
-    return createRegionName(fqtn, startKey, Bytes.toBytes(id), newFormat);
+    return createRegionName(tableName, startKey, Bytes.toBytes(id), newFormat);
   }
 
   /**
    * Make a region name of passed parameters.
-   * @param fqtn
+   * @param tableName
    * @param startKey Can be null
    * @param id Region id (Usually timestamp from when region was created).
    * @param newFormat should we create the region name in the new format
    *                  (such that it contains its encoded name?).
-   * @return Region name made of passed fqtn, startKey and id
+   * @return Region name made of passed tableName, startKey and id
    */
-  public static byte [] createRegionName(final FullyQualifiedTableName fqtn,
+  public static byte [] createRegionName(final TableName tableName,
       final byte [] startKey, final byte [] id, boolean newFormat) {
-    byte [] b = new byte [fqtn.getName().length + 2 + id.length +
+    byte [] b = new byte [tableName.getName().length + 2 + id.length +
        (startKey == null? 0: startKey.length) +
        (newFormat ? (MD5_HEX_LENGTH + 2) : 0)];
 
-    int offset = fqtn.getName().length;
-    System.arraycopy(fqtn.getName(), 0, b, 0, offset);
+    int offset = tableName.getName().length;
+    System.arraycopy(tableName.getName(), 0, b, 0, offset);
     b[offset++] = HConstants.DELIMITER;
     if (startKey != null && startKey.length > 0) {
       System.arraycopy(startKey, 0, b, offset, startKey.length);
@@ -411,7 +411,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    * @param regionName
    * @return Table name.
    */
-  public static FullyQualifiedTableName getFullyQualifiedTableName(byte[] regionName) {
+  public static TableName getTableName(byte[] regionName) {
     int offset = -1;
     for (int i = 0; i < regionName.length; i++) {
       if (regionName[i] == HConstants.DELIMITER) {
@@ -421,7 +421,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
     byte[] buff  = new byte[offset];
     System.arraycopy(regionName, 0, buff, 0, offset);
-    return FullyQualifiedTableName.valueOf(buff);
+    return TableName.valueOf(buff);
   }
 
   /**
@@ -436,7 +436,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   /**
    * Separate elements of a regionName.
    * @param regionName
-   * @return Array of byte[] containing fqtn, startKey and id
+   * @return Array of byte[] containing tableName, startKey and id
    * @throws IOException
    */
   public static byte [][] parseRegionName(final byte [] regionName)
@@ -532,11 +532,11 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    * Get current table name of the region
    * @return byte array of table name
    */
-  public FullyQualifiedTableName getFullyQualifiedTableName() {
-    if (fqtn == null || fqtn.getName().length == 0) {
-      fqtn = getFullyQualifiedTableName(getRegionName());
+  public TableName getTableName() {
+    if (tableName == null || tableName.getName().length == 0) {
+      tableName = getTableName(getRegionName());
     }
-    return fqtn;
+    return tableName;
   }
 
   /**
@@ -578,7 +578,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
   /** @return true if this region is a meta region */
   public boolean isMetaRegion() {
-     return fqtn.equals(HRegionInfo.FIRST_META_REGIONINFO.getFullyQualifiedTableName());
+     return tableName.equals(HRegionInfo.FIRST_META_REGIONINFO.getTableName());
   }
 
   /**
@@ -696,7 +696,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     Bytes.writeByteArray(out, regionName);
     out.writeBoolean(split);
     Bytes.writeByteArray(out, startKey);
-    Bytes.writeByteArray(out, fqtn.getName());
+    Bytes.writeByteArray(out, tableName.getName());
     out.writeInt(hashCode);
   }
 
@@ -723,7 +723,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       try {
         HTableDescriptor htd = new HTableDescriptor();
         htd.readFields(in);
-        this.fqtn = htd.getFullyQualifiedTableName();
+        this.tableName = htd.getTableName();
       } catch(EOFException eofe) {
          throw new IOException("HTD not found in input buffer", eofe);
       }
@@ -736,7 +736,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       this.regionNameStr = Bytes.toStringBinary(this.regionName);
       this.split = in.readBoolean();
       this.startKey = Bytes.readByteArray(in);
-      this.fqtn = FullyQualifiedTableName.valueOf(Bytes.readByteArray(in));
+      this.tableName = TableName.valueOf(Bytes.readByteArray(in));
       this.hashCode = in.readInt();
     } else {
       throw new IOException("Non-migratable/unknown version=" + getVersion());
@@ -768,7 +768,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
 
     // Are regions of same table?
-    int result = this.fqtn.compareTo(o.fqtn);
+    int result = this.tableName.compareTo(o.tableName);
     if (result != 0) {
       return result;
     }
@@ -835,7 +835,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   public static RegionInfo convert(final HRegionInfo info) {
     if (info == null) return null;
     RegionInfo.Builder builder = RegionInfo.newBuilder();
-    builder.setTableName(ByteString.copyFrom(info.getFullyQualifiedTableName().getName()));
+    builder.setTableName(ByteString.copyFrom(info.getTableName().getName()));
     builder.setRegionId(info.getRegionId());
     if (info.getStartKey() != null) {
       builder.setStartKey(ByteString.copyFrom(info.getStartKey()));
@@ -857,9 +857,9 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
    */
   public static HRegionInfo convert(final RegionInfo proto) {
     if (proto == null) return null;
-    FullyQualifiedTableName fqtn =
-        FullyQualifiedTableName.valueOf(proto.getTableName().toByteArray());
-    if (fqtn.equals(HConstants.META_TABLE_NAME)) {
+    TableName tableName =
+        TableName.valueOf(proto.getTableName().toByteArray());
+    if (tableName.equals(HConstants.META_TABLE_NAME)) {
       return FIRST_META_REGIONINFO;
     }
     long regionId = proto.getRegionId();
@@ -876,7 +876,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
       split = proto.getSplit();
     }
     HRegionInfo hri = new HRegionInfo(
-        fqtn,
+        tableName,
         startKey,
         endKey, split, regionId);
     if (proto.hasOffline()) {

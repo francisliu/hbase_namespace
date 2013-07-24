@@ -23,18 +23,15 @@ import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 
 import java.io.IOException;
@@ -85,7 +82,7 @@ public class NamespaceUpgrade {
         for(Path oldTableDir: oldTableDirs) {
           if (!sysTables.contains(oldTableDir.getName())) {
             Path nsDir = FSUtils.getTableDir(baseDir,
-                FullyQualifiedTableName.valueOf(oldTableDir.getName()));
+                TableName.valueOf(oldTableDir.getName()));
             if(!fs.exists(nsDir.getParent())) {
               if(!fs.mkdirs(nsDir.getParent())) {
                 throw new IOException("Failed to create namespace dir "+nsDir.getParent());

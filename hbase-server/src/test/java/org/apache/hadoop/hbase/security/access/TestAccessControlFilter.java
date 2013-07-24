@@ -32,7 +32,7 @@ import java.io.IOException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.client.HTable;
@@ -62,8 +62,8 @@ public class TestAccessControlFilter {
   private static User LIMITED;
   private static User DENIED;
 
-  private static FullyQualifiedTableName TABLE =
-      FullyQualifiedTableName.valueOf("testtable");
+  private static TableName TABLE =
+      TableName.valueOf("testtable");
   private static byte[] FAMILY = Bytes.toBytes("f1");
   private static byte[] PRIVATE_COL = Bytes.toBytes("private");
   private static byte[] PUBLIC_COL = Bytes.toBytes("public");

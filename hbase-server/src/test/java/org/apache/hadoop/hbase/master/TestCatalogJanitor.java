@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -39,7 +38,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -57,7 +56,6 @@ import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HConnectionTestingUtility;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.executor.ExecutorService;
 import org.apache.hadoop.hbase.io.Reference;
 import org.apache.hadoop.hbase.master.CatalogJanitor.SplitParentFirstComparator;
@@ -185,7 +183,7 @@ public class TestCatalogJanitor {
     }
 
     @Override
-    public void checkTableModifiable(FullyQualifiedTableName tableName) throws IOException {
+    public void checkTableModifiable(TableName tableName) throws IOException {
       //no-op
     }
 
@@ -266,7 +264,7 @@ public class TestCatalogJanitor {
     public TableDescriptors getTableDescriptors() {
       return new TableDescriptors() {
         @Override
-        public HTableDescriptor remove(FullyQualifiedTableName tablename) throws IOException {
+        public HTableDescriptor remove(TableName tablename) throws IOException {
           // TODO Auto-generated method stub
           return null;
         }
@@ -278,7 +276,7 @@ public class TestCatalogJanitor {
         }
 
         @Override
-        public HTableDescriptor get(FullyQualifiedTableName tablename)
+        public HTableDescriptor get(TableName tablename)
         throws IOException {
           return createHTableDescriptor();
         }
@@ -337,28 +335,28 @@ public class TestCatalogJanitor {
     }
 
     @Override
-    public void deleteTable(FullyQualifiedTableName tableName) throws IOException { }
+    public void deleteTable(TableName tableName) throws IOException { }
 
     @Override
-    public void modifyTable(FullyQualifiedTableName tableName, HTableDescriptor descriptor)
+    public void modifyTable(TableName tableName, HTableDescriptor descriptor)
         throws IOException { }
 
     @Override
-    public void enableTable(FullyQualifiedTableName tableName) throws IOException { }
+    public void enableTable(TableName tableName) throws IOException { }
 
     @Override
-    public void disableTable(FullyQualifiedTableName tableName) throws IOException { }
+    public void disableTable(TableName tableName) throws IOException { }
 
     @Override
-    public void addColumn(FullyQualifiedTableName tableName, HColumnDescriptor column)
+    public void addColumn(TableName tableName, HColumnDescriptor column)
         throws IOException { }
 
     @Override
-    public void modifyColumn(FullyQualifiedTableName tableName, HColumnDescriptor descriptor)
+    public void modifyColumn(TableName tableName, HColumnDescriptor descriptor)
         throws IOException { }
 
     @Override
-    public void deleteColumn(FullyQualifiedTableName tableName, byte[] columnName)
+    public void deleteColumn(TableName tableName, byte[] columnName)
         throws IOException { }
 
     @Override
@@ -390,13 +388,13 @@ public class TestCatalogJanitor {
       HTableDescriptor htd = new HTableDescriptor("table");
       htd.addFamily(new HColumnDescriptor("f"));
       HRegionInfo parent =
-        new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+        new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
             Bytes.toBytes("eee"));
       HRegionInfo splita =
-        new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+        new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
             Bytes.toBytes("ccc"));
       HRegionInfo splitb =
-        new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("ccc"),
+        new HRegionInfo(htd.getTableName(), Bytes.toBytes("ccc"),
             Bytes.toBytes("eee"));
       // Test that when both daughter regions are in place, that we do not
       // remove the parent.
@@ -404,7 +402,7 @@ public class TestCatalogJanitor {
       // Add a reference under splitA directory so we don't clear out the parent.
       Path rootdir = services.getMasterFileSystem().getRootDir();
       Path tabledir =
-        FSUtils.getTableDir(rootdir, htd.getFullyQualifiedTableName());
+        FSUtils.getTableDir(rootdir, htd.getTableName());
       Path storedir = HStore.getStoreHomedir(tabledir, splita,
           htd.getColumnFamilies()[0].getName());
       Reference ref = Reference.createTopReference(Bytes.toBytes("ccc"));
@@ -468,30 +466,30 @@ public class TestCatalogJanitor {
     // Create regions: aaa->{lastEndKey}, aaa->ccc, aaa->bbb, bbb->ccc, etc.
 
     // Parent
-    HRegionInfo parent = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+    HRegionInfo parent = new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
       lastEndKey);
     // Sleep a second else the encoded name on these regions comes out
     // same for all with same start key and made in same second.
     Thread.sleep(1001);
 
     // Daughter a
-    HRegionInfo splita = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+    HRegionInfo splita = new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
       Bytes.toBytes("ccc"));
     Thread.sleep(1001);
     // Make daughters of daughter a; splitaa and splitab.
-    HRegionInfo splitaa = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+    HRegionInfo splitaa = new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
       Bytes.toBytes("bbb"));
-    HRegionInfo splitab = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("bbb"),
+    HRegionInfo splitab = new HRegionInfo(htd.getTableName(), Bytes.toBytes("bbb"),
       Bytes.toBytes("ccc"));
 
     // Daughter b
-    HRegionInfo splitb = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("ccc"),
+    HRegionInfo splitb = new HRegionInfo(htd.getTableName(), Bytes.toBytes("ccc"),
       lastEndKey);
     Thread.sleep(1001);
     // Make Daughters of daughterb; splitba and splitbb.
-    HRegionInfo splitba = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("ccc"),
+    HRegionInfo splitba = new HRegionInfo(htd.getTableName(), Bytes.toBytes("ccc"),
       Bytes.toBytes("ddd"));
-    HRegionInfo splitbb = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("ddd"),
+    HRegionInfo splitbb = new HRegionInfo(htd.getTableName(), Bytes.toBytes("ddd"),
     lastEndKey);
 
     // First test that our Comparator works right up in CatalogJanitor.
@@ -570,24 +568,24 @@ public class TestCatalogJanitor {
     // Create regions: aaa->{lastEndKey}, aaa->ccc, aaa->bbb, bbb->ccc, etc.
 
     // Parent
-    HRegionInfo parent = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+    HRegionInfo parent = new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
       new byte[0], true);
     // Sleep a second else the encoded name on these regions comes out
     // same for all with same start key and made in same second.
     Thread.sleep(1001);
 
     // Daughter a
-    HRegionInfo splita = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+    HRegionInfo splita = new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
       Bytes.toBytes("ccc"), true);
     Thread.sleep(1001);
     // Make daughters of daughter a; splitaa and splitab.
-    HRegionInfo splitaa = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("aaa"),
+    HRegionInfo splitaa = new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
       Bytes.toBytes("bbb"), false);
-    HRegionInfo splitab = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("bbb"),
+    HRegionInfo splitab = new HRegionInfo(htd.getTableName(), Bytes.toBytes("bbb"),
       Bytes.toBytes("ccc"), false);
 
     // Daughter b
-    HRegionInfo splitb = new HRegionInfo(htd.getFullyQualifiedTableName(), Bytes.toBytes("ccc"),
+    HRegionInfo splitb = new HRegionInfo(htd.getTableName(), Bytes.toBytes("ccc"),
         new byte[0]);
     Thread.sleep(1001);
 
@@ -649,13 +647,13 @@ public class TestCatalogJanitor {
      */
 
     // root region
-    HRegionInfo rootRegion = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo rootRegion = new HRegionInfo(htd.getTableName(),
       HConstants.EMPTY_START_ROW,
       HConstants.EMPTY_END_ROW, true);
-    HRegionInfo firstRegion = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo firstRegion = new HRegionInfo(htd.getTableName(),
       HConstants.EMPTY_START_ROW,
       Bytes.toBytes("bbb"), true);
-    HRegionInfo lastRegion = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo lastRegion = new HRegionInfo(htd.getTableName(),
       Bytes.toBytes("bbb"),
       HConstants.EMPTY_END_ROW, true);
 
@@ -667,17 +665,17 @@ public class TestCatalogJanitor {
     assertTrue(comp.compare(firstRegion, lastRegion) < 0);
 
     //first region split into a, b
-    HRegionInfo firstRegiona = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo firstRegiona = new HRegionInfo(htd.getTableName(),
       HConstants.EMPTY_START_ROW,
       Bytes.toBytes("aaa"), true);
-    HRegionInfo firstRegionb = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo firstRegionb = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"),
       Bytes.toBytes("bbb"), true);
     //last region split into a, b
-    HRegionInfo lastRegiona = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo lastRegiona = new HRegionInfo(htd.getTableName(),
       Bytes.toBytes("bbb"),
       Bytes.toBytes("ddd"), true);
-    HRegionInfo lastRegionb = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo lastRegionb = new HRegionInfo(htd.getTableName(),
       Bytes.toBytes("ddd"),
       HConstants.EMPTY_END_ROW, true);
 
@@ -702,10 +700,10 @@ public class TestCatalogJanitor {
     assertTrue(comp.compare(firstRegionb, lastRegiona) < 0);
     assertTrue(comp.compare(firstRegionb, lastRegionb) < 0);
 
-    HRegionInfo lastRegionaa = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo lastRegionaa = new HRegionInfo(htd.getTableName(),
       Bytes.toBytes("bbb"),
       Bytes.toBytes("ccc"), false);
-    HRegionInfo lastRegionab = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo lastRegionab = new HRegionInfo(htd.getTableName(),
       Bytes.toBytes("ccc"),
       Bytes.toBytes("ddd"), false);
 
@@ -729,11 +727,11 @@ public class TestCatalogJanitor {
     // Create regions.
     HTableDescriptor htd = new HTableDescriptor(table);
     htd.addFamily(new HColumnDescriptor("f"));
-    HRegionInfo parent = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo parent = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"), Bytes.toBytes("eee"));
-    HRegionInfo splita = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo splita = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"), Bytes.toBytes("ccc"));
-    HRegionInfo splitb = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo splitb = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("ccc"),
         Bytes.toBytes("eee"));
 
@@ -746,7 +744,7 @@ public class TestCatalogJanitor {
     // archive directory. Otherwise, it just seems to pick the first root directory it can find (so
     // the single test passes, but when the full suite is run, things get borked).
     FSUtils.setRootDir(fs.getConf(), rootdir);
-    Path tabledir = FSUtils.getTableDir(rootdir, htd.getFullyQualifiedTableName());
+    Path tabledir = FSUtils.getTableDir(rootdir, htd.getTableName());
     Path storedir = HStore.getStoreHomedir(tabledir, parent, htd.getColumnFamilies()[0].getName());
     Path storeArchive = HFileArchiveUtil.getStoreArchivePath(services.getConfiguration(), parent,
       tabledir, htd.getColumnFamilies()[0].getName());
@@ -813,11 +811,11 @@ public class TestCatalogJanitor {
     // Create regions.
     HTableDescriptor htd = new HTableDescriptor(table);
     htd.addFamily(new HColumnDescriptor("f"));
-    HRegionInfo parent = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo parent = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"), Bytes.toBytes("eee"));
-    HRegionInfo splita = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo splita = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"), Bytes.toBytes("ccc"));
-    HRegionInfo splitb = new HRegionInfo(htd.getFullyQualifiedTableName(),
+    HRegionInfo splitb = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("ccc"), Bytes.toBytes("eee"));
     // Test that when both daughter regions are in place, that we do not
     // remove the parent.
@@ -830,7 +828,7 @@ public class TestCatalogJanitor {
     // archive directory. Otherwise, it just seems to pick the first root directory it can find (so
     // the single test passes, but when the full suite is run, things get borked).
     FSUtils.setRootDir(fs.getConf(), rootdir);
-    Path tabledir = FSUtils.getTableDir(rootdir, parent.getFullyQualifiedTableName());
+    Path tabledir = FSUtils.getTableDir(rootdir, parent.getTableName());
     Path storedir = HStore.getStoreHomedir(tabledir, parent, htd.getColumnFamilies()[0].getName());
     System.out.println("Old root:" + rootdir);
     System.out.println("Old table:" + tabledir);
@@ -912,7 +910,7 @@ public class TestCatalogJanitor {
       final HRegionInfo daughter, final byte [] midkey, final boolean top)
   throws IOException {
     Path rootdir = services.getMasterFileSystem().getRootDir();
-    Path tabledir = FSUtils.getTableDir(rootdir, parent.getFullyQualifiedTableName());
+    Path tabledir = FSUtils.getTableDir(rootdir, parent.getTableName());
     Path storedir = HStore.getStoreHomedir(tabledir, daughter,
       htd.getColumnFamilies()[0].getName());
     Reference ref =

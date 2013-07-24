@@ -35,7 +35,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.exceptions.SnapshotCreationException;
@@ -227,7 +227,7 @@ public class RegionServerSnapshotManager {
    */
   private List<HRegion> getRegionsToSnapshot(SnapshotDescription snapshot) throws IOException {
     byte[] table = Bytes.toBytes(snapshot.getTable());
-    return rss.getOnlineRegions(FullyQualifiedTableName.valueOf(table));
+    return rss.getOnlineRegions(TableName.valueOf(table));
   }
 
   /**

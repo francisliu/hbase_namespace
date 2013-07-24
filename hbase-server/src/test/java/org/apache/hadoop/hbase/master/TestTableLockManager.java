@@ -38,7 +38,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -73,8 +73,8 @@ public class TestTableLockManager {
   private static final Log LOG =
     LogFactory.getLog(TestTableLockManager.class);
 
-  private static final FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("TestTableLevelLocks");
+  private static final TableName TABLE_NAME =
+      TableName.valueOf("TestTableLevelLocks");
 
   private static final byte[] FAMILY = Bytes.toBytes("f1");
 
@@ -135,18 +135,18 @@ public class TestTableLockManager {
   public static class TestLockTimeoutExceptionMasterObserver extends BaseMasterObserver {
     @Override
     public void preDeleteColumnHandler(ObserverContext<MasterCoprocessorEnvironment> ctx,
-        FullyQualifiedTableName tableName, byte[] c) throws IOException {
+        TableName tableName, byte[] c) throws IOException {
       deleteColumn.countDown();
     }
     @Override
     public void postDeleteColumnHandler(ObserverContext<MasterCoprocessorEnvironment> ctx,
-        FullyQualifiedTableName tableName, byte[] c) throws IOException {
+        TableName tableName, byte[] c) throws IOException {
       Threads.sleep(10000);
     }
 
     @Override
     public void preAddColumnHandler(ObserverContext<MasterCoprocessorEnvironment> ctx,
-        FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException {
+        TableName tableName, HColumnDescriptor column) throws IOException {
       fail("Add column should have timeouted out for acquiring the table lock");
     }
   }
@@ -200,14 +200,14 @@ public class TestTableLockManager {
   public static class TestAlterAndDisableMasterObserver extends BaseMasterObserver {
     @Override
     public void preAddColumnHandler(ObserverContext<MasterCoprocessorEnvironment> ctx,
-        FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException {
+        TableName tableName, HColumnDescriptor column) throws IOException {
       LOG.debug("addColumn called");
       addColumn.countDown();
     }
 
     @Override
     public void postAddColumnHandler(ObserverContext<MasterCoprocessorEnvironment> ctx,
-        FullyQualifiedTableName tableName, HColumnDescriptor column) throws IOException {
+        TableName tableName, HColumnDescriptor column) throws IOException {
       Threads.sleep(6000);
       try {
         ctx.getEnvironment().getMasterServices().checkTableModifiable(tableName);
@@ -221,7 +221,7 @@ public class TestTableLockManager {
 
     @Override
     public void preDisableTable(ObserverContext<MasterCoprocessorEnvironment> ctx,
-                                FullyQualifiedTableName tableName) throws IOException {
+                                TableName tableName) throws IOException {
       try {
         LOG.debug("Waiting for addColumn to be processed first");
         //wait for addColumn to be processed first
@@ -234,7 +234,7 @@ public class TestTableLockManager {
 
     @Override
     public void postDisableTableHandler(ObserverContext<MasterCoprocessorEnvironment> ctx,
-                                        FullyQualifiedTableName tableName) throws IOException {
+                                        TableName tableName) throws IOException {
       Threads.sleep(3000);
     }
   }
@@ -287,7 +287,7 @@ public class TestTableLockManager {
           @Override
           public Void call() throws Exception {
             writeLocksAttempted.countDown();
-            lockManager.writeLock(FullyQualifiedTableName.valueOf(table),
+            lockManager.writeLock(TableName.valueOf(table),
                 "testReapAllTableLocks").acquire();
             writeLocksObtained.countDown();
             return null;
@@ -308,7 +308,7 @@ public class TestTableLockManager {
 
     //should not throw table lock timeout exception
     zeroTimeoutLockManager.writeLock(
-        FullyQualifiedTableName.valueOf(tables[tables.length -1]),
+        TableName.valueOf(tables[tables.length - 1]),
         "zero timeout")
       .acquire();
 
@@ -326,7 +326,7 @@ public class TestTableLockManager {
     LoadTestTool loadTool = new LoadTestTool();
     loadTool.setConf(TEST_UTIL.getConfiguration());
     int numKeys = 10000;
-    final FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf("testTableReadLock");
+    final TableName tableName = TableName.valueOf("testTableReadLock");
     final HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
     final HTableDescriptor desc = new HTableDescriptor(tableName);
     final byte[] family = Bytes.toBytes("test_cf");

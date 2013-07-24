@@ -146,7 +146,7 @@ public class TestStore extends TestCase {
       HColumnDescriptor hcd) throws IOException {
     //Setting up a Store
     Path basedir = new Path(DIR+methodName);
-    Path tableDir = FSUtils.getTableDir(basedir, htd.getFullyQualifiedTableName());
+    Path tableDir = FSUtils.getTableDir(basedir, htd.getTableName());
     String logName = "logs";
     Path logdir = new Path(basedir, logName);
 
@@ -155,7 +155,7 @@ public class TestStore extends TestCase {
     fs.delete(logdir, true);
 
     htd.addFamily(hcd);
-    HRegionInfo info = new HRegionInfo(htd.getFullyQualifiedTableName(), null, null, false);
+    HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     HLog hlog = HLogFactory.createHLog(fs, basedir, logName, conf);
     HRegion region = new HRegion(tableDir, hlog, fs, conf, info, htd, null);
 

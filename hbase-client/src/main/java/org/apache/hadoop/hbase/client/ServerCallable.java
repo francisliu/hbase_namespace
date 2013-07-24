@@ -25,7 +25,7 @@ import com.google.protobuf.ServiceException;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
@@ -62,7 +62,7 @@ public abstract class ServerCallable<T> implements Callable<T> {
   static final Log LOG = LogFactory.getLog(ServerCallable.class);
 
   protected final HConnection connection;
-  protected final FullyQualifiedTableName fqtn;
+  protected final TableName tableName;
   protected final byte [] row;
   protected HRegionLocation location;
   protected ClientService.BlockingInterface stub;
@@ -74,18 +74,18 @@ public abstract class ServerCallable<T> implements Callable<T> {
 
   /**
    * @param connection Connection to use.
-   * @param fqtn Table name to which <code>row</code> belongs.
+   * @param tableName Table name to which <code>row</code> belongs.
    * @param row The row we want in <code>tableName</code>.
    */
-  public ServerCallable(HConnection connection, FullyQualifiedTableName fqtn, byte [] row) {
-    this(connection, fqtn, row, HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
+  public ServerCallable(HConnection connection, TableName tableName, byte [] row) {
+    this(connection, tableName, row, HConstants.DEFAULT_HBASE_CLIENT_OPERATION_TIMEOUT);
   }
 
-  public ServerCallable(HConnection connection, FullyQualifiedTableName fqtn,
+  public ServerCallable(HConnection connection, TableName tableName,
                         byte [] row,
                         int callTimeout) {
     this.connection = connection;
-    this.fqtn = fqtn;
+    this.tableName = tableName;
     this.row = row;
     this.callTimeout = callTimeout;
   }
@@ -97,9 +97,9 @@ public abstract class ServerCallable<T> implements Callable<T> {
    * @throws IOException e
    */
   public void prepare(final boolean reload) throws IOException {
-    this.location = connection.getRegionLocation(fqtn, row, reload);
+    this.location = connection.getRegionLocation(tableName, row, reload);
     if (this.location == null) {
-      throw new IOException("Failed to find location, tableName=" + fqtn.getNameAsString()
+      throw new IOException("Failed to find location, tableName=" + tableName.getNameAsString()
         + ", row=" + Bytes.toString(row) + ", reload=" + reload);
     }
     this.stub = connection.getClient(location.getServerName());
@@ -192,7 +192,7 @@ public abstract class ServerCallable<T> implements Callable<T> {
           // .META. again to find the new location
           getConnection().clearCaches(location.getServerName());
         } else if (t instanceof RegionMovedException) {
-          getConnection().updateCachedLocations(fqtn, row, t, location);
+          getConnection().updateCachedLocations(tableName, row, t, location);
         } else if (t instanceof NotServingRegionException && numRetries == 1) {
           // Purge cache entries for this specific region from META cache
           // since we don't call connect(true) when number of retries is 1.
@@ -221,7 +221,7 @@ public abstract class ServerCallable<T> implements Callable<T> {
         if (duration > this.callTimeout) {
           throw (SocketTimeoutException) new SocketTimeoutException(
               "Call to access row '" + Bytes.toString(row) + "' on table '"
-                  + fqtn.getNameAsString()
+                  + tableName.getNameAsString()
                   + "' failed on timeout. " + " callTimeout=" + this.callTimeout +
                   ", callDuration=" + duration).initCause(t);
         }

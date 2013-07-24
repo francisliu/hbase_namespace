@@ -29,7 +29,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.io.HLogLink;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
@@ -96,8 +96,8 @@ class SnapshotLogSplitter implements Closeable {
 
   private final Map<byte[], byte[]> regionsMap;
   private final Configuration conf;
-  private final FullyQualifiedTableName snapshotTableName;
-  private final FullyQualifiedTableName tableName;
+  private final TableName snapshotTableName;
+  private final TableName tableName;
   private final Path tableDir;
   private final FileSystem fs;
 
@@ -106,11 +106,11 @@ class SnapshotLogSplitter implements Closeable {
    * @params regionsMap maps original region names to the new ones.
    */
   public SnapshotLogSplitter(final Configuration conf, final FileSystem fs,
-      final Path tableDir, final FullyQualifiedTableName snapshotTableName,
+      final Path tableDir, final TableName snapshotTableName,
       final Map<byte[], byte[]> regionsMap) {
     this.regionsMap = regionsMap;
     this.snapshotTableName = snapshotTableName;
-    this.tableName = FullyQualifiedTableName.valueOf(tableDir.getName());
+    this.tableName = TableName.valueOf(tableDir.getName());
     this.tableDir = tableDir;
     this.conf = conf;
     this.fs = fs;

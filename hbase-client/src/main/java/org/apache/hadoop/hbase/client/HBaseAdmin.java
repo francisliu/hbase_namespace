@@ -37,7 +37,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -246,16 +246,16 @@ public class HBaseAdmin implements Abortable, Closeable {
   }
 
   /**
-   * @param fqtn Table to check.
+   * @param tableName Table to check.
    * @return True if table exists already.
    * @throws IOException
    */
-  public boolean tableExists(final FullyQualifiedTableName fqtn)
+  public boolean tableExists(final TableName tableName)
   throws IOException {
     boolean b = false;
     CatalogTracker ct = getCatalogTracker();
     try {
-      b = MetaReader.tableExists(ct, fqtn);
+      b = MetaReader.tableExists(ct, tableName);
     } finally {
       cleanupCatalogTracker(ct);
     }
@@ -264,12 +264,12 @@ public class HBaseAdmin implements Abortable, Closeable {
 
   public boolean tableExists(final byte[] tableName)
   throws IOException {
-    return tableExists(FullyQualifiedTableName.valueOf(tableName));
+    return tableExists(TableName.valueOf(tableName));
   }
 
   public boolean tableExists(final String tableName)
   throws IOException {
-    return tableExists(FullyQualifiedTableName.valueOf(tableName));
+    return tableExists(TableName.valueOf(tableName));
   }
 
   /**
@@ -320,19 +320,19 @@ public class HBaseAdmin implements Abortable, Closeable {
 
   /**
    * Method for getting the tableDescriptor
-   * @param fqtn as a byte []
+   * @param tableName as a byte []
    * @return the tableDescriptor
    * @throws TableNotFoundException
    * @throws IOException if a remote or network exception occurs
    */
-  public HTableDescriptor getTableDescriptor(final FullyQualifiedTableName fqtn)
+  public HTableDescriptor getTableDescriptor(final TableName tableName)
   throws TableNotFoundException, IOException {
-    return this.connection.getHTableDescriptor(fqtn);
+    return this.connection.getHTableDescriptor(tableName);
   }
 
   public HTableDescriptor getTableDescriptor(final byte[] tableName)
   throws TableNotFoundException, IOException {
-    return getTableDescriptor(FullyQualifiedTableName.valueOf(tableName));
+    return getTableDescriptor(TableName.valueOf(tableName));
   }
 
   private long getPauseTime(int tries) {
@@ -444,7 +444,7 @@ public class HBaseAdmin implements Abortable, Closeable {
               LOG.warn("No serialized HRegionInfo in " + rowResult);
               return true;
             }
-            if (!info.getFullyQualifiedTableName().equals(desc.getFullyQualifiedTableName())) {
+            if (!info.getTableName().equals(desc.getTableName())) {
               return false;
             }
             ServerName serverName = HRegionInfo.getServerName(rowResult);
@@ -456,7 +456,7 @@ public class HBaseAdmin implements Abortable, Closeable {
             return true;
           }
         };
-        MetaScanner.metaScan(conf, visitor, desc.getFullyQualifiedTableName());
+        MetaScanner.metaScan(conf, visitor, desc.getTableName());
         if (actualRegCount.get() != numRegs) {
           if (tries == this.numRetries * this.retryLongerMultiplier - 1) {
             throw new RegionOfflineException("Only " + actualRegCount.get() +
@@ -477,7 +477,7 @@ public class HBaseAdmin implements Abortable, Closeable {
           doneWithMetaScan = true;
           tries = -1;
         }
-      } else if (isTableEnabled(desc.getFullyQualifiedTableName())) {
+      } else if (isTableEnabled(desc.getTableName())) {
         return;
       } else {
         try { // Sleep
@@ -541,28 +541,28 @@ public class HBaseAdmin implements Abortable, Closeable {
   }
 
   public void deleteTable(final String tableName) throws IOException {
-    deleteTable(FullyQualifiedTableName.valueOf(tableName));
+    deleteTable(TableName.valueOf(tableName));
   }
 
   public void deleteTable(final byte[] tableName) throws IOException {
-    deleteTable(FullyQualifiedTableName.valueOf(tableName));
+    deleteTable(TableName.valueOf(tableName));
   }
 
   /**
    * Deletes a table.
    * Synchronous operation.
    *
-   * @param fqtn name of table to delete
+   * @param tableName name of table to delete
    * @throws IOException if a remote or network exception occurs
    */
-  public void deleteTable(final FullyQualifiedTableName fqtn) throws IOException {
-    HRegionLocation firstMetaServer = getFirstMetaServerForTable(fqtn);
+  public void deleteTable(final TableName tableName) throws IOException {
+    HRegionLocation firstMetaServer = getFirstMetaServerForTable(tableName);
     boolean tableExists = true;
 
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        DeleteTableRequest req = RequestConverter.buildDeleteTableRequest(fqtn);
+        DeleteTableRequest req = RequestConverter.buildDeleteTableRequest(tableName);
         masterAdmin.deleteTable(null,req);
         return null;
       }
@@ -572,7 +572,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     for (int tries = 0; tries < (this.numRetries * this.retryLongerMultiplier); tries++) {
       try {
 
-        Scan scan = MetaReader.getScanForTableName(fqtn);
+        Scan scan = MetaReader.getScanForTableName(tableName);
         scan.addColumn(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);
         ScanRequest request = RequestConverter.buildScanRequest(
           firstMetaServer.getRegionInfo().getRegionName(), scan, 1, true);
@@ -596,7 +596,7 @@ public class HBaseAdmin implements Abortable, Closeable {
           MasterMonitorKeepAliveConnection master = connection.getKeepAliveMasterMonitorService();
           try {
             GetTableDescriptorsRequest req =
-              RequestConverter.buildGetTableDescriptorsRequest(fqtn);
+              RequestConverter.buildGetTableDescriptorsRequest(tableName);
             htds = master.getTableDescriptors(null, req);
           } catch (ServiceException se) {
             throw ProtobufUtil.getRemoteException(se);
@@ -626,11 +626,11 @@ public class HBaseAdmin implements Abortable, Closeable {
 
     if (tableExists) {
       throw new IOException("Retries exhausted, it took too long to wait"+
-        " for the table " + fqtn.getNameAsString() + " to be deleted.");
+        " for the table " + tableName.getNameAsString() + " to be deleted.");
     }
     // Delete cached information to prevent clients from using old locations
-    this.connection.clearRegionCache(fqtn);
-    LOG.info("Deleted " + fqtn.getNameAsString());
+    this.connection.clearRegionCache(tableName);
+    LOG.info("Deleted " + tableName.getNameAsString());
   }
 
   /**
@@ -665,7 +665,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     List<HTableDescriptor> failed = new LinkedList<HTableDescriptor>();
     for (HTableDescriptor table : listTables(pattern)) {
       try {
-        deleteTable(table.getFullyQualifiedTableName());
+        deleteTable(table.getTableName());
       } catch (IOException ex) {
         LOG.info("Failed to delete table " + table.getNameAsString(), ex);
         failed.add(table);
@@ -688,45 +688,45 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @see #disableTable(byte[])
    * @see #enableTableAsync(byte[])
    */
-  public void enableTable(final FullyQualifiedTableName fqtn)
+  public void enableTable(final TableName tableName)
   throws IOException {
-    enableTableAsync(fqtn);
+    enableTableAsync(tableName);
 
     // Wait until all regions are enabled
-    waitUntilTableIsEnabled(fqtn);
+    waitUntilTableIsEnabled(tableName);
 
-    LOG.info("Enabled table " + fqtn.getNameAsString());
+    LOG.info("Enabled table " + tableName.getNameAsString());
   }
 
   public void enableTable(final byte[] tableName)
   throws IOException {
-    enableTable(FullyQualifiedTableName.valueOf(tableName));
+    enableTable(TableName.valueOf(tableName));
   }
 
   public void enableTable(final String tableName)
   throws IOException {
-    enableTable(FullyQualifiedTableName.valueOf(tableName));
+    enableTable(TableName.valueOf(tableName));
   }
 
   /**
    * Wait for the table to be enabled and available
    * If enabling the table exceeds the retry period, an exception is thrown.
-   * @param fqtn name of the table
+   * @param tableName name of the table
    * @throws IOException if a remote or network exception occurs or
    *    table is not enabled after the retries period.
    */
-  private void waitUntilTableIsEnabled(final FullyQualifiedTableName fqtn) throws IOException {
+  private void waitUntilTableIsEnabled(final TableName tableName) throws IOException {
     boolean enabled = false;
     long start = EnvironmentEdgeManager.currentTimeMillis();
     for (int tries = 0; tries < (this.numRetries * this.retryLongerMultiplier); tries++) {
-      enabled = isTableEnabled(fqtn) && isTableAvailable(fqtn);
+      enabled = isTableEnabled(tableName) && isTableAvailable(tableName);
       if (enabled) {
         break;
       }
       long sleep = getPauseTime(tries);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Sleeping= " + sleep + "ms, waiting for all regions to be " +
-          "enabled in " + fqtn.getNameAsString());
+          "enabled in " + tableName.getNameAsString());
       }
       try {
         Thread.sleep(sleep);
@@ -739,7 +739,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     }
     if (!enabled) {
       long msec = EnvironmentEdgeManager.currentTimeMillis() - start;
-      throw new IOException("Table '" + fqtn.getNameAsString() +
+      throw new IOException("Table '" + tableName.getNameAsString() +
         "' not yet enabled, after " + msec + "ms.");
     }
   }
@@ -754,13 +754,13 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IOException
    * @since 0.90.0
    */
-  public void enableTableAsync(final FullyQualifiedTableName fqtn)
+  public void enableTableAsync(final TableName tableName)
   throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        LOG.info("Started enable of " + fqtn.getNameAsString());
-        EnableTableRequest req = RequestConverter.buildEnableTableRequest(fqtn);
+        LOG.info("Started enable of " + tableName.getNameAsString());
+        EnableTableRequest req = RequestConverter.buildEnableTableRequest(tableName);
         masterAdmin.enableTable(null,req);
         return null;
       }
@@ -769,7 +769,7 @@ public class HBaseAdmin implements Abortable, Closeable {
 
   public void enableTableAsync(final byte[] tableName)
   throws IOException {
-    enableTable(FullyQualifiedTableName.valueOf(tableName));
+    enableTable(TableName.valueOf(tableName));
   }
 
   /**
@@ -801,9 +801,9 @@ public class HBaseAdmin implements Abortable, Closeable {
   public HTableDescriptor[] enableTables(Pattern pattern) throws IOException {
     List<HTableDescriptor> failed = new LinkedList<HTableDescriptor>();
     for (HTableDescriptor table : listTables(pattern)) {
-      if (isTableDisabled(table.getFullyQualifiedTableName())) {
+      if (isTableDisabled(table.getTableName())) {
         try {
-          enableTable(table.getFullyQualifiedTableName());
+          enableTable(table.getTableName());
         } catch (IOException ex) {
           LOG.info("Failed to enable table " + table.getNameAsString(), ex);
           failed.add(table);
@@ -826,12 +826,12 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @see #isTableEnabled(byte[])
    * @since 0.90.0
    */
-  public void disableTableAsync(final FullyQualifiedTableName fqtn) throws IOException {
+  public void disableTableAsync(final TableName tableName) throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        LOG.info("Started disable of " + fqtn.getNameAsString());
-        DisableTableRequest req = RequestConverter.buildDisableTableRequest(fqtn);
+        LOG.info("Started disable of " + tableName.getNameAsString());
+        DisableTableRequest req = RequestConverter.buildDisableTableRequest(tableName);
         masterAdmin.disableTable(null,req);
         return null;
       }
@@ -839,11 +839,11 @@ public class HBaseAdmin implements Abortable, Closeable {
   }
 
   public void disableTableAsync(final byte[] tableName) throws IOException {
-    disableTableAsync(FullyQualifiedTableName.valueOf(tableName));
+    disableTableAsync(TableName.valueOf(tableName));
   }
 
   public void disableTableAsync(final String tableName) throws IOException {
-    disableTableAsync(FullyQualifiedTableName.valueOf(tableName));
+    disableTableAsync(TableName.valueOf(tableName));
   }
 
   /**
@@ -857,23 +857,23 @@ public class HBaseAdmin implements Abortable, Closeable {
    * TableNotFoundException means the table doesn't exist.
    * TableNotEnabledException means the table isn't in enabled state.
    */
-  public void disableTable(final FullyQualifiedTableName fqtn)
+  public void disableTable(final TableName tableName)
   throws IOException {
-    if(fqtn.equals(HConstants.META_TABLE_NAME)) {
+    if(tableName.equals(HConstants.META_TABLE_NAME)) {
       throw new IllegalArgumentException("Cannot disable catalog table");
     }
-    disableTableAsync(fqtn);
+    disableTableAsync(tableName);
     // Wait until table is disabled
     boolean disabled = false;
     for (int tries = 0; tries < (this.numRetries * this.retryLongerMultiplier); tries++) {
-      disabled = isTableDisabled(fqtn);
+      disabled = isTableDisabled(tableName);
       if (disabled) {
         break;
       }
       long sleep = getPauseTime(tries);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Sleeping= " + sleep + "ms, waiting for all regions to be " +
-          "disabled in " + fqtn.getNameAsString());
+          "disabled in " + tableName.getNameAsString());
       }
       try {
         Thread.sleep(sleep);
@@ -886,19 +886,19 @@ public class HBaseAdmin implements Abortable, Closeable {
     }
     if (!disabled) {
       throw new RegionException("Retries exhausted, it took too long to wait"+
-        " for the table " + fqtn.getNameAsString() + " to be disabled.");
+        " for the table " + tableName.getNameAsString() + " to be disabled.");
     }
-    LOG.info("Disabled " + fqtn.getNameAsString());
+    LOG.info("Disabled " + tableName.getNameAsString());
   }
 
   public void disableTable(final byte[] tableName)
   throws IOException {
-    disableTable(FullyQualifiedTableName.valueOf(tableName));
+    disableTable(TableName.valueOf(tableName));
   }
 
   public void disableTable(final String tableName)
   throws IOException {
-    disableTable(FullyQualifiedTableName.valueOf(tableName));
+    disableTable(TableName.valueOf(tableName));
   }
 
   /**
@@ -932,9 +932,9 @@ public class HBaseAdmin implements Abortable, Closeable {
   public HTableDescriptor[] disableTables(Pattern pattern) throws IOException {
     List<HTableDescriptor> failed = new LinkedList<HTableDescriptor>();
     for (HTableDescriptor table : listTables(pattern)) {
-      if (isTableEnabled(table.getFullyQualifiedTableName())) {
+      if (isTableEnabled(table.getTableName())) {
         try {
-          disableTable(table.getFullyQualifiedTableName());
+          disableTable(table.getTableName());
         } catch (IOException ex) {
           LOG.info("Failed to disable table " + table.getNameAsString(), ex);
           failed.add(table);
@@ -945,56 +945,56 @@ public class HBaseAdmin implements Abortable, Closeable {
   }
 
   /**
-   * @param fqtn name of table to check
+   * @param tableName name of table to check
    * @return true if table is on-line
    * @throws IOException if a remote or network exception occurs
    */
-  public boolean isTableEnabled(FullyQualifiedTableName fqtn) throws IOException {
-    return connection.isTableEnabled(fqtn);
+  public boolean isTableEnabled(TableName tableName) throws IOException {
+    return connection.isTableEnabled(tableName);
   }
 
   public boolean isTableEnabled(byte[] tableName) throws IOException {
-    return connection.isTableEnabled(FullyQualifiedTableName.valueOf(tableName));
+    return connection.isTableEnabled(TableName.valueOf(tableName));
   }
 
   public boolean isTableEnabled(String tableName) throws IOException {
-    return connection.isTableEnabled(FullyQualifiedTableName.valueOf(tableName));
+    return connection.isTableEnabled(TableName.valueOf(tableName));
   }
 
 
 
   /**
-   * @param fqtn name of table to check
+   * @param tableName name of table to check
    * @return true if table is off-line
    * @throws IOException if a remote or network exception occurs
    */
-  public boolean isTableDisabled(FullyQualifiedTableName fqtn) throws IOException {
-    return connection.isTableDisabled(fqtn);
+  public boolean isTableDisabled(TableName tableName) throws IOException {
+    return connection.isTableDisabled(tableName);
   }
 
   public boolean isTableDisabled(byte[] tableName) throws IOException {
-    return connection.isTableDisabled(FullyQualifiedTableName.valueOf(tableName));
+    return connection.isTableDisabled(TableName.valueOf(tableName));
   }
 
   public boolean isTableDisabled(String tableName) throws IOException {
-    return connection.isTableDisabled(FullyQualifiedTableName.valueOf(tableName));
+    return connection.isTableDisabled(TableName.valueOf(tableName));
   }
 
   /**
-   * @param fqtn name of table to check
+   * @param tableName name of table to check
    * @return true if all regions of the table are available
    * @throws IOException if a remote or network exception occurs
    */
-  public boolean isTableAvailable(FullyQualifiedTableName fqtn) throws IOException {
-    return connection.isTableAvailable(fqtn);
+  public boolean isTableAvailable(TableName tableName) throws IOException {
+    return connection.isTableAvailable(tableName);
   }
 
   public boolean isTableAvailable(byte[] tableName) throws IOException {
-    return connection.isTableAvailable(FullyQualifiedTableName.valueOf(tableName));
+    return connection.isTableAvailable(TableName.valueOf(tableName));
   }
 
   public boolean isTableAvailable(String tableName) throws IOException {
-    return connection.isTableAvailable(FullyQualifiedTableName.valueOf(tableName));
+    return connection.isTableAvailable(TableName.valueOf(tableName));
   }
   
   /**
@@ -1002,33 +1002,33 @@ public class HBaseAdmin implements Abortable, Closeable {
    * splitkeys which was used while creating the given table.
    * Note : If this api is used after a table's region gets splitted, the api may return
    * false.
-   * @param fqtn
+   * @param tableName
    *          name of table to check
    * @param splitKeys
    *          keys to check if the table has been created with all split keys
    * @throws IOException
    *           if a remote or network excpetion occurs
    */
-  public boolean isTableAvailable(FullyQualifiedTableName fqtn,
+  public boolean isTableAvailable(TableName tableName,
                                   byte[][] splitKeys) throws IOException {
-    return connection.isTableAvailable(fqtn, splitKeys);
+    return connection.isTableAvailable(tableName, splitKeys);
   }
 
   public boolean isTableAvailable(byte[] tableName,
                                   byte[][] splitKeys) throws IOException {
-    return isTableAvailable(FullyQualifiedTableName.valueOf(tableName), splitKeys);
+    return isTableAvailable(TableName.valueOf(tableName), splitKeys);
   }
 
   public boolean isTableAvailable(String tableName,
                                   byte[][] splitKeys) throws IOException {
-    return isTableAvailable(FullyQualifiedTableName.valueOf(tableName), splitKeys);
+    return isTableAvailable(TableName.valueOf(tableName), splitKeys);
   }
 
   /**
    * Get the status of alter command - indicates how many regions have received
    * the updated schema Asynchronous operation.
    *
-   * @param fqtn
+   * @param tableName
    *          name of the table to get the status of
    * @return Pair indicating the number of regions updated Pair.getFirst() is the
    *         regions that are yet to be updated Pair.getSecond() is the total number
@@ -1036,13 +1036,13 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IOException
    *           if a remote or network exception occurs
    */
-  public Pair<Integer, Integer> getAlterStatus(final FullyQualifiedTableName fqtn)
+  public Pair<Integer, Integer> getAlterStatus(final TableName tableName)
   throws IOException {
     return execute(new MasterMonitorCallable<Pair<Integer, Integer>>() {
       @Override
       public Pair<Integer, Integer> call() throws ServiceException {
         GetSchemaAlterStatusRequest req = RequestConverter
-            .buildGetSchemaAlterStatusRequest(fqtn);
+            .buildGetSchemaAlterStatusRequest(tableName);
         GetSchemaAlterStatusResponse ret = masterMonitor.getSchemaAlterStatus(null, req);
         Pair<Integer, Integer> pair = new Pair<Integer, Integer>(Integer.valueOf(ret
             .getYetToUpdateRegions()), Integer.valueOf(ret.getTotalRegions()));
@@ -1061,7 +1061,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void addColumn(final byte[] tableName, HColumnDescriptor column)
   throws IOException {
-    addColumn(FullyQualifiedTableName.valueOf(tableName), column);
+    addColumn(TableName.valueOf(tableName), column);
   }
 
 
@@ -1075,23 +1075,23 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void addColumn(final String tableName, HColumnDescriptor column)
   throws IOException {
-    addColumn(FullyQualifiedTableName.valueOf(tableName), column);
+    addColumn(TableName.valueOf(tableName), column);
   }
 
   /**
    * Add a column to an existing table.
    * Asynchronous operation.
    *
-   * @param fqtn name of the table to add column to
+   * @param tableName name of the table to add column to
    * @param column column descriptor of column to be added
    * @throws IOException if a remote or network exception occurs
    */
-  public void addColumn(final FullyQualifiedTableName fqtn, final HColumnDescriptor column)
+  public void addColumn(final TableName tableName, final HColumnDescriptor column)
   throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        AddColumnRequest req = RequestConverter.buildAddColumnRequest(fqtn, column);
+        AddColumnRequest req = RequestConverter.buildAddColumnRequest(tableName, column);
         masterAdmin.addColumn(null,req);
         return null;
       }
@@ -1108,7 +1108,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void deleteColumn(final byte[] tableName, final String columnName)
   throws IOException {
-    deleteColumn(FullyQualifiedTableName.valueOf(tableName), Bytes.toBytes(columnName));
+    deleteColumn(TableName.valueOf(tableName), Bytes.toBytes(columnName));
   }
 
   /**
@@ -1121,7 +1121,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void deleteColumn(final String tableName, final String columnName)
   throws IOException {
-    deleteColumn(FullyQualifiedTableName.valueOf(tableName), Bytes.toBytes(columnName));
+    deleteColumn(TableName.valueOf(tableName), Bytes.toBytes(columnName));
   }
 
   /**
@@ -1132,12 +1132,12 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @param columnName name of column to be deleted
    * @throws IOException if a remote or network exception occurs
    */
-  public void deleteColumn(final FullyQualifiedTableName fqtn, final byte [] columnName)
+  public void deleteColumn(final TableName tableName, final byte [] columnName)
   throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        DeleteColumnRequest req = RequestConverter.buildDeleteColumnRequest(fqtn, columnName);
+        DeleteColumnRequest req = RequestConverter.buildDeleteColumnRequest(tableName, columnName);
         masterAdmin.deleteColumn(null,req);
         return null;
       }
@@ -1154,7 +1154,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void modifyColumn(final String tableName, HColumnDescriptor descriptor)
   throws IOException {
-    modifyColumn(FullyQualifiedTableName.valueOf(tableName), descriptor);
+    modifyColumn(TableName.valueOf(tableName), descriptor);
   }
 
   /**
@@ -1167,7 +1167,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void modifyColumn(final byte[] tableName, HColumnDescriptor descriptor)
   throws IOException {
-    modifyColumn(FullyQualifiedTableName.valueOf(tableName), descriptor);
+    modifyColumn(TableName.valueOf(tableName), descriptor);
   }
 
 
@@ -1180,12 +1180,12 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @param descriptor new column descriptor to use
    * @throws IOException if a remote or network exception occurs
    */
-  public void modifyColumn(final FullyQualifiedTableName fqtn, final HColumnDescriptor descriptor)
+  public void modifyColumn(final TableName tableName, final HColumnDescriptor descriptor)
   throws IOException {
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        ModifyColumnRequest req = RequestConverter.buildModifyColumnRequest(fqtn, descriptor);
+        ModifyColumnRequest req = RequestConverter.buildModifyColumnRequest(tableName, descriptor);
         masterAdmin.modifyColumn(null,req);
         return null;
       }
@@ -1342,11 +1342,11 @@ public class HBaseAdmin implements Abortable, Closeable {
           flush(regionServerPair.getSecond(), regionServerPair.getFirst());
         }
       } else {
-        final FullyQualifiedTableName fqtn = tableNameString(
-            FullyQualifiedTableName.valueOf(tableNameOrRegionName), ct);
+        final TableName tableName = tableNameString(
+            TableName.valueOf(tableNameOrRegionName), ct);
         List<Pair<HRegionInfo, ServerName>> pairs =
           MetaReader.getTableRegionsAndLocations(ct,
-              fqtn);
+              tableName);
         for (Pair<HRegionInfo, ServerName> pair: pairs) {
           if (pair.getFirst().isOffline()) continue;
           if (pair.getSecond() == null) continue;
@@ -1510,8 +1510,8 @@ public class HBaseAdmin implements Abortable, Closeable {
           compact(regionServerPair.getSecond(), regionServerPair.getFirst(), major, columnFamily);
         }
       } else {
-        final FullyQualifiedTableName tableName =
-            tableNameString(FullyQualifiedTableName.valueOf(tableNameOrRegionName), ct);
+        final TableName tableName =
+            tableNameString(TableName.valueOf(tableNameOrRegionName), ct);
         List<Pair<HRegionInfo, ServerName>> pairs =
           MetaReader.getTableRegionsAndLocations(ct,
               tableName);
@@ -1823,11 +1823,11 @@ public class HBaseAdmin implements Abortable, Closeable {
           split(regionServerPair.getSecond(), regionServerPair.getFirst(), splitPoint);
         }
       } else {
-        final FullyQualifiedTableName fqtn =
-            tableNameString(FullyQualifiedTableName.valueOf(tableNameOrRegionName), ct);
+        final TableName tableName =
+            tableNameString(TableName.valueOf(tableNameOrRegionName), ct);
         List<Pair<HRegionInfo, ServerName>> pairs =
           MetaReader.getTableRegionsAndLocations(ct,
-              fqtn);
+              tableName);
         for (Pair<HRegionInfo, ServerName> pair: pairs) {
           // May not be a server for a particular row
           if (pair.getSecond() == null) continue;
@@ -1860,17 +1860,17 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @param htd modified description of the table
    * @throws IOException if a remote or network exception occurs
    */
-  public void modifyTable(final FullyQualifiedTableName fqtn, final HTableDescriptor htd)
+  public void modifyTable(final TableName tableName, final HTableDescriptor htd)
   throws IOException {
-    if (!fqtn.equals(htd.getFullyQualifiedTableName())) {
-      throw new IllegalArgumentException("the specified table name '" + fqtn.getNameAsString() +
+    if (!tableName.equals(htd.getTableName())) {
+      throw new IllegalArgumentException("the specified table name '" + tableName.getNameAsString() +
         "' doesn't match with the HTD one: " + htd.getNameAsString());
     }
 
     execute(new MasterAdminCallable<Void>() {
       @Override
       public Void call() throws ServiceException {
-        ModifyTableRequest request = RequestConverter.buildModifyTableRequest(fqtn, htd);
+        ModifyTableRequest request = RequestConverter.buildModifyTableRequest(tableName, htd);
         masterAdmin.modifyTable(null, request);
         return null;
       }
@@ -1879,12 +1879,12 @@ public class HBaseAdmin implements Abortable, Closeable {
 
   public void modifyTable(final byte[] tableName, final HTableDescriptor htd)
   throws IOException {
-    modifyTable(FullyQualifiedTableName.valueOf(tableName), htd);
+    modifyTable(TableName.valueOf(tableName), htd);
   }
 
   public void modifyTable(final String tableName, final HTableDescriptor htd)
   throws IOException {
-    modifyTable(FullyQualifiedTableName.valueOf(tableName), htd);
+    modifyTable(TableName.valueOf(tableName), htd);
   }
 
   /**
@@ -1930,20 +1930,20 @@ public class HBaseAdmin implements Abortable, Closeable {
   /**
    * Convert the table name byte array into a table name string and check if table
    * exists or not.
-   * @param fqtn Name of a table.
+   * @param tableName Name of a table.
    * @param ct A {@link CatalogTracker} instance (caller of this method usually has one).
    * @return tableName in string form.
    * @throws IOException if a remote or network exception occurs.
    * @throws TableNotFoundException if table does not exist.
    */
   //TODO rename this method
-  private FullyQualifiedTableName tableNameString(
-      final FullyQualifiedTableName fqtn, CatalogTracker ct)
+  private TableName tableNameString(
+      final TableName tableName, CatalogTracker ct)
       throws IOException {
-    if (!MetaReader.tableExists(ct, fqtn)) {
-      throw new TableNotFoundException(fqtn);
+    if (!MetaReader.tableExists(ct, tableName)) {
+      throw new TableNotFoundException(tableName);
     }
-    return fqtn;
+    return tableName;
   }
 
   /**
@@ -2012,10 +2012,10 @@ public class HBaseAdmin implements Abortable, Closeable {
     });
   }
 
-  private HRegionLocation getFirstMetaServerForTable(final FullyQualifiedTableName fqtn)
+  private HRegionLocation getFirstMetaServerForTable(final TableName tableName)
   throws IOException {
     return connection.locateRegion(HConstants.META_TABLE_NAME,
-      HRegionInfo.createRegionName(fqtn, null, HConstants.NINES, false));
+      HRegionInfo.createRegionName(tableName, null, HConstants.NINES, false));
   }
 
   /**
@@ -2199,16 +2199,16 @@ public class HBaseAdmin implements Abortable, Closeable {
   /**
    * get the regions of a given table.
    *
-   * @param fqtn the name of the table
+   * @param tableName the name of the table
    * @return Ordered list of {@link HRegionInfo}.
    * @throws IOException
    */
-  public List<HRegionInfo> getTableRegions(final FullyQualifiedTableName fqtn)
+  public List<HRegionInfo> getTableRegions(final TableName tableName)
   throws IOException {
     CatalogTracker ct = getCatalogTracker();
     List<HRegionInfo> Regions = null;
     try {
-      Regions = MetaReader.getTableRegions(ct, fqtn, true);
+      Regions = MetaReader.getTableRegions(ct, tableName, true);
     } finally {
       cleanupCatalogTracker(ct);
     }
@@ -2217,7 +2217,7 @@ public class HBaseAdmin implements Abortable, Closeable {
 
   public List<HRegionInfo> getTableRegions(final byte[] tableName)
   throws IOException {
-    return getTableRegions(FullyQualifiedTableName.valueOf(tableName));
+    return getTableRegions(TableName.valueOf(tableName));
   }
 
   @Override
@@ -2233,7 +2233,7 @@ public class HBaseAdmin implements Abortable, Closeable {
  * @return HTD[] the tableDescriptor
  * @throws IOException if a remote or network exception occurs
  */
-  public HTableDescriptor[] getTableDescriptors(List<FullyQualifiedTableName> tableNames)
+  public HTableDescriptor[] getTableDescriptors(List<TableName> tableNames)
   throws IOException {
     return this.connection.getHTableDescriptors(tableNames);
   }
@@ -2321,10 +2321,10 @@ public class HBaseAdmin implements Abortable, Closeable {
           return response.getCompactionState();
         }
       } else {
-        final FullyQualifiedTableName fqtn =
-            tableNameString(FullyQualifiedTableName.valueOf(tableNameOrRegionName), ct);
+        final TableName tableName =
+            tableNameString(TableName.valueOf(tableNameOrRegionName), ct);
         List<Pair<HRegionInfo, ServerName>> pairs =
-          MetaReader.getTableRegionsAndLocations(ct, fqtn);
+          MetaReader.getTableRegionsAndLocations(ct, tableName);
         for (Pair<HRegionInfo, ServerName> pair: pairs) {
           if (pair.getFirst().isOffline()) continue;
           if (pair.getSecond() == null) continue;
@@ -2378,7 +2378,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link org.apache.hadoop.hbase.FullyQualifiedTableName#isLegalFullyQualifiedTableName(byte[])}.
+   * {@link org.apache.hadoop.hbase.TableName#isLegalFullyQualifiedTableName(byte[])}.
    * @param snapshotName name of the snapshot to be created
    * @param tableName name of the table for which snapshot is created
    * @throws IOException if a remote or network exception occurs
@@ -2386,42 +2386,42 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IllegalArgumentException if the snapshot request is formatted incorrectly
    */
   public void snapshot(final String snapshotName,
-                       final FullyQualifiedTableName fqtn) throws IOException,
+                       final TableName tableName) throws IOException,
       SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, fqtn, SnapshotDescription.Type.FLUSH);
+    snapshot(snapshotName, tableName, SnapshotDescription.Type.FLUSH);
   }
 
   public void snapshot(final String snapshotName,
                        final byte[] tableName) throws IOException,
       SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, FullyQualifiedTableName.valueOf(tableName),
+    snapshot(snapshotName, TableName.valueOf(tableName),
         SnapshotDescription.Type.FLUSH);
   }
 
   public void snapshot(final String snapshotName,
                        final String tableName) throws IOException,
       SnapshotCreationException, IllegalArgumentException {
-    snapshot(snapshotName, FullyQualifiedTableName.valueOf(tableName),
+    snapshot(snapshotName, TableName.valueOf(tableName),
         SnapshotDescription.Type.FLUSH);
   }
 
   public void snapshot(final byte[] snapshotName,
-                       final FullyQualifiedTableName fqtn) throws IOException,
+                       final TableName tableName) throws IOException,
       SnapshotCreationException, IllegalArgumentException {
-    snapshot(Bytes.toString(snapshotName), fqtn, SnapshotDescription.Type.FLUSH);
+    snapshot(Bytes.toString(snapshotName), tableName, SnapshotDescription.Type.FLUSH);
   }
 
   public void snapshot(final byte[] snapshotName,
                        final byte[] tableName) throws IOException,
       SnapshotCreationException, IllegalArgumentException {
-    snapshot(Bytes.toString(snapshotName), FullyQualifiedTableName.valueOf(tableName),
+    snapshot(Bytes.toString(snapshotName), TableName.valueOf(tableName),
         SnapshotDescription.Type.FLUSH);
   }
 
   public void snapshot(final byte[] snapshotName,
                        final String tableName) throws IOException,
       SnapshotCreationException, IllegalArgumentException {
-    snapshot(Bytes.toString(snapshotName), FullyQualifiedTableName.valueOf(tableName),
+    snapshot(Bytes.toString(snapshotName), TableName.valueOf(tableName),
         SnapshotDescription.Type.FLUSH);
   }
 
@@ -2433,7 +2433,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link org.apache.hadoop.hbase.FullyQualifiedTableName#isLegalFullyQualifiedTableName(byte[])}.
+   * {@link org.apache.hadoop.hbase.TableName#isLegalFullyQualifiedTableName(byte[])}.
    * <p>
    * @param snapshotName name to give the snapshot on the filesystem. Must be unique from all other
    *          snapshots stored on the cluster
@@ -2444,11 +2444,11 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws IllegalArgumentException if the snapshot request is formatted incorrectly
    */
   public void snapshot(final String snapshotName,
-                       final FullyQualifiedTableName fqtn,
+                       final TableName tableName,
                       SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException {
     SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-    builder.setTable(fqtn.getNameAsString());
+    builder.setTable(tableName.getNameAsString());
     builder.setName(snapshotName);
     builder.setType(type);
     snapshot(builder.build());
@@ -2458,14 +2458,14 @@ public class HBaseAdmin implements Abortable, Closeable {
                        final String tableName,
                       SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException {
-    snapshot(snapshotName, FullyQualifiedTableName.valueOf(tableName), type);
+    snapshot(snapshotName, TableName.valueOf(tableName), type);
   }
 
   public void snapshot(final String snapshotName,
                        final byte[] tableName,
                       SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException {
-    snapshot(snapshotName, FullyQualifiedTableName.valueOf(tableName), type);
+    snapshot(snapshotName, TableName.valueOf(tableName), type);
   }
 
   /**
@@ -2480,7 +2480,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    * a {@link SnapshotCreationException} indicating the duplicate naming.
    * <p>
    * Snapshot names follow the same naming constraints as tables in HBase. See
-   * {@link org.apache.hadoop.hbase.FullyQualifiedTableName#isLegalFullyQualifiedTableName(byte[])}.
+   * {@link org.apache.hadoop.hbase.TableName#isLegalFullyQualifiedTableName(byte[])}.
    * <p>
    * You should probably use {@link #snapshot(String, String)} or {@link #snapshot(byte[], byte[])}
    * unless you are sure about the type of snapshot that you want to take.
@@ -2616,32 +2616,32 @@ public class HBaseAdmin implements Abortable, Closeable {
       throws IOException, RestoreSnapshotException {
     String rollbackSnapshot = snapshotName + "-" + EnvironmentEdgeManager.currentTimeMillis();
 
-    FullyQualifiedTableName fqtn = null;
+    TableName tableName = null;
     for (SnapshotDescription snapshotInfo: listSnapshots()) {
       if (snapshotInfo.getName().equals(snapshotName)) {
-        fqtn = FullyQualifiedTableName.valueOf(snapshotInfo.getTable());
+        tableName = TableName.valueOf(snapshotInfo.getTable());
         break;
       }
     }
 
-    if (fqtn == null) {
+    if (tableName == null) {
       throw new RestoreSnapshotException(
         "Unable to find the table name for snapshot=" + snapshotName);
     }
 
     // Take a snapshot of the current state
-    snapshot(rollbackSnapshot, fqtn);
+    snapshot(rollbackSnapshot, tableName);
 
     // Restore snapshot
     try {
-      internalRestoreSnapshot(snapshotName, fqtn);
+      internalRestoreSnapshot(snapshotName, tableName);
     } catch (IOException e) {
       // Try to rollback
       try {
         String msg = "Restore snapshot=" + snapshotName +
           " failed. Rollback to snapshot=" + rollbackSnapshot + " succeeded.";
         LOG.error(msg, e);
-        internalRestoreSnapshot(rollbackSnapshot, fqtn);
+        internalRestoreSnapshot(rollbackSnapshot, tableName);
         throw new RestoreSnapshotException(msg, e);
       } catch (IOException ex) {
         String msg = "Failed to restore and rollback to snapshot=" + rollbackSnapshot;
@@ -2663,7 +2663,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void cloneSnapshot(final byte[] snapshotName, final byte[] tableName)
       throws IOException, TableExistsException, RestoreSnapshotException, InterruptedException {
-    cloneSnapshot(Bytes.toString(snapshotName), FullyQualifiedTableName.valueOf(tableName));
+    cloneSnapshot(Bytes.toString(snapshotName), TableName.valueOf(tableName));
   }
 
   /**
@@ -2676,9 +2676,9 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws RestoreSnapshotException if snapshot failed to be cloned
    * @throws IllegalArgumentException if the specified table has not a valid name
    */
-  public void cloneSnapshot(final byte[] snapshotName, final FullyQualifiedTableName fqtn)
+  public void cloneSnapshot(final byte[] snapshotName, final TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException, InterruptedException {
-    cloneSnapshot(Bytes.toString(snapshotName), fqtn);
+    cloneSnapshot(Bytes.toString(snapshotName), tableName);
   }
 
 
@@ -2695,7 +2695,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void cloneSnapshot(final String snapshotName, final String tableName)
       throws IOException, TableExistsException, RestoreSnapshotException, InterruptedException {
-    cloneSnapshot(snapshotName, FullyQualifiedTableName.valueOf(tableName));
+    cloneSnapshot(snapshotName, TableName.valueOf(tableName));
   }
 
   /**
@@ -2708,13 +2708,13 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws RestoreSnapshotException if snapshot failed to be cloned
    * @throws IllegalArgumentException if the specified table has not a valid name
    */
-  public void cloneSnapshot(final String snapshotName, final FullyQualifiedTableName fqtn)
+  public void cloneSnapshot(final String snapshotName, final TableName tableName)
       throws IOException, TableExistsException, RestoreSnapshotException, InterruptedException {
-    if (tableExists(fqtn)) {
-      throw new TableExistsException("Table '" + fqtn.getNameAsString() + " already exists");
+    if (tableExists(tableName)) {
+      throw new TableExistsException("Table '" + tableName.getNameAsString() + " already exists");
     }
-    internalRestoreSnapshot(snapshotName, fqtn);
-    waitUntilTableIsEnabled(fqtn);
+    internalRestoreSnapshot(snapshotName, tableName);
+    waitUntilTableIsEnabled(tableName);
   }
 
   /**
@@ -2727,11 +2727,11 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @throws RestoreSnapshotException if snapshot failed to be restored
    * @throws IllegalArgumentException if the restore request is formatted incorrectly
    */
-  private void internalRestoreSnapshot(final String snapshotName, final FullyQualifiedTableName
-      fqtn)
+  private void internalRestoreSnapshot(final String snapshotName, final TableName
+      tableName)
       throws IOException, RestoreSnapshotException {
     SnapshotDescription snapshot = SnapshotDescription.newBuilder()
-        .setName(snapshotName).setTable(fqtn.getNameAsString()).build();
+        .setName(snapshotName).setTable(tableName.getNameAsString()).build();
 
     // actually restore the snapshot
     internalRestoreSnapshotAsync(snapshot);
@@ -2851,7 +2851,7 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void deleteSnapshot(final String snapshotName) throws IOException {
     // make sure the snapshot is possibly valid
-    FullyQualifiedTableName.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshotName));
+    TableName.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshotName));
     // do the delete
     execute(new MasterAdminCallable<Void>() {
       @Override

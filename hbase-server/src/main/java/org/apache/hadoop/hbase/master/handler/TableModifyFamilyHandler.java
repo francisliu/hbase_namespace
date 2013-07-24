@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -39,7 +39,7 @@ import org.apache.hadoop.hbase.master.MasterServices;
 public class TableModifyFamilyHandler extends TableEventHandler {
   private final HColumnDescriptor familyDesc;
 
-  public TableModifyFamilyHandler(FullyQualifiedTableName tableName,
+  public TableModifyFamilyHandler(TableName tableName,
       HColumnDescriptor familyDesc, Server server,
       final MasterServices masterServices) {
     super(EventType.C_M_MODIFY_FAMILY, tableName, server, masterServices);

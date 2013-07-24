@@ -50,8 +50,8 @@ import static org.junit.Assert.*;
 public class TestMaster {
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static final Log LOG = LogFactory.getLog(TestMaster.class);
-  private static final FullyQualifiedTableName TABLENAME =
-      FullyQualifiedTableName.valueOf("TestMaster");
+  private static final TableName TABLENAME =
+      TableName.valueOf("TestMaster");
   private static final byte[] FAMILYNAME = Bytes.toBytes("fam");
   private static HBaseAdmin admin;
 
@@ -136,8 +136,8 @@ public class TestMaster {
 
   @Test
   public void testMoveThrowsUnknownRegionException() throws IOException {
-    FullyQualifiedTableName tableName =
-        FullyQualifiedTableName.valueOf("testMoveThrowsUnknownRegionException");
+    TableName tableName =
+        TableName.valueOf("testMoveThrowsUnknownRegionException");
     HTableDescriptor htd = new HTableDescriptor(tableName);
     HColumnDescriptor hcd = new HColumnDescriptor("value");
     htd.addFamily(hcd);

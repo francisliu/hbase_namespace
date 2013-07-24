@@ -38,7 +38,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.Stoppable;
@@ -69,7 +69,6 @@ import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescriptio
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.RestoreSnapshotHelper;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -144,15 +143,15 @@ public class SnapshotManager implements Stoppable {
   // The map is always accessed and modified under the object lock using synchronized.
   // snapshotTable() will insert an Handler in the table.
   // isSnapshotDone() will remove the handler requested if the operation is finished.
-  private Map<FullyQualifiedTableName, SnapshotSentinel> snapshotHandlers =
-      new HashMap<FullyQualifiedTableName, SnapshotSentinel>();
+  private Map<TableName, SnapshotSentinel> snapshotHandlers =
+      new HashMap<TableName, SnapshotSentinel>();
 
   // Restore Sentinels map, with table name as key.
   // The map is always accessed and modified under the object lock using synchronized.
   // restoreSnapshot()/cloneSnapshot() will insert an Handler in the table.
   // isRestoreDone() will remove the handler requested if the operation is finished.
-  private Map<FullyQualifiedTableName, SnapshotSentinel> restoreHandlers =
-      new HashMap<FullyQualifiedTableName, SnapshotSentinel>();
+  private Map<TableName, SnapshotSentinel> restoreHandlers =
+      new HashMap<TableName, SnapshotSentinel>();
 
   private final Path rootDir;
   private final ExecutorService executorService;
@@ -381,7 +380,7 @@ public class SnapshotManager implements Stoppable {
    * @param tableName name of the table being snapshotted.
    * @return <tt>true</tt> if there is a snapshot in progress on the specified table.
    */
-  synchronized boolean isTakingSnapshot(final FullyQualifiedTableName tableName) {
+  synchronized boolean isTakingSnapshot(final TableName tableName) {
     SnapshotSentinel handler = this.snapshotHandlers.get(tableName);
     return handler != null && !handler.isFinished();
   }
@@ -396,8 +395,8 @@ public class SnapshotManager implements Stoppable {
       throws HBaseSnapshotException {
     FileSystem fs = master.getMasterFileSystem().getFileSystem();
     Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
-    FullyQualifiedTableName snapshotTable =
-        FullyQualifiedTableName.valueOf(snapshot.getTable());
+    TableName snapshotTable =
+        TableName.valueOf(snapshot.getTable());
 
     // make sure we aren't already running a snapshot
     if (isTakingSnapshot(snapshotTable)) {
@@ -483,7 +482,7 @@ public class SnapshotManager implements Stoppable {
     try {
       handler.prepare();
       this.executorService.submit(handler);
-      this.snapshotHandlers.put(FullyQualifiedTableName.valueOf(snapshot.getTable()), handler);
+      this.snapshotHandlers.put(TableName.valueOf(snapshot.getTable()), handler);
     } catch (Exception e) {
       // cleanup the working directory by trying to delete it from the fs.
       Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
@@ -524,7 +523,7 @@ public class SnapshotManager implements Stoppable {
     HTableDescriptor desc = null;
     try {
       desc = master.getTableDescriptors().get(
-          FullyQualifiedTableName.valueOf(snapshot.getTable()));
+          TableName.valueOf(snapshot.getTable()));
     } catch (FileNotFoundException e) {
       String msg = "Table:" + snapshot.getTable() + " info doesn't exist!";
       LOG.error(msg);
@@ -549,7 +548,7 @@ public class SnapshotManager implements Stoppable {
     }
 
     // if the table is enabled, then have the RS run actually the snapshot work
-    FullyQualifiedTableName snapshotTable = FullyQualifiedTableName.valueOf(snapshot.getTable());
+    TableName snapshotTable = TableName.valueOf(snapshot.getTable());
     AssignmentManager assignmentMgr = master.getAssignmentManager();
     if (assignmentMgr.getZKTable().isEnabledTable(snapshotTable)) {
       LOG.debug("Table enabled, starting distributed snapshot.");
@@ -585,7 +584,7 @@ public class SnapshotManager implements Stoppable {
    * TODO get rid of this if possible, repackaging, modify tests.
    */
   public synchronized void setSnapshotHandlerForTesting(
-      final FullyQualifiedTableName tableName,
+      final TableName tableName,
       final SnapshotSentinel handler) {
     if (handler != null) {
       this.snapshotHandlers.put(tableName, handler);
@@ -631,7 +630,7 @@ public class SnapshotManager implements Stoppable {
    */
   synchronized void cloneSnapshot(final SnapshotDescription snapshot,
       final HTableDescriptor hTableDescriptor) throws HBaseSnapshotException {
-    FullyQualifiedTableName tableName = hTableDescriptor.getFullyQualifiedTableName();
+    TableName tableName = hTableDescriptor.getTableName();
 
     // make sure we aren't running a snapshot on the same table
     if (isTakingSnapshot(tableName)) {
@@ -675,7 +674,7 @@ public class SnapshotManager implements Stoppable {
     // read snapshot information
     SnapshotDescription fsSnapshot = SnapshotDescriptionUtils.readSnapshotInfo(fs, snapshotDir);
     HTableDescriptor snapshotTableDesc = FSTableDescriptors.getTableDescriptor(fs, snapshotDir);
-    FullyQualifiedTableName tableName = FullyQualifiedTableName.valueOf(reqSnapshot.getTable());
+    TableName tableName = TableName.valueOf(reqSnapshot.getTable());
 
     // stop tracking "abandoned" handlers
     cleanupSentinels();
@@ -683,7 +682,7 @@ public class SnapshotManager implements Stoppable {
     // Execute the restore/clone operation
     if (MetaReader.tableExists(master.getCatalogTracker(), tableName)) {
       if (master.getAssignmentManager().getZKTable().isEnabledTable(
-          FullyQualifiedTableName.valueOf(fsSnapshot.getTable()))) {
+          TableName.valueOf(fsSnapshot.getTable()))) {
         throw new UnsupportedOperationException("Table '" +
           fsSnapshot.getTable() + "' must be disabled in order to perform a restore operation.");
       }
@@ -721,7 +720,7 @@ public class SnapshotManager implements Stoppable {
    */
   private synchronized void restoreSnapshot(final SnapshotDescription snapshot,
       final HTableDescriptor hTableDescriptor) throws HBaseSnapshotException {
-    FullyQualifiedTableName tableName = hTableDescriptor.getFullyQualifiedTableName();
+    TableName tableName = hTableDescriptor.getTableName();
 
     // make sure we aren't running a snapshot on the same table
     if (isTakingSnapshot(tableName)) {
@@ -753,7 +752,7 @@ public class SnapshotManager implements Stoppable {
    * @param tableName table under restore
    * @return <tt>true</tt> if there is a restore in progress of the specified table.
    */
-  private synchronized boolean isRestoringTable(final FullyQualifiedTableName tableName) {
+  private synchronized boolean isRestoringTable(final TableName tableName) {
     SnapshotSentinel sentinel = this.restoreHandlers.get(tableName);
     return(sentinel != null && !sentinel.isFinished());
   }
@@ -807,13 +806,13 @@ public class SnapshotManager implements Stoppable {
    * @return null if doesn't match, else a live handler.
    */
   private synchronized SnapshotSentinel removeSentinelIfFinished(
-      final Map<FullyQualifiedTableName, SnapshotSentinel> sentinels,
+      final Map<TableName, SnapshotSentinel> sentinels,
       final SnapshotDescription snapshot) {
     if (!snapshot.hasTable()) {
       return null;
     }
 
-    FullyQualifiedTableName snapshotTable = FullyQualifiedTableName.valueOf(snapshot.getTable());
+    TableName snapshotTable = TableName.valueOf(snapshot.getTable());
     SnapshotSentinel h = sentinels.get(snapshotTable);
     if (h == null) {
       return null;
@@ -849,12 +848,12 @@ public class SnapshotManager implements Stoppable {
    * has exceeded the removal timeout.
    * @param sentinels map of sentinels to clean
    */
-  private synchronized void cleanupSentinels(final Map<FullyQualifiedTableName, SnapshotSentinel> sentinels) {
+  private synchronized void cleanupSentinels(final Map<TableName, SnapshotSentinel> sentinels) {
     long currentTime = EnvironmentEdgeManager.currentTimeMillis();
-    Iterator<Map.Entry<FullyQualifiedTableName, SnapshotSentinel>> it =
+    Iterator<Map.Entry<TableName, SnapshotSentinel>> it =
         sentinels.entrySet().iterator();
     while (it.hasNext()) {
-      Map.Entry<FullyQualifiedTableName, SnapshotSentinel> entry = it.next();
+      Map.Entry<TableName, SnapshotSentinel> entry = it.next();
       SnapshotSentinel sentinel = entry.getValue();
       if (sentinel.isFinished() &&
           (currentTime - sentinel.getCompletionTimestamp()) > SNAPSHOT_SENTINELS_CLEANUP_TIMEOUT)

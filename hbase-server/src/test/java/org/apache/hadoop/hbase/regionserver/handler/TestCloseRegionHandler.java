@@ -76,7 +76,7 @@ public class TestCloseRegionHandler {
    */
   @Before
   public void setupHRI() {
-    TEST_HRI = new HRegionInfo(TEST_HTD.getFullyQualifiedTableName(),
+    TEST_HRI = new HRegionInfo(TEST_HTD.getTableName(),
       Bytes.toBytes(testIndex),
       Bytes.toBytes(testIndex + 1));
     testIndex++;
@@ -95,7 +95,7 @@ public class TestCloseRegionHandler {
     final RegionServerServices rss = new MockRegionServerServices();
     HTableDescriptor htd = TEST_HTD;
     final HRegionInfo hri =
-      new HRegionInfo(htd.getFullyQualifiedTableName(), HConstants.EMPTY_END_ROW,
+      new HRegionInfo(htd.getTableName(), HConstants.EMPTY_END_ROW,
         HConstants.EMPTY_END_ROW);
     HRegion region =
       HRegion.createHRegion(hri, HTU.getDataTestDir(),

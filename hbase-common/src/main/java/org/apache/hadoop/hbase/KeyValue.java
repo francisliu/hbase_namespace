@@ -124,14 +124,14 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
    * Hopefully we can get rid of this, I added this here because it's replacing
    * something in HSK.  We should move completely off of that.
    *
-   * @param fqtn  The table name.
+   * @param tableName  The table name.
    * @return The comparator.
    */
-  public static KeyComparator getRowComparator(FullyQualifiedTableName fqtn) {
-    if(HConstants.ROOT_TABLE_NAME.getName().equals(fqtn)) {
+  public static KeyComparator getRowComparator(TableName tableName) {
+    if(HConstants.ROOT_TABLE_NAME.getName().equals(tableName)) {
       return ROOT_COMPARATOR.getRawComparator();
     }
-    if(HConstants.META_TABLE_NAME.getName().equals(fqtn)) {
+    if(HConstants.META_TABLE_NAME.getName().equals(tableName)) {
       return META_COMPARATOR.getRawComparator();
     }
     return COMPARATOR.getRawComparator();

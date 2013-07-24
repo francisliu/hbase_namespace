@@ -29,7 +29,7 @@ import java.util.TreeMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.Server;
@@ -61,11 +61,11 @@ import com.google.common.collect.Maps;
 public abstract class TableEventHandler extends EventHandler {
   private static final Log LOG = LogFactory.getLog(TableEventHandler.class);
   protected final MasterServices masterServices;
-  protected final FullyQualifiedTableName tableName;
+  protected final TableName tableName;
   protected TableLock tableLock;
   private boolean isPrepareCalled = false;
 
-  public TableEventHandler(EventType eventType, FullyQualifiedTableName tableName, Server server,
+  public TableEventHandler(EventType eventType, TableName tableName, Server server,
       MasterServices masterServices) {
     super(server, eventType);
     this.masterServices = masterServices;

@@ -22,7 +22,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -32,7 +31,7 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.WALProtos.FamilyScope;
@@ -98,7 +97,7 @@ public class HLogKey implements WritableComparable<HLogKey> {
 
   //  The encoded region name.
   private byte [] encodedRegionName;
-  private FullyQualifiedTableName tablename;
+  private TableName tablename;
   private long logSeqNum;
   // Time at which this edit was written.
   private long writeTime;
@@ -126,7 +125,7 @@ public class HLogKey implements WritableComparable<HLogKey> {
    * @param now Time at which this edit was written.
    * @param clusterId of the cluster (used in Replication)
    */
-  public HLogKey(final byte [] encodedRegionName, final FullyQualifiedTableName tablename,
+  public HLogKey(final byte [] encodedRegionName, final TableName tablename,
       long logSeqNum, final long now, UUID clusterId) {
     this.logSeqNum = logSeqNum;
     this.writeTime = now;
@@ -156,7 +155,7 @@ public class HLogKey implements WritableComparable<HLogKey> {
   }
 
   /** @return table name */
-  public FullyQualifiedTableName getTablename() {
+  public TableName getTablename() {
     return tablename;
   }
 
@@ -263,7 +262,7 @@ public class HLogKey implements WritableComparable<HLogKey> {
    * meant to be a general purpose setter - it's only used
    * to collapse references to conserve memory.
    */
-  void internTableName(FullyQualifiedTableName tablename) {
+  void internTableName(TableName tablename) {
     // We should not use this as a setter - only to swap
     // in a new reference to the same table name.
     assert tablename.equals(this.tablename);
@@ -336,11 +335,11 @@ public class HLogKey implements WritableComparable<HLogKey> {
       this.encodedRegionName = new byte[len];
       in.readFully(this.encodedRegionName);
       byte[] tablenameBytes = Bytes.readByteArray(in);
-      this.tablename = FullyQualifiedTableName.valueOf(tablenameBytes);
+      this.tablename = TableName.valueOf(tablenameBytes);
     } else {
       this.encodedRegionName = Compressor.readCompressed(in, compressionContext.regionDict);
       byte[] tablenameBytes = Compressor.readCompressed(in, compressionContext.tableDict);
-      this.tablename =  FullyQualifiedTableName.valueOf(tablenameBytes);
+      this.tablename =  TableName.valueOf(tablenameBytes);
     }
 
     this.logSeqNum = in.readLong();
@@ -397,10 +396,10 @@ public class HLogKey implements WritableComparable<HLogKey> {
           walKey.getEncodedRegionName(), compressionContext.regionDict);
       byte[] tablenameBytes = uncompressor.uncompress(
           walKey.getTableName(), compressionContext.tableDict);
-      this.tablename = FullyQualifiedTableName.valueOf(tablenameBytes);
+      this.tablename = TableName.valueOf(tablenameBytes);
     } else {
       this.encodedRegionName = walKey.getEncodedRegionName().toByteArray();
-      this.tablename = FullyQualifiedTableName.valueOf(walKey.getTableName().toByteArray());
+      this.tablename = TableName.valueOf(walKey.getTableName().toByteArray());
     }
     this.clusterId = HConstants.DEFAULT_CLUSTER_ID;
     if (walKey.hasClusterId()) {

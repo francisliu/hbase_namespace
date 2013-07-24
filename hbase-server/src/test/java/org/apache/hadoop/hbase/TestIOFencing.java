@@ -189,8 +189,8 @@ public class TestIOFencing {
   }
 
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
-  private final static FullyQualifiedTableName TABLE_NAME =
-      FullyQualifiedTableName.valueOf("tabletest");
+  private final static TableName TABLE_NAME =
+      TableName.valueOf("tabletest");
   private final static byte[] FAMILY = Bytes.toBytes("family");
   private static final int FIRST_BATCH_COUNT = 4000;
   private static final int SECOND_BATCH_COUNT = FIRST_BATCH_COUNT;

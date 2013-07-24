@@ -21,7 +21,7 @@ package org.apache.hadoop.hbase.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.util.HBaseFsck.HbckInfo;
@@ -35,17 +35,17 @@ import org.junit.experimental.categories.Category;
 @Category(SmallTests.class)
 public class TestHBaseFsckComparator {
 
-  FullyQualifiedTableName table =
-      FullyQualifiedTableName.valueOf("table1");
-  FullyQualifiedTableName table2 =
-      FullyQualifiedTableName.valueOf("table2");
+  TableName table =
+      TableName.valueOf("table1");
+  TableName table2 =
+      TableName.valueOf("table2");
   byte[] keyStart = Bytes.toBytes("");
   byte[] keyA = Bytes.toBytes("A");
   byte[] keyB = Bytes.toBytes("B");
   byte[] keyC = Bytes.toBytes("C");
   byte[] keyEnd = Bytes.toBytes("");
 
-  static HbckInfo genHbckInfo(FullyQualifiedTableName table, byte[] start, byte[] end, int time) {
+  static HbckInfo genHbckInfo(TableName table, byte[] start, byte[] end, int time) {
     return new HbckInfo(new MetaEntry(new HRegionInfo(table, start, end), null,
         time));
   }

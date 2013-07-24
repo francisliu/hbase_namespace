@@ -29,7 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.FullyQualifiedTableName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -72,11 +72,11 @@ public class TableNamespaceManager {
   }
 
   public void start() throws IOException {
-    FullyQualifiedTableName fullyQualifiedTableName = HConstants.NAMESPACE_TABLE_NAME;
+    TableName tableName = HConstants.NAMESPACE_TABLE_NAME;
     boolean newTable = false;
     try {
       if (!MetaReader.tableExists(masterServices.getCatalogTracker(),
-          fullyQualifiedTableName)) {
+          tableName)) {
         LOG.info("Namespace table not found. Creating...");
         newTable = true;
         createNamespaceTable(masterServices);
@@ -84,7 +84,7 @@ public class TableNamespaceManager {
     } catch (InterruptedException e) {
       throw new IOException("Wait for namespace table assignment interrupted", e);
     }
-    table = new HTable(conf, fullyQualifiedTableName);
+    table = new HTable(conf, tableName);
     zkNamespaceManager = new ZKNamespaceManager(masterServices.getZooKeeper());
     zkNamespaceManager.start();
 
@@ -104,7 +104,7 @@ public class TableNamespaceManager {
       List<Path> dirs = FSUtils.getTableDirs(mfs.getFileSystem(), mfs.getRootDir());
       for(Path p: dirs) {
         NamespaceDescriptor ns =
-            NamespaceDescriptor.create(FullyQualifiedTableName.valueOf(p.getName()).getNamespaceAsString())
+            NamespaceDescriptor.create(TableName.valueOf(p.getName()).getNamespaceAsString())
                         .build();
         if (get(ns.getName()) == null) {
           create(ns);
@@ -209,7 +209,7 @@ public class TableNamespaceManager {
 
   private void createNamespaceTable(MasterServices masterServices) throws IOException, InterruptedException {
     HRegionInfo newRegions[] = new HRegionInfo[]{
-        new HRegionInfo(HTableDescriptor.NAMESPACE_TABLEDESC.getFullyQualifiedTableName(), null, null)};
+        new HRegionInfo(HTableDescriptor.NAMESPACE_TABLEDESC.getTableName(), null, null)};
 
     //we need to create the table this way to bypass
     //checkInitialized
