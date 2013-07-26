@@ -419,7 +419,6 @@ public class FSTableDescriptors implements TableDescriptors {
         || tableName.compareTo(HConstants.META_TABLE_NAME) == 0) {
       return null;
     }
-    LOG.info("-->modTime:"+FSUtils.getTableDir(hbaseRootDir, tableName));
     return getTableDescriptorModtime(fs,
         FSUtils.getTableDir(hbaseRootDir, tableName));
   }
