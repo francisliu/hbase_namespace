@@ -38,6 +38,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.SmallTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.hfile.LruBlockCache;
@@ -329,7 +330,7 @@ public class TestSplitTransaction {
   throws IOException {
     // Make a region with start and end keys. Use 'aaa', to 'AAA'.  The load
     // region utility will add rows between 'aaa' and 'zzz'.
-    HTableDescriptor htd = new HTableDescriptor("table");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("table"));
     HColumnDescriptor hcd = new HColumnDescriptor(CF);
     htd.addFamily(hcd);
     HRegionInfo hri = new HRegionInfo(htd.getTableName(), STARTROW, ENDROW);

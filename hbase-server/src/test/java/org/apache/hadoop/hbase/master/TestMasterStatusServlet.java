@@ -58,7 +58,7 @@ public class TestMasterStatusServlet {
   static final ServerName FAKE_HOST = 
     new ServerName("fakehost", 12345, 1234567890);
   static final HTableDescriptor FAKE_TABLE =
-    new HTableDescriptor("mytable");
+    new HTableDescriptor(TableName.valueOf("mytable"));
   static final HRegionInfo FAKE_HRI =
       new HRegionInfo(FAKE_TABLE.getTableName(),
           Bytes.toBytes("a"), Bytes.toBytes("b"));
@@ -107,8 +107,8 @@ public class TestMasterStatusServlet {
 
   private void setupMockTables() throws IOException {
     HTableDescriptor tables[] = new HTableDescriptor[] {
-        new HTableDescriptor("foo"),
-        new HTableDescriptor("bar")
+        new HTableDescriptor(TableName.valueOf("foo")),
+        new HTableDescriptor(TableName.valueOf("bar"))
     };
     Mockito.doReturn(tables).when(admin).listTables();
   }

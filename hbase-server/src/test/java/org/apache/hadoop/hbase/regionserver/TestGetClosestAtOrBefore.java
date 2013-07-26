@@ -73,7 +73,7 @@ public class TestGetClosestAtOrBefore extends HBaseTestCase {
     try {
     // Write rows for three tables 'A', 'B', and 'C'.
     for (char c = 'A'; c < 'D'; c++) {
-      HTableDescriptor htd = new HTableDescriptor("" + c);
+      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("" + c));
       final int last = 128;
       final int interval = 2;
       for (int i = 0; i <= last; i += interval) {

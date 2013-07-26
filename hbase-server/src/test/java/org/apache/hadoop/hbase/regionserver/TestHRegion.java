@@ -3340,7 +3340,7 @@ public class TestHRegion extends HBaseTestCase {
         .setMaxVersions(Integer.MAX_VALUE)
         .setBloomFilterType(BloomType.ROWCOL);
 
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(hcd);
     HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     Path path = new Path(DIR + "testBloomFilterSize");
@@ -3399,7 +3399,7 @@ public class TestHRegion extends HBaseTestCase {
     HColumnDescriptor hcd = new HColumnDescriptor(FAMILY)
         .setMaxVersions(Integer.MAX_VALUE)
         .setBloomFilterType(BloomType.ROWCOL);
-    HTableDescriptor htd = new HTableDescriptor(TABLE);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(TABLE));
     htd.addFamily(hcd);
     HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     Path path = new Path(DIR + "testAllColumnsWithBloomFilter");
@@ -3449,7 +3449,7 @@ public class TestHRegion extends HBaseTestCase {
         .setMaxVersions(Integer.MAX_VALUE)
         .setBloomFilterType(BloomType.ROWCOL);
 
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(hcd);
     HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     Path path = new Path(DIR + "TestDeleteRowWithBloomFilter");
@@ -3553,7 +3553,7 @@ public class TestHRegion extends HBaseTestCase {
     try {
       FileSystem fs = Mockito.mock(FileSystem.class);
       Mockito.when(fs.exists((Path) Mockito.anyObject())).thenThrow(new IOException());
-      HTableDescriptor htd = new HTableDescriptor(tableName);
+      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
       htd.addFamily(new HColumnDescriptor("cf"));
       info = new HRegionInfo(htd.getTableName(), HConstants.EMPTY_BYTE_ARRAY,
           HConstants.EMPTY_BYTE_ARRAY, false);
@@ -3585,7 +3585,7 @@ public class TestHRegion extends HBaseTestCase {
     Path rootDir = new Path(DIR + "testRegionInfoFileCreation");
     Configuration conf = HBaseConfiguration.create(this.conf);
 
-    HTableDescriptor htd = new HTableDescriptor("testtb");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("testtb"));
     htd.addFamily(new HColumnDescriptor("cf"));
 
     HRegionInfo hri = new HRegionInfo(htd.getTableName());
@@ -4029,7 +4029,7 @@ public class TestHRegion extends HBaseTestCase {
   private static HRegion initHRegion(byte[] tableName, byte[] startKey, byte[] stopKey,
       String callingMethod, Configuration conf, boolean isReadOnly, byte[]... families)
       throws IOException {
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.setReadOnly(isReadOnly);
     for(byte [] family : families) {
       HColumnDescriptor hcd = new HColumnDescriptor(family);

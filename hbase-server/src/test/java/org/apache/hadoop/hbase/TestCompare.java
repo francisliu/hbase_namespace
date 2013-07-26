@@ -36,7 +36,7 @@ public class TestCompare extends TestCase {
     HRegionInfo a = new HRegionInfo(TableName.valueOf("a"), null, null);
     HRegionInfo b = new HRegionInfo(TableName.valueOf("b"), null, null);
     assertTrue(a.compareTo(b) != 0);
-    HTableDescriptor t = new HTableDescriptor("t");
+    HTableDescriptor t = new HTableDescriptor(TableName.valueOf("t"));
     byte [] midway = Bytes.toBytes("midway");
     a = new HRegionInfo(t.getTableName(), null, midway);
     b = new HRegionInfo(t.getTableName(), midway, null);

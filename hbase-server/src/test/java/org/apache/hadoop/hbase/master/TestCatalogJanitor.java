@@ -385,7 +385,7 @@ public class TestCatalogJanitor {
       MasterServices services = new MockMasterServices(server);
       CatalogJanitor janitor = new CatalogJanitor(server, services);
       // Create regions.
-      HTableDescriptor htd = new HTableDescriptor("table");
+      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("table"));
       htd.addFamily(new HColumnDescriptor("f"));
       HRegionInfo parent =
         new HRegionInfo(htd.getTableName(), Bytes.toBytes("aaa"),
@@ -725,7 +725,7 @@ public class TestCatalogJanitor {
     CatalogJanitor janitor = new CatalogJanitor(server, services);
 
     // Create regions.
-    HTableDescriptor htd = new HTableDescriptor(table);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
     htd.addFamily(new HColumnDescriptor("f"));
     HRegionInfo parent = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"), Bytes.toBytes("eee"));
@@ -809,7 +809,7 @@ public class TestCatalogJanitor {
     CatalogJanitor janitor = new CatalogJanitor(server, services);
 
     // Create regions.
-    HTableDescriptor htd = new HTableDescriptor(table);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
     htd.addFamily(new HColumnDescriptor("f"));
     HRegionInfo parent = new HRegionInfo(htd.getTableName(),
         Bytes.toBytes("aaa"), Bytes.toBytes("eee"));
@@ -930,7 +930,7 @@ public class TestCatalogJanitor {
   }
 
   private HTableDescriptor createHTableDescriptor() {
-    HTableDescriptor htd = new HTableDescriptor("t");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("t"));
     htd.addFamily(new HColumnDescriptor("f"));
     return htd;
   }

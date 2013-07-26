@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.rest.HBaseRESTTestingUtility;
 import org.apache.hadoop.hbase.rest.model.StorageClusterStatusModel;
 import org.apache.hadoop.hbase.rest.model.TableModel;
@@ -49,8 +50,8 @@ public class TestRemoteAdmin {
   private static final String TABLE_1 = "TestRemoteAdmin_Table_1";
   private static final String TABLE_2 = TABLE_1 + System.currentTimeMillis();
   private static final byte[] COLUMN_1 = Bytes.toBytes("a");
-  static final HTableDescriptor DESC_1 =  new HTableDescriptor(TABLE_1);
-  static final HTableDescriptor DESC_2 =  new HTableDescriptor(TABLE_2);
+  static final HTableDescriptor DESC_1 =  new HTableDescriptor(TableName.valueOf(TABLE_1));
+  static final HTableDescriptor DESC_2 = new HTableDescriptor(TableName.valueOf(TABLE_2));
   private static RemoteAdmin remoteAdmin;
 
   @BeforeClass

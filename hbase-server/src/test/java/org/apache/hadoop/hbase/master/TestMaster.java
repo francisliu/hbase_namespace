@@ -159,7 +159,7 @@ public class TestMaster {
   public void testMoveThrowsPleaseHoldException() throws IOException {
     byte[] tableName = Bytes.toBytes("testMoveThrowsPleaseHoldException");
     HMaster master = TEST_UTIL.getMiniHBaseCluster().getMaster();
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     HColumnDescriptor hcd = new HColumnDescriptor("value");
     htd.addFamily(hcd);
 

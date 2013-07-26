@@ -183,7 +183,7 @@ public class TestMetaMigrationConvertingToPB {
   public void testMetaMigration() throws Exception {
     LOG.info("Starting testMetaMigration");
     final byte [] FAMILY = Bytes.toBytes("family");
-    HTableDescriptor htd = new HTableDescriptor("testMetaMigration");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("testMetaMigration"));
     HColumnDescriptor hcd = new HColumnDescriptor(FAMILY);
       htd.addFamily(hcd);
     Configuration conf = TEST_UTIL.getConfiguration();
@@ -231,7 +231,8 @@ public class TestMetaMigrationConvertingToPB {
   @Test
   public void testMasterCrashDuringMetaMigration() throws Exception {
     final byte[] FAMILY = Bytes.toBytes("family");
-    HTableDescriptor htd = new HTableDescriptor("testMasterCrashDuringMetaMigration");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf
+        ("testMasterCrashDuringMetaMigration"));
     HColumnDescriptor hcd = new HColumnDescriptor(FAMILY);
       htd.addFamily(hcd);
     Configuration conf = TEST_UTIL.getConfiguration();

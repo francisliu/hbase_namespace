@@ -200,7 +200,7 @@ public class TestNamespace {
     String nsName = prefix+"_"+testName;
     LOG.info(testName);
 
-    HTableDescriptor desc = new HTableDescriptor(nsName+":my_table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(nsName+":my_table"));
     HColumnDescriptor colDesc = new HColumnDescriptor("my_cf");
     desc.addFamily(colDesc);
     try {
@@ -243,7 +243,7 @@ public class TestNamespace {
 
   @Test
   public void createTableInDefaultNamespace() throws Exception {
-    HTableDescriptor desc = new HTableDescriptor("default_table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("default_table"));
     HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
     desc.addFamily(colDesc);
     admin.createTable(desc);
@@ -255,7 +255,7 @@ public class TestNamespace {
   @Test
   public void createTableInSystemNamespace() throws Exception {
     String tableName = "hbase:createTableInSystemNamespace";
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     HColumnDescriptor colDesc = new HColumnDescriptor("cf1");
     desc.addFamily(colDesc);
     admin.createTable(desc);

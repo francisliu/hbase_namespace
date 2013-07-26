@@ -67,7 +67,7 @@ public class TestFSTableDescriptors {
   @Test
   public void testCreateAndUpdate() throws IOException {
     Path testdir = UTIL.getDataTestDir("testCreateAndUpdate");
-    HTableDescriptor htd = new HTableDescriptor("testCreate");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("testCreate"));
     FileSystem fs = FileSystem.get(UTIL.getConfiguration());
     assertTrue(FSTableDescriptors.createTableDescriptor(fs, testdir, htd));
     assertFalse(FSTableDescriptors.createTableDescriptor(fs, testdir, htd));
@@ -86,7 +86,8 @@ public class TestFSTableDescriptors {
   @Test
   public void testSequenceidAdvancesOnTableInfo() throws IOException {
     Path testdir = UTIL.getDataTestDir("testSequenceidAdvancesOnTableInfo");
-    HTableDescriptor htd = new HTableDescriptor("testSequenceidAdvancesOnTableInfo");
+    HTableDescriptor htd = new HTableDescriptor(
+        TableName.valueOf("testSequenceidAdvancesOnTableInfo"));
     FileSystem fs = FileSystem.get(UTIL.getConfiguration());
     Path p0 = FSTableDescriptors.updateHTableDescriptor(fs, testdir, htd);
     int i0 = FSTableDescriptors.getTableInfoSequenceid(p0);
@@ -142,7 +143,7 @@ public class TestFSTableDescriptors {
     // Cleanup old tests if any detrius laying around.
     Path rootdir = new Path(UTIL.getDataTestDir(), name);
     TableDescriptors htds = new FSTableDescriptors(fs, rootdir);
-    HTableDescriptor htd = new HTableDescriptor(name);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name));
     htds.add(htd);
     assertNotNull(htds.remove(htd.getTableName()));
     assertNull(htds.remove(htd.getTableName()));
@@ -151,7 +152,7 @@ public class TestFSTableDescriptors {
   @Test public void testReadingHTDFromFS() throws IOException {
     final String name = "testReadingHTDFromFS";
     FileSystem fs = FileSystem.get(UTIL.getConfiguration());
-    HTableDescriptor htd = new HTableDescriptor(name);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name));
     Path rootdir = UTIL.getDataTestDir(name);
     createHTDInFS(fs, rootdir, htd);
     HTableDescriptor htd2 =
@@ -174,7 +175,7 @@ public class TestFSTableDescriptors {
     final int count = 10;
     // Write out table infos.
     for (int i = 0; i < count; i++) {
-      HTableDescriptor htd = new HTableDescriptor(name + i);
+      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name + i));
       createHTDInFS(fs, rootdir, htd);
     }
     FSTableDescriptors htds = new FSTableDescriptors(fs, rootdir) {
@@ -193,7 +194,7 @@ public class TestFSTableDescriptors {
     }
     // Update the table infos
     for (int i = 0; i < count; i++) {
-      HTableDescriptor htd = new HTableDescriptor(name + i);
+      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name + i));
       htd.addFamily(new HColumnDescriptor("" + i));
       FSTableDescriptors.updateHTableDescriptor(fs, rootdir, htd);
     }
@@ -232,7 +233,7 @@ public class TestFSTableDescriptors {
     // Cleanup old tests if any detrius laying around.
     Path rootdir = new Path(UTIL.getDataTestDir(), name);
     TableDescriptors htds = new FSTableDescriptors(fs, rootdir);
-    HTableDescriptor htd = new HTableDescriptor(name);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name));
     htds.add(htd);
     htds.add(htd);
     htds.add(htd);
@@ -280,8 +281,8 @@ public class TestFSTableDescriptors {
   @Test
   public void testCreateTableDescriptorUpdatesIfExistsAlready() throws IOException {
     Path testdir = UTIL.getDataTestDir("testCreateTableDescriptorUpdatesIfThereExistsAlready");
-    HTableDescriptor htd = new HTableDescriptor(
-        "testCreateTableDescriptorUpdatesIfThereExistsAlready");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(
+        "testCreateTableDescriptorUpdatesIfThereExistsAlready"));
     FileSystem fs = FileSystem.get(UTIL.getConfiguration());
     assertTrue(FSTableDescriptors.createTableDescriptor(fs, testdir, htd));
     assertFalse(FSTableDescriptors.createTableDescriptor(fs, testdir, htd));

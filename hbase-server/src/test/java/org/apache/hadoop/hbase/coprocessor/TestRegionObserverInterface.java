@@ -382,7 +382,7 @@ public class TestRegionObserverInterface {
       admin.deleteTable(compactTable);
     }
 
-    HTableDescriptor htd = new HTableDescriptor(compactTable);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(compactTable));
     htd.addFamily(new HColumnDescriptor(A));
     htd.addCoprocessor(EvenOnlyCompactor.class.getName());
     admin.createTable(htd);

@@ -62,7 +62,7 @@ public class TestHTableDescriptor {
    */
   @Test
   public void testGetSetRemoveCP() throws Exception {
-    HTableDescriptor desc = new HTableDescriptor("table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("table"));
     // simple CP
     String className = BaseRegionObserver.class.getName();
     // add and check that it is present
@@ -79,7 +79,7 @@ public class TestHTableDescriptor {
    */
   @Test
   public void testSetListRemoveCP() throws Exception {
-    HTableDescriptor desc = new HTableDescriptor("testGetSetRemoveCP");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("testGetSetRemoveCP"));
     // simple CP
     String className1 = BaseRegionObserver.class.getName();
     String className2 = SampleRegionWALObserver.class.getName();
@@ -116,7 +116,7 @@ public class TestHTableDescriptor {
    */
   @Test
   public void testRemoveString() throws Exception {
-    HTableDescriptor desc = new HTableDescriptor("table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("table"));
     String key = "Some";
     String value = "value";
     desc.setValue(key, value);
@@ -174,7 +174,7 @@ public class TestHTableDescriptor {
    */
   @Test
   public void testGetMaxFileSize() {
-    HTableDescriptor desc = new HTableDescriptor("table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("table"));
     assertEquals(-1, desc.getMaxFileSize());
     desc.setMaxFileSize(1111L);
     assertEquals(1111L, desc.getMaxFileSize());
@@ -185,7 +185,7 @@ public class TestHTableDescriptor {
    */
   @Test
   public void testGetMemStoreFlushSize() {
-    HTableDescriptor desc = new HTableDescriptor("table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("table"));
     assertEquals(-1, desc.getMemStoreFlushSize());
     desc.setMemStoreFlushSize(1111L);
     assertEquals(1111L, desc.getMemStoreFlushSize());
@@ -196,7 +196,7 @@ public class TestHTableDescriptor {
    */
   @Test
   public void testAddGetRemoveConfiguration() throws Exception {
-    HTableDescriptor desc = new HTableDescriptor("table");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("table"));
     String key = "Some";
     String value = "value";
     desc.setConfiguration(key, value);

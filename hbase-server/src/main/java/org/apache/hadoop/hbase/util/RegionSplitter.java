@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -373,7 +374,7 @@ public class RegionSplitter {
     LOG.debug("Creating table " + tableName + " with " + columnFamilies.length
         + " column families.  Presplitting to " + splitCount + " regions");
 
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     for (String cf : columnFamilies) {
       desc.addFamily(new HColumnDescriptor(Bytes.toBytes(cf)));
     }

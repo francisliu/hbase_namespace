@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.KVComparator;
 import org.apache.hadoop.hbase.MediumTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
@@ -138,7 +139,7 @@ public class TestStore extends TestCase {
 
   private void init(String methodName, Configuration conf,
       HColumnDescriptor hcd) throws IOException {
-    HTableDescriptor htd = new HTableDescriptor(table);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
     init(methodName, conf, htd, hcd);
   }
 
@@ -839,7 +840,7 @@ public class TestStore extends TestCase {
 
     // HTD overrides XML.
     --anyValue;
-    HTableDescriptor htd = new HTableDescriptor(table);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
     HColumnDescriptor hcd = new HColumnDescriptor(family);
     htd.setConfiguration(CONFIG_KEY, Long.toString(anyValue));
     init(getName() + "-htd", conf, htd, hcd);

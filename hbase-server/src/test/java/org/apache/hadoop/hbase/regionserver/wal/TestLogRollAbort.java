@@ -125,7 +125,7 @@ public class TestLogRollAbort {
 
     // Create the test table and open it
     String tableName = this.getClass().getSimpleName();
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     desc.addFamily(new HColumnDescriptor(HConstants.CATALOG_FAMILY));
     desc.setDeferredLogFlush(true);
 

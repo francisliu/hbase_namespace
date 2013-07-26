@@ -105,7 +105,7 @@ public class TestMultiSlaveReplication {
     utility3.setZkCluster(miniZK);
     new ZooKeeperWatcher(conf3, "cluster3", null, true);
 
-    table = new HTableDescriptor(tableName);
+    table = new HTableDescriptor(TableName.valueOf(tableName));
     HColumnDescriptor fam = new HColumnDescriptor(famName);
     fam.setScope(HConstants.REPLICATION_SCOPE_GLOBAL);
     table.addFamily(fam);

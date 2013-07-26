@@ -175,7 +175,7 @@ public class TestFromClientSide {
      HColumnDescriptor hcd = new HColumnDescriptor(FAMILY)
          .setKeepDeletedCells(true).setMaxVersions(3);
 
-     HTableDescriptor desc = new HTableDescriptor(TABLENAME);
+     HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(TABLENAME));
      desc.addFamily(hcd);
      TEST_UTIL.getHBaseAdmin().createTable(desc);
      Configuration c = TEST_UTIL.getConfiguration();

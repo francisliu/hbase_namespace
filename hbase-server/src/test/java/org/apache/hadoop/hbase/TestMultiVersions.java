@@ -94,7 +94,7 @@ public class TestMultiVersions {
    */
   @Test
   public void testTimestamps() throws Exception {
-    HTableDescriptor desc = new HTableDescriptor("testTimestamps");
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf("testTimestamps"));
     HColumnDescriptor hcd = new HColumnDescriptor(TimestampTestBase.FAMILY_NAME);
     hcd.setMaxVersions(3);
     desc.addFamily(hcd);
@@ -135,7 +135,7 @@ public class TestMultiVersions {
     final byte [] value2 = Bytes.toBytes("value2");
     final long timestamp1 = 100L;
     final long timestamp2 = 200L;
-    final HTableDescriptor desc = new HTableDescriptor(tableName);
+    final HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     HColumnDescriptor hcd = new HColumnDescriptor(contents);
     hcd.setMaxVersions(3);
     desc.addFamily(hcd);
@@ -196,7 +196,7 @@ public class TestMultiVersions {
   @Test
   public void testScanMultipleVersions() throws Exception {
     final byte [] tableName = Bytes.toBytes("testScanMultipleVersions");
-    final HTableDescriptor desc = new HTableDescriptor(tableName);
+    final HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     desc.addFamily(new HColumnDescriptor(HConstants.CATALOG_FAMILY));
     final byte [][] rows = new byte[][] {
       Bytes.toBytes("row_0200"),

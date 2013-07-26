@@ -44,6 +44,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -107,7 +108,7 @@ public class PerformanceEvaluation  {
 
   protected static final HTableDescriptor TABLE_DESCRIPTOR;
   static {
-    TABLE_DESCRIPTOR = new HTableDescriptor(TABLE_NAME);
+    TABLE_DESCRIPTOR = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
     TABLE_DESCRIPTOR.addFamily(new HColumnDescriptor(FAMILY_NAME));
   }
 

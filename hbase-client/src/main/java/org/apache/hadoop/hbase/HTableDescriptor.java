@@ -272,30 +272,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Construct a table descriptor specifying a byte array table name
-   * @param name Table name.
-   * @throws IllegalArgumentException if passed a table name
-   * that is made of other than 'word' characters, underscore or period: i.e.
-   * <code>[a-zA-Z_0-9-.].
-   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
-   */
-  public HTableDescriptor(final byte[] name) {
-    this(TableName.valueOf(name));
-  }
-
-  /**
-   * Construct a table descriptor specifying a byte array table name
-   * @param name Table name.
-   * @throws IllegalArgumentException if passed a table name
-   * that is made of other than 'word' characters, underscore or period: i.e.
-   * <code>[a-zA-Z_0-9-.].
-   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
-   */
-  public HTableDescriptor(final String name) {
-    this(TableName.valueOf(name));
-  }
-
-  /**
    * Construct a table descriptor by cloning the descriptor passed as a parameter.
    * <p>
    * Makes a deep copy of the supplied descriptor.

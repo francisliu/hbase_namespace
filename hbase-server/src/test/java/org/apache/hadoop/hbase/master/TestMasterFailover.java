@@ -189,7 +189,7 @@ public class TestMasterFailover {
     };
 
     byte [] enabledTable = Bytes.toBytes("enabledTable");
-    HTableDescriptor htdEnabled = new HTableDescriptor(enabledTable);
+    HTableDescriptor htdEnabled = new HTableDescriptor(TableName.valueOf(enabledTable));
     htdEnabled.addFamily(new HColumnDescriptor(FAMILY));
 
     FileSystem filesystem = FileSystem.get(conf);
@@ -492,7 +492,7 @@ public class TestMasterFailover {
         TEST_UTIL.getRegionSplitStartKeys(Bytes.toBytes("aaa"), Bytes.toBytes("zzz"), 30);
 
     byte [] enabledTable = Bytes.toBytes("enabledTable");
-    HTableDescriptor htdEnabled = new HTableDescriptor(enabledTable);
+    HTableDescriptor htdEnabled = new HTableDescriptor(TableName.valueOf(enabledTable));
     htdEnabled.addFamily(new HColumnDescriptor(FAMILY));
     FileSystem filesystem = FileSystem.get(conf);
     Path rootdir = FSUtils.getRootDir(conf);

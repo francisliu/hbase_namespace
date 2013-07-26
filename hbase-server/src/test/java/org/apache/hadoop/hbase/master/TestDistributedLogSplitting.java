@@ -1216,7 +1216,7 @@ public class TestDistributedLogSplitting {
     // remove root and meta region
     regions.remove(HRegionInfo.FIRST_META_REGIONINFO);
     byte[] table = Bytes.toBytes(tname);
-    HTableDescriptor htd = new HTableDescriptor(tname);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tname));
     byte[] value = new byte[edit_size];
 
     List<HRegionInfo> hris = new ArrayList<HRegionInfo>();

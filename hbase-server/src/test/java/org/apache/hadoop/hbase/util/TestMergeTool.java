@@ -67,7 +67,7 @@ public class TestMergeTool extends HBaseTestCase {
     this.conf.set("hbase.hstore.compactionThreshold", "2");
 
     // Create table description
-    this.desc = new HTableDescriptor("TestMergeTool");
+    this.desc = new HTableDescriptor(TableName.valueOf("TestMergeTool"));
     this.desc.addFamily(new HColumnDescriptor(FAMILY));
 
     /*

@@ -56,7 +56,7 @@ public class TestResettingCounters {
     byte [][] rows = new byte [numRows][];
     for (int i=0; i<numRows; i++) rows[i] = Bytes.toBytes("r" + i);
 
-    HTableDescriptor htd = new HTableDescriptor(table);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
     for (byte [] family : families) htd.addFamily(new HColumnDescriptor(family));
 
     HRegionInfo hri = new HRegionInfo(htd.getTableName(), null, null, false);

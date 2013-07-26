@@ -388,7 +388,7 @@ public class TestRegionPlacement {
       splitKeys[i - 1] = new byte[] { splitKey, splitKey, splitKey };
     }
 
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     desc.addFamily(new HColumnDescriptor(HConstants.CATALOG_FAMILY));
     admin.createTable(desc, splitKeys);
 

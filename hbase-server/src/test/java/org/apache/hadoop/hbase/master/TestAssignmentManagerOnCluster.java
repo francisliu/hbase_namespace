@@ -93,7 +93,7 @@ public class TestAssignmentManagerOnCluster {
   public void testAssignRegion() throws Exception {
     String table = "testAssignRegion";
     try {
-      HTableDescriptor desc = new HTableDescriptor(table);
+      HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(table));
       desc.addFamily(new HColumnDescriptor(FAMILY));
       admin.createTable(desc);
 
@@ -123,7 +123,7 @@ public class TestAssignmentManagerOnCluster {
     ServerName deadServer = null;
     HMaster master = null;
     try {
-      HTableDescriptor desc = new HTableDescriptor(table);
+      HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(table));
       desc.addFamily(new HColumnDescriptor(FAMILY));
       admin.createTable(desc);
 
@@ -287,7 +287,7 @@ public class TestAssignmentManagerOnCluster {
   public void testForceAssignWhileClosing() throws Exception {
     String table = "testForceAssignWhileClosing";
     try {
-      HTableDescriptor desc = new HTableDescriptor(table);
+      HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(table));
       desc.addFamily(new HColumnDescriptor(FAMILY));
       admin.createTable(desc);
 
@@ -333,7 +333,7 @@ public class TestAssignmentManagerOnCluster {
   public void testCloseFailed() throws Exception {
     String table = "testCloseFailed";
     try {
-      HTableDescriptor desc = new HTableDescriptor(table);
+      HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(table));
       desc.addFamily(new HColumnDescriptor(FAMILY));
       admin.createTable(desc);
 
@@ -377,7 +377,7 @@ public class TestAssignmentManagerOnCluster {
   public void testOpenFailed() throws Exception {
     String table = "testOpenFailed";
     try {
-      HTableDescriptor desc = new HTableDescriptor(table);
+      HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(table));
       desc.addFamily(new HColumnDescriptor(FAMILY));
       admin.createTable(desc);
 

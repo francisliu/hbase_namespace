@@ -46,7 +46,7 @@ public class TestMultipleColumnPrefixFilter {
   @Test
   public void testMultipleColumnPrefixFilter() throws IOException {
     String family = "Family";
-    HTableDescriptor htd = new HTableDescriptor("TestMultipleColumnPrefixFilter");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("TestMultipleColumnPrefixFilter"));
     HColumnDescriptor hcd = new HColumnDescriptor(family);
     hcd.setMaxVersions(3);
     htd.addFamily(hcd);
@@ -110,7 +110,7 @@ public class TestMultipleColumnPrefixFilter {
   public void testMultipleColumnPrefixFilterWithManyFamilies() throws IOException {
     String family1 = "Family1";
     String family2 = "Family2";
-    HTableDescriptor htd = new HTableDescriptor("TestMultipleColumnPrefixFilter");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("TestMultipleColumnPrefixFilter"));
     HColumnDescriptor hcd1 = new HColumnDescriptor(family1);
     hcd1.setMaxVersions(3);
     htd.addFamily(hcd1);
@@ -181,7 +181,7 @@ public class TestMultipleColumnPrefixFilter {
   @Test
   public void testMultipleColumnPrefixFilterWithColumnPrefixFilter() throws IOException {
     String family = "Family";
-    HTableDescriptor htd = new HTableDescriptor("TestMultipleColumnPrefixFilter");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("TestMultipleColumnPrefixFilter"));
     htd.addFamily(new HColumnDescriptor(family));
     HRegionInfo info = new HRegionInfo(htd.getTableName(), null, null, false);
     HRegion region = HRegion.createHRegion(info, TEST_UTIL.

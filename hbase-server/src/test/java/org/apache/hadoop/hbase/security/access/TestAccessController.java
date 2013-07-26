@@ -313,7 +313,7 @@ public class TestAccessController {
   public void testTableCreate() throws Exception {
     PrivilegedExceptionAction createTable = new PrivilegedExceptionAction() {
       public Object run() throws Exception {
-        HTableDescriptor htd = new HTableDescriptor("testnewtable");
+        HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("testnewtable"));
         htd.addFamily(new HColumnDescriptor(TEST_FAMILY));
         ACCESS_CONTROLLER.preCreateTable(ObserverContext.createAndPrepare(CP_ENV, null), htd, null);
         return null;

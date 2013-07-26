@@ -118,7 +118,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
   private void setupTable(String table, int cfs) throws IOException {
     try {
       LOG.info("Creating table " + table);
-      HTableDescriptor htd = new HTableDescriptor(table);
+      HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(table));
       for (int i = 0; i < 10; i++) {
         htd.addFamily(new HColumnDescriptor(family(i)));
       }

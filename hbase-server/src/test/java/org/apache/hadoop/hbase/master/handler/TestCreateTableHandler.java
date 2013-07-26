@@ -68,7 +68,7 @@ public class TestCreateTableHandler {
   public void testCreateTableHandlerIfCalledTwoTimesAndFirstOneIsUnderProgress() throws Exception {
     final MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
     final HMaster m = cluster.getMaster();
-    final HTableDescriptor desc = new HTableDescriptor(TABLENAME);
+    final HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(TABLENAME));
     desc.addFamily(new HColumnDescriptor(FAMILYNAME));
     final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getTableName(), null,
         null) };
@@ -96,7 +96,7 @@ public class TestCreateTableHandler {
     byte[] tableName = Bytes.toBytes("testMasterRestartAfterEnablingNodeIsCreated");
     final MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
     final HMaster m = cluster.getMaster();
-    final HTableDescriptor desc = new HTableDescriptor(tableName);
+    final HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     desc.addFamily(new HColumnDescriptor(FAMILYNAME));
     final HRegionInfo[] hRegionInfos = new HRegionInfo[] { new HRegionInfo(desc.getTableName(), null,
         null) };

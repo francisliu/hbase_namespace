@@ -105,7 +105,7 @@ public class TestHRegionInfo {
   
   @Test
   public void testContainsRange() {
-    HTableDescriptor tableDesc = new HTableDescriptor("testtable");
+    HTableDescriptor tableDesc = new HTableDescriptor(TableName.valueOf("testtable"));
     HRegionInfo hri = new HRegionInfo(
         tableDesc.getTableName(), Bytes.toBytes("a"), Bytes.toBytes("g"));
     // Single row range at start of region
@@ -133,7 +133,7 @@ public class TestHRegionInfo {
 
   @Test
   public void testLastRegionCompare() {
-    HTableDescriptor tableDesc = new HTableDescriptor("testtable");
+    HTableDescriptor tableDesc = new HTableDescriptor(TableName.valueOf("testtable"));
     HRegionInfo hrip = new HRegionInfo(
         tableDesc.getTableName(), Bytes.toBytes("a"), new byte[0]);
     HRegionInfo hric = new HRegionInfo(

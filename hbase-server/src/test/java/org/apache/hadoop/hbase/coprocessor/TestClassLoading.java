@@ -138,7 +138,7 @@ public class TestClassLoading {
     LOG.info("Copied jar file to HDFS: " + jarFileOnHDFS2);
 
     // create a table that references the coprocessors
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(new HColumnDescriptor("test"));
       // without configuration values
     htd.setValue("COPROCESSOR$1", jarFileOnHDFS1.toString() + "|" + cpName1 +
@@ -232,7 +232,7 @@ public class TestClassLoading {
     File jarFile = buildCoprocessorJar(cpName3);
 
     // create a table that references the jar
-    HTableDescriptor htd = new HTableDescriptor(cpName3);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(cpName3));
     htd.addFamily(new HColumnDescriptor("test"));
     htd.setValue("COPROCESSOR$1", getLocalPath(jarFile) + "|" + cpName3 + "|" +
       Coprocessor.PRIORITY_USER);
@@ -258,7 +258,7 @@ public class TestClassLoading {
     File jarFile = buildCoprocessorJar(cpName4);
 
     // create a table that references the jar
-    HTableDescriptor htd = new HTableDescriptor(cpName4);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(cpName4));
     htd.addFamily(new HColumnDescriptor("test"));
     htd.setValue("COPROCESSOR$1", getLocalPath(jarFile) + "|" + cpName4 + "|" +
       Coprocessor.PRIORITY_USER);
@@ -306,7 +306,7 @@ public class TestClassLoading {
         " | org.apache.hadoop.hbase.coprocessor.SimpleRegionObserver | | k=v ";
 
     // create a table that references the jar
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(new HColumnDescriptor("test"));
 
     // add 3 coprocessors by setting htd attributes directly.
@@ -408,7 +408,7 @@ public class TestClassLoading {
     LOG.info("Copied jar file to HDFS: " + jarFileOnHDFS);
 
     // create a table that references the coprocessors
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(new HColumnDescriptor("test"));
       // without configuration values
     htd.setValue("COPROCESSOR$1", jarFileOnHDFS.toString() + "|" + cpName1 +

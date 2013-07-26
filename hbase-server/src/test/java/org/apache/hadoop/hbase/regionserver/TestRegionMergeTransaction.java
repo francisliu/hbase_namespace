@@ -398,7 +398,7 @@ public class TestRegionMergeTransaction {
       final byte[] startrow, final byte[] endrow)
       throws IOException {
     // Make a region with start and end keys.
-    HTableDescriptor htd = new HTableDescriptor("table");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("table"));
     HColumnDescriptor hcd = new HColumnDescriptor(CF);
     htd.addFamily(hcd);
     HRegionInfo hri = new HRegionInfo(htd.getTableName(), startrow, endrow);

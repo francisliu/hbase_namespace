@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.SmallTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.UnknownScannerException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -61,7 +62,7 @@ public class TestScanner extends HBaseTestCase {
   };
 
   static final HTableDescriptor TESTTABLEDESC =
-    new HTableDescriptor("testscanner");
+    new HTableDescriptor(TableName.valueOf("testscanner"));
   static {
     TESTTABLEDESC.addFamily(
         new HColumnDescriptor(HConstants.CATALOG_FAMILY)

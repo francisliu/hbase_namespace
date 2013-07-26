@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Entry;
@@ -224,7 +225,7 @@ public final class HLogPerformanceEvaluation extends Configured implements Tool 
   }
 
   private static HTableDescriptor createHTableDescriptor(final int numFamilies) {
-    HTableDescriptor htd = new HTableDescriptor(TABLE_NAME);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
     for (int i = 0; i < numFamilies; ++i) {
       HColumnDescriptor colDef = new HColumnDescriptor(FAMILY_PREFIX + i);
       htd.addFamily(colDef);

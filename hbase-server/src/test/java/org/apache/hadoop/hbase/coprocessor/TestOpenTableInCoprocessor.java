@@ -81,7 +81,7 @@ public class TestOpenTableInCoprocessor {
 
   @Test
   public void testCoprocessorCanCreateConnectionToRemoteTable() throws Throwable {
-    HTableDescriptor primary = new HTableDescriptor("primary");
+    HTableDescriptor primary = new HTableDescriptor(TableName.valueOf("primary"));
     primary.addFamily(new HColumnDescriptor(family));
     // add our coprocessor
     primary.addCoprocessor(SendToOtherTableCoprocessor.class.getName());

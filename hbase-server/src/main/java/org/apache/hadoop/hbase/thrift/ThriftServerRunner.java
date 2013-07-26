@@ -52,6 +52,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -911,7 +912,7 @@ public class ThriftServerRunner implements Runnable {
         if (getHBaseAdmin().tableExists(tableName)) {
           throw new AlreadyExists("table name already in use");
         }
-        HTableDescriptor desc = new HTableDescriptor(tableName);
+        HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
         for (ColumnDescriptor col : columnFamilies) {
           HColumnDescriptor colDesc = ThriftUtilities.colDescFromThrift(col);
           desc.addFamily(colDesc);

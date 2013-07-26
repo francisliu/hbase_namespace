@@ -1157,7 +1157,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   public HTable createTable(byte[] tableName, byte[][] families,
       final Configuration c)
   throws IOException {
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     for(byte[] family : families) {
       HColumnDescriptor hcd = new HColumnDescriptor(family);
       // Disable blooms (they are on by default as of 0.95) but we disable them here because
@@ -1204,7 +1204,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   public HTable createTable(byte[] tableName, byte[][] families,
       final Configuration c, int numVersions)
   throws IOException {
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     for(byte[] family : families) {
       HColumnDescriptor hcd = new HColumnDescriptor(family)
           .setMaxVersions(numVersions);
@@ -1386,7 +1386,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    */
   public HTable createTable(byte[] tableName, byte[][] families, byte[][] splitRows)
       throws IOException {
-    HTableDescriptor desc = new HTableDescriptor(tableName);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
     for(byte[] family:families) {
       HColumnDescriptor hcd = new HColumnDescriptor(family);
       desc.addFamily(hcd);
@@ -2869,7 +2869,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
 
   public HRegion createTestRegion(String tableName, HColumnDescriptor hcd)
       throws IOException {
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     htd.addFamily(hcd);
     HRegionInfo info =
         new HRegionInfo(TableName.valueOf(tableName), null, null, false);

@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -111,7 +112,7 @@ public class TestRSKilledWhenMasterInitializing {
 
     MiniHBaseCluster cluster = TESTUTIL.getHBaseCluster();
 
-    HTableDescriptor desc = new HTableDescriptor(TABLENAME);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(TABLENAME));
     desc.addFamily(new HColumnDescriptor(FAMILY));
     HBaseAdmin hbaseAdmin = TESTUTIL.getHBaseAdmin();
     hbaseAdmin.createTable(desc, SPLITKEYS);

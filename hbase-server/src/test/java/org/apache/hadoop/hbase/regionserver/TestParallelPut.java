@@ -154,7 +154,7 @@ public class TestParallelPut extends HBaseTestCase {
   private void initHRegion(byte [] tableName, String callingMethod,
     Configuration conf, byte [] ... families)
   throws IOException{
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     for(byte [] family : families) {
       htd.addFamily(new HColumnDescriptor(family));
     }

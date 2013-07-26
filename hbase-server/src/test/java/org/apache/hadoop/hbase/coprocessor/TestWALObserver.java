@@ -306,7 +306,7 @@ public class TestWALObserver {
    * @param tableName Name of table to use when we create HTableDescriptor.
    */
   private HRegionInfo createBasic3FamilyHRegionInfo(final String tableName) {
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
 
     for (int i = 0; i < TEST_FAMILY.length; i++) {
       HColumnDescriptor a = new HColumnDescriptor(TEST_FAMILY[i]);
@@ -396,7 +396,7 @@ public class TestWALObserver {
   }
 
   private HTableDescriptor createBasic3FamilyHTD(final String tableName) {
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     HColumnDescriptor a = new HColumnDescriptor(Bytes.toBytes("a"));
     htd.addFamily(a);
     HColumnDescriptor b = new HColumnDescriptor(Bytes.toBytes("b"));

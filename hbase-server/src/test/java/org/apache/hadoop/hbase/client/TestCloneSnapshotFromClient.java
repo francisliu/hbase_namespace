@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.exceptions.SnapshotDoesNotExistException;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
@@ -239,7 +240,7 @@ public class TestCloneSnapshotFromClient {
   //  Helpers
   // ==========================================================================
   private void createTable(final byte[] tableName, final byte[]... families) throws IOException {
-    HTableDescriptor htd = new HTableDescriptor(tableName);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
     for (byte[] family: families) {
       HColumnDescriptor hcd = new HColumnDescriptor(family);
       htd.addFamily(hcd);

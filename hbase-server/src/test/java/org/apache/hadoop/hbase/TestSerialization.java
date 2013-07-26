@@ -136,7 +136,7 @@ public class TestSerialization {
   }
 
   private HRegionInfo createRandomRegion(final String name) {
-    HTableDescriptor htd = new HTableDescriptor(name);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name));
     String [] families = new String [] {"info", "anchor"};
     for (int i = 0; i < families.length; i++) {
       htd.addFamily(new HColumnDescriptor(families[i]));
@@ -543,7 +543,7 @@ public class TestSerialization {
    */
   protected HTableDescriptor createTableDescriptor(final String name,
       final int versions) {
-    HTableDescriptor htd = new HTableDescriptor(name);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(name));
     htd.addFamily(new HColumnDescriptor(fam1)
         .setMaxVersions(versions)
         .setBlockCacheEnabled(false)

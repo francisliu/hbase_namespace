@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SmallTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetOnlineRegionRequest;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.GetServerInfoRequest;
@@ -91,7 +92,7 @@ public class TestRSStatusServlet {
   
   @Test
   public void testWithRegions() throws IOException, ServiceException {
-    HTableDescriptor htd = new HTableDescriptor("mytable");
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf("mytable"));
     List<HRegionInfo> regions = Lists.newArrayList(
         new HRegionInfo(htd.getTableName(), Bytes.toBytes("a"), Bytes.toBytes("d")),
         new HRegionInfo(htd.getTableName(), Bytes.toBytes("d"), Bytes.toBytes("z"))

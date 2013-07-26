@@ -146,7 +146,7 @@ public class TestSnapshotMetadata {
     dataBlockColumn.setDataBlockEncoding(DATA_BLOCK_ENCODING_TYPE);
     blockSizeColumn.setBlocksize(BLOCK_SIZE);
 
-    HTableDescriptor htd = new HTableDescriptor(sourceTableNameAsString);
+    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(sourceTableNameAsString));
     htd.addFamily(maxVersionsColumn);
     htd.addFamily(bloomFilterColumn);
     htd.addFamily(dataBlockColumn);

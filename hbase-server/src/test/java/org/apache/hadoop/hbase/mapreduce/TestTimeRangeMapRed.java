@@ -142,7 +142,7 @@ public class TestTimeRangeMapRed {
   @Test
   public void testTimeRangeMapRed()
   throws IOException, InterruptedException, ClassNotFoundException {
-    final HTableDescriptor desc = new HTableDescriptor(TABLE_NAME);
+    final HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
     final HColumnDescriptor col = new HColumnDescriptor(FAMILY_NAME);
     col.setMaxVersions(Integer.MAX_VALUE);
     desc.addFamily(col);

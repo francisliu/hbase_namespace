@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.MediumTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -204,7 +205,7 @@ public class TestImportExport {
    @Test
    public void testExportScannerBatching() throws Exception {
     String BATCH_TABLE = "exportWithBatch";
-    HTableDescriptor desc = new HTableDescriptor(BATCH_TABLE);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(BATCH_TABLE));
     desc.addFamily(new HColumnDescriptor(FAMILYA)
         .setMaxVersions(1)
     );
@@ -234,7 +235,7 @@ public class TestImportExport {
   @Test
   public void testWithDeletes() throws Exception {
     String EXPORT_TABLE = "exportWithDeletes";
-    HTableDescriptor desc = new HTableDescriptor(EXPORT_TABLE);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(EXPORT_TABLE));
     desc.addFamily(new HColumnDescriptor(FAMILYA)
         .setMaxVersions(5)
         .setKeepDeletedCells(true)
@@ -265,7 +266,7 @@ public class TestImportExport {
     assertTrue(runExport(args));
 
     String IMPORT_TABLE = "importWithDeletes";
-    desc = new HTableDescriptor(IMPORT_TABLE);
+    desc = new HTableDescriptor(TableName.valueOf(IMPORT_TABLE));
     desc.addFamily(new HColumnDescriptor(FAMILYA)
         .setMaxVersions(5)
         .setKeepDeletedCells(true)
@@ -303,7 +304,7 @@ public class TestImportExport {
   public void testWithFilter() throws Exception {
     // Create simple table to export
     String EXPORT_TABLE = "exportSimpleCase_ImportWithFilter";
-    HTableDescriptor desc = new HTableDescriptor(EXPORT_TABLE);
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(EXPORT_TABLE));
     desc.addFamily(new HColumnDescriptor(FAMILYA).setMaxVersions(5));
     UTIL.getHBaseAdmin().createTable(desc);
     HTable exportTable = new HTable(UTIL.getConfiguration(), EXPORT_TABLE);
@@ -322,7 +323,7 @@ public class TestImportExport {
 
     // Import to a new table
     String IMPORT_TABLE = "importWithFilter";
-    desc = new HTableDescriptor(IMPORT_TABLE);
+    desc = new HTableDescriptor(TableName.valueOf(IMPORT_TABLE));
     desc.addFamily(new HColumnDescriptor(FAMILYA).setMaxVersions(5));
     UTIL.getHBaseAdmin().createTable(desc);
 

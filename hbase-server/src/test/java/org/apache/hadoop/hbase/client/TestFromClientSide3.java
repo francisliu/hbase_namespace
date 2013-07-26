@@ -382,7 +382,7 @@ public class TestFromClientSide3 {
   public void testGetEmptyRow() throws Exception {
     //Create a table and put in 1 row
     HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
-    HTableDescriptor desc = new HTableDescriptor(Bytes.toBytes("test"));
+    HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(Bytes.toBytes("test")));
     desc.addFamily(new HColumnDescriptor(FAMILY));
     admin.createTable(desc);
     HTable table = new HTable(TEST_UTIL.getConfiguration(), "test");
