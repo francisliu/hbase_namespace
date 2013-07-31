@@ -45,9 +45,11 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -55,8 +57,6 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
@@ -819,8 +819,8 @@ public class TestWALReplay {
     wal.completeCacheFlush(hri.getEncodedNameAsBytes());
     wal.close();
     FileStatus[] listStatus = this.fs.listStatus(wal.getDir());
-    HLogSplitter.splitLogFile(hbaseRootDir, listStatus[0], this.fs, this.conf,
-        null);
+    HLogSplitter.splitLogFile(hbaseRootDir, listStatus[0],
+      this.fs, this.conf, null, null, null);
     FileStatus[] listStatus1 = this.fs.listStatus(
         new Path(FSUtils.getTableDir(hbaseRootDir, tableName),
             new Path(hri.getEncodedName(), "recovered.edits")));
@@ -929,10 +929,8 @@ public class TestWALReplay {
    * @throws IOException
    */
   private Path runWALSplit(final Configuration c) throws IOException {
-    FileSystem fs = FileSystem.get(c);
-    HLogSplitter logSplitter = HLogSplitter.createLogSplitter(c,
-        this.hbaseRootDir, this.logDir, this.oldLogDir, fs);
-    List<Path> splits = logSplitter.splitLog();
+    List<Path> splits = HLogSplitter.split(
+      hbaseRootDir, logDir, oldLogDir, FileSystem.get(c), c);
     // Split should generate only 1 file since there's only 1 region
     assertEquals("splits=" + splits, 1, splits.size());
     // Make sure the file exists

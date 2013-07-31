@@ -21,6 +21,9 @@ package org.apache.hadoop.hbase.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -65,15 +68,19 @@ public class TestSnapshotMetadata {
   private static final String BLOOMFILTER_FAM_STR = "fam_bloomfilter";
   private static final byte[] BLOOMFILTER_FAM = Bytes.toBytes(BLOOMFILTER_FAM_STR);
 
-  byte[][] families = { MAX_VERSIONS_FAM, BLOOMFILTER_FAM, COMPRESSED_FAM, BLOCKSIZE_FAM };
+  private static final String TEST_CONF_CUSTOM_VALUE = "TestCustomConf";
+  private static final String TEST_CUSTOM_VALUE = "TestCustomValue";
+
+  private static final byte[][] families = {
+    MAX_VERSIONS_FAM, BLOOMFILTER_FAM, COMPRESSED_FAM, BLOCKSIZE_FAM
+  };
 
   private static final DataBlockEncoding DATA_BLOCK_ENCODING_TYPE = DataBlockEncoding.FAST_DIFF;
   private static final BloomType BLOOM_TYPE = BloomType.ROW;
   private static final int BLOCK_SIZE = 98;
   private static final int MAX_VERSIONS = 8;
 
-  HBaseAdmin admin;
-
+  private HBaseAdmin admin;
   private String originalTableDescription;
   private HTableDescriptor originalTableDescriptor;
   TableName originalTableName;
@@ -87,7 +94,6 @@ public class TestSnapshotMetadata {
     UTIL.startMiniCluster(NUM_RS);
 
     fs = UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getFileSystem();
-
     rootDir = UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getRootDir();
   }
 
@@ -104,10 +110,7 @@ public class TestSnapshotMetadata {
     conf.setInt("hbase.hstore.compactionThreshold", 10);
     // block writes if we get to 12 store files
     conf.setInt("hbase.hstore.blockingStoreFiles", 12);
-    // drop the number of attempts for the hbase admin
     conf.setInt("hbase.regionserver.msginterval", 100);
-    conf.setInt("hbase.client.pause", 250);
-    conf.setInt("hbase.client.retries.number", 6);
     conf.setBoolean("hbase.master.enabletable.roundrobin", true);
     // Avoid potentially aggressive splitting which would cause snapshot to fail
     conf.set(HConstants.HBASE_REGION_SPLIT_POLICY_KEY,
@@ -151,11 +154,15 @@ public class TestSnapshotMetadata {
     htd.addFamily(bloomFilterColumn);
     htd.addFamily(dataBlockColumn);
     htd.addFamily(blockSizeColumn);
+    htd.setValue(TEST_CUSTOM_VALUE, TEST_CUSTOM_VALUE);
+    htd.setConfiguration(TEST_CONF_CUSTOM_VALUE, TEST_CONF_CUSTOM_VALUE);
+    assertTrue(htd.getConfiguration().size() > 0);
 
     admin.createTable(htd);
     HTable original = new HTable(UTIL.getConfiguration(), originalTableName);
-    originalTableDescriptor = original.getTableDescriptor();
-    originalTableDescription = originalTableDescriptor.toString();
+    originalTableName = TableName.valueOf(sourceTableNameAsString);
+    originalTableDescriptor = admin.getTableDescriptor(originalTableName);
+    originalTableDescription = originalTableDescriptor.toStringCustomizedValues();
 
     original.close();
   }
@@ -164,7 +171,7 @@ public class TestSnapshotMetadata {
   /**
    * Verify that the describe for a cloned table matches the describe from the original.
    */
-  @Test
+  @Test (timeout=300000)
   public void testDescribeMatchesAfterClone() throws Exception {
     // Clone the original table
     final String clonedTableNameAsString = "clone" + originalTableName;
@@ -176,7 +183,6 @@ public class TestSnapshotMetadata {
     // restore the snapshot into a cloned table and examine the output
     List<byte[]> familiesList = new ArrayList<byte[]>();
     for (byte[] family : families) {
-
       familiesList.add(family);
     }
 
@@ -186,10 +192,20 @@ public class TestSnapshotMetadata {
 
     admin.cloneSnapshot(snapshotName, clonedTableName);
     HTable clonedTable = new HTable(UTIL.getConfiguration(), clonedTableName);
-    Assert.assertEquals(
-      originalTableDescription.replace(originalTableName.getNameAsString(),
-          clonedTableNameAsString),
-      clonedTable.getTableDescriptor().toString());
+    HTableDescriptor cloneHtd = admin.getTableDescriptor(clonedTableName);
+    assertEquals(
+      originalTableDescription.replace(originalTableName.getNameAsString(),clonedTableNameAsString),
+      cloneHtd.toStringCustomizedValues());
+
+    // Verify the custom fields
+    assertEquals(originalTableDescriptor.getValues().size(),
+                        cloneHtd.getValues().size());
+    assertEquals(originalTableDescriptor.getConfiguration().size(),
+                        cloneHtd.getConfiguration().size());
+    assertEquals(cloneHtd.getValue(TEST_CUSTOM_VALUE), TEST_CUSTOM_VALUE);
+    assertEquals(cloneHtd.getConfigurationValue(TEST_CONF_CUSTOM_VALUE), TEST_CONF_CUSTOM_VALUE);
+    assertEquals(originalTableDescriptor.getValues(), cloneHtd.getValues());
+    assertEquals(originalTableDescriptor.getConfiguration(), cloneHtd.getConfiguration());
 
     admin.enableTable(originalTableName);
     clonedTable.close();
@@ -198,7 +214,7 @@ public class TestSnapshotMetadata {
   /**
    * Verify that the describe for a restored table matches the describe for one the original.
    */
-  @Test
+  @Test (timeout=300000)
   public void testDescribeMatchesAfterRestore() throws Exception {
     runRestoreWithAdditionalMetadata(false);
   }
@@ -207,7 +223,7 @@ public class TestSnapshotMetadata {
    * Verify that if metadata changed after a snapshot was taken, that the old metadata replaces the
    * new metadata during a restore
    */
-  @Test
+  @Test (timeout=300000)
   public void testDescribeMatchesAfterMetadataChangeAndRestore() throws Exception {
     runRestoreWithAdditionalMetadata(true);
   }
@@ -217,7 +233,7 @@ public class TestSnapshotMetadata {
    * the restored table's original metadata
    * @throws Exception
    */
-  @Test
+  @Test (timeout=300000)
   public void testDescribeOnEmptyTableMatchesAfterMetadataChangeAndRestore() throws Exception {
     runRestoreWithAdditionalMetadata(true, false);
   }
@@ -245,7 +261,6 @@ public class TestSnapshotMetadata {
 
       for (byte[] family : families) {
         if (family != familyForUpdate) {
-
           emptyFamiliesList.add(family);
         }
       }
@@ -273,9 +288,10 @@ public class TestSnapshotMetadata {
       admin.disableTable(originalTableName);
       HColumnDescriptor hcd = new HColumnDescriptor(newFamilyName);
       admin.addColumn(originalTableName, hcd);
-      Assert.assertTrue("New column family was not added.",
+      assertTrue("New column family was not added.",
         admin.getTableDescriptor(originalTableName).toString().contains(newFamilyNameAsString));
     }
+
     // restore it
     if (!admin.isTableDisabled(originalTableName)) {
       admin.disableTable(originalTableName);
@@ -284,13 +300,11 @@ public class TestSnapshotMetadata {
     admin.restoreSnapshot(snapshotName);
     admin.enableTable(originalTableName);
 
-    HTable original = new HTable(UTIL.getConfiguration(), originalTableName);
-
     // verify that the descrption is reverted
+    HTable original = new HTable(UTIL.getConfiguration(), originalTableName);
     try {
-      Assert
-          .assertTrue(originalTableDescriptor.equals(admin.getTableDescriptor(originalTableName)));
-      Assert.assertTrue(originalTableDescriptor.equals(original.getTableDescriptor()));
+      assertTrue(originalTableDescriptor.equals(admin.getTableDescriptor(originalTableName)));
+      assertTrue(originalTableDescriptor.equals(original.getTableDescriptor()));
     } finally {
       original.close();
     }

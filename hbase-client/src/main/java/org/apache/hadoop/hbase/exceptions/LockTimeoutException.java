@@ -19,9 +19,9 @@
  */
 package org.apache.hadoop.hbase.exceptions;
 
-import java.io.IOException;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 
-public class LockTimeoutException extends IOException {
+public class LockTimeoutException extends DoNotRetryIOException {
 
   private static final long serialVersionUID = -1770764924258999825L;
 
@@ -33,5 +33,4 @@ public class LockTimeoutException extends IOException {
   public LockTimeoutException(String s) {
     super(s);
   }
-
 }

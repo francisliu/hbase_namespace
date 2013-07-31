@@ -25,10 +25,13 @@ import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.thrift2.generated.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.*;
+
+import static org.apache.hadoop.hbase.util.Bytes.getBytes;
 
 @InterfaceAudience.Private
 public class ThriftUtilities {
@@ -62,6 +65,15 @@ public class ThriftUtilities {
       out.setMaxVersions(in.getMaxVersions());
     }
 
+    if (in.isSetFilterString()) {
+      ParseFilter parseFilter = new ParseFilter();
+      out.setFilter(parseFilter.parseFilterString(in.getFilterString()));
+    }
+
+    if (in.isSetAttributes()) {
+      addAttributes(out,in.getAttributes());
+    }
+
     if (!in.isSetColumns()) {
       return out;
     }
@@ -72,11 +84,6 @@ public class ThriftUtilities {
       } else {
         out.addFamily(column.getFamily());
       }
-    }
-
-    if (in.isSetFilterString()) {
-      ParseFilter parseFilter = new ParseFilter();
-      out.setFilter(parseFilter.parseFilterString(in.getFilterString()));
     }
 
     return out;
@@ -160,7 +167,9 @@ public class ThriftUtilities {
       out = new Put(in.getRow());
     }
 
-    out.setDurability(in.isWriteToWal() ? Durability.SYNC_WAL : Durability.SKIP_WAL);
+    if (in.isSetDurability()) {
+      out.setDurability(durabilityFromThrift(in.getDurability()));
+    }
 
     for (TColumnValue columnValue : in.getColumnValues()) {
       if (columnValue.isSetTimestamp()) {
@@ -169,6 +178,10 @@ public class ThriftUtilities {
       } else {
         out.add(columnValue.getFamily(), columnValue.getQualifier(), columnValue.getValue());
       }
+    }
+
+    if (in.isSetAttributes()) {
+      addAttributes(out,in.getAttributes());
     }
 
     return out;
@@ -234,7 +247,15 @@ public class ThriftUtilities {
         out = new Delete(in.getRow());
       }
     }
-    out.setDurability(in.isWriteToWal() ? Durability.SYNC_WAL : Durability.SKIP_WAL);
+
+    if (in.isSetAttributes()) {
+      addAttributes(out,in.getAttributes());
+    }
+
+    if (in.isSetDurability()) {
+      out.setDurability(durabilityFromThrift(in.getDurability()));
+    }
+
     return out;
   }
 
@@ -291,6 +312,27 @@ public class ThriftUtilities {
     return out;
   }
 
+  /**
+   * Creates a {@link RowMutations} (HBase) from a {@link TRowMutations} (Thrift)
+   *
+   * @param in the <code>TRowMutations</code> to convert
+   *
+   * @return converted <code>RowMutations</code>
+   */
+  public static RowMutations rowMutationsFromThrift(TRowMutations in) throws IOException {
+    RowMutations out = new RowMutations(in.getRow());
+    List<TMutation> mutations = in.getMutations();
+    for (TMutation mutation : mutations) {
+      if (mutation.isSetPut()) {
+        out.add(putFromThrift(mutation.getPut()));
+      }
+      if (mutation.isSetDeleteSingle()) {
+        out.add(deleteFromThrift(mutation.getDeleteSingle()));
+      }
+    }
+    return out;
+  }
+
   public static Scan scanFromThrift(TScan in) throws IOException {
     Scan out = new Scan();
 
@@ -329,6 +371,10 @@ public class ThriftUtilities {
       out.setFilter(parseFilter.parseFilterString(in.getFilterString()));
     }
 
+    if (in.isSetAttributes()) {
+      addAttributes(out,in.getAttributes());
+    }
+
     return out;
   }
 
@@ -337,7 +383,40 @@ public class ThriftUtilities {
     for (TColumnIncrement column : in.getColumns()) {
       out.addColumn(column.getFamily(), column.getQualifier(), column.getAmount());
     }
-    out.setDurability(in.isWriteToWal() ? Durability.SYNC_WAL : Durability.SKIP_WAL);
+
+    if (in.isSetAttributes()) {
+      addAttributes(out,in.getAttributes());
+    }
+
+    if (in.isSetDurability()) {
+      out.setDurability(durabilityFromThrift(in.getDurability()));
+    }
+
     return out;
+  }
+
+  /**
+   * Adds all the attributes into the Operation object
+   */
+  private static void addAttributes(OperationWithAttributes op,
+                                    Map<ByteBuffer, ByteBuffer> attributes) {
+    if (attributes == null || attributes.size() == 0) {
+      return;
+    }
+    for (Map.Entry<ByteBuffer, ByteBuffer> entry : attributes.entrySet()) {
+      String name = Bytes.toStringBinary(getBytes(entry.getKey()));
+      byte[] value =  getBytes(entry.getValue());
+      op.setAttribute(name, value);
+    }
+  }
+
+  private static Durability durabilityFromThrift(TDurability tDurability) {
+    switch (tDurability.getValue()) {
+      case 1: return Durability.SKIP_WAL;
+      case 2: return Durability.ASYNC_WAL;
+      case 3: return Durability.SYNC_WAL;
+      case 4: return Durability.FSYNC_WAL;
+      default: return null;
+    }
   }
 }

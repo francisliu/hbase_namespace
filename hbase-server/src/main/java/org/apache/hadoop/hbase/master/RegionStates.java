@@ -43,6 +43,8 @@ import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.zookeeper.KeeperException;
 
+import com.google.common.base.Preconditions;
+
 /**
  * Region state accountant. It holds the states of all regions in the memory.
  * In normal scenario, it should match the meta table and the true region states.
@@ -137,21 +139,13 @@ public class RegionStates {
   }
 
   /**
-   * @return True if specified region failed to open.
+   * @return True if specified region is in specified state
    */
-  public synchronized boolean isRegionFailedToOpen(final HRegionInfo hri) {
-    RegionState regionState = getRegionTransitionState(hri);
-    State state = regionState != null ? regionState.getState() : null;
-    return state == State.FAILED_OPEN;
-  }
-
-  /**
-   * @return True if specified region failed to close.
-   */
-  public synchronized boolean isRegionFailedToClose(final HRegionInfo hri) {
-    RegionState regionState = getRegionTransitionState(hri);
-    State state = regionState != null ? regionState.getState() : null;
-    return state == State.FAILED_CLOSE;
+  public synchronized boolean isRegionInState(
+      final HRegionInfo hri, final State state) {
+    RegionState regionState = getRegionState(hri);
+    State s = regionState != null ? regionState.getState() : null;
+    return s == state;
   }
 
   /**
@@ -263,7 +257,7 @@ public class RegionStates {
       hri, state, System.currentTimeMillis(), newServerName);
     RegionState oldState = regionStates.put(regionName, regionState);
     if (oldState == null || oldState.getState() != regionState.getState()) {
-      LOG.info("Region transitioned from " + oldState + " to " + regionState);
+      LOG.info("Transitioned from " + oldState + " to " + regionState);
     }
     if (newServerName != null || (
         state != State.PENDING_CLOSE && state != State.CLOSING)) {
@@ -299,7 +293,7 @@ public class RegionStates {
 
     ServerName oldServerName = regionAssignments.put(hri, serverName);
     if (!serverName.equals(oldServerName)) {
-      LOG.info("Onlined region " + hri.getShortNameToLog() + " on " + serverName);
+      LOG.info("Onlined " + hri.getShortNameToLog() + " on " + serverName);
       Set<HRegionInfo> regions = serverHoldings.get(serverName);
       if (regions == null) {
         regions = new HashSet<HRegionInfo>();
@@ -307,7 +301,7 @@ public class RegionStates {
       }
       regions.add(hri);
       if (oldServerName != null) {
-        LOG.info("Offlined region " + hri.getShortNameToLog() + " from " + oldServerName);
+        LOG.info("Offlined " + hri.getShortNameToLog() + " from " + oldServerName);
         serverHoldings.get(oldServerName).remove(hri);
       }
     }
@@ -316,25 +310,47 @@ public class RegionStates {
   /**
    * A region is offline, won't be in transition any more.
    */
-  public synchronized void regionOffline(final HRegionInfo hri) {
+  public void regionOffline(final HRegionInfo hri) {
+    regionOffline(hri, null);
+  }
+
+  /**
+   * A region is offline, won't be in transition any more.
+   * Its state should be the specified expected state, which
+   * can be Split/Merged/Offline/null(=Offline) only.
+   */
+  public synchronized void regionOffline(
+      final HRegionInfo hri, final State expectedState) {
+    Preconditions.checkArgument(expectedState == null
+      || expectedState == State.OFFLINE || expectedState == State.SPLIT
+      || expectedState == State.MERGED, "Offlined region should be in state"
+        + " OFFLINE/SPLIT/MERGED instead of " + expectedState);
     String regionName = hri.getEncodedName();
     RegionState oldState = regionStates.get(regionName);
     if (oldState == null) {
       LOG.warn("Offline a region not in RegionStates: " + hri.getShortNameToLog());
-    } else {
+    } else if (LOG.isDebugEnabled()) {
       State state = oldState.getState();
       ServerName sn = oldState.getServerName();
-      if (state != State.OFFLINE || sn != null) {
-        LOG.debug("Offline a region " + hri.getShortNameToLog() + " with current state=" + state +
-          ", expected state=OFFLINE" + ", assigned to server: " + sn + ", expected null");
+      if (state != State.OFFLINE
+          && state != State.SPLITTING && state != State.MERGING) {
+        LOG.debug("Offline a region " + hri.getShortNameToLog() + " with current state="
+          + state + ", expected state=OFFLINE/SPLITTING/MERGING");
+      }
+      if (sn != null && state == State.OFFLINE) {
+        LOG.debug("Offline a region " + hri.getShortNameToLog()
+          + " with current state=OFFLINE, assigned to server: "
+          + sn + ", expected null");
       }
     }
-    updateRegionState(hri, State.OFFLINE);
+    State newState = expectedState;
+    if (newState == null) newState = State.OFFLINE;
+    updateRegionState(hri, newState);
     regionsInTransition.remove(regionName);
 
     ServerName oldServerName = regionAssignments.remove(hri);
     if (oldServerName != null) {
-      LOG.info("Offlined region " + hri.getShortNameToLog() + " from " + oldServerName);
+      LOG.info("Offlined " + hri.getShortNameToLog() + " from " + oldServerName);
       serverHoldings.get(oldServerName).remove(hri);
     }
   }
@@ -362,7 +378,7 @@ public class RegionStates {
         // Region is open on this region server, but in transition.
         // This region must be moving away from this server, or splitting/merging.
         // SSH will handle it, either skip assigning, or re-assign.
-        LOG.info("Transitioning region " + state + " will be handled by SSH for " + sn);
+        LOG.info("Transitioning " + state + " will be handled by SSH for " + sn);
         if (state.isSplitting() || state.isMerging()) {
           LOG.info("Offline splitting/merging region " + state);
           try {

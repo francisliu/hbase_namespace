@@ -78,6 +78,21 @@ enum TDeleteType {
 }
 
 /**
+ * Specify Durability:
+ *  - SKIP_WAL means do not write the Mutation to the WAL.
+ *  - ASYNC_WAL means write the Mutation to the WAL asynchronously,
+ *  - SYNC_WAL means write the Mutation to the WAL synchronously,
+ *  - FSYNC_WAL means Write the Mutation to the WAL synchronously and force the entries to disk.
+ */
+
+enum TDurability {
+  SKIP_WAL = 1,
+  ASYNC_WAL = 2,
+  SYNC_WAL = 3,
+  FSYNC_WAL = 4
+}
+
+/**
  * Used to perform Get operations on a single row.
  *
  * The scope can be further narrowed down by specifying a list of
@@ -98,7 +113,8 @@ struct TGet {
   4: optional TTimeRange timeRange,
 
   5: optional i32 maxVersions,
-  6: optional binary filterString
+  6: optional binary filterString,
+  7: optional map<binary, binary> attributes
 }
 
 /**
@@ -109,14 +125,16 @@ struct TGet {
  * don't have one. If you don't provide a default timestamp
  * the current time is inserted.
  *
- * You can also specify if this Put should be written
- * to the write-ahead Log (WAL) or not. It defaults to true.
+ * You can specify how this Put should be written to the write-ahead Log (WAL)
+ * by changing the durability. If you don't provide durability, it defaults to
+ * column family's default setting for durability.
  */
 struct TPut {
   1: required binary row,
   2: required list<TColumnValue> columnValues
   3: optional i64 timestamp,
-  4: optional bool writeToWal = 1
+  5: optional map<binary, binary> attributes,
+  6: optional TDurability durability
 }
 
 /**
@@ -141,25 +159,32 @@ struct TPut {
  * as if you had added a TColumn for every column family and this timestamp
  * (i.e. all versions older than or equal in all column families will be deleted)
  *
+ * You can specify how this Delete should be written to the write-ahead Log (WAL)
+ * by changing the durability. If you don't provide durability, it defaults to
+ * column family's default setting for durability.
  */
 struct TDelete {
   1: required binary row,
   2: optional list<TColumn> columns,
   3: optional i64 timestamp,
   4: optional TDeleteType deleteType = 1,
-  5: optional bool writeToWal = 1
+  6: optional map<binary, binary> attributes,
+  7: optional TDurability durability
+
 }
 
 /**
  * Used to perform Increment operations for a single row.
  *
- * You can specify if this Increment should be written
- * to the write-ahead Log (WAL) or not. It defaults to true.
+ * You can specify how this Increment should be written to the write-ahead Log (WAL)
+ * by changing the durability. If you don't provide durability, it defaults to
+ * column family's default setting for durability.
  */
 struct TIncrement {
   1: required binary row,
   2: required list<TColumnIncrement> columns,
-  3: optional bool writeToWal = 1
+  4: optional map<binary, binary> attributes,
+  5: optional TDurability durability
 }
 
 /**
@@ -174,7 +199,24 @@ struct TScan {
   5: optional i32 maxVersions=1,
   6: optional TTimeRange timeRange,
   7: optional binary filterString,
-  8: optional i32 batchSize
+  8: optional i32 batchSize,
+  9: optional map<binary, binary> attributes
+}
+
+/**
+ * Atomic mutation for the specified row. It can be either Put or Delete.
+ */
+union TMutation {
+  1: optional TPut put,
+  2: optional TDelete deleteSingle,
+}
+
+/**
+ * A TRowMutations object is used to apply a number of Mutations to a single row.
+ */
+struct TRowMutations {
+  1: required binary row
+  2: required list<TMutation> mutations
 }
 
 //
@@ -395,10 +437,9 @@ service THBaseService {
   )
 
   /**
-   * Closes the scanner. Should be called if you need to close
-   * the Scanner before all results are read.
-   *
-   * Exhausted scanners are closed automatically.
+   * Closes the scanner. Should be called to free server side resources timely.
+   * Typically close once the scanner is not needed anymore, i.e. after looping
+   * over it to get all the required rows.
    */
   void closeScanner(
     /** the Id of the Scanner to close **/
@@ -408,6 +449,36 @@ service THBaseService {
 
     /** if the scannerId is invalid */
     2: TIllegalArgument ia
+  )
+
+  /**
+   * mutateRow performs multiple mutations atomically on a single row.
+  */
+  void mutateRow(
+  /** table to apply the mutations */
+    1: required binary table,
+
+    /** mutations to apply */
+    2: required TRowMutations rowMutations
+  ) throws (1: TIOError io)
+
+  /**
+   * Get results for the provided TScan object.
+   * This helper function opens a scanner, get the results and close the scanner.
+   *
+   * @return between zero and numRows TResults
+   */
+  list<TResult> getScannerResults(
+    /** the table to get the Scanner for */
+    1: required binary table,
+
+    /** the scan object to get a Scanner for */
+    2: required TScan scan,
+
+    /** number of rows to return */
+    3: i32 numRows = 1
+  ) throws (
+    1: TIOError io
   )
 
 }

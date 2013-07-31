@@ -112,10 +112,8 @@ public class ReplicationSink {
    }
 
   /**
-   * Replicate this array of entries directly into the local cluster using the native client.
-   * Like {@link #replicateEntries(org.apache.hadoop.hbase.regionserver.wal.HLog.Entry[])} only
-   * operates against raw protobuf type saving on a convertion from pb to pojo.
-   *
+   * Replicate this array of entries directly into the local cluster using the native client. Only
+   * operates against raw protobuf type saving on a conversion from pb to pojo.
    * @param entries
    * @param cells
    * @throws IOException

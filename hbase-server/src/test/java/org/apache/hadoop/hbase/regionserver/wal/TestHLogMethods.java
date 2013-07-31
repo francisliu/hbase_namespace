@@ -72,8 +72,7 @@ public class TestHLogMethods {
     createFile(fs, recoverededits,
       Long.toString(Long.MAX_VALUE) + "." + System.currentTimeMillis());
 
-    HLog log = HLogFactory.createHLog(fs, regiondir,
-                                      "dummyLogName", util.getConfiguration());
+    HLogFactory.createHLog(fs, regiondir, "dummyLogName", util.getConfiguration());
     NavigableSet<Path> files = HLogUtil.getSplitEditFilesSorted(fs, regiondir);
     assertEquals(7, files.size());
     assertEquals(files.pollFirst().getName(), first);
@@ -112,9 +111,8 @@ public class TestHLogMethods {
   @Test
   public void testEntrySink() throws Exception {
     Configuration conf = new Configuration();
-    HLogSplitter splitter = HLogSplitter.createLogSplitter(
-        conf, mock(Path.class), mock(Path.class), mock(Path.class),
-        mock(FileSystem.class));
+    HLogSplitter splitter = new HLogSplitter(
+      conf, mock(Path.class), mock(FileSystem.class), null, null);
 
     EntryBuffers sink = splitter.new EntryBuffers(1*1024*1024);
     for (int i = 0; i < 1000; i++) {

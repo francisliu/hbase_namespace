@@ -45,10 +45,13 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
+import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.RegionTransition;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.UnknownRegionException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -58,16 +61,16 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
-import org.apache.hadoop.hbase.exceptions.UnknownRegionException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.executor.EventType;
+import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.RegionState;
 import org.apache.hadoop.hbase.master.RegionStates;
+import org.apache.hadoop.hbase.master.RegionState.State;
 import org.apache.hadoop.hbase.master.handler.SplitRegionHandler;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HBaseFsck;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
@@ -134,7 +137,28 @@ public class TestSplitTransactionOnCluster {
 
   private HRegionInfo getAndCheckSingleTableRegion(final List<HRegion> regions) {
     assertEquals(1, regions.size());
-    return regions.get(0).getRegionInfo();
+    HRegionInfo hri = regions.get(0).getRegionInfo();
+    return waitOnRIT(hri);
+  }
+
+  /**
+   * Often region has not yet fully opened.  If we try to use it -- do a move for instance -- it
+   * will fail silently if the region is not yet opened.
+   * @param hri Region to check if in Regions In Transition... wait until out of transition before
+   * returning
+   * @return Passed in <code>hri</code>
+   */
+  private HRegionInfo waitOnRIT(final HRegionInfo hri) {
+    // Close worked but we are going to open the region elsewhere.  Before going on, make sure
+    // this completes.
+    while (TESTING_UTIL.getHBaseCluster().getMaster().getAssignmentManager().
+        getRegionStates().isRegionInTransition(hri)) {
+      LOG.info("Waiting on region in transition: " +
+        TESTING_UTIL.getHBaseCluster().getMaster().getAssignmentManager().getRegionStates().
+          getRegionTransitionState(hri));
+      Threads.sleep(10);
+    }
+    return hri;
   }
 
   @Test(timeout = 60000)
@@ -232,7 +256,7 @@ public class TestSplitTransactionOnCluster {
   throws IOException, InterruptedException, NodeExistsException, KeeperException,
       DeserializationException, ServiceException {
     final byte [] tableName =
-      Bytes.toBytes("ephemeral");
+      Bytes.toBytes("testRSSplitEphemeralsDisappearButDaughtersAreOnlinedAfterShutdownHandling");
 
     // Create table then get the single region for our new table.
     HTable t = createTableAndWait(tableName, HConstants.CATALOG_FAMILY);
@@ -794,6 +818,22 @@ public class TestSplitTransactionOnCluster {
           FSUtils.getTableStoreFilePathMap(null, fs, rootDir, tableName);
       assertEquals("Expected nothing but found " + storefilesAfter.toString(),
           storefilesAfter.size(), 0);
+
+      hri = region.getRegionInfo(); // split parent
+      AssignmentManager am = cluster.getMaster().getAssignmentManager();
+      RegionStates regionStates = am.getRegionStates();
+      long start = EnvironmentEdgeManager.currentTimeMillis();
+      while (!regionStates.isRegionInState(hri, State.SPLIT)) {
+        assertFalse("Timed out in waiting split parent to be in state SPLIT",
+          EnvironmentEdgeManager.currentTimeMillis() - start > 60000);
+        Thread.sleep(500);
+      }
+
+      // We should not be able to assign it again
+      am.assign(hri, true, true);
+      assertFalse("Split region should not be in transition again",
+        regionStates.isRegionInTransition(hri)
+          && regionStates.isRegionInState(hri, State.SPLIT));
     } finally {
       admin.setBalancerRunning(true, false);
       cluster.getMaster().setCatalogJanitorEnabled(true);
@@ -965,7 +1005,7 @@ public class TestSplitTransactionOnCluster {
    * @return Index of the server hosting the single table region
    * @throws UnknownRegionException
    * @throws MasterNotRunningException
-   * @throws org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException
+   * @throws org.apache.hadoop.hbase.ZooKeeperConnectionException
    * @throws InterruptedException
    */
   private int ensureTableRegionNotOnSameServerAsMeta(final HBaseAdmin admin,

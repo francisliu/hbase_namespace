@@ -19,11 +19,11 @@
 
 package org.apache.hadoop.hbase.tool;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -33,10 +33,13 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableNotFoundException;
 
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.Scan;
 
 /**
  * HBase Canary Tool, that that can be used to do
@@ -48,8 +51,8 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 public final class Canary implements Tool {
   // Sink interface used by the canary to outputs information
   public interface Sink {
-    public void publishReadFailure(HRegionInfo region);
-    public void publishReadFailure(HRegionInfo region, HColumnDescriptor column);
+    public void publishReadFailure(HRegionInfo region, Exception e);
+    public void publishReadFailure(HRegionInfo region, HColumnDescriptor column, Exception e);
     public void publishReadTiming(HRegionInfo region, HColumnDescriptor column, long msTime);
   }
 
@@ -57,14 +60,14 @@ public final class Canary implements Tool {
   // file or standard output timings or failures.
   public static class StdOutSink implements Sink {
     @Override
-    public void publishReadFailure(HRegionInfo region) {
-      LOG.error(String.format("read from region %s failed", region.getRegionNameAsString()));
+    public void publishReadFailure(HRegionInfo region, Exception e) {
+      LOG.error(String.format("read from region %s failed", region.getRegionNameAsString()), e);
     }
 
     @Override
-    public void publishReadFailure(HRegionInfo region, HColumnDescriptor column) {
+    public void publishReadFailure(HRegionInfo region, HColumnDescriptor column, Exception e) {
       LOG.error(String.format("read from region %s column family %s failed",
-                region.getRegionNameAsString(), column.getNameAsString()));
+                region.getRegionNameAsString(), column.getNameAsString()), e);
     }
 
     @Override
@@ -151,24 +154,27 @@ public final class Canary implements Tool {
     // initialize HBase conf and admin
     if (conf == null) conf = HBaseConfiguration.create();
     admin = new HBaseAdmin(conf);
-
-    // lets the canary monitor the cluster
-    do {
-      if (admin.isAborted()) {
-        LOG.error("HBaseAdmin aborted");
-        return(1);
-      }
-
-      if (tables_index >= 0) {
-        for (int i = tables_index; i < args.length; i++) {
-          sniff(TableName.valueOf(args[i]));
+    try {
+      // lets the canary monitor the cluster
+      do {
+        if (admin.isAborted()) {
+          LOG.error("HBaseAdmin aborted");
+          return(1);
         }
-      } else {
-        sniff();
-      }
 
-      Thread.sleep(interval);
-    } while (interval > 0);
+        if (tables_index >= 0) {
+          for (int i = tables_index; i < args.length; i++) {
+            sniff(admin, sink, TableName.valueOf(args[i]));
+          }
+        } else {
+          sniff();
+        }
+
+        Thread.sleep(interval);
+      } while (interval > 0);
+    } finally {
+      this.admin.close();
+    }
 
     return(0);
   }
@@ -187,16 +193,32 @@ public final class Canary implements Tool {
    */
   private void sniff() throws Exception {
     for (HTableDescriptor table : admin.listTables()) {
-      sniff(table);
+      sniff(admin, sink, table);
     }
   }
 
-  /*
-   * canary entry point to monitor specified table.
+  /**
+   * Canary entry point for specified table.
+   * @param admin
+   * @param tableName
+   * @throws Exception
    */
-  private void sniff(TableName tableName) throws Exception {
+  public static void sniff(final HBaseAdmin admin, TableName tableName)
+  throws Exception {
+    sniff(admin, new StdOutSink(), tableName);
+  }
+
+  /**
+   * Canary entry point for specified table.
+   * @param admin
+   * @param sink
+   * @param tableName
+   * @throws Exception
+   */
+  private static void sniff(final HBaseAdmin admin, final Sink sink, TableName tableName)
+  throws Exception {
     if (admin.isTableAvailable(tableName)) {
-      sniff(admin.getTableDescriptor(tableName));
+      sniff(admin, sink, admin.getTableDescriptor(tableName));
     } else {
       LOG.warn(String.format("Table %s is not available", tableName));
     }
@@ -206,7 +228,8 @@ public final class Canary implements Tool {
    * Loops over regions that owns this table,
    * and output some information abouts the state.
    */
-  private void sniff(HTableDescriptor tableDesc) throws Exception {
+  private static void sniff(final HBaseAdmin admin, final Sink sink, HTableDescriptor tableDesc)
+  throws Exception {
     HTable table = null;
 
     try {
@@ -217,9 +240,9 @@ public final class Canary implements Tool {
 
     for (HRegionInfo region : admin.getTableRegions(tableDesc.getTableName())) {
       try {
-        sniffRegion(region, table);
+        sniffRegion(admin, sink, region, table);
       } catch (Exception e) {
-        sink.publishReadFailure(region);
+        sink.publishReadFailure(region, e);
       }
     }
   }
@@ -228,20 +251,42 @@ public final class Canary implements Tool {
    * For each column family of the region tries to get one row
    * and outputs the latency, or the failure.
    */
-  private void sniffRegion(HRegionInfo region, HTable table) throws Exception {
+  private static void sniffRegion(final HBaseAdmin admin, final Sink sink, HRegionInfo region,
+      HTable table)
+  throws Exception {
     HTableDescriptor tableDesc = table.getTableDescriptor();
+    StopWatch stopWatch = new StopWatch();
     for (HColumnDescriptor column : tableDesc.getColumnFamilies()) {
-      Get get = new Get(region.getStartKey());
-      get.addFamily(column.getName());
-
-      try {
-        long startTime = System.currentTimeMillis();
-        table.get(get);
-        long time = System.currentTimeMillis() - startTime;
-
-        sink.publishReadTiming(region, column, time);
-      } catch (Exception e) {
-        sink.publishReadFailure(region, column);
+      stopWatch.reset();
+      byte [] startKey = region.getStartKey();
+      if (startKey ==  null || startKey.length <= 0) {
+        // Can't do a get on empty start row so do a Scan of first element if any instead.
+        Scan scan = new Scan();
+        scan.addFamily(column.getName());
+        scan.setBatch(1);
+        ResultScanner scanner = null;
+        try {
+          stopWatch.start();
+          scanner = table.getScanner(scan);
+          scanner.next();
+          stopWatch.stop();
+          sink.publishReadTiming(region, column, stopWatch.getTime());
+        } catch (Exception e) {
+          sink.publishReadFailure(region, column, e);
+        } finally {
+          if (scanner != null) scanner.close();
+        }
+      } else {
+        Get get = new Get(region.getStartKey());
+        get.addFamily(column.getName());
+        try {
+          stopWatch.start();
+          table.get(get);
+          stopWatch.stop();
+          sink.publishReadTiming(region, column, stopWatch.getTime());
+        } catch (Exception e) {
+          sink.publishReadFailure(region, column, e);
+        }
       }
     }
   }
@@ -251,4 +296,3 @@ public final class Canary implements Tool {
     System.exit(exitCode);
   }
 }
-

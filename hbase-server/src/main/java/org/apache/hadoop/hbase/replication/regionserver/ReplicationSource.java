@@ -35,7 +35,6 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,20 +47,20 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.Stoppable;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.ReplicationProtbufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.replication.ReplicationPeers;
 import org.apache.hadoop.hbase.replication.ReplicationQueueInfo;
-import org.apache.hadoop.hbase.replication.ReplicationZookeeper;
+import org.apache.hadoop.hbase.replication.ReplicationQueues;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Threads;
-import org.apache.hadoop.hbase.zookeeper.ZKClusterId;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.zookeeper.KeeperException;
 
@@ -81,20 +80,18 @@ import org.apache.zookeeper.KeeperException;
 public class ReplicationSource extends Thread
     implements ReplicationSourceInterface {
 
-  private static final Log LOG = LogFactory.getLog(ReplicationSource.class);
+  public static final Log LOG = LogFactory.getLog(ReplicationSource.class);
   // Queue of logs to process
   private PriorityBlockingQueue<Path> queue;
   // container of entries to replicate
   private HLog.Entry[] entriesArray;
   private HConnection conn;
-  // Helper class for zookeeper
-  private ReplicationZookeeper zkHelper;
+  private ReplicationQueues replicationQueues;
+  private ReplicationPeers replicationPeers;
   private Configuration conf;
   // ratio of region servers to chose from a slave cluster
   private float ratio;
   private Random random;
-  // should we replicate or not?
-  private AtomicBoolean replicating;
   private ReplicationQueueInfo replicationQueueInfo;
   // id of the peer cluster this source replicates to
   private String peerId;
@@ -123,6 +120,8 @@ public class ReplicationSource extends Thread
   private UUID peerClusterId;
   // total number of edits we replicated
   private long totalReplicatedEdits = 0;
+  // total number of edits we replicated
+  private long totalReplicatedOperations = 0;
   // The znode we currently play with
   private String peerClusterZnode;
   // Maximum number of retries before taking bold actions
@@ -149,17 +148,13 @@ public class ReplicationSource extends Thread
    * @param fs file system to use
    * @param manager replication manager to ping to
    * @param stopper     the atomic boolean to use to stop the regionserver
-   * @param replicating the atomic boolean that starts/stops replication
    * @param peerClusterZnode the name of our znode
    * @throws IOException
    */
-  public void init(final Configuration conf,
-                   final FileSystem fs,
-                   final ReplicationSourceManager manager,
-                   final Stoppable stopper,
-                   final AtomicBoolean replicating,
-                   final String peerClusterZnode)
-      throws IOException {
+  public void init(final Configuration conf, final FileSystem fs,
+      final ReplicationSourceManager manager, final ReplicationQueues replicationQueues,
+      final ReplicationPeers replicationPeers, final Stoppable stopper,
+      final String peerClusterZnode, final UUID clusterId) throws IOException {
     this.stopper = stopper;
     this.conf = conf;
     this.replicationQueueSizeCapacity =
@@ -181,22 +176,19 @@ public class ReplicationSource extends Thread
     // replication and make replication specific settings such as compression or codec to use
     // passing Cells.
     this.conn = HConnectionManager.getConnection(conf);
-    this.zkHelper = manager.getRepZkWrapper();
+    this.replicationQueues = replicationQueues;
+    this.replicationPeers = replicationPeers;
     this.ratio = this.conf.getFloat("replication.source.ratio", 0.1f);
     this.currentPeers = new ArrayList<ServerName>();
     this.random = new Random();
-    this.replicating = replicating;
     this.manager = manager;
     this.sleepForRetries =
         this.conf.getLong("replication.source.sleepforretries", 1000);
     this.fs = fs;
     this.metrics = new MetricsSource(peerClusterZnode);
     this.repLogReader = new ReplicationHLogReaderManager(this.fs, this.conf);
-    try {
-      this.clusterId = ZKClusterId.getUUIDForCluster(zkHelper.getZookeeperWatcher());
-    } catch (KeeperException ke) {
-      throw new IOException("Could not read cluster id", ke);
-    }
+    this.clusterId = clusterId;
+
     this.peerClusterZnode = peerClusterZnode;
     this.replicationQueueInfo = new ReplicationQueueInfo(peerClusterZnode);
     // ReplicationQueueInfo parses the peerId out of the znode for us
@@ -208,10 +200,10 @@ public class ReplicationSource extends Thread
    */
   private void chooseSinks() {
     this.currentPeers.clear();
-    List<ServerName> addresses = this.zkHelper.getSlavesAddresses(this.peerId);
+    List<ServerName> addresses = this.replicationPeers.getRegionServersOfConnectedPeer(this.peerId);
     Set<ServerName> setOfAddr = new HashSet<ServerName>();
     int nbPeers = (int) (Math.ceil(addresses.size() * ratio));
-    LOG.info("Getting " + nbPeers +
+    LOG.debug("Getting " + nbPeers +
         " rs from peer cluster # " + this.peerId);
     for (int i = 0; i < nbPeers; i++) {
       ServerName sn;
@@ -242,7 +234,7 @@ public class ReplicationSource extends Thread
     int sleepMultiplier = 1;
     // delay this until we are in an asynchronous thread
     while (this.peerClusterId == null) {
-      this.peerClusterId = zkHelper.getPeerUUID(this.peerId);
+      this.peerClusterId = replicationPeers.getPeerUUID(this.peerId);
       if (this.peerClusterId == null) {
         if (sleepForRetries("Cannot contact the peer's zk ensemble", sleepMultiplier)) {
           sleepMultiplier++;
@@ -258,8 +250,12 @@ public class ReplicationSource extends Thread
     // normally has a position (unless the RS failed between 2 logs)
     if (this.replicationQueueInfo.isQueueRecovered()) {
       try {
-        this.repLogReader.setPosition(this.zkHelper.getHLogRepPosition(
-            this.peerClusterZnode, this.queue.peek().getName()));
+        this.repLogReader.setPosition(this.replicationQueues.getLogPosition(this.peerClusterZnode,
+          this.queue.peek().getName()));
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Recovered queue started with log " + this.queue.peek() +
+              " at position " + this.repLogReader.getPosition());
+        }
       } catch (KeeperException e) {
         this.terminate("Couldn't get the position of this recovered queue " +
             this.peerClusterZnode, e);
@@ -403,6 +399,10 @@ public class ReplicationSource extends Thread
   protected boolean readAllEntriesToReplicateOrNextFile(boolean currentWALisBeingWrittenTo)
       throws IOException{
     long seenEntries = 0;
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("Seeking in " + this.currentPath + " at position "
+          + this.repLogReader.getPosition());
+    }
     this.repLogReader.seek();
     HLog.Entry entry =
         this.repLogReader.readNextAndSetPosition(this.entriesArray, this.currentNbEntries);
@@ -419,7 +419,7 @@ public class ReplicationSource extends Thread
         // containing anything to replicate and if we're currently not set to replicate
         if (!(logKey.getTablename().equals(HConstants.ROOT_TABLE_NAME) ||
             logKey.getTablename().equals(HConstants.META_TABLE_NAME)) &&
-            edit.size() != 0 && replicating.get()) {
+            edit.size() != 0) {
           // Only set the clusterId if is a local key.
           // This ensures that the originator sets the cluster id
           // and all replicas retain the initial cluster id.
@@ -477,6 +477,14 @@ public class ReplicationSource extends Thread
       if (this.currentPath == null) {
         this.currentPath = queue.poll(this.sleepForRetries, TimeUnit.MILLISECONDS);
         this.metrics.setSizeOfLogQueue(queue.size());
+        if (this.currentPath != null) {
+          this.manager.cleanOldLogs(this.currentPath.getName(),
+              this.peerId,
+              this.replicationQueueInfo.isQueueRecovered());
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("New log: " + this.currentPath);
+          }
+        }
       }
     } catch (InterruptedException e) {
       LOG.warn("Interrupted while reading edits", e);
@@ -493,6 +501,9 @@ public class ReplicationSource extends Thread
   protected boolean openReader(int sleepMultiplier) {
     try {
       try {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Opening log " + this.currentPath);
+        }
         this.reader = repLogReader.openReader(this.currentPath);
       } catch (FileNotFoundException fnfe) {
         if (this.replicationQueueInfo.isQueueRecovered()) {
@@ -645,6 +656,9 @@ public class ReplicationSource extends Thread
       }
       try {
         AdminService.BlockingInterface rrs = getRS();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Replicating " + this.currentNbEntries + " entries");
+        }
         ReplicationProtbufUtil.replicateWALEntry(rrs,
             Arrays.copyOf(this.entriesArray, currentNbEntries));
         if (this.lastLoggedPosition != this.repLogReader.getPosition()) {
@@ -654,9 +668,14 @@ public class ReplicationSource extends Thread
           this.lastLoggedPosition = this.repLogReader.getPosition();
         }
         this.totalReplicatedEdits += currentNbEntries;
+        this.totalReplicatedOperations += currentNbOperations;
         this.metrics.shipBatch(this.currentNbOperations);
         this.metrics.setAgeOfLastShippedOp(
             this.entriesArray[currentNbEntries-1].getKey().getWriteTime());
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Replicated " + this.totalReplicatedEdits + " entries in total, or "
+              + this.totalReplicatedOperations + " operations");
+        }
         break;
 
       } catch (IOException ioe) {
@@ -714,8 +733,7 @@ public class ReplicationSource extends Thread
    * @return true if the peer is enabled, otherwise false
    */
   protected boolean isPeerEnabled() {
-    return this.replicating.get() &&
-        this.zkHelper.getPeerEnabled(this.peerId);
+    return this.replicationPeers.getStatusOfConnectedPeer(this.peerId);
   }
 
   /**
@@ -727,13 +745,22 @@ public class ReplicationSource extends Thread
    */
   protected boolean processEndOfFile() {
     if (this.queue.size() != 0) {
+      if (LOG.isTraceEnabled()) {
+        String filesize = "N/A";
+        try {
+          FileStatus stat = this.fs.getFileStatus(this.currentPath);
+          filesize = stat.getLen()+"";
+        } catch (IOException ex) {}
+        LOG.trace("Reached the end of a log, stats: " + getStats() +
+            ", and the length of the file is " + filesize);
+      }
       this.currentPath = null;
       this.repLogReader.finishCurrentFile();
       this.reader = null;
       return true;
     } else if (this.replicationQueueInfo.isQueueRecovered()) {
       this.manager.closeRecoveredQueue(this);
-      LOG.info("Finished recovering the queue");
+      LOG.info("Finished recovering the queue with the following stats " + getStats());
       this.running = false;
       return true;
     }
@@ -803,7 +830,7 @@ public class ReplicationSource extends Thread
           if (ex instanceof RemoteException) {
             ex = ((RemoteException) ex).unwrapRemoteException();
           }
-          LOG.info("Slave cluster looks down: " + ex.getMessage());
+          LOG.info("Slave cluster looks down: " + ex.getMessage(), ex);
         }
       }
     };
@@ -854,13 +881,7 @@ public class ReplicationSource extends Thread
 
   @Override
   public String getStats() {
-    String position = "N/A";
-    try {
-      if (this.reader != null) {
-        position = this.reader.getPosition()+"";
-      }
-    } catch (IOException ioe) {
-    }
+    long position = this.repLogReader.getPosition();
     return "Total replicated edits: " + totalReplicatedEdits +
       ", currently replicating from: " + this.currentPath +
       " at position: " + position;

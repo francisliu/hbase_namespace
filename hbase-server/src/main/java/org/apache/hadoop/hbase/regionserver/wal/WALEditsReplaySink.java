@@ -30,19 +30,23 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.client.Action;
 import org.apache.hadoop.hbase.client.HConnection;
+import org.apache.hadoop.hbase.client.RegionServerCallable;
 import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.ServerCallable;
+import org.apache.hadoop.hbase.client.RpcRetryingCaller;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ActionResult;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MultiRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MultiResponse;
+import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.Pair;
 
@@ -162,7 +166,7 @@ public class WALEditsReplaySink {
     try {
       ReplayServerCallable<MultiResponse> callable = new ReplayServerCallable<MultiResponse>(
           this.conn, this.tableName, regionLoc, regionInfo, actions);
-      callable.withRetries();
+      new RpcRetryingCaller<MultiResponse>().callWithRetries(callable, conf, this.replayTimeout);
     } catch (IOException ie) {
       if (skipErrors) {
         LOG.warn(HConstants.HREGION_EDITS_REPLAY_SKIP_ERRORS
@@ -177,19 +181,17 @@ public class WALEditsReplaySink {
    * Callable that handles the <code>replay</code> method call going against a single regionserver
    * @param <R>
    */
-  class ReplayServerCallable<R> extends ServerCallable<MultiResponse> {
+  class ReplayServerCallable<R> extends RegionServerCallable<MultiResponse> {
     private HRegionInfo regionInfo;
     private List<Action<Row>> actions;
-
-    private Map<HRegionLocation, Map<HRegionInfo, List<Action<Row>>>> retryActions = null;
 
     ReplayServerCallable(final HConnection connection, final TableName tableName,
         final HRegionLocation regionLoc, final HRegionInfo regionInfo,
         final List<Action<Row>> actions) {
-      super(connection, tableName, null, replayTimeout);
+      super(connection, tableName, null);
       this.actions = actions;
       this.regionInfo = regionInfo;
-      this.location = regionLoc;
+      setLocation(regionLoc);
     }
     
     @Override
@@ -204,7 +206,7 @@ public class WALEditsReplaySink {
 
     private void replayToServer(HRegionInfo regionInfo, List<Action<Row>> actions)
         throws IOException, ServiceException {
-      AdminService.BlockingInterface remoteSvr = connection.getAdmin(location.getServerName());
+      AdminService.BlockingInterface remoteSvr = conn.getAdmin(getLocation().getServerName());
       MultiRequest request = RequestConverter.buildMultiRequest(regionInfo.getRegionName(),
         actions);
       MultiResponse protoResults = remoteSvr.replay(null, request);
@@ -231,16 +233,14 @@ public class WALEditsReplaySink {
     @Override
     public void prepare(boolean reload) throws IOException {
       if (!reload) return;
-      
       // relocate regions in case we have a new dead server or network hiccup
       // if not due to connection issue, the following code should run fast because it uses
       // cached location
       for (Action<Row> action : actions) {
         // use first row to relocate region because all actions are for one region
-        this.location = this.connection.locateRegion(tableName, action.getAction().getRow());
+        setLocation(conn.locateRegion(tableName, action.getAction().getRow()));
         break;
       }
     }
   }
-  
 }

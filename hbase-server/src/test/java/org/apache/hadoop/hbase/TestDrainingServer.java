@@ -35,6 +35,8 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
+import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
+import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
@@ -184,11 +186,8 @@ public class TestDrainingServer {
     final long regionCount = TEST_UTIL.getMiniHBaseCluster().countServedRegions();
 
     // Let's get a copy of the regions today.
-    Collection<HRegion> regions = new ArrayList<HRegion>();
-    for (int i = 0; i < NB_SLAVES; i++) {
-      HRegionServer hrs = TEST_UTIL.getMiniHBaseCluster().getRegionServer(i);
-      regions.addAll( hrs.getCopyOfOnlineRegionsSortedBySize().values() );
-    }
+    Collection<HRegion> regions = getRegions();
+    LOG.info("All regions: " + regions);
 
       // Choose the draining server
     HRegionServer drainingServer = TEST_UTIL.getMiniHBaseCluster().getRegionServer(0);
@@ -197,8 +196,7 @@ public class TestDrainingServer {
 
     ServerManager sm = master.getServerManager();
 
-    Collection<HRegion> regionsBefore = drainingServer.
-      getCopyOfOnlineRegionsSortedBySize().values();
+    Collection<HRegion> regionsBefore = drainingServer.getOnlineRegionsLocalContext();
     LOG.info("Regions of drained server are: "+ regionsBefore );
 
     try {
@@ -224,18 +222,23 @@ public class TestDrainingServer {
         hrs.abort("Aborting");
       }
 
-      // Wait for regions to come back online again.
-      waitForAllRegionsOnline();
-
-      Collection<HRegion> regionsAfter =
-          drainingServer.getCopyOfOnlineRegionsSortedBySize().values();
-      LOG.info("Regions of drained server are: " + regionsAfter);
-
+      // Wait for regions to come back online again.  waitForAllRegionsOnline can come back before
+      // we've assigned out regions on the cluster so retry if we are shy the wanted number
+      Collection<HRegion> regionsAfter = null;
+      for (int i = 0; i < 1000; i++) {
+        waitForAllRegionsOnline();
+        regionsAfter = getRegions();
+        if (regionsAfter.size() >= regionCount) break;
+        LOG.info("Expecting " + regionCount + " but only " + regionsAfter);
+        Threads.sleep(10);
+      }
+      LOG.info("Regions of drained server: " + regionsAfter + ", all regions: " + getRegions());
       Assert.assertEquals("Test conditions are not met: regions were" +
         " created/deleted during the test. ",
         regionCount, TEST_UTIL.getMiniHBaseCluster().countServedRegions());
 
       // Assert the draining server still has the same regions.
+      regionsAfter = drainingServer.getOnlineRegionsLocalContext();
       StringBuilder result = new StringBuilder();
       for (HRegion r: regionsAfter){
         if (!regionsBefore.contains(r)){
@@ -260,9 +263,21 @@ public class TestDrainingServer {
     }
   }
 
+  private Collection<HRegion> getRegions() {
+    Collection<HRegion> regions = new ArrayList<HRegion>();
+    List<RegionServerThread> rsthreads =
+      TEST_UTIL.getMiniHBaseCluster().getLiveRegionServerThreads();
+    for (RegionServerThread t: rsthreads) {
+      HRegionServer rs = t.getRegionServer();
+      Collection<HRegion> lr = rs.getOnlineRegionsLocalContext();
+      LOG.info("Found " + lr + " on " + rs);
+      regions.addAll(lr);
+    }
+    return regions;
+  }
+
   private static void waitForAllRegionsOnline() throws Exception {
     // Wait for regions to come back on line again.
-
     boolean done = false;
     while (!done) {
       Thread.sleep(1);
@@ -284,6 +299,8 @@ public class TestDrainingServer {
         if (!rs.getRegionServer().getRegionsInTransitionInRS().isEmpty()) {
           done = false;
         }
+        // Sleep some else we spam the log w/ notice that servers are not yet alive.
+        Threads.sleep(10);
       }
     }
   }
@@ -292,6 +309,4 @@ public class TestDrainingServer {
     return TEST_UTIL.getMiniHBaseCluster().countServedRegions() ==
         (COUNT_OF_REGIONS + 1 /*catalog regions*/);
   }
-
 }
-

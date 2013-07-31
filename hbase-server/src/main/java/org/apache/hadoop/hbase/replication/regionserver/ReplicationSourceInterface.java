@@ -19,13 +19,15 @@
 package org.apache.hadoop.hbase.replication.regionserver;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Stoppable;
+import org.apache.hadoop.hbase.replication.ReplicationPeers;
+import org.apache.hadoop.hbase.replication.ReplicationQueues;
 
 /**
  * Interface that defines a replication source
@@ -38,67 +40,67 @@ public interface ReplicationSourceInterface {
    * @param conf the configuration to use
    * @param fs the file system to use
    * @param manager the manager to use
+   * @param replicationQueues
+   * @param replicationPeers
    * @param stopper the stopper object for this region server
-   * @param replicating the status of the replication on this cluster
-   * @param peerClusterId the id of the peer cluster
+   * @param peerClusterZnode
+   * @param clusterId
    * @throws IOException
    */
-  public void init(final Configuration conf,
-                   final FileSystem fs,
-                   final ReplicationSourceManager manager,
-                   final Stoppable stopper,
-                   final AtomicBoolean replicating,
-                   final String peerClusterId) throws IOException;
+  public void init(final Configuration conf, final FileSystem fs,
+      final ReplicationSourceManager manager, final ReplicationQueues replicationQueues,
+      final ReplicationPeers replicationPeers, final Stoppable stopper,
+      final String peerClusterZnode, final UUID clusterId) throws IOException;
 
   /**
    * Add a log to the list of logs to replicate
    * @param log path to the log to replicate
    */
-  public void enqueueLog(Path log);
+  void enqueueLog(Path log);
 
   /**
    * Get the current log that's replicated
    * @return the current log
    */
-  public Path getCurrentPath();
+  Path getCurrentPath();
 
   /**
    * Start the replication
    */
-  public void startup();
+  void startup();
 
   /**
    * End the replication
    * @param reason why it's terminating
    */
-  public void terminate(String reason);
+  void terminate(String reason);
 
   /**
    * End the replication
    * @param reason why it's terminating
    * @param cause the error that's causing it
    */
-  public void terminate(String reason, Exception cause);
+  void terminate(String reason, Exception cause);
 
   /**
    * Get the id that the source is replicating to
    *
    * @return peer cluster id
    */
-  public String getPeerClusterZnode();
+  String getPeerClusterZnode();
 
   /**
    * Get the id that the source is replicating to.
    *
    * @return peer cluster id
    */
-  public String getPeerClusterId();
+  String getPeerClusterId();
 
   /**
    * Get a string representation of the current statistics
    * for this source
    * @return printable stats
    */
-  public String getStats();
+  String getStats();
 
 }

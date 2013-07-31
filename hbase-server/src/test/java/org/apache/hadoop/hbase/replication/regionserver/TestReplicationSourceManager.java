@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -52,11 +52,13 @@ import org.apache.hadoop.hbase.regionserver.wal.HLogFactory;
 import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
 import org.apache.hadoop.hbase.regionserver.wal.WALActionsListener;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.replication.ReplicationFactory;
 import org.apache.hadoop.hbase.replication.ReplicationQueueInfo;
+import org.apache.hadoop.hbase.replication.ReplicationQueues;
 import org.apache.hadoop.hbase.replication.ReplicationSourceDummy;
 import org.apache.hadoop.hbase.replication.ReplicationStateZKBase;
-import org.apache.hadoop.hbase.replication.ReplicationZookeeper;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.zookeeper.ZKClusterId;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.junit.After;
@@ -130,6 +132,8 @@ public class TestReplicationSourceManager {
       ReplicationStateZKBase.ENABLED_ZNODE_BYTES);
     ZKUtil.createWithParents(zkw, "/hbase/replication/state");
     ZKUtil.setData(zkw, "/hbase/replication/state", ReplicationStateZKBase.ENABLED_ZNODE_BYTES);
+
+    ZKClusterId.setClusterId(zkw, new ClusterId());
 
     replication = new Replication(new DummyServer(), fs, logDir, oldLogDir);
     manager = replication.getReplicationManager();
@@ -229,13 +233,15 @@ public class TestReplicationSourceManager {
     LOG.debug("testNodeFailoverWorkerCopyQueuesFromRSUsingMulti");
     conf.setBoolean(HConstants.ZOOKEEPER_USEMULTI, true);
     final Server server = new DummyServer("hostname0.example.org");
-    AtomicBoolean replicating = new AtomicBoolean(true);
-    ReplicationZookeeper rz = new ReplicationZookeeper(server, replicating);
+    ReplicationQueues rq =
+        ReplicationFactory.getReplicationQueues(server.getZooKeeper(), server.getConfiguration(),
+          server);
+    rq.init(server.getServerName().toString());
     // populate some znodes in the peer znode
     files.add("log1");
     files.add("log2");
     for (String file : files) {
-      rz.addLogToList(file, "1");
+      rq.addLog("1", file);
     }
     // create 3 DummyServers
     Server s1 = new DummyServer("dummyserver1.example.org");
@@ -262,8 +268,6 @@ public class TestReplicationSourceManager {
     populatedMap += w1.isLogZnodesMapPopulated() + w2.isLogZnodesMapPopulated()
         + w3.isLogZnodesMapPopulated();
     assertEquals(1, populatedMap);
-    // close out the resources.
-    rz.close();
     server.abort("", null);
   }
 
@@ -272,13 +276,14 @@ public class TestReplicationSourceManager {
     LOG.debug("testNodeFailoverDeadServerParsing");
     conf.setBoolean(HConstants.ZOOKEEPER_USEMULTI, true);
     final Server server = new DummyServer("ec2-54-234-230-108.compute-1.amazonaws.com");
-    AtomicBoolean replicating = new AtomicBoolean(true);
-    ReplicationZookeeper rz = new ReplicationZookeeper(server, replicating);
+    ReplicationQueues repQueues =
+        ReplicationFactory.getReplicationQueues(server.getZooKeeper(), conf, server);
+    repQueues.init(server.getServerName().toString());
     // populate some znodes in the peer znode
     files.add("log1");
     files.add("log2");
     for (String file : files) {
-      rz.addLogToList(file, "1");
+      repQueues.addLog("1", file);
     }
 
     // create 3 DummyServers
@@ -287,16 +292,19 @@ public class TestReplicationSourceManager {
     Server s3 = new DummyServer("ec2-23-20-187-167.compute-1.amazonaws.com");
 
     // simulate three servers fail sequentially
-    ReplicationZookeeper rz1 = new ReplicationZookeeper(s1, new AtomicBoolean(true));
+    ReplicationQueues rq1 =
+        ReplicationFactory.getReplicationQueues(s1.getZooKeeper(), s1.getConfiguration(), s1);
+    rq1.init(s1.getServerName().toString());
     SortedMap<String, SortedSet<String>> testMap =
-        rz1.claimQueues(server.getServerName().getServerName());
-    rz1.close();
-    ReplicationZookeeper rz2 = new ReplicationZookeeper(s2, new AtomicBoolean(true));
-    testMap = rz2.claimQueues(s1.getServerName().getServerName());
-    rz2.close();
-    ReplicationZookeeper rz3 = new ReplicationZookeeper(s3, new AtomicBoolean(true));
-    testMap = rz3.claimQueues(s2.getServerName().getServerName());
-    rz3.close();
+        rq1.claimQueues(server.getServerName().getServerName());
+    ReplicationQueues rq2 =
+        ReplicationFactory.getReplicationQueues(s2.getZooKeeper(), s2.getConfiguration(), s2);
+    rq2.init(s2.getServerName().toString());
+    testMap = rq2.claimQueues(s1.getServerName().getServerName());
+    ReplicationQueues rq3 =
+        ReplicationFactory.getReplicationQueues(s3.getZooKeeper(), s3.getConfiguration(), s3);
+    rq3.init(s3.getServerName().toString());
+    testMap = rq3.claimQueues(s2.getServerName().getServerName());
 
     ReplicationQueueInfo replicationQueueInfo = new ReplicationQueueInfo(testMap.firstKey());
     List<String> result = replicationQueueInfo.getDeadRegionServers();
@@ -305,9 +313,7 @@ public class TestReplicationSourceManager {
     assertTrue(result.contains(server.getServerName().getServerName()));
     assertTrue(result.contains(s1.getServerName().getServerName()));
     assertTrue(result.contains(s2.getServerName().getServerName()));
-    
-    // close out the resources.
-    rz.close();
+
     server.abort("", null);
   }
   
@@ -316,19 +322,21 @@ public class TestReplicationSourceManager {
     private SortedMap<String, SortedSet<String>> logZnodesMap;
     Server server;
     private String deadRsZnode;
-    ReplicationZookeeper rz;
+    ReplicationQueues rq;
 
     public DummyNodeFailoverWorker(String znode, Server s) throws Exception {
       this.deadRsZnode = znode;
       this.server = s;
-      rz = new ReplicationZookeeper(server, new AtomicBoolean(true));
+      this.rq =
+          ReplicationFactory.getReplicationQueues(server.getZooKeeper(), server.getConfiguration(),
+            server);
+      this.rq.init(this.server.getServerName().toString());
     }
 
     @Override
     public void run() {
       try {
-        logZnodesMap = rz.claimQueues(deadRsZnode);
-        rz.close();
+        logZnodesMap = rq.claimQueues(deadRsZnode);
         server.abort("Done with testing", null);
       } catch (Exception e) {
         LOG.error("Got exception while running NodeFailoverWorker", e);

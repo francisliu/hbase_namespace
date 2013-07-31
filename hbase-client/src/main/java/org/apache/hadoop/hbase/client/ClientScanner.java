@@ -17,28 +17,29 @@
  */
 package org.apache.hadoop.hbase.client;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.NotServingRegionException;
+import org.apache.hadoop.hbase.UnknownScannerException;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
-import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
-import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
 import org.apache.hadoop.hbase.exceptions.OutOfOrderScannerNextException;
-import org.apache.hadoop.hbase.exceptions.RegionServerStoppedException;
-import org.apache.hadoop.hbase.exceptions.UnknownScannerException;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.MapReduceProtos;
+import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.hbase.util.Bytes;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
 
 /**
  * Implements the scanner interface for the HBase client.
@@ -66,7 +67,8 @@ public class ClientScanner extends AbstractClientScanner {
     private final TableName tableName;
     private final int scannerTimeout;
     private boolean scanMetricsPublished = false;
-    
+    private ScannerCaller caller = new ScannerCaller();
+
     /**
      * Create a new ClientScanner for the specified table. An HConnection will be
      * retrieved using the passed Configuration.
@@ -93,9 +95,9 @@ public class ClientScanner extends AbstractClientScanner {
      * @throws IOException
      */
     public ClientScanner(final Configuration conf, final Scan scan,
-      final TableName tableName, HConnection connection) throws IOException {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Scan table=" + tableName
+        final TableName tableName, HConnection connection) throws IOException {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Scan table=" + tableName
             + ", startRow=" + Bytes.toStringBinary(scan.getStartRow()));
       }
       this.scan = scan;
@@ -109,7 +111,9 @@ public class ClientScanner extends AbstractClientScanner {
           HConstants.HBASE_CLIENT_SCANNER_MAX_RESULT_SIZE_KEY,
           HConstants.DEFAULT_HBASE_CLIENT_SCANNER_MAX_RESULT_SIZE);
       }
-      this.scannerTimeout = conf.getInt(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD,
+      this.scannerTimeout = HBaseConfiguration.getInt(conf,
+        HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD,
+        HConstants.HBASE_REGIONSERVER_LEASE_PERIOD_KEY,
         HConstants.DEFAULT_HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD);
 
       // check if application wants to collect scan metrics
@@ -177,7 +181,7 @@ public class ClientScanner extends AbstractClientScanner {
       // Close the previous scanner if it's open
       if (this.callable != null) {
         this.callable.setClose();
-        callable.withRetries();
+        this.caller.callWithRetries(callable, getConnection().getConfiguration());
         this.callable = null;
       }
 
@@ -214,7 +218,7 @@ public class ClientScanner extends AbstractClientScanner {
         callable = getScannerCallable(localStartKey);
         // Open a scanner on the region server starting at the
         // beginning of the region
-        callable.withRetries();
+        this.caller.callWithRetries(callable, getConnection().getConfiguration());
         this.currentRegion = callable.getHRegionInfo();
         if (this.scanMetrics != null) {
           this.scanMetrics.countOfRegions.incrementAndGet();
@@ -254,6 +258,7 @@ public class ClientScanner extends AbstractClientScanner {
       scanMetricsPublished = true;
     }
 
+    @Override
     public Result next() throws IOException {
       // If the scanner is closed and there's nothing left in the cache, next is a no-op.
       if (cache.size() == 0 && this.closed) {
@@ -273,10 +278,10 @@ public class ClientScanner extends AbstractClientScanner {
             // Server returns a null values if scanning is to stop.  Else,
             // returns an empty array if scanning is to go on and we've just
             // exhausted current region.
-            values = callable.withRetries();
+            values = this.caller.callWithRetries(callable, getConnection().getConfiguration());
             if (skipFirst && values != null && values.length == 1) {
               skipFirst = false; // Already skipped, unset it before scanning again
-              values = callable.withRetries();
+              values = this.caller.callWithRetries(callable, getConnection().getConfiguration());
             }
             retryAfterOutOfOrderException  = true;
           } catch (DoNotRetryIOException e) {
@@ -378,6 +383,7 @@ public class ClientScanner extends AbstractClientScanner {
      * if returned array is of zero-length (We never return null).
      * @throws IOException
      */
+    @Override
     public Result [] next(int nbRows) throws IOException {
       // Collect values to be returned here
       ArrayList<Result> resultSets = new ArrayList<Result>(nbRows);
@@ -392,12 +398,13 @@ public class ClientScanner extends AbstractClientScanner {
       return resultSets.toArray(new Result[resultSets.size()]);
     }
 
+    @Override
     public void close() {
       if (!scanMetricsPublished) writeScanMetrics();
       if (callable != null) {
         callable.setClose();
         try {
-          callable.withRetries();
+          this.caller.callWithRetries(callable, getConnection().getConfiguration());
         } catch (IOException e) {
           // We used to catch this error, interpret, and rethrow. However, we
           // have since decided that it's not nice for a scanner's close to

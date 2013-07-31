@@ -37,7 +37,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.MetaScanner;
 import org.apache.hadoop.hbase.rest.model.TableInfoModel;
 import org.apache.hadoop.hbase.rest.model.TableRegionModel;
@@ -77,7 +77,7 @@ public class RegionsResource extends ResourceBase {
       TableName tableName = TableName.valueOf(tableResource.getName());
       TableInfoModel model = new TableInfoModel(tableName.getNameAsString());
       Map<HRegionInfo,ServerName> regions = MetaScanner.allTableRegions(
-        servlet.getConfiguration(), tableName, false);
+        servlet.getConfiguration(), null, tableName, false);
       for (Map.Entry<HRegionInfo,ServerName> e: regions.entrySet()) {
         HRegionInfo hri = e.getKey();
         ServerName addr = e.getValue();

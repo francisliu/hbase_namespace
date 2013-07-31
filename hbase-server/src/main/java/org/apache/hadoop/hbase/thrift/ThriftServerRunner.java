@@ -53,7 +53,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -386,6 +386,25 @@ public class ThriftServerRunner implements Runnable {
     return InetAddress.getByName(bindAddressStr);
   }
 
+  protected static class ResultScannerWrapper {
+
+    private final ResultScanner scanner;
+    private final boolean sortColumns;
+    public ResultScannerWrapper(ResultScanner resultScanner,
+                                boolean sortResultColumns) {
+      scanner = resultScanner;
+      sortColumns = sortResultColumns;
+   }
+
+    public ResultScanner getScanner() {
+      return scanner;
+    }
+
+    public boolean isColumnSorted() {
+      return sortColumns;
+    }
+  }
+
   /**
    * The HBaseHandler is a glue object that connects Thrift RPC calls to the
    * HBase client API primarily defined in the HBaseAdmin and HTable objects.
@@ -397,7 +416,7 @@ public class ThriftServerRunner implements Runnable {
 
     // nextScannerId and scannerMap are used to manage scanner state
     protected int nextScannerId = 0;
-    protected HashMap<Integer, ResultScanner> scannerMap = null;
+    protected HashMap<Integer, ResultScannerWrapper> scannerMap = null;
     private ThriftMetrics metrics = null;
 
     private static ThreadLocal<Map<String, HTable>> threadLocalTables =
@@ -457,9 +476,10 @@ public class ThriftServerRunner implements Runnable {
      * @param scanner
      * @return integer scanner id
      */
-    protected synchronized int addScanner(ResultScanner scanner) {
+    protected synchronized int addScanner(ResultScanner scanner,boolean sortColumns) {
       int id = nextScannerId++;
-      scannerMap.put(id, scanner);
+      ResultScannerWrapper resultScannerWrapper = new ResultScannerWrapper(scanner, sortColumns);
+      scannerMap.put(id, resultScannerWrapper);
       return id;
     }
 
@@ -469,7 +489,7 @@ public class ThriftServerRunner implements Runnable {
      * @param id
      * @return a Scanner, or null if ID was invalid.
      */
-    protected synchronized ResultScanner getScanner(int id) {
+    protected synchronized ResultScannerWrapper getScanner(int id) {
       return scannerMap.get(id);
     }
 
@@ -480,7 +500,7 @@ public class ThriftServerRunner implements Runnable {
      * @param id
      * @return a Scanner, or null if ID was invalid.
      */
-    protected synchronized ResultScanner removeScanner(int id) {
+    protected synchronized ResultScannerWrapper removeScanner(int id) {
       return scannerMap.remove(id);
     }
 
@@ -495,7 +515,7 @@ public class ThriftServerRunner implements Runnable {
 
     protected HBaseHandler(final Configuration c) throws IOException {
       this.conf = c;
-      scannerMap = new HashMap<Integer, ResultScanner>();
+      scannerMap = new HashMap<Integer, ResultScannerWrapper>();
       this.coalescer = new IncrementCoalescer(this);
     }
 
@@ -1104,13 +1124,13 @@ public class ThriftServerRunner implements Runnable {
 
     public void scannerClose(int id) throws IOError, IllegalArgument {
       LOG.debug("scannerClose: id=" + id);
-      ResultScanner scanner = getScanner(id);
-      if (scanner == null) {
+      ResultScannerWrapper resultScannerWrapper = getScanner(id);
+      if (resultScannerWrapper == null) {
         String message = "scanner ID is invalid";
         LOG.warn(message);
         throw new IllegalArgument("scanner ID is invalid");
       }
-      scanner.close();
+      resultScannerWrapper.getScanner().close();
       removeScanner(id);
     }
 
@@ -1118,8 +1138,8 @@ public class ThriftServerRunner implements Runnable {
     public List<TRowResult> scannerGetList(int id,int nbRows)
         throws IllegalArgument, IOError {
       LOG.debug("scannerGetList: id=" + id);
-      ResultScanner scanner = getScanner(id);
-      if (null == scanner) {
+      ResultScannerWrapper resultScannerWrapper = getScanner(id);
+      if (null == resultScannerWrapper) {
         String message = "scanner ID is invalid";
         LOG.warn(message);
         throw new IllegalArgument("scanner ID is invalid");
@@ -1127,7 +1147,7 @@ public class ThriftServerRunner implements Runnable {
 
       Result [] results = null;
       try {
-        results = scanner.next(nbRows);
+        results = resultScannerWrapper.getScanner().next(nbRows);
         if (null == results) {
           return new ArrayList<TRowResult>();
         }
@@ -1135,7 +1155,7 @@ public class ThriftServerRunner implements Runnable {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());
       }
-      return ThriftUtilities.rowResultFromHBase(results);
+      return ThriftUtilities.rowResultFromHBase(results, resultScannerWrapper.isColumnSorted());
     }
 
     @Override
@@ -1180,7 +1200,7 @@ public class ThriftServerRunner implements Runnable {
           scan.setFilter(
               parseFilter.parseFilterString(tScan.getFilterString()));
         }
-        return addScanner(table.getScanner(scan));
+        return addScanner(table.getScanner(scan), tScan.sortColumns);
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());
@@ -1205,7 +1225,7 @@ public class ThriftServerRunner implements Runnable {
             }
           }
         }
-        return addScanner(table.getScanner(scan));
+        return addScanner(table.getScanner(scan), false);
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());
@@ -1231,7 +1251,7 @@ public class ThriftServerRunner implements Runnable {
             }
           }
         }
-        return addScanner(table.getScanner(scan));
+        return addScanner(table.getScanner(scan), false);
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());
@@ -1261,7 +1281,7 @@ public class ThriftServerRunner implements Runnable {
             }
           }
         }
-        return addScanner(table.getScanner(scan));
+        return addScanner(table.getScanner(scan), false);
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());
@@ -1287,7 +1307,7 @@ public class ThriftServerRunner implements Runnable {
             }
           }
         }
-        return addScanner(table.getScanner(scan));
+        return addScanner(table.getScanner(scan), false);
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());
@@ -1315,7 +1335,7 @@ public class ThriftServerRunner implements Runnable {
           }
         }
         scan.setTimeRange(Long.MIN_VALUE, timestamp);
-        return addScanner(table.getScanner(scan));
+        return addScanner(table.getScanner(scan), false);
       } catch (IOException e) {
         LOG.warn(e.getMessage(), e);
         throw new IOError(e.getMessage());

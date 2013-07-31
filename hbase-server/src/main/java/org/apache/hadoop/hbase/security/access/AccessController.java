@@ -41,6 +41,8 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Append;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -50,9 +52,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.coprocessor.*;
-import org.apache.hadoop.hbase.exceptions.CoprocessorException;
-import org.apache.hadoop.hbase.exceptions.TableNotDisabledException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
 import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
@@ -70,7 +69,7 @@ import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
-import org.apache.hadoop.hbase.exceptions.AccessDeniedException;
+import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.security.access.Permission.Action;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -1126,7 +1125,6 @@ public class AccessController extends BaseRegionObserver
   @Override
   public void preBulkLoadHFile(ObserverContext<RegionCoprocessorEnvironment> ctx,
       List<Pair<byte[], String>> familyPaths) throws IOException {
-    List<byte[]> cfs = new LinkedList<byte[]>();
     for(Pair<byte[],String> el : familyPaths) {
       requirePermission("preBulkLoadHFile",
           ctx.getEnvironment().getRegion().getTableDesc().getTableName(),

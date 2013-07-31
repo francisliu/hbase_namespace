@@ -99,6 +99,7 @@ public class TestZKBasedOpenCloseRegion {
 
     }
     waitUntilAllRegionsAssigned();
+    waitOnRIT();
   }
 
   /**
@@ -319,6 +320,18 @@ public class TestZKBasedOpenCloseRegion {
     LOG.info("Done with testCloseRegion");
   }
 
+  private void waitOnRIT() {
+    // Close worked but we are going to open the region elsewhere.  Before going on, make sure
+    // this completes.
+    while (TEST_UTIL.getHBaseCluster().getMaster().getAssignmentManager().
+        getRegionStates().isRegionsInTransition()) {
+      LOG.info("Waiting on regions in transition: " +
+        TEST_UTIL.getHBaseCluster().getMaster().getAssignmentManager().
+          getRegionStates().getRegionsInTransition());
+      Threads.sleep(10);
+    }
+  }
+
   /**
    * If region open fails with IOException in openRegion() while doing tableDescriptors.get()
    * the region should not add into regionsInTransitionInRS map
@@ -345,8 +358,7 @@ public class TestZKBasedOpenCloseRegion {
 
   private static void waitUntilAllRegionsAssigned()
   throws IOException {
-    HTable meta = new HTable(TEST_UTIL.getConfiguration(),
-      HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(TEST_UTIL.getConfiguration(), HConstants.META_TABLE_NAME);
     while (true) {
       int rows = 0;
       Scan scan = new Scan();

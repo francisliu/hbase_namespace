@@ -29,8 +29,8 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.TableDescriptors;
-import org.apache.hadoop.hbase.exceptions.TableNotDisabledException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.executor.ExecutorService;
 
 import com.google.protobuf.Service;
@@ -43,32 +43,32 @@ public interface MasterServices extends Server {
   /**
    * @return Master's instance of the {@link AssignmentManager}
    */
-  public AssignmentManager getAssignmentManager();
+  AssignmentManager getAssignmentManager();
 
   /**
    * @return Master's filesystem {@link MasterFileSystem} utility class.
    */
-  public MasterFileSystem getMasterFileSystem();
+  MasterFileSystem getMasterFileSystem();
 
   /**
    * @return Master's {@link ServerManager} instance.
    */
-  public ServerManager getServerManager();
+  ServerManager getServerManager();
 
   /**
    * @return Master's instance of {@link ExecutorService}
    */
-  public ExecutorService getExecutorService();
+  ExecutorService getExecutorService();
 
   /**
    * @return Master's instance of {@link TableLockManager}
    */
-  public TableLockManager getTableLockManager();
+  TableLockManager getTableLockManager();
 
   /**
    * @return Master's instance of {@link MasterCoprocessorHost}
    */
-  public MasterCoprocessorHost getCoprocessorHost();
+  MasterCoprocessorHost getCoprocessorHost();
 
   /**
    * Check table is modifiable; i.e. exists and is offline.
@@ -78,7 +78,7 @@ public interface MasterServices extends Server {
    * @throws IOException
    */
   // We actually throw the exceptions mentioned in the
-  public void checkTableModifiable(final TableName tableName)
+  void checkTableModifiable(final TableName tableName)
       throws IOException, TableNotFoundException, TableNotDisabledException;
 
   /**
@@ -87,7 +87,7 @@ public interface MasterServices extends Server {
    * @param splitKeys Starting row keys for the initial table regions.  If null
    *     a single region is created.
    */
-  public void createTable(HTableDescriptor desc, byte [][] splitKeys)
+  void createTable(HTableDescriptor desc, byte[][] splitKeys)
       throws IOException;
 
   /**
@@ -95,7 +95,7 @@ public interface MasterServices extends Server {
    * @param tableName The table name
    * @throws IOException
    */
-  public void deleteTable(final TableName tableName) throws IOException;
+  void deleteTable(final TableName tableName) throws IOException;
 
   /**
    * Modify the descriptor of an existing table
@@ -103,7 +103,7 @@ public interface MasterServices extends Server {
    * @param descriptor The updated table descriptor
    * @throws IOException
    */
-  public void modifyTable(final TableName tableName, final HTableDescriptor descriptor)
+  void modifyTable(final TableName tableName, final HTableDescriptor descriptor)
       throws IOException;
 
   /**
@@ -111,14 +111,15 @@ public interface MasterServices extends Server {
    * @param tableName The table name
    * @throws IOException
    */
-  public void enableTable(final TableName tableName) throws IOException;
+  void enableTable(final TableName tableName) throws IOException;
 
   /**
    * Disable an existing table
    * @param tableName The table name
    * @throws IOException
    */
-  public void disableTable(final TableName tableName) throws IOException;
+  void disableTable(final TableName tableName) throws IOException;
+
 
   /**
    * Add a new column to an existing table
@@ -126,7 +127,7 @@ public interface MasterServices extends Server {
    * @param column The column definition
    * @throws IOException
    */
-  public void addColumn(final TableName tableName, final HColumnDescriptor column)
+  void addColumn(final TableName tableName, final HColumnDescriptor column)
       throws IOException;
 
   /**
@@ -135,7 +136,7 @@ public interface MasterServices extends Server {
    * @param descriptor The updated column definition
    * @throws IOException
    */
-  public void modifyColumn(TableName tableName, HColumnDescriptor descriptor)
+  void modifyColumn(TableName tableName, HColumnDescriptor descriptor)
       throws IOException;
 
   /**
@@ -144,18 +145,18 @@ public interface MasterServices extends Server {
    * @param columnName The column name
    * @throws IOException
    */
-  public void deleteColumn(final TableName tableName, final byte[] columnName)
+  void deleteColumn(final TableName tableName, final byte[] columnName)
       throws IOException;
 
   /**
    * @return Return table descriptors implementation.
    */
-  public TableDescriptors getTableDescriptors();
+  TableDescriptors getTableDescriptors();
 
   /**
    * @return true if master enables ServerShutdownHandler;
    */
-  public boolean isServerShutdownHandlerEnabled();
+  boolean isServerShutdownHandlerEnabled();
 
   /**
    * Registers a new protocol buffer {@link Service} subclass as a master coprocessor endpoint.
@@ -170,7 +171,7 @@ public interface MasterServices extends Server {
    * @return {@code true} if the registration was successful, {@code false}
    * otherwise
    */
-  public boolean registerService(Service instance);
+  boolean registerService(Service instance);
 
   /**
    * Merge two regions. The real implementation is on the regionserver, master
@@ -181,13 +182,14 @@ public interface MasterServices extends Server {
    *          two adjacent regions
    * @throws IOException
    */
-  public void dispatchMergingRegions(final HRegionInfo region_a,
-      final HRegionInfo region_b, final boolean forcible) throws IOException;
+  void dispatchMergingRegions(
+    final HRegionInfo region_a, final HRegionInfo region_b, final boolean forcible
+  ) throws IOException;
 
   /**
    * @return true if master is initialized
    */
-  public boolean isInitialized();
+  boolean isInitialized();
 
   /**
    * Create a new namespace

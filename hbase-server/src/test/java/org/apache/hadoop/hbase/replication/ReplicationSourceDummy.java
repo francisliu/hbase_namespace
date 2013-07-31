@@ -19,6 +19,7 @@
 package org.apache.hadoop.hbase.replication;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.hadoop.conf.Configuration;
@@ -38,10 +39,10 @@ public class ReplicationSourceDummy implements ReplicationSourceInterface {
   Path currentPath;
 
   @Override
-  public void init(Configuration conf, FileSystem fs,
-                   ReplicationSourceManager manager, Stoppable stopper,
-                   AtomicBoolean replicating, String peerClusterId)
-      throws IOException {
+  public void init(Configuration conf, FileSystem fs, ReplicationSourceManager manager,
+      ReplicationQueues rq, ReplicationPeers rp, Stoppable stopper, String peerClusterId,
+      UUID clusterId) throws IOException {
+
     this.manager = manager;
     this.peerClusterId = peerClusterId;
   }

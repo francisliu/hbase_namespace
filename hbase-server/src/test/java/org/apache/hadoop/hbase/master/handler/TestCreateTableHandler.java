@@ -64,7 +64,7 @@ public class TestCreateTableHandler {
     throwException = false;
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testCreateTableHandlerIfCalledTwoTimesAndFirstOneIsUnderProgress() throws Exception {
     final MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
     final HMaster m = cluster.getMaster();
@@ -90,8 +90,7 @@ public class TestCreateTableHandler {
     assertTrue(TEST_UTIL.getHBaseAdmin().isTableEnabled(TABLENAME));
 
   }
-  
-  @Test (timeout=15000)
+  @Test (timeout=60000)
   public void testMasterRestartAfterEnablingNodeIsCreated() throws Exception {
     byte[] tableName = Bytes.toBytes("testMasterRestartAfterEnablingNodeIsCreated");
     final MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();

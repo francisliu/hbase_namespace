@@ -21,10 +21,12 @@ package org.apache.hadoop.hbase.regionserver;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,10 +46,17 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.exceptions.MergeRegionException;
+import org.apache.hadoop.hbase.UnknownRegionException;
+import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.HMaster;
+import org.apache.hadoop.hbase.master.RegionStates;
+import org.apache.hadoop.hbase.master.RegionState.State;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.hadoop.hbase.util.PairOfSameType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -96,7 +105,7 @@ public class TestRegionMergeTransactionOnCluster {
   public static void afterAllTests() throws Exception {
     TEST_UTIL.shutdownMiniCluster();
   }
-  
+
   @Test
   public void testWholesomeMerge() throws Exception {
     LOG.info("Starting testWholesomeMerge");
@@ -110,10 +119,30 @@ public class TestRegionMergeTransactionOnCluster {
         INITIAL_REGION_NUM - 1);
 
     // Merge 2nd and 3th region
-    mergeRegionsAndVerifyRegionNum(master, tableName, 1, 2,
+    PairOfSameType<HRegionInfo> mergedRegions =
+      mergeRegionsAndVerifyRegionNum(master, tableName, 1, 2,
         INITIAL_REGION_NUM - 2);
 
     verifyRowCount(table, ROWSIZE);
+
+    // Randomly choose one of the two merged regions
+    HRegionInfo hri = RandomUtils.nextBoolean() ?
+      mergedRegions.getFirst() : mergedRegions.getSecond();
+    MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
+    AssignmentManager am = cluster.getMaster().getAssignmentManager();
+    RegionStates regionStates = am.getRegionStates();
+    long start = EnvironmentEdgeManager.currentTimeMillis();
+    while (!regionStates.isRegionInState(hri, State.MERGED)) {
+      assertFalse("Timed out in waiting one merged region to be in state MERGED",
+        EnvironmentEdgeManager.currentTimeMillis() - start > 60000);
+      Thread.sleep(500);
+    }
+
+    // We should not be able to assign it again
+    am.assign(hri, true, true);
+    assertFalse("Merged region should not be in transition again",
+      regionStates.isRegionInTransition(hri)
+        && regionStates.isRegionInState(hri, State.MERGED));
 
     table.close();
   }
@@ -194,20 +223,79 @@ public class TestRegionMergeTransactionOnCluster {
     }
   }
 
-  private void mergeRegionsAndVerifyRegionNum(HMaster master, TableName tablename,
-      int regionAnum, int regionBnum, int expectedRegionNum) throws Exception {
-    requestMergeRegion(master, tablename, regionAnum, regionBnum);
-    waitAndVerifyRegionNum(master, tablename, expectedRegionNum);
+  /**
+   * This test tests 1, merging region not online;
+   * 2, merging same two regions; 3, merging unknown regions.
+   * They are in one test case so that we don't have to create
+   * many tables, and these tests are simple.
+   */
+  @Test
+  public void testMerge() throws Exception {
+    LOG.info("Starting testMerge");
+    final TableName tableName = TableName.valueOf("testMerge");
+
+    try {
+      // Create table and load data.
+      HTable table = createTableAndLoadData(master, tableName);
+      RegionStates regionStates = master.getAssignmentManager().getRegionStates();
+      List<HRegionInfo> regions = regionStates.getRegionsOfTable(tableName);
+      // Fake offline one region
+      HRegionInfo a = regions.get(0);
+      HRegionInfo b = regions.get(1);
+      regionStates.regionOffline(a);
+      try {
+        // Merge offline region. Region a is offline here
+        admin.mergeRegions(a.getEncodedNameAsBytes(), b.getEncodedNameAsBytes(), false);
+        fail("Offline regions should not be able to merge");
+      } catch (IOException ie) {
+        assertTrue("Exception should mention regions not online",
+          ie.getMessage().contains("regions not online")
+            && ie instanceof MergeRegionException);
+      }
+      try {
+        // Merge the same region: b and b.
+        admin.mergeRegions(b.getEncodedNameAsBytes(), b.getEncodedNameAsBytes(), true);
+        fail("A region should not be able to merge with itself, even forcifully");
+      } catch (IOException ie) {
+        assertTrue("Exception should mention regions not online",
+          ie.getMessage().contains("region to itself")
+            && ie instanceof MergeRegionException);
+      }
+      try {
+        // Merge unknown regions
+        admin.mergeRegions(Bytes.toBytes("-f1"), Bytes.toBytes("-f2"), true);
+        fail("Unknown region could not be merged");
+      } catch (IOException ie) {
+        assertTrue("UnknownRegionException should be thrown",
+          ie instanceof UnknownRegionException);
+      }
+      table.close();
+    } finally {
+      TEST_UTIL.deleteTable(tableName);
+    }
   }
 
-  private void requestMergeRegion(HMaster master, TableName tablename,
+  private PairOfSameType<HRegionInfo> mergeRegionsAndVerifyRegionNum(
+      HMaster master, TableName tablename,
+      int regionAnum, int regionBnum, int expectedRegionNum) throws Exception {
+    PairOfSameType<HRegionInfo> mergedRegions =
+      requestMergeRegion(master, tablename, regionAnum, regionBnum);
+    waitAndVerifyRegionNum(master, tablename, expectedRegionNum);
+    return mergedRegions;
+  }
+
+  private PairOfSameType<HRegionInfo> requestMergeRegion(
+      HMaster master, TableName tablename,
       int regionAnum, int regionBnum) throws Exception {
     List<Pair<HRegionInfo, ServerName>> tableRegions = MetaReader
         .getTableRegionsAndLocations(master.getCatalogTracker(),
             tablename);
+    HRegionInfo regionA = tableRegions.get(regionAnum).getFirst();
+    HRegionInfo regionB = tableRegions.get(regionBnum).getFirst();
     TEST_UTIL.getHBaseAdmin().mergeRegions(
-        tableRegions.get(regionAnum).getFirst().getEncodedNameAsBytes(),
-        tableRegions.get(regionBnum).getFirst().getEncodedNameAsBytes(), false);
+      regionA.getEncodedNameAsBytes(),
+      regionB.getEncodedNameAsBytes(), false);
+    return new PairOfSameType<HRegionInfo>(regionA, regionB);
   }
 
   private void waitAndVerifyRegionNum(HMaster master, TableName tablename,

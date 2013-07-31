@@ -28,21 +28,21 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.NotServingRegionException;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
+import org.apache.hadoop.hbase.UnknownScannerException;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
-import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
-import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
-import org.apache.hadoop.hbase.exceptions.RegionServerStoppedException;
-import org.apache.hadoop.hbase.exceptions.UnknownScannerException;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ScanResponse;
+import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hadoop.net.DNS;
 
@@ -50,12 +50,13 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 /**
- * Retries scanner operations such as create, next, etc.
- * Used by {@link ResultScanner}s made by {@link HTable}.
+ * Scanner operations such as create, next, etc.
+ * Used by {@link ResultScanner}s made by {@link HTable}. Passed to a retrying caller such as
+ * {@link RpcRetryingCaller} so fails are retried.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class ScannerCallable extends ServerCallable<Result[]> {
+public class ScannerCallable extends RegionServerCallable<Result[]> {
   public static final String LOG_SCANNER_LATENCY_CUTOFF
     = "hbase.client.log.scanner.latency.cutoff";
   public static final String LOG_SCANNER_ACTIVITY = "hbase.client.log.scanner.activity";
@@ -127,7 +128,7 @@ public class ScannerCallable extends ServerCallable<Result[]> {
    * to decide if hbase client connects to a remote region server
    */
   private void checkIfRegionServerIsRemote() {
-    if (this.location.getHostname().equalsIgnoreCase(myAddress)) {
+    if (getLocation().getHostname().equalsIgnoreCase(myAddress)) {
       isRegionServerRemote = false;
     } else {
       isRegionServerRemote = true;
@@ -155,7 +156,7 @@ public class ScannerCallable extends ServerCallable<Result[]> {
           ScanResponse response = null;
           PayloadCarryingRpcController controller = new PayloadCarryingRpcController();
           try {
-            response = stub.scan(controller, request);
+            response = getStub().scan(controller, request);
             // Client and RS maintain a nextCallSeq number during the scan. Every next() call
             // from client to server will increment this number in both sides. Client passes this
             // number along with the request and at RS side both the incoming nextCallSeq and its
@@ -199,7 +200,7 @@ public class ScannerCallable extends ServerCallable<Result[]> {
           if (logScannerActivity && (ioe instanceof UnknownScannerException)) {
             try {
               HRegionLocation location =
-                connection.relocateRegion(tableName, scan.getStartRow());
+                getConnection().relocateRegion(getTableName(), scan.getStartRow());
               LOG.info("Scanner=" + scannerId
                 + " expired, current region location is " + location.toString()
                 + " ip:" + location.getHostnamePort());
@@ -271,7 +272,7 @@ public class ScannerCallable extends ServerCallable<Result[]> {
       ScanRequest request =
         RequestConverter.buildScanRequest(this.scannerId, 0, true);
       try {
-        stub.scan(null, request);
+        getStub().scan(null, request);
       } catch (ServiceException se) {
         throw ProtobufUtil.getRemoteException(se);
       }
@@ -285,15 +286,15 @@ public class ScannerCallable extends ServerCallable<Result[]> {
     incRPCcallsMetrics();
     ScanRequest request =
       RequestConverter.buildScanRequest(
-        this.location.getRegionInfo().getRegionName(),
+        getLocation().getRegionInfo().getRegionName(),
         this.scan, 0, false);
     try {
-      ScanResponse response = stub.scan(null, request);
+      ScanResponse response = getStub().scan(null, request);
       long id = response.getScannerId();
       if (logScannerActivity) {
         LOG.info("Open scanner=" + id + " for scan=" + scan.toString()
-          + " on region " + this.location.toString() + " ip:"
-          + this.location.getHostnamePort());
+          + " on region " + getLocation().toString() + " ip:"
+          + getLocation().getHostnamePort());
       }
       return id;
     } catch (ServiceException se) {
@@ -319,7 +320,7 @@ public class ScannerCallable extends ServerCallable<Result[]> {
     if (!instantiated) {
       return null;
     }
-    return location.getRegionInfo();
+    return getLocation().getRegionInfo();
   }
 
   /**

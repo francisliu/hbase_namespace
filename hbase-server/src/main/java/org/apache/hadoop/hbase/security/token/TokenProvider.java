@@ -35,7 +35,7 @@ import org.apache.hadoop.hbase.ipc.RpcServerInterface;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
 import org.apache.hadoop.hbase.protobuf.generated.AuthenticationProtos;
-import org.apache.hadoop.hbase.exceptions.AccessDeniedException;
+import org.apache.hadoop.hbase.security.AccessDeniedException;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod;
@@ -133,7 +133,7 @@ public class TokenProvider implements AuthenticationProtos.AuthenticationService
   }
 
   @Override
-  public void whoami(RpcController controller, AuthenticationProtos.WhoAmIRequest request,
+  public void whoAmI(RpcController controller, AuthenticationProtos.WhoAmIRequest request,
                      RpcCallback<AuthenticationProtos.WhoAmIResponse> done) {
     User requestUser = RequestContext.getRequestUser();
     AuthenticationProtos.WhoAmIResponse.Builder response =

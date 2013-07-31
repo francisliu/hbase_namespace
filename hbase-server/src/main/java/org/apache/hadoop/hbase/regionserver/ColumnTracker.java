@@ -31,12 +31,18 @@ import org.apache.hadoop.hbase.regionserver.ScanQueryMatcher.MatchCode;
  * Currently there are two different types of Store/Family-level queries.
  * <ul><li>{@link ExplicitColumnTracker} is used when the query specifies
  * one or more column qualifiers to return in the family.
+ * <ul><li>{@link ScanWildcardColumnTracker} is used when no columns are
+ * explicitly specified.
  * <p>
- * This class is utilized by {@link ScanQueryMatcher} through two methods:
+ * This class is utilized by {@link ScanQueryMatcher} mainly through two methods:
  * <ul><li>{@link #checkColumn} is called when a Put satisfies all other
- * conditions of the query.  This method returns a {@link org.apache.hadoop.hbase.regionserver.ScanQueryMatcher.MatchCode} to define
- * what action should be taken.
- * <li>{@link #update} is called at the end of every StoreFile or memstore.
+ * conditions of the query.
+ * <ul><li>{@link #getNextRowOrNextColumn} is called whenever ScanQueryMatcher
+ * believes that the current column should be skipped (by timestamp, filter etc.)
+ * <p>
+ * These two methods returns a 
+ * {@link org.apache.hadoop.hbase.regionserver.ScanQueryMatcher.MatchCode}
+ * to define what action should be taken.
  * <p>
  * This class is NOT thread-safe as queries are never multi-threaded
  */
@@ -56,25 +62,21 @@ public interface ColumnTracker {
    * @throws IOException in case there is an internal consistency problem
    *      caused by a data corruption.
    */
-  public ScanQueryMatcher.MatchCode checkColumn(byte[] bytes, int offset,
-      int length, long ttl, byte type, boolean ignoreCount)
+  ScanQueryMatcher.MatchCode checkColumn(
+    byte[] bytes, int offset, int length, long ttl, byte type, boolean ignoreCount
+  )
       throws IOException;
-
-  /**
-   * Updates internal variables in between files
-   */
-  public void update();
 
   /**
    * Resets the Matcher
    */
-  public void reset();
+  void reset();
 
   /**
    *
    * @return <code>true</code> when done.
    */
-  public boolean done();
+  boolean done();
 
   /**
    * Used by matcher and scan/get to get a hint of the next column
@@ -87,13 +89,14 @@ public interface ColumnTracker {
    *
    * @return null, or a ColumnCount that we should seek to
    */
-  public ColumnCount getColumnHint();
+  ColumnCount getColumnHint();
 
   /**
    * Retrieve the MatchCode for the next row or column
    */
-  public MatchCode getNextRowOrNextColumn(byte[] bytes, int offset,
-      int qualLength);
+  MatchCode getNextRowOrNextColumn(
+    byte[] bytes, int offset, int qualLength
+  );
 
   /**
    * Give the tracker a chance to declare it's done based on only the timestamp
@@ -102,5 +105,5 @@ public interface ColumnTracker {
    * @param timestamp
    * @return <code>true</code> to early out based on timestamp.
    */
-  public boolean isDone(long timestamp);
+  boolean isDone(long timestamp);
 }

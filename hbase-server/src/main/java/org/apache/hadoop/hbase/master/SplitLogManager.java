@@ -149,19 +149,39 @@ public class SplitLogManager extends ZooKeeperListener {
 
   /**
    * Wrapper around {@link #SplitLogManager(ZooKeeperWatcher zkw, Configuration conf,
-   *   Stoppable stopper, MasterServices master, ServerName serverName, TaskFinisher tf)}
+   *   Stoppable stopper, MasterServices master, ServerName serverName,
+   *   boolean masterRecovery, TaskFinisher tf)}
+   * with masterRecovery = false, and tf = null.  Used in unit tests.
+   *
+   * @param zkw the ZK watcher
+   * @param conf the HBase configuration
+   * @param stopper the stoppable in case anything is wrong
+   * @param master the master services
+   * @param serverName the master server name
+   */
+  public SplitLogManager(ZooKeeperWatcher zkw, final Configuration conf,
+      Stoppable stopper, MasterServices master, ServerName serverName) {
+    this(zkw, conf, stopper, master, serverName, false, null);
+  }
+
+  /**
+   * Wrapper around {@link #SplitLogManager(ZooKeeperWatcher zkw, Configuration conf,
+   *   Stoppable stopper, MasterServices master, ServerName serverName,
+   *   boolean masterRecovery, TaskFinisher tf)}
    * that provides a task finisher for copying recovered edits to their final destination.
    * The task finisher has to be robust because it can be arbitrarily restarted or called
    * multiple times.
-   * 
-   * @param zkw
-   * @param conf
-   * @param stopper
-   * @param serverName
+   *
+   * @param zkw the ZK watcher
+   * @param conf the HBase configuration
+   * @param stopper the stoppable in case anything is wrong
+   * @param master the master services
+   * @param serverName the master server name
+   * @param masterRecovery an indication if the master is in recovery
    */
   public SplitLogManager(ZooKeeperWatcher zkw, final Configuration conf,
-       Stoppable stopper, MasterServices master, ServerName serverName) {
-    this(zkw, conf, stopper,  master, serverName, new TaskFinisher() {
+      Stoppable stopper, MasterServices master, ServerName serverName, boolean masterRecovery) {
+    this(zkw, conf, stopper, master, serverName, masterRecovery, new TaskFinisher() {
       @Override
       public Status finish(ServerName workerName, String logfile) {
         try {
@@ -180,14 +200,17 @@ public class SplitLogManager extends ZooKeeperListener {
    * does lookup the orphan tasks in zk but it doesn't block waiting for them
    * to be done.
    *
-   * @param zkw
-   * @param conf
-   * @param stopper
-   * @param serverName
-   * @param tf task finisher 
+   * @param zkw the ZK watcher
+   * @param conf the HBase configuration
+   * @param stopper the stoppable in case anything is wrong
+   * @param master the master services
+   * @param serverName the master server name
+   * @param masterRecovery an indication if the master is in recovery
+   * @param tf task finisher
    */
   public SplitLogManager(ZooKeeperWatcher zkw, Configuration conf,
-        Stoppable stopper, MasterServices master, ServerName serverName, TaskFinisher tf) {
+        Stoppable stopper, MasterServices master,
+        ServerName serverName, boolean masterRecovery, TaskFinisher tf) {
     super(zkw);
     this.taskFinisher = tf;
     this.conf = conf;
@@ -205,12 +228,10 @@ public class SplitLogManager extends ZooKeeperListener {
       conf.getInt("hbase.splitlog.manager.timeoutmonitor.period", 1000), stopper);
 
     this.failedDeletions = Collections.synchronizedSet(new HashSet<String>());
-    this.distributedLogReplay = this.conf.getBoolean(HConstants.DISTRIBUTED_LOG_REPLAY_KEY, 
+    this.distributedLogReplay = this.conf.getBoolean(HConstants.DISTRIBUTED_LOG_REPLAY_KEY,
       HConstants.DEFAULT_DISTRIBUTED_LOG_REPLAY_CONFIG);
     LOG.info("distributedLogReplay = " + this.distributedLogReplay);
-  }
 
-  public void finishInitialization(boolean masterRecovery) {
     if (!masterRecovery) {
       Threads.setDaemonThreadRunning(timeoutMonitor.getThread(), serverName
           + ".splitLogManagerTimeoutMonitor");
@@ -844,6 +865,7 @@ public class SplitLogManager extends ZooKeeperListener {
       // race with heartbeat() that might be changing last_version
       version = task.last_version;
     } else {
+      SplitLogCounters.tot_mgr_resubmit_force.incrementAndGet();
       version = -1;
     }
     LOG.info("resubmitting task " + path);
@@ -1308,6 +1330,8 @@ public class SplitLogManager extends ZooKeeperListener {
    * out
    */
   private class TimeoutMonitor extends Chore {
+    private long lastLog = 0;
+
     public TimeoutMonitor(final int period, Stoppable stopper) {
       super("SplitLogManager Timeout Monitor", period, stopper);
     }
@@ -1354,7 +1378,11 @@ public class SplitLogManager extends ZooKeeperListener {
         }
       }
       if (tot > 0) {
-        LOG.debug("total tasks = " + tot + " unassigned = " + unassigned);
+        long now = EnvironmentEdgeManager.currentTimeMillis();
+        if (now > lastLog + 5000) {
+          lastLog = now;
+          LOG.info("total tasks = " + tot + " unassigned = " + unassigned + " tasks=" + tasks);
+        }
       }
       if (resubmitted > 0) {
         LOG.info("resubmitted " + resubmitted + " out of " + tot + " tasks");
@@ -1593,11 +1621,11 @@ public class SplitLogManager extends ZooKeeperListener {
    * a serialization point at the end of the task processing. Must be
    * restartable and idempotent.
    */
-  static public interface TaskFinisher {
+  public interface TaskFinisher {
     /**
      * status that can be returned finish()
      */
-    static public enum Status {
+    enum Status {
       /**
        * task completed successfully
        */
@@ -1616,7 +1644,7 @@ public class SplitLogManager extends ZooKeeperListener {
      * @param taskname
      * @return DONE if task completed successfully, ERR otherwise
      */
-    public Status finish(ServerName workerName, String taskname);
+    Status finish(ServerName workerName, String taskname);
   }
 
   enum ResubmitDirective {
@@ -1640,12 +1668,4 @@ public class SplitLogManager extends ZooKeeperListener {
       return statusMsg;
     }
   }
-  
-  /**
-   * Completes the initialization
-   */
-  public void finishInitialization() {
-    finishInitialization(false);
-  }
-  
 }

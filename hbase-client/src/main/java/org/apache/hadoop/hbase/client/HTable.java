@@ -277,9 +277,6 @@ public class HTable implements HTableInterface {
    */
   public HTable(TableName tableName, final HConnection connection,
       final ExecutorService pool) throws IOException {
-    if (pool == null || pool.isShutdown()) {
-      throw new IllegalArgumentException("Pool is null or shut down.");
-    }
     if (connection == null || connection.isClosed()) {
       throw new IllegalArgumentException("Connection is null or closed.");
     }
@@ -584,7 +581,7 @@ public class HTable implements HTableInterface {
    */
   public NavigableMap<HRegionInfo, ServerName> getRegionLocations() throws IOException {
     // TODO: Odd that this returns a Map of HRI to SN whereas getRegionLocation, singular, returns an HRegionLocation.
-    return MetaScanner.allTableRegions(getConfiguration(), getTableNameAsPOJO(), false);
+    return MetaScanner.allTableRegions(getConfiguration(), this.connection, getTableNameAsPOJO(), false);
   }
 
   /**
@@ -675,12 +672,15 @@ public class HTable implements HTableInterface {
    @Override
    public Result getRowOrBefore(final byte[] row, final byte[] family)
    throws IOException {
-     return new ServerCallable<Result>(connection, tableName, row, operationTimeout) {
+     RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
+         tableName, row) {
        public Result call() throws IOException {
-         return ProtobufUtil.getRowOrBefore(stub,
-           location.getRegionInfo().getRegionName(), row, family);
+         return ProtobufUtil.getRowOrBefore(getStub(),
+           getLocation().getRegionInfo().getRegionName(), row, family);
        }
-     }.withRetries();
+     };
+     return new RpcRetryingCaller<Result>().
+       callWithRetries(callable, getConfiguration(), this.operationTimeout);
    }
 
    /**
@@ -721,12 +721,14 @@ public class HTable implements HTableInterface {
    */
   @Override
   public Result get(final Get get) throws IOException {
-    return new ServerCallable<Result>(connection, tableName, get.getRow(), operationTimeout) {
-          public Result call() throws IOException {
-            return ProtobufUtil.get(stub,
-              location.getRegionInfo().getRegionName(), get);
-          }
-        }.withRetries();
+    RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
+        getTableNameAsPOJO(), get.getRow()) {
+      public Result call() throws IOException {
+        return ProtobufUtil.get(getStub(), getLocation().getRegionInfo().getRegionName(), get);
+      }
+    };
+    return new RpcRetryingCaller<Result>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -788,18 +790,21 @@ public class HTable implements HTableInterface {
   @Override
   public void delete(final Delete delete)
   throws IOException {
-    new ServerCallable<Boolean>(connection, tableName, delete.getRow(), operationTimeout) {
-          public Boolean call() throws IOException {
-            try {
-              MutateRequest request = RequestConverter.buildMutateRequest(
-                location.getRegionInfo().getRegionName(), delete);
-              MutateResponse response = stub.mutate(null, request);
-              return Boolean.valueOf(response.getProcessed());
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
-          }
-        }.withRetries();
+    RegionServerCallable<Boolean> callable = new RegionServerCallable<Boolean>(connection,
+        tableName, delete.getRow()) {
+      public Boolean call() throws IOException {
+        try {
+          MutateRequest request = RequestConverter.buildMutateRequest(
+            getLocation().getRegionInfo().getRegionName(), delete);
+          MutateResponse response = getStub().mutate(null, request);
+          return Boolean.valueOf(response.getProcessed());
+        } catch (ServiceException se) {
+          throw ProtobufUtil.getRemoteException(se);
+        }
+      }
+    };
+    new RpcRetryingCaller<Boolean>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -922,19 +927,21 @@ public class HTable implements HTableInterface {
    */
   @Override
   public void mutateRow(final RowMutations rm) throws IOException {
-    new ServerCallable<Void>(connection, tableName, rm.getRow(),
-        operationTimeout) {
+    RegionServerCallable<Void> callable =
+        new RegionServerCallable<Void>(connection, getTableNameAsPOJO(), rm.getRow()) {
       public Void call() throws IOException {
         try {
           MultiRequest request = RequestConverter.buildMultiRequest(
-            location.getRegionInfo().getRegionName(), rm);
-          stub.multi(null, request);
+            getLocation().getRegionInfo().getRegionName(), rm);
+          getStub().multi(null, request);
         } catch (ServiceException se) {
           throw ProtobufUtil.getRemoteException(se);
         }
         return null;
       }
-    }.withRetries();
+    };
+    new RpcRetryingCaller<Void>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -946,21 +953,23 @@ public class HTable implements HTableInterface {
       throw new IOException(
           "Invalid arguments to append, no columns specified");
     }
-    return new ServerCallable<Result>(connection, tableName, append.getRow(), operationTimeout) {
-          public Result call() throws IOException {
-            try {
-              MutateRequest request = RequestConverter.buildMutateRequest(
-                location.getRegionInfo().getRegionName(), append);
-              PayloadCarryingRpcController rpcController =
-                new PayloadCarryingRpcController();
-              MutateResponse response = stub.mutate(rpcController, request);
-              if (!response.hasResult()) return null;
-              return ProtobufUtil.toResult(response.getResult(), rpcController.cellScanner());
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
+    RegionServerCallable<Result> callable =
+      new RegionServerCallable<Result>(this.connection, getTableNameAsPOJO(), append.getRow()) {
+        public Result call() throws IOException {
+          try {
+            MutateRequest request = RequestConverter.buildMutateRequest(
+              getLocation().getRegionInfo().getRegionName(), append);
+            PayloadCarryingRpcController rpcController = new PayloadCarryingRpcController();
+            MutateResponse response = getStub().mutate(rpcController, request);
+            if (!response.hasResult()) return null;
+            return ProtobufUtil.toResult(response.getResult(), rpcController.cellScanner());
+          } catch (ServiceException se) {
+            throw ProtobufUtil.getRemoteException(se);
           }
-        }.withRetries();
+        }
+      };
+    return new RpcRetryingCaller<Result>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -972,19 +981,22 @@ public class HTable implements HTableInterface {
       throw new IOException(
           "Invalid arguments to increment, no columns specified");
     }
-    return new ServerCallable<Result>(connection, tableName, increment.getRow(), operationTimeout) {
-          public Result call() throws IOException {
-            try {
-              MutateRequest request = RequestConverter.buildMutateRequest(
-                location.getRegionInfo().getRegionName(), increment);
-              PayloadCarryingRpcController rpcContoller = new PayloadCarryingRpcController();
-              MutateResponse response = stub.mutate(rpcContoller, request);
-              return ProtobufUtil.toResult(response.getResult(), rpcContoller.cellScanner());
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
+    RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
+        getTableNameAsPOJO(), increment.getRow()) {
+      public Result call() throws IOException {
+        try {
+          MutateRequest request = RequestConverter.buildMutateRequest(
+            getLocation().getRegionInfo().getRegionName(), increment);
+            PayloadCarryingRpcController rpcContoller = new PayloadCarryingRpcController();
+            MutateResponse response = getStub().mutate(rpcContoller, request);
+            return ProtobufUtil.toResult(response.getResult(), rpcContoller.cellScanner());
+          } catch (ServiceException se) {
+            throw ProtobufUtil.getRemoteException(se);
           }
-        }.withRetries();
+        }
+      };
+    return new RpcRetryingCaller<Result>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -1016,22 +1028,26 @@ public class HTable implements HTableInterface {
       throw new IOException(
           "Invalid arguments to incrementColumnValue", npe);
     }
-    return new ServerCallable<Long>(connection, tableName, row, operationTimeout) {
-          public Long call() throws IOException {
-            try {
-              MutateRequest request = RequestConverter.buildMutateRequest(
-                location.getRegionInfo().getRegionName(), row, family,
-                qualifier, amount, durability);
-              PayloadCarryingRpcController rpcController = new PayloadCarryingRpcController();
-              MutateResponse response = stub.mutate(rpcController, request);
-              Result result =
-                ProtobufUtil.toResult(response.getResult(), rpcController.cellScanner());
-              return Long.valueOf(Bytes.toLong(result.getValue(family, qualifier)));
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
+    
+    RegionServerCallable<Long> callable =
+      new RegionServerCallable<Long>(connection, getTableNameAsPOJO(), row) {
+        public Long call() throws IOException {
+          try {
+            MutateRequest request = RequestConverter.buildMutateRequest(
+              getLocation().getRegionInfo().getRegionName(), row, family,
+              qualifier, amount, durability);
+            PayloadCarryingRpcController rpcController = new PayloadCarryingRpcController();
+            MutateResponse response = getStub().mutate(rpcController, request);
+            Result result =
+              ProtobufUtil.toResult(response.getResult(), rpcController.cellScanner());
+            return Long.valueOf(Bytes.toLong(result.getValue(family, qualifier)));
+          } catch (ServiceException se) {
+            throw ProtobufUtil.getRemoteException(se);
           }
-        }.withRetries();
+        }
+      };
+    return new RpcRetryingCaller<Long>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -1042,19 +1058,22 @@ public class HTable implements HTableInterface {
       final byte [] family, final byte [] qualifier, final byte [] value,
       final Put put)
   throws IOException {
-    return new ServerCallable<Boolean>(connection, tableName, row, operationTimeout) {
-          public Boolean call() throws IOException {
-            try {
-              MutateRequest request = RequestConverter.buildMutateRequest(
-                location.getRegionInfo().getRegionName(), row, family, qualifier,
+    RegionServerCallable<Boolean> callable =
+      new RegionServerCallable<Boolean>(connection, getTableNameAsPOJO(), row) {
+        public Boolean call() throws IOException {
+          try {
+            MutateRequest request = RequestConverter.buildMutateRequest(
+              getLocation().getRegionInfo().getRegionName(), row, family, qualifier,
                 new BinaryComparator(value), CompareType.EQUAL, put);
-              MutateResponse response = stub.mutate(null, request);
-              return Boolean.valueOf(response.getProcessed());
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
+            MutateResponse response = getStub().mutate(null, request);
+            return Boolean.valueOf(response.getProcessed());
+          } catch (ServiceException se) {
+            throw ProtobufUtil.getRemoteException(se);
           }
-        }.withRetries();
+        }
+      };
+    return new RpcRetryingCaller<Boolean>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
 
@@ -1066,19 +1085,22 @@ public class HTable implements HTableInterface {
       final byte [] family, final byte [] qualifier, final byte [] value,
       final Delete delete)
   throws IOException {
-    return new ServerCallable<Boolean>(connection, tableName, row, operationTimeout) {
-          public Boolean call() throws IOException {
-            try {
-              MutateRequest request = RequestConverter.buildMutateRequest(
-                location.getRegionInfo().getRegionName(), row, family, qualifier,
+    RegionServerCallable<Boolean> callable =
+      new RegionServerCallable<Boolean>(connection, getTableNameAsPOJO(), row) {
+        public Boolean call() throws IOException {
+          try {
+            MutateRequest request = RequestConverter.buildMutateRequest(
+              getLocation().getRegionInfo().getRegionName(), row, family, qualifier,
                 new BinaryComparator(value), CompareType.EQUAL, delete);
-              MutateResponse response = stub.mutate(null, request);
-              return Boolean.valueOf(response.getProcessed());
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
+            MutateResponse response = getStub().mutate(null, request);
+            return Boolean.valueOf(response.getProcessed());
+          } catch (ServiceException se) {
+            throw ProtobufUtil.getRemoteException(se);
           }
-        }.withRetries();
+        }
+      };
+    return new RpcRetryingCaller<Boolean>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -1086,19 +1108,21 @@ public class HTable implements HTableInterface {
    */
   @Override
   public boolean exists(final Get get) throws IOException {
-    return new ServerCallable<Boolean>(connection, tableName, get.getRow(), operationTimeout) {
-          public Boolean call() throws IOException {
-            try {
-              GetRequest request = RequestConverter.buildGetRequest(
-                  location.getRegionInfo().getRegionName(), get, true);
-
-              GetResponse response = stub.get(null, request);
-              return response.getExists();
-            } catch (ServiceException se) {
-              throw ProtobufUtil.getRemoteException(se);
-            }
-          }
-        }.withRetries();
+    RegionServerCallable<Boolean> callable =
+        new RegionServerCallable<Boolean>(connection, getTableNameAsPOJO(), get.getRow()) {
+      public Boolean call() throws IOException {
+        try {
+          GetRequest request = RequestConverter.buildGetRequest(
+            getLocation().getRegionInfo().getRegionName(), get, true);
+          GetResponse response = getStub().get(null, request);
+          return response.getExists();
+        } catch (ServiceException se) {
+          throw ProtobufUtil.getRemoteException(se);
+        }
+      }
+    };
+    return new RpcRetryingCaller<Boolean>().
+      callWithRetries(callable, getConfiguration(), this.operationTimeout);
   }
 
   /**
@@ -1189,19 +1213,23 @@ public class HTable implements HTableInterface {
     for (final Map.Entry<Integer, List<Get>> getsByRegionEntry : getsByRegion.entrySet()) {
       Callable<List<Boolean>> callable = new Callable<List<Boolean>>() {
         public List<Boolean> call() throws Exception {
-          return new ServerCallable<List<Boolean>>(connection, tableName, getsByRegionEntry.getValue()
-              .get(0).getRow(), operationTimeout) {
+          RegionServerCallable<List<Boolean>> callable =
+            new RegionServerCallable<List<Boolean>>(connection, getTableNameAsPOJO(),
+              getsByRegionEntry.getValue().get(0).getRow()) {
             public List<Boolean> call() throws IOException {
               try {
-                MultiGetRequest requests = RequestConverter.buildMultiGetRequest(location
-                    .getRegionInfo().getRegionName(), getsByRegionEntry.getValue(), true, false);
-                MultiGetResponse responses = stub.multiGet(null, requests);
+                MultiGetRequest requests = RequestConverter.buildMultiGetRequest(
+                  getLocation().getRegionInfo().getRegionName(), getsByRegionEntry.getValue(),
+                  true, false);
+                MultiGetResponse responses = getStub().multiGet(null, requests);
                 return responses.getExistsList();
               } catch (ServiceException se) {
                 throw ProtobufUtil.getRemoteException(se);
               }
             }
-          }.withRetries();
+          };
+          return new RpcRetryingCaller<List<Boolean>>().
+            callWithRetries(callable, getConfiguration(), operationTimeout);
         }
       };
       futures.put(getsByRegionEntry.getKey(), pool.submit(callable));

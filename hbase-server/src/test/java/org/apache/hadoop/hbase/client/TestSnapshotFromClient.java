@@ -34,11 +34,11 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.LargeTests;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.ConstantSizeRegionSplitPolicy;
-import org.apache.hadoop.hbase.exceptions.SnapshotCreationException;
+import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -86,8 +86,6 @@ public class TestSnapshotFromClient {
     conf.setInt("hbase.hstore.compactionThreshold", 10);
     // block writes if we get to 12 store files
     conf.setInt("hbase.hstore.blockingStoreFiles", 12);
-    // drop the number of attempts for the hbase admin
-    conf.setInt("hbase.client.retries.number", 1);
     // Enable snapshot
     conf.setBoolean(SnapshotManager.HBASE_SNAPSHOT_ENABLED, true);
     conf.set(HConstants.HBASE_REGION_SPLIT_POLICY_KEY,
@@ -104,7 +102,8 @@ public class TestSnapshotFromClient {
     UTIL.deleteTable(TABLE_NAME);
     // and cleanup the archive directory
     try {
-      UTIL.getTestFileSystem().delete(new Path(UTIL.getDefaultRootDirPath(), ".archive"), true);
+      UTIL.getTestFileSystem().delete(
+        new Path(UTIL.getDefaultRootDirPath(), HConstants.HFILE_ARCHIVE_DIRECTORY), true);
     } catch (IOException e) {
       LOG.warn("Failure to delete archive directory", e);
     }
@@ -123,7 +122,7 @@ public class TestSnapshotFromClient {
    * Test snapshotting not allowed .META. and -ROOT-
    * @throws Exception
    */
-  @Test
+  @Test (timeout=300000)
   public void testMetaTablesSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     byte[] snapshotName = Bytes.toBytes("metaSnapshot");
@@ -145,10 +144,10 @@ public class TestSnapshotFromClient {
 
   /**
    * Test HBaseAdmin#deleteSnapshots(String) which deletes snapshots whose names match the parameter
-   * 
+   *
    * @throws Exception
    */
-  @Test
+  @Test (timeout=300000)
   public void testSnapshotDeletionWithRegex() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots
@@ -158,15 +157,15 @@ public class TestSnapshotFromClient {
     HTable table = new HTable(UTIL.getConfiguration(), TABLE_NAME);
     UTIL.loadTable(table, TEST_FAM);
     table.close();
-    
+
     byte[] snapshot1 = Bytes.toBytes("TableSnapshot1");
     admin.snapshot(snapshot1, TABLE_NAME);
     LOG.debug("Snapshot1 completed.");
-    
+
     byte[] snapshot2 = Bytes.toBytes("TableSnapshot2");
     admin.snapshot(snapshot2, TABLE_NAME);
     LOG.debug("Snapshot2 completed.");
-    
+
     String snapshot3 = "3rdTableSnapshot";
     admin.snapshot(Bytes.toBytes(snapshot3), TABLE_NAME);
     LOG.debug(snapshot3 + " completed.");
@@ -176,7 +175,7 @@ public class TestSnapshotFromClient {
     List<SnapshotDescription> snapshots = admin.listSnapshots();
     assertEquals(1, snapshots.size());
     assertEquals(snapshots.get(0).getName(), snapshot3);
-    
+
     admin.deleteSnapshot(snapshot3);
     admin.close();
   }
@@ -184,7 +183,7 @@ public class TestSnapshotFromClient {
    * Test snapshotting a table that is offline
    * @throws Exception
    */
-  @Test
+  @Test (timeout=300000)
   public void testOfflineTableSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots
@@ -238,7 +237,7 @@ public class TestSnapshotFromClient {
     SnapshotTestingUtils.assertNoSnapshots(admin);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSnapshotFailsOnNonExistantTable() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots

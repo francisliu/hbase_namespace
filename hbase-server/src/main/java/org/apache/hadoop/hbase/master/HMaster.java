@@ -52,20 +52,26 @@ import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.ClusterStatus;
+import org.apache.hadoop.hbase.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.exceptions.ConstraintException;
+import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.HealthCheckChore;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.PleaseHoldException;
 import org.apache.hadoop.hbase.Server;
 import org.apache.hadoop.hbase.ServerLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableDescriptors;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.UnknownRegionException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.HConnectionManager;
@@ -74,19 +80,20 @@ import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
-import org.apache.hadoop.hbase.exceptions.NotAllMetaRegionsOnlineException;
-import org.apache.hadoop.hbase.exceptions.PleaseHoldException;
-import org.apache.hadoop.hbase.exceptions.TableNotDisabledException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.exceptions.DeserializationException;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.exceptions.MergeRegionException;
+import org.apache.hadoop.hbase.PleaseHoldException;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.exceptions.UnknownProtocolException;
-import org.apache.hadoop.hbase.exceptions.UnknownRegionException;
 import org.apache.hadoop.hbase.executor.ExecutorService;
 import org.apache.hadoop.hbase.executor.ExecutorType;
-import org.apache.hadoop.hbase.ipc.RpcServerInterface;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.ipc.RpcServer.BlockingServiceAndInterface;
+import org.apache.hadoop.hbase.ipc.RpcServerInterface;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
+import org.apache.hadoop.hbase.ipc.SimpleRpcScheduler;
 import org.apache.hadoop.hbase.master.balancer.BalancerChore;
 import org.apache.hadoop.hbase.master.balancer.ClusterStatusChore;
 import org.apache.hadoop.hbase.master.balancer.LoadBalancerFactory;
@@ -408,14 +415,19 @@ MasterServices, Server {
     String name = "master/" + initialIsa.toString();
     // Set how many times to retry talking to another server over HConnection.
     HConnectionManager.setServerSideHConnectionRetries(this.conf, name, LOG);
-    int numHandlers = conf.getInt("hbase.master.handler.count",
-      conf.getInt("hbase.regionserver.handler.count", 25));
+    int numHandlers = conf.getInt(HConstants.MASTER_HANDLER_COUNT,
+      conf.getInt(HConstants.REGION_SERVER_HANDLER_COUNT, HConstants.DEFAULT_MASTER_HANLDER_COUNT));
+    SimpleRpcScheduler scheduler = new SimpleRpcScheduler(
+        conf,
+        numHandlers,
+        0, // we don't use high priority handlers in master
+        0, // we don't use replication handlers in master
+        null, // this is a DNC w/o high priority handlers
+        0);
     this.rpcServer = new RpcServer(this, name, getServices(),
       initialIsa, // BindAddress is IP we got for this server.
-      numHandlers,
-      0, // we dont use high priority handlers in master
       conf,
-      0); // this is a DNC w/o high priority handlers
+      scheduler);
     // Set our address.
     this.isa = this.rpcServer.getListenerAddress();
     this.serverName =
@@ -920,7 +932,7 @@ MasterServices, Server {
    * @param master
    * @param services
    * @return An instance of {@link ServerManager}
-   * @throws org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException
+   * @throws org.apache.hadoop.hbase.ZooKeeperConnectionException
    * @throws IOException
    */
   ServerManager createServerManager(final Server master,
@@ -1671,16 +1683,28 @@ MasterServices, Server {
               : encodedNameOfRegionB)));
     }
 
-    if (!forcible && !HRegionInfo.areAdjacent(regionStateA.getRegion(),
-            regionStateB.getRegion())) {
-      throw new ServiceException("Unable to merge not adjacent regions "
-          + regionStateA.getRegion().getRegionNameAsString() + ", "
-          + regionStateB.getRegion().getRegionNameAsString()
-          + " where forcible = " + forcible);
+    if (!regionStateA.isOpened() || !regionStateB.isOpened()) {
+      throw new ServiceException(new MergeRegionException(
+        "Unable to merge regions not online " + regionStateA + ", " + regionStateB));
+    }
+
+    HRegionInfo regionInfoA = regionStateA.getRegion();
+    HRegionInfo regionInfoB = regionStateB.getRegion();
+    if (regionInfoA.compareTo(regionInfoB) == 0) {
+      throw new ServiceException(new MergeRegionException(
+        "Unable to merge a region to itself " + regionInfoA + ", " + regionInfoB));
+    }
+
+    if (!forcible && !HRegionInfo.areAdjacent(regionInfoA, regionInfoB)) {
+      throw new ServiceException(new MergeRegionException(
+        "Unable to merge not adjacent regions "
+          + regionInfoA.getRegionNameAsString() + ", "
+          + regionInfoB.getRegionNameAsString()
+          + " where forcible = " + forcible));
     }
 
     try {
-      dispatchMergingRegions(regionStateA.getRegion(), regionStateB.getRegion(), forcible);
+      dispatchMergingRegions(regionInfoA, regionInfoB, forcible);
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -2305,7 +2329,7 @@ MasterServices, Server {
    * @return true if we should proceed with abort operation, false other wise.
    */
   private boolean abortNow(final String msg, final Throwable t) {
-    if (!this.isActiveMaster) {
+    if (!this.isActiveMaster || this.stopped) {
       return true;
     }
     if (t != null && t instanceof KeeperException.SessionExpiredException) {

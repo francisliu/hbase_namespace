@@ -28,7 +28,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.MetaScanner;
-import org.apache.hadoop.hbase.exceptions.TableExistsException;
 import org.apache.hadoop.hbase.executor.EventType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Threads;
@@ -102,7 +101,7 @@ public class TestRestartCluster {
     }
 
     List<HRegionInfo> allRegions =
-      MetaScanner.listAllRegions(UTIL.getConfiguration());
+      MetaScanner.listAllRegions(UTIL.getConfiguration(), true);
     assertEquals(4, allRegions.size());
 
     LOG.info("\n\nShutting down cluster");
@@ -117,10 +116,8 @@ public class TestRestartCluster {
     // Need to use a new 'Configuration' so we make a new HConnection.
     // Otherwise we're reusing an HConnection that has gone stale because
     // the shutdown of the cluster also called shut of the connection.
-    allRegions = MetaScanner.
-      listAllRegions(new Configuration(UTIL.getConfiguration()));
+    allRegions = MetaScanner.listAllRegions(new Configuration(UTIL.getConfiguration()), true);
     assertEquals(4, allRegions.size());
-
     LOG.info("\n\nWaiting for tables to be available");
     for(byte [] TABLE: TABLES) {
       try {

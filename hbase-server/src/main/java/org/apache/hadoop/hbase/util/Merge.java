@@ -34,8 +34,8 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -177,7 +177,7 @@ public class Merge extends Configured implements Tool {
           Bytes.toStringBinary(meta.getRegionName()));
     }
     if (info2 == null) {
-      throw new IOException("Cound not find " + Bytes.toStringBinary(region2) + " in " +
+      throw new IOException("Could not find " + Bytes.toStringBinary(region2) + " in " +
           Bytes.toStringBinary(meta.getRegionName()));
     }
     HRegion merged = null;

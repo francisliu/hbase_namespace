@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.BindException;
 import java.util.TreeMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.regionserver.wal.HLog.Reader;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
 import org.apache.hadoop.hbase.coprocessor.SampleRegionWALObserver;
@@ -59,6 +61,7 @@ import org.junit.experimental.categories.Category;
 
 /** JUnit test case for HLog */
 @Category(LargeTests.class)
+@SuppressWarnings("deprecation")
 public class TestHLog  {
   private static final Log LOG = LogFactory.getLog(TestHLog.class);
   {
@@ -77,7 +80,7 @@ public class TestHLog  {
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private static Path hbaseDir;
   private static Path oldLogDir;
-  
+
   @Before
   public void setUp() throws Exception {
 
@@ -119,7 +122,7 @@ public class TestHLog  {
     fs = cluster.getFileSystem();
 
     hbaseDir = TEST_UTIL.createRootDir();
-    oldLogDir = new Path(hbaseDir, ".oldlogs");
+    oldLogDir = new Path(hbaseDir, HConstants.HREGION_OLDLOGDIR_NAME);
     dir = new Path(hbaseDir, getName());
   }
   @AfterClass
@@ -159,7 +162,7 @@ public class TestHLog  {
         TableName.valueOf(getName());
     final byte [] rowName = tableName.getName();
     Path logdir = new Path(hbaseDir, HConstants.HREGION_LOGDIR_NAME);
-    HLog log = HLogFactory.createHLog(fs, hbaseDir, 
+    HLog log = HLogFactory.createHLog(fs, hbaseDir,
         HConstants.HREGION_LOGDIR_NAME, conf);
     final int howmany = 3;
     HRegionInfo[] infos = new HRegionInfo[3];
@@ -194,10 +197,8 @@ public class TestHLog  {
         log.rollWriter();
       }
       log.close();
-      HLogSplitter logSplitter = HLogSplitter.createLogSplitter(conf,
-          hbaseDir, logdir, oldLogDir, fs);
-      List<Path> splits =
-        logSplitter.splitLog();
+      List<Path> splits = HLogSplitter.split(
+        hbaseDir, logdir, oldLogDir, fs, conf);
       verifySplits(splits, howmany);
       log = null;
     } finally {
@@ -240,7 +241,7 @@ public class TestHLog  {
     in.close();
 
     HLog wal = HLogFactory.createHLog(fs, dir, "hlogdir", conf);
-    
+
     final int total = 20;
     HLog.Reader reader = null;
 
@@ -342,7 +343,7 @@ public class TestHLog  {
 
   private void verifySplits(List<Path> splits, final int howmany)
   throws IOException {
-    assertEquals(howmany, splits.size());
+    assertEquals(howmany * howmany, splits.size());
     for (int i = 0; i < splits.size(); i++) {
       LOG.info("Verifying=" + splits.get(i));
       HLog.Reader reader = HLogFactory.createReader(fs, splits.get(i), conf);
@@ -364,23 +365,23 @@ public class TestHLog  {
           previousRegion = region;
           count++;
         }
-        assertEquals(howmany * howmany, count);
+        assertEquals(howmany, count);
       } finally {
         reader.close();
       }
     }
   }
-  
+
   /*
    * We pass different values to recoverFileLease() so that different code paths are covered
-   * 
+   *
    * For this test to pass, requires:
    * 1. HDFS-200 (append support)
    * 2. HDFS-988 (SafeMode should freeze file operations
    *              [FSNamesystem.nextGenerationStampForBlock])
    * 3. HDFS-142 (on restart, maintain pendingCreates)
    */
-  @Test
+  @Test (timeout=300000)
   public void testAppendClose() throws Exception {
     TableName tableName =
         TableName.valueOf(getName());
@@ -426,16 +427,16 @@ public class TestHLog  {
         Thread.sleep(1000);
       }
       assertFalse(cluster.isClusterUp());
-
-      // Workaround a strange issue with Hadoop's RPC system - if we don't
-      // sleep here, the new datanodes will pick up a cached IPC connection to
-      // the old (dead) NN and fail to start. Sleeping 2 seconds goes past
-      // the idle time threshold configured in the conf above
-      Thread.sleep(2000);
-
-      LOG.info("Waiting a few seconds before re-starting HDFS");
-      Thread.sleep(5000);
-      cluster = TEST_UTIL.startMiniDFSClusterForTestHLog(namenodePort);
+      cluster = null;
+      for (int i = 0; i < 100; i++) {
+        try {
+          cluster = TEST_UTIL.startMiniDFSClusterForTestHLog(namenodePort);
+          break;
+        } catch (BindException e) {
+          LOG.info("Sleeping.  BindException bringing up new cluster");
+          Threads.sleep(1000);
+        }
+      }
       cluster.waitActive();
       fs = cluster.getFileSystem();
       LOG.info("STARTED second instance.");
@@ -482,7 +483,7 @@ public class TestHLog  {
       throw t.exception;
 
     // Make sure you can read all the content
-    HLog.Reader reader = HLogFactory.createReader(this.fs, walPath, this.conf);
+    HLog.Reader reader = HLogFactory.createReader(fs, walPath, conf);
     int count = 0;
     HLog.Entry entry = new HLog.Entry();
     while (reader.next(entry) != null) {
@@ -511,7 +512,7 @@ public class TestHLog  {
     HLog log = null;
     try {
       log = HLogFactory.createHLog(fs, hbaseDir, getName(), conf);
-      
+
       // Write columns named 1, 2, 3, etc. and then values of single byte
       // 1, 2, 3...
       long timestamp = System.currentTimeMillis();
@@ -661,7 +662,7 @@ public class TestHLog  {
     final TableName tableName2 =
         TableName.valueOf("testLogCleaning2");
 
-    HLog log = HLogFactory.createHLog(fs, hbaseDir, 
+    HLog log = HLogFactory.createHLog(fs, hbaseDir,
         getName(), conf);
     try {
       HRegionInfo hri = new HRegionInfo(tableName,
@@ -745,7 +746,7 @@ public class TestHLog  {
   @Test
   public void testWALCoprocessorLoaded() throws Exception {
     // test to see whether the coprocessor is loaded or not.
-    HLog log = HLogFactory.createHLog(fs, hbaseDir, 
+    HLog log = HLogFactory.createHLog(fs, hbaseDir,
         getName(), conf);
     try {
       WALCoprocessorHost host = log.getCoprocessorHost();
@@ -769,7 +770,7 @@ public class TestHLog  {
       log.append(hri, tableName, cols, timestamp, htd);
     }
   }
-  
+
 
   /**
    * @throws IOException
@@ -964,7 +965,7 @@ public class TestHLog  {
     @Override
     public void logRollRequested() {
       // TODO Auto-generated method stub
-      
+
     }
 
     @Override

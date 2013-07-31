@@ -39,7 +39,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.LargeTests;
-import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
+import org.apache.hadoop.hbase.NotServingRegionException;
 import org.apache.hadoop.hbase.ipc.PayloadCarryingRpcController;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.Stoppable;
@@ -226,7 +226,8 @@ public class TestEndToEndSplitTransaction {
       try {
         Random random = new Random();
         for (int i=0; i< 5; i++) {
-          NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, tableName, false);
+          NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, null,
+              tableName, false);
           if (regions.size() == 0) {
             continue;
           }
@@ -298,8 +299,8 @@ public class TestEndToEndSplitTransaction {
     void verifyRegionsUsingMetaScanner() throws Exception {
 
       //MetaScanner.allTableRegions()
-      NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, tableName,
-          false);
+      NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, null,
+          tableName, false);
       verifyTableRegions(regions.keySet());
 
       //MetaScanner.listAllRegions()

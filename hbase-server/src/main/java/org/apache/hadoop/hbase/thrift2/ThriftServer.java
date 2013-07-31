@@ -18,6 +18,7 @@
  */
 package org.apache.hadoop.hbase.thrift2;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -40,11 +41,13 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.thrift.CallQueue;
 import org.apache.hadoop.hbase.thrift.CallQueue.Call;
 import org.apache.hadoop.hbase.thrift.ThriftMetrics;
 import org.apache.hadoop.hbase.thrift2.generated.THBaseService;
 import org.apache.hadoop.hbase.util.InfoServer;
+import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -104,9 +107,12 @@ public class ThriftServer {
     return options;
   }
 
-  private static CommandLine parseArguments(Options options, String[] args) throws ParseException {
+  private static CommandLine parseArguments(Configuration conf, Options options, String[] args)
+      throws ParseException, IOException {
+    GenericOptionsParser genParser = new GenericOptionsParser(conf, args);
+    String[] remainingArgs = genParser.getRemainingArgs();
     CommandLineParser parser = new PosixParser();
-    return parser.parse(options, args);
+    return parser.parse(options, remainingArgs);
   }
 
   private static TProtocolFactory getTProtocolFactory(boolean isCompact) {
@@ -129,7 +135,7 @@ public class ThriftServer {
   }
 
   /*
-   * If bindValue is null, we don't bind. 
+   * If bindValue is null, we don't bind.
    */
   private static InetSocketAddress bindToPort(String bindValue, int listenPort)
       throws UnknownHostException {
@@ -194,15 +200,35 @@ public class ThriftServer {
   }
 
   /**
+   * Adds the option to pre-load filters at startup.
+   *
+   * @param conf  The current configuration instance.
+   */
+  protected static void registerFilters(Configuration conf) {
+    String[] filters = conf.getStrings("hbase.thrift.filters");
+    if(filters != null) {
+      for(String filterClass: filters) {
+        String[] filterPart = filterClass.split(":");
+        if(filterPart.length != 2) {
+          log.warn("Invalid filter specification " + filterClass + " - skipping");
+        } else {
+          ParseFilter.registerFilter(filterPart[0], filterPart[1]);
+        }
+      }
+    }
+  }
+
+  /**
    * Start up the Thrift2 server.
-   * 
+   *
    * @param args
    */
   public static void main(String[] args) throws Exception {
     TServer server = null;
     Options options = getOptions();
     try {
-      CommandLine cmd = parseArguments(options, args);
+      Configuration conf = HBaseConfiguration.create();
+      CommandLine cmd = parseArguments(conf, options, args);
 
       /**
        * This is to please both bin/hbase and bin/hbase-daemon. hbase-daemon provides "start" and "stop" arguments hbase
@@ -225,7 +251,6 @@ public class ThriftServer {
       boolean nonblocking = cmd.hasOption("nonblocking");
       boolean hsha = cmd.hasOption("hsha");
 
-      Configuration conf = HBaseConfiguration.create();
       ThriftMetrics metrics = new ThriftMetrics(conf, ThriftMetrics.ThriftServerType.TWO);
 
       String implType = "threadpool";
@@ -237,16 +262,19 @@ public class ThriftServer {
 
       conf.set("hbase.regionserver.thrift.server.type", implType);
       conf.setInt("hbase.regionserver.thrift.port", listenPort);
+      registerFilters(conf);
 
       // Construct correct ProtocolFactory
-      boolean compact = cmd.hasOption("compact");
+      boolean compact = cmd.hasOption("compact") ||
+        conf.getBoolean("hbase.regionserver.thrift.compact", false);
       TProtocolFactory protocolFactory = getTProtocolFactory(compact);
       THBaseService.Iface handler =
           ThriftHBaseServiceHandler.newInstance(conf, metrics);
       THBaseService.Processor processor = new THBaseService.Processor(handler);
       conf.setBoolean("hbase.regionserver.thrift.compact", compact);
 
-      boolean framed = cmd.hasOption("framed") || nonblocking || hsha;
+      boolean framed = cmd.hasOption("framed") ||
+        conf.getBoolean("hbase.regionserver.thrift.framed", false) || nonblocking || hsha;
       TTransportFactory transportFactory = getTTransportFactory(framed);
       InetSocketAddress inetSocketAddress = bindToPort(cmd.getOptionValue("bind"), listenPort);
       conf.setBoolean("hbase.regionserver.thrift.framed", framed);

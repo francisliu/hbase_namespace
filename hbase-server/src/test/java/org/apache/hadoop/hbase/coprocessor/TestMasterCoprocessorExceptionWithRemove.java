@@ -192,7 +192,7 @@ public class TestMasterCoprocessorExceptionWithRemove {
       HBaseAdmin admin = UTIL.getHBaseAdmin();
       admin.createTable(htd1);
     } catch (IOException e) {
-      if (e.getClass().getName().equals("org.apache.hadoop.hbase.exceptions.DoNotRetryIOException")) {
+      if (e.getClass().getName().equals("org.apache.hadoop.hbase.DoNotRetryIOException")) {
         threwDNRE = true;
       }
     } finally {

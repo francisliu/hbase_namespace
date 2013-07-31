@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,12 +37,15 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
-import org.apache.hadoop.hbase.exceptions.SnapshotCreationException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Durability;
+import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -57,6 +62,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
+import org.apache.hadoop.hbase.util.MD5Hash;
 import org.apache.log4j.Level;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -80,8 +86,10 @@ public class TestFlushSnapshotFromClient {
   private static final int NUM_RS = 2;
   private static final String STRING_TABLE_NAME = "test";
   private static final byte[] TEST_FAM = Bytes.toBytes("fam");
+  private static final byte[] TEST_QUAL = Bytes.toBytes("q");
   private static final TableName TABLE_NAME =
       TableName.valueOf(STRING_TABLE_NAME);
+  private final int DEFAULT_NUM_ROWS = 100;
 
   /**
    * Setup the config for the cluster
@@ -107,8 +115,6 @@ public class TestFlushSnapshotFromClient {
     conf.setInt("hbase.hstore.compactionThreshold", 10);
     // block writes if we get to 12 store files
     conf.setInt("hbase.hstore.blockingStoreFiles", 12);
-    // drop the number of attempts for the hbase admin
-    conf.setInt("hbase.client.retries.number", 1);
     // Enable snapshot
     conf.setBoolean(SnapshotManager.HBASE_SNAPSHOT_ENABLED, true);
     conf.set(HConstants.HBASE_REGION_SPLIT_POLICY_KEY,
@@ -117,7 +123,7 @@ public class TestFlushSnapshotFromClient {
 
   @Before
   public void setup() throws Exception {
-    UTIL.createTable(TABLE_NAME, TEST_FAM);
+    createTable(TABLE_NAME, TEST_FAM);
   }
 
   @After
@@ -125,10 +131,15 @@ public class TestFlushSnapshotFromClient {
     UTIL.deleteTable(TABLE_NAME);
     // and cleanup the archive directory
     try {
-      UTIL.getTestFileSystem().delete(new Path(UTIL.getDefaultRootDirPath(), ".archive"), true);
+      UTIL.getTestFileSystem().delete(
+        new Path(UTIL.getDefaultRootDirPath(), HConstants.HFILE_ARCHIVE_DIRECTORY), true);
     } catch (IOException e) {
       LOG.warn("Failure to delete archive directory", e);
     }
+    for (SnapshotDescription snapshot: UTIL.getHBaseAdmin().listSnapshots()) {
+      UTIL.getHBaseAdmin().deleteSnapshot(snapshot.getName());
+    }
+    SnapshotTestingUtils.assertNoSnapshots(UTIL.getHBaseAdmin());
   }
 
   @AfterClass
@@ -144,7 +155,7 @@ public class TestFlushSnapshotFromClient {
    * Test simple flush snapshotting a table that is online
    * @throws Exception
    */
-  @Test
+  @Test (timeout=300000)
   public void testFlushTableSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots
@@ -152,7 +163,7 @@ public class TestFlushSnapshotFromClient {
 
     // put some stuff in the table
     HTable table = new HTable(UTIL.getConfiguration(), TABLE_NAME);
-    UTIL.loadTable(table, TEST_FAM);
+    loadData(table, DEFAULT_NUM_ROWS, TEST_FAM);
 
     // get the name of all the regionservers hosting the snapshotted table
     Set<String> snapshotServers = new HashSet<String>();
@@ -186,13 +197,9 @@ public class TestFlushSnapshotFromClient {
 
     SnapshotTestingUtils.confirmSnapshotValid(snapshots.get(0), TABLE_NAME, TEST_FAM, rootDir,
       admin, fs, false, new Path(rootDir, HConstants.HREGION_LOGDIR_NAME), snapshotServers);
-
-    admin.deleteSnapshot(snapshot);
-    snapshots = admin.listSnapshots();
-    SnapshotTestingUtils.assertNoSnapshots(admin);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSnapshotFailsOnNonExistantTable() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots
@@ -205,7 +212,7 @@ public class TestFlushSnapshotFromClient {
     try {
       admin.getTableDescriptor(Bytes.toBytes(tableName));
       fail = true;
-          LOG.error("Table:" + tableName + " already exists, checking a new name");
+      LOG.error("Table:" + tableName + " already exists, checking a new name");
       tableName = tableName+"!";
     } catch (TableNotFoundException e) {
       fail = false;
@@ -221,7 +228,7 @@ public class TestFlushSnapshotFromClient {
     }
   }
 
-  @Test(timeout = 60000)
+  @Test(timeout = 300000)
   public void testAsyncFlushSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("asyncSnapshot")
@@ -238,29 +245,117 @@ public class TestFlushSnapshotFromClient {
       FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
     // make sure we get the snapshot
     SnapshotTestingUtils.assertOneSnapshotThatMatches(admin, snapshot);
+  }
+
+  @Test (timeout=300000)
+  public void testSnapshotStateAfterMerge() throws Exception {
+    int numRows = DEFAULT_NUM_ROWS;
+    HBaseAdmin admin = UTIL.getHBaseAdmin();
+    // make sure we don't fail on listing snapshots
+    SnapshotTestingUtils.assertNoSnapshots(admin);
+    // load the table so we have some data
+    loadData(new HTable(UTIL.getConfiguration(), TABLE_NAME), numRows, TEST_FAM);
+    // and wait until everything stabilizes
+    waitForTableToBeOnline(TABLE_NAME);
+
+    // Take a snapshot
+    String snapshotBeforeMergeName = "snapshotBeforeMerge";
+    admin.snapshot(snapshotBeforeMergeName, STRING_TABLE_NAME, SnapshotDescription.Type.FLUSH);
+
+    // Clone the table
+    String cloneBeforeMergeName = "cloneBeforeMerge";
+    admin.cloneSnapshot(snapshotBeforeMergeName, cloneBeforeMergeName);
+    waitForTableToBeOnline(TableName.valueOf(cloneBeforeMergeName));
+
+    // Merge two regions
+    List<HRegionInfo> regions = admin.getTableRegions(TABLE_NAME);
+    Collections.sort(regions, new Comparator<HRegionInfo>() {
+      public int compare(HRegionInfo r1, HRegionInfo r2) {
+        return Bytes.compareTo(r1.getStartKey(), r2.getStartKey());
+      }
+    });
+
+    int numRegions = admin.getTableRegions(TABLE_NAME).size();
+    int numRegionsAfterMerge = numRegions - 2;
+    admin.mergeRegions(regions.get(1).getEncodedNameAsBytes(),
+        regions.get(2).getEncodedNameAsBytes(), true);
+    admin.mergeRegions(regions.get(5).getEncodedNameAsBytes(),
+        regions.get(6).getEncodedNameAsBytes(), true);
+
+    // Verify that there's one region less
+    waitRegionsAfterMerge(numRegionsAfterMerge);
+    assertEquals(numRegionsAfterMerge, admin.getTableRegions(TABLE_NAME).size());
+
+    // Clone the table
+    String cloneAfterMergeName = "cloneAfterMerge";
+    admin.cloneSnapshot(snapshotBeforeMergeName, cloneAfterMergeName);
+    waitForTableToBeOnline(TableName.valueOf(cloneAfterMergeName));
+
+    verifyRowCount(TABLE_NAME.getName(), numRows);
+    verifyRowCount(Bytes.toBytes(cloneBeforeMergeName), numRows);
+    verifyRowCount(Bytes.toBytes(cloneAfterMergeName), numRows);
 
     // test that we can delete the snapshot
-    admin.deleteSnapshot(snapshot.getName());
-    LOG.info(" === Async Snapshot Deleted ===");
-    FSUtils.logFileSystemState(UTIL.getTestFileSystem(),
-      FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
-    // make sure we don't have any snapshots
-    SnapshotTestingUtils.assertNoSnapshots(admin);
-    LOG.info(" === Async Snapshot Test Completed ===");
+    UTIL.deleteTable(cloneAfterMergeName);
+    UTIL.deleteTable(cloneBeforeMergeName);
+  }
 
+  @Test (timeout=300000)
+  public void testTakeSnapshotAfterMerge() throws Exception {
+    int numRows = DEFAULT_NUM_ROWS;
+    HBaseAdmin admin = UTIL.getHBaseAdmin();
+    // make sure we don't fail on listing snapshots
+    SnapshotTestingUtils.assertNoSnapshots(admin);
+    // load the table so we have some data
+    loadData(new HTable(UTIL.getConfiguration(), TABLE_NAME), numRows, TEST_FAM);
+    // and wait until everything stabilizes
+    waitForTableToBeOnline(TABLE_NAME);
+
+    // Merge two regions
+    List<HRegionInfo> regions = admin.getTableRegions(TABLE_NAME);
+    Collections.sort(regions, new Comparator<HRegionInfo>() {
+      public int compare(HRegionInfo r1, HRegionInfo r2) {
+        return Bytes.compareTo(r1.getStartKey(), r2.getStartKey());
+      }
+    });
+
+    int numRegions = admin.getTableRegions(TABLE_NAME).size();
+    int numRegionsAfterMerge = numRegions - 2;
+    admin.mergeRegions(regions.get(1).getEncodedNameAsBytes(),
+        regions.get(2).getEncodedNameAsBytes(), true);
+    admin.mergeRegions(regions.get(5).getEncodedNameAsBytes(),
+        regions.get(6).getEncodedNameAsBytes(), true);
+
+    waitRegionsAfterMerge(numRegionsAfterMerge);
+    assertEquals(numRegionsAfterMerge, admin.getTableRegions(TABLE_NAME).size());
+
+    // Take a snapshot
+    String snapshotName = "snapshotAfterMerge";
+    admin.snapshot(snapshotName, STRING_TABLE_NAME, SnapshotDescription.Type.FLUSH);
+
+    // Clone the table
+    String cloneName = "cloneMerge";
+    admin.cloneSnapshot(snapshotName, cloneName);
+    waitForTableToBeOnline(TableName.valueOf(cloneName));
+
+    verifyRowCount(TABLE_NAME.getName(), numRows);
+    verifyRowCount(Bytes.toBytes(cloneName), numRows);
+
+    // test that we can delete the snapshot
+    UTIL.deleteTable(cloneName);
   }
 
   /**
    * Basic end-to-end test of simple-flush-based snapshots
    */
-  @Test
+  @Test (timeout=300000)
   public void testFlushCreateListDestroy() throws Exception {
     LOG.debug("------- Starting Snapshot test -------------");
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots
     SnapshotTestingUtils.assertNoSnapshots(admin);
     // load the table so we have some data
-    UTIL.loadTable(new HTable(UTIL.getConfiguration(), TABLE_NAME), TEST_FAM);
+    loadData(new HTable(UTIL.getConfiguration(), TABLE_NAME), DEFAULT_NUM_ROWS, TEST_FAM);
     // and wait until everything stabilizes
     waitForTableToBeOnline(TABLE_NAME);
 
@@ -290,6 +385,7 @@ public class TestFlushSnapshotFromClient {
 
     // check the region snapshot for all the regions
     List<HRegionInfo> regions = admin.getTableRegions(TABLE_NAME);
+    assertTrue(regions.size() > 1);
     for (HRegionInfo info : regions) {
       String regionName = info.getEncodedName();
       Path regionDir = new Path(snapshotDir, regionName);
@@ -297,19 +393,12 @@ public class TestFlushSnapshotFromClient {
       assertEquals(info, snapshotRegionInfo);
       // check to make sure we have the family
       Path familyDir = new Path(regionDir, Bytes.toString(TEST_FAM));
-      assertTrue(fs.exists(familyDir));
+      assertTrue("Missing region " + Bytes.toString(snapshotRegionInfo.getStartKey()),
+                 fs.exists(familyDir));
+
       // make sure we have some file references
       assertTrue(fs.listStatus(familyDir).length > 0);
     }
-
-    // test that we can delete the snapshot
-    admin.deleteSnapshot(snapshotName);
-    FSUtils.logFileSystemState(UTIL.getTestFileSystem(),
-      FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
-
-    // make sure we don't have any snapshots
-    SnapshotTestingUtils.assertNoSnapshots(admin);
-    LOG.debug("------- Flush-Snapshot Create List Destroy-------------");
   }
 
   /**
@@ -317,7 +406,7 @@ public class TestFlushSnapshotFromClient {
    * same table currently running and that concurrent snapshots on different tables can both
    * succeed concurretly.
    */
-  @Test(timeout=60000)
+  @Test(timeout=300000)
   public void testConcurrentSnapshottingAttempts() throws IOException, InterruptedException {
     final String STRING_TABLE2_NAME = STRING_TABLE_NAME + "2";
     final TableName TABLE2_NAME =
@@ -328,10 +417,10 @@ public class TestFlushSnapshotFromClient {
     // make sure we don't fail on listing snapshots
     SnapshotTestingUtils.assertNoSnapshots(admin);
     // create second testing table
-    UTIL.createTable(TABLE2_NAME, TEST_FAM);
+    createTable(TABLE2_NAME, TEST_FAM);
     // load the table so we have some data
-    UTIL.loadTable(new HTable(UTIL.getConfiguration(), TABLE_NAME), TEST_FAM);
-    UTIL.loadTable(new HTable(UTIL.getConfiguration(), TABLE2_NAME), TEST_FAM);
+    loadData(new HTable(UTIL.getConfiguration(), TABLE_NAME), DEFAULT_NUM_ROWS, TEST_FAM);
+    loadData(new HTable(UTIL.getConfiguration(), TABLE2_NAME), DEFAULT_NUM_ROWS, TEST_FAM);
     // and wait until everything stabilizes
     waitForTableToBeOnline(TABLE_NAME);
     waitForTableToBeOnline(TABLE2_NAME);
@@ -419,10 +508,6 @@ public class TestFlushSnapshotFromClient {
     assertTrue("We expect at least 1 snapshot of table1 ", t1SnapshotsCount > 0);
     assertTrue("We expect at least 1 snapshot of table2 ", t2SnapshotsCount > 0);
 
-    // delete snapshots so subsequent tests are clean.
-    for (SnapshotDescription ss : taken) {
-      admin.deleteSnapshot(ss.getName());
-    }
     UTIL.deleteTable(TABLE2_NAME);
   }
 
@@ -430,11 +515,86 @@ public class TestFlushSnapshotFromClient {
     FSUtils.logFileSystemState(UTIL.getDFSCluster().getFileSystem(), root, LOG);
   }
 
-  private void waitForTableToBeOnline(final TableName tableName) throws IOException {
-    HRegionServer rs = UTIL.getRSForFirstRegionInTable(tableName);
+  private void waitForTableToBeOnline(final TableName tableName)
+      throws IOException, InterruptedException {
+    HRegionServer rs = UTIL.getRSForFirstRegionInTable(tableName.getName());
     List<HRegion> onlineRegions = rs.getOnlineRegions(tableName);
     for (HRegion region : onlineRegions) {
       region.waitForFlushesAndCompactions();
     }
+    UTIL.getHBaseAdmin().isTableAvailable(tableName);
+  }
+
+  private void waitRegionsAfterMerge(final long numRegionsAfterMerge)
+      throws IOException, InterruptedException {
+    HBaseAdmin admin = UTIL.getHBaseAdmin();
+    // Verify that there's one region less
+    long startTime = System.currentTimeMillis();
+    while (admin.getTableRegions(TABLE_NAME).size() != numRegionsAfterMerge) {
+      // This may be flaky... if after 15sec the merge is not complete give up
+      // it will fail in the assertEquals(numRegionsAfterMerge).
+      if ((System.currentTimeMillis() - startTime) > 15000)
+        break;
+      Thread.sleep(100);
+    }
+    waitForTableToBeOnline(TABLE_NAME);
+  }
+
+  private void createTable(final TableName tableName, final byte[]... families)
+      throws IOException, InterruptedException {
+    HTableDescriptor htd = new HTableDescriptor(tableName);
+    for (byte[] family: families) {
+      HColumnDescriptor hcd = new HColumnDescriptor(family);
+      htd.addFamily(hcd);
+    }
+    byte[][] splitKeys = new byte[14][];
+    byte[] hex = Bytes.toBytes("123456789abcde");
+    for (int i = 0; i < splitKeys.length; ++i) {
+      splitKeys[i] = new byte[] { hex[i] };
+    }
+    UTIL.getHBaseAdmin().createTable(htd, splitKeys);
+    waitForTableToBeOnline(tableName);
+    assertEquals(15, UTIL.getHBaseAdmin().getTableRegions(TABLE_NAME).size());
+  }
+
+  public void loadData(final HTable table, int rows, byte[]... families)
+      throws IOException, InterruptedException {
+    table.setAutoFlush(false);
+
+    // Ensure one row per region
+    assertTrue(rows >= 16);
+    for (byte k0: Bytes.toBytes("0123456789abcdef")) {
+      byte[] k = new byte[] { k0 };
+      byte[] value = Bytes.add(Bytes.toBytes(System.currentTimeMillis()), k);
+      byte[] key = Bytes.add(k, Bytes.toBytes(MD5Hash.getMD5AsHex(value)));
+      putData(table, families, key, value);
+      rows--;
+    }
+
+    // Add other extra rows. more rows, more files
+    while (rows-- > 0) {
+      byte[] value = Bytes.add(Bytes.toBytes(System.currentTimeMillis()), Bytes.toBytes(rows));
+      byte[] key = Bytes.toBytes(MD5Hash.getMD5AsHex(value));
+      putData(table, families, key, value);
+    }
+    table.flushCommits();
+
+    waitForTableToBeOnline(table.getTableNameAsPOJO());
+  }
+
+  private void putData(final HTable table, final byte[][] families,
+      final byte[] key, final byte[] value) throws IOException {
+    Put put = new Put(key);
+    put.setDurability(Durability.SKIP_WAL);
+    for (byte[] family: families) {
+      put.add(family, TEST_QUAL, value);
+    }
+    table.put(put);
+  }
+
+  private void verifyRowCount(final byte[] tableName, long expectedRows) throws IOException {
+    HTable table = new HTable(UTIL.getConfiguration(), tableName);
+    assertEquals(expectedRows, UTIL.countRows(table));
+    table.close();
   }
 }

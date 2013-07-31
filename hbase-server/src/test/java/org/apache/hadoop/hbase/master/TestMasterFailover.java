@@ -47,11 +47,11 @@ import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.RegionTransition;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.exceptions.RegionServerStoppedException;
 import org.apache.hadoop.hbase.executor.EventType;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
+import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
@@ -789,7 +789,7 @@ public class TestMasterFailover {
     ZKAssign.blockUntilNoRIT(zkw);
     log("No more RIT in ZK");
     long now = System.currentTimeMillis();
-    final long maxTime = 120000;
+    long maxTime = 120000;
     boolean done = master.assignmentManager.waitUntilNoRegionsInTransition(maxTime);
     if (!done) {
       LOG.info("rit=" + master.getAssignmentManager().getRegionStates().getRegionsInTransition());
@@ -801,10 +801,22 @@ public class TestMasterFailover {
 
     // Grab all the regions that are online across RSs
     Set<HRegionInfo> onlineRegions = new TreeSet<HRegionInfo>();
+    now = System.currentTimeMillis();
+    maxTime = 30000;
     for (JVMClusterUtil.RegionServerThread rst :
         cluster.getRegionServerThreads()) {
       try {
-        onlineRegions.addAll(ProtobufUtil.getOnlineRegions(rst.getRegionServer()));
+        HRegionServer rs = rst.getRegionServer();
+        while (!rs.getRegionsInTransitionInRS().isEmpty()) {
+          elapsed = System.currentTimeMillis() - now;
+          assertTrue("Test timed out in getting online regions", elapsed < maxTime);
+          if (rs.isAborted() || rs.isStopped()) {
+            // This region server is stopped, skip it.
+            break;
+          }
+          Thread.sleep(100);
+        }
+        onlineRegions.addAll(ProtobufUtil.getOnlineRegions(rs));
       } catch (RegionServerStoppedException e) {
         LOG.info("Got RegionServerStoppedException", e);
       }

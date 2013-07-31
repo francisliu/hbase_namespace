@@ -89,7 +89,7 @@ public class TestAssignmentManagerOnCluster {
   /**
    * This tests region assignment
    */
-  @Test
+  @Test (timeout=60000)
   public void testAssignRegion() throws Exception {
     String table = "testAssignRegion";
     try {
@@ -117,7 +117,7 @@ public class TestAssignmentManagerOnCluster {
   /**
    * This tests region assignment on a simulated restarted server
    */
-  @Test
+  @Test (timeout=60000)
   public void testAssignRegionOnRestartedServer() throws Exception {
     String table = "testAssignRegionOnRestartedServer";
     ServerName deadServer = null;
@@ -175,7 +175,7 @@ public class TestAssignmentManagerOnCluster {
   /**
    * This tests offlining a region
    */
-  @Test
+  @Test (timeout=60000)
   public void testOfflineRegion() throws Exception {
     TableName table =
         TableName.valueOf("testOfflineRegion");
@@ -261,7 +261,7 @@ public class TestAssignmentManagerOnCluster {
 
     // wait till the table is assigned
     HMaster master = TEST_UTIL.getHBaseCluster().getMaster();
-    long timeoutTime = System.currentTimeMillis() + 100;
+    long timeoutTime = System.currentTimeMillis() + 1000;
     while (true) {
       List<HRegionInfo> regions = master.getAssignmentManager().
         getRegionStates().getRegionsOfTable(tableName);
@@ -329,7 +329,7 @@ public class TestAssignmentManagerOnCluster {
   /**
    * This tests region close failed
    */
-  @Test (timeout=30000)
+  @Test (timeout=60000)
   public void testCloseFailed() throws Exception {
     String table = "testCloseFailed";
     try {
@@ -373,7 +373,7 @@ public class TestAssignmentManagerOnCluster {
   /**
    * This tests region open failed
    */
-  @Test (timeout=30000)
+  @Test (timeout=60000)
   public void testOpenFailed() throws Exception {
     String table = "testOpenFailed";
     try {
@@ -412,7 +412,7 @@ public class TestAssignmentManagerOnCluster {
   /**
    * This tests region open failure which is not recoverable
    */
-  @Test (timeout=30000)
+  @Test (timeout=60000)
   public void testOpenFailedUnrecoverable() throws Exception {
     TableName table =
         TableName.valueOf("testOpenFailedUnrecoverable");
@@ -453,8 +453,8 @@ public class TestAssignmentManagerOnCluster {
       TEST_UTIL.deleteTable(table);
     }
   }
-  
-  @Test
+
+  @Test (timeout=60000)
   public void testSSHWhenDisablingTableRegionsInOpeningOrPendingOpenState() throws Exception {
     final TableName table =
         TableName.valueOf
@@ -485,7 +485,9 @@ public class TestAssignmentManagerOnCluster {
       assertTrue("Regions to be assigned should be empty.", am.getRegionStates()
           .getRegionState(hri).isOffline());
     } finally {
-      am.regionOnline(hri, serverName);
+      if (hri != null && serverName != null) {
+        am.regionOnline(hri, serverName);
+      }
       am.getZKTable().setDisabledTable(table);
       TEST_UTIL.deleteTable(table);
     }

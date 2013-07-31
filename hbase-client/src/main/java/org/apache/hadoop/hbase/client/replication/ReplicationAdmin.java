@@ -25,7 +25,9 @@ import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HConnectionManager;
-import org.apache.hadoop.hbase.replication.ReplicationZookeeper;
+import org.apache.hadoop.hbase.replication.ReplicationFactory;
+import org.apache.hadoop.hbase.replication.ReplicationPeers;
+import org.apache.hadoop.hbase.replication.ReplicationQueuesClient;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.zookeeper.KeeperException;
 
@@ -52,16 +54,6 @@ import java.util.Map;
  * used to keep track of the replication state.
  * </p>
  * <p>
- * Enabling and disabling peers is currently not supported.
- * </p>
- * <p>
- * As cluster replication is still experimental, a kill switch is provided
- * in order to stop all replication-related operations, see
- * {@link #setReplicating(boolean)}. When setting it back to true, the new
- * state of all the replication streams will be unknown and may have holes.
- * Use at your own risk.
- * </p>
- * <p>
  * To see which commands are available in the shell, type
  * <code>replication</code>.
  * </p>
@@ -69,8 +61,9 @@ import java.util.Map;
 public class ReplicationAdmin implements Closeable {
   private static final Log LOG = LogFactory.getLog(ReplicationAdmin.class);
 
-  private final ReplicationZookeeper replicationZk;
   private final HConnection connection;
+  private final ReplicationQueuesClient replicationQueuesClient;
+  private final ReplicationPeers replicationPeers;
 
   /**
    * Constructor that creates a connection to the local ZooKeeper ensemble.
@@ -86,7 +79,12 @@ public class ReplicationAdmin implements Closeable {
     this.connection = HConnectionManager.getConnection(conf);
     ZooKeeperWatcher zkw = createZooKeeperWatcher();
     try {
-      this.replicationZk = new ReplicationZookeeper(this.connection, conf, zkw);
+      this.replicationPeers = ReplicationFactory.getReplicationPeers(zkw, conf, this.connection);
+      this.replicationPeers.init();
+      this.replicationQueuesClient =
+          ReplicationFactory.getReplicationQueuesClient(zkw, conf, this.connection);
+      this.replicationQueuesClient.init();
+
     } catch (KeeperException e) {
       throw new IOException("Unable setup the ZooKeeper connection", e);
     }
@@ -119,7 +117,7 @@ public class ReplicationAdmin implements Closeable {
    * multi-slave isn't supported yet.
    */
   public void addPeer(String id, String clusterKey) throws IOException {
-    this.replicationZk.addPeer(id, clusterKey);
+    this.replicationPeers.addPeer(id, clusterKey);
   }
 
   /**
@@ -127,7 +125,7 @@ public class ReplicationAdmin implements Closeable {
    * @param id a short that identifies the cluster
    */
   public void removePeer(String id) throws IOException {
-    this.replicationZk.removePeer(id);
+    this.replicationPeers.removePeer(id);
   }
 
   /**
@@ -135,7 +133,7 @@ public class ReplicationAdmin implements Closeable {
    * @param id a short that identifies the cluster
    */
   public void enablePeer(String id) throws IOException {
-    this.replicationZk.enablePeer(id);
+    this.replicationPeers.enablePeer(id);
   }
 
   /**
@@ -143,7 +141,7 @@ public class ReplicationAdmin implements Closeable {
    * @param id a short that identifies the cluster
    */
   public void disablePeer(String id) throws IOException {
-    this.replicationZk.disablePeer(id);
+    this.replicationPeers.disablePeer(id);
   }
 
   /**
@@ -151,7 +149,7 @@ public class ReplicationAdmin implements Closeable {
    * @return number of slave clusters
    */
   public int getPeersCount() {
-    return this.replicationZk.listPeersIdsAndWatch().size();
+    return this.replicationPeers.getAllPeerIds().size();
   }
 
   /**
@@ -159,45 +157,7 @@ public class ReplicationAdmin implements Closeable {
    * @return A map of peer ids to peer cluster keys
    */
   public Map<String, String> listPeers() {
-    return this.replicationZk.listPeers();
-  }
-
-  /**
-   * Get the current status of the kill switch, if the cluster is replicating
-   * or not.
-   * @return true if the cluster is replicated, otherwise false
-   */
-  public boolean getReplicating() throws IOException {
-    try {
-      return this.replicationZk.getReplication();
-    } catch (KeeperException e) {
-      throw new IOException("Couldn't get the replication status");
-    }
-  }
-
-  /**
-   * Kill switch for all replication-related features
-   * @param newState true to start replication, false to stop it.
-   * completely
-   * @return the previous state
-   */
-  public boolean setReplicating(boolean newState) throws IOException {
-    boolean prev = true;
-    try {
-      prev = getReplicating();
-      this.replicationZk.setReplication(newState);
-    } catch (KeeperException e) {
-      throw new IOException("Unable to set the replication state", e);
-    }
-    return prev;
-  }
-
-  /**
-   * Get the ZK-support tool created and used by this object for replication.
-   * @return the ZK-support tool
-   */
-  ReplicationZookeeper getReplicationZk() {
-    return replicationZk;
+    return this.replicationPeers.getAllPeerClusterKeys();
   }
 
   @Override

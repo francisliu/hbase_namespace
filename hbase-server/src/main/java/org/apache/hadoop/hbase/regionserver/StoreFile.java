@@ -93,7 +93,7 @@ public class StoreFile {
   public static final byte[] MAJOR_COMPACTION_KEY =
       Bytes.toBytes("MAJOR_COMPACTION_KEY");
 
-  /** Major compaction flag in FileInfo */
+  /** Minor compaction flag in FileInfo */
   public static final byte[] EXCLUDE_FROM_MINOR_COMPACTION_KEY =
       Bytes.toBytes("EXCLUDE_FROM_MINOR_COMPACTION");
 
@@ -950,7 +950,7 @@ public class StoreFile {
 
     private void appendDeleteFamilyBloomFilter(final KeyValue kv)
         throws IOException {
-      if (!kv.isDeleteFamily()) {
+      if (!kv.isDeleteFamily() && !kv.isDeleteFamilyVersion()) {
         return;
       }
 

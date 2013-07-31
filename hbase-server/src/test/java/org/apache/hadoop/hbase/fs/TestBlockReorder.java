@@ -19,6 +19,12 @@
 package org.apache.hadoop.hbase.fs;
 
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.BindException;
+import java.net.ServerSocket;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.Log4JLogger;
@@ -36,9 +42,9 @@ import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
-import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.apache.hadoop.hbase.regionserver.wal.HLogUtil;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
@@ -55,11 +61,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.ServerSocket;
 
 /**
  * Tests for the hdfs fix from HBASE-6435.
@@ -179,12 +180,25 @@ public class TestBlockReorder {
         }));
 
 
-    ServerSocket ss = new ServerSocket(port);// We're taking the port to have a timeout issue later.
-    ServerSocket ssI = new ServerSocket(ipcPort);
+    final int retries = 10;
+    ServerSocket ss = null;
+    ServerSocket ssI;
+    try {
+      ss = new ServerSocket(port);// We're taking the port to have a timeout issue later.
+      ssI = new ServerSocket(ipcPort);
+    } catch (BindException be) {
+      LOG.warn("Got bind exception trying to set up socket on " + port + " or " + ipcPort +
+          ", this means that the datanode has not closed the socket or" +
+          " someone else took it. It may happen, skipping this test for this time.", be);
+      if (ss != null) {
+        ss.close();
+      }
+      return;
+    }
 
     // Now it will fail with a timeout, unfortunately it does not always connect to the same box,
-    // so we try 10 times;  with the reorder it will never last more than a few milli seconds
-    for (int i = 0; i < 10; i++) {
+    // so we try retries times;  with the reorder it will never last more than a few milli seconds
+    for (int i = 0; i < retries; i++) {
       start = System.currentTimeMillis();
 
       fin = dfs.open(p);
@@ -194,6 +208,7 @@ public class TestBlockReorder {
       LOG.info("HFileSystem readtime= " + (end - start));
       Assert.assertFalse("We took too much time to read", (end - start) > 60000);
     }
+
     ss.close();
     ssI.close();
   }

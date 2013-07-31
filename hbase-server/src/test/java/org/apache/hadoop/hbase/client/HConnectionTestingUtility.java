@@ -24,7 +24,7 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.ServerName;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.client.HConnectionManager.HConnectionImplementation;
@@ -44,7 +44,7 @@ public class HConnectionTestingUtility {
    * configuration instance.  Minimally the mock will return
    * <code>conf</conf> when {@link HConnection#getConfiguration()} is invoked.
    * Be sure to shutdown the connection when done by calling
-   * {@link HConnectionManager#deleteConnection(HConnectionKey, boolean)} else it
+   * {@link HConnectionManager#deleteConnection(Configuration)} else it
    * will stick around; this is probably not what you want.
    * @param conf configuration
    * @return HConnection object for <code>conf</code>
@@ -70,7 +70,7 @@ public class HConnectionTestingUtility {
    * more of the popular {@link HConnection} methods so they do 'normal'
    * operation (see return doc below for list). Be sure to shutdown the
    * connection when done by calling
-   * {@link HConnectionManager#deleteConnection(HConnectionKey, boolean)} else it
+   * {@link HConnectionManager#deleteConnection(Configuration)} else it
    * will stick around; this is probably not what you want.
    *
    * @param conf Configuration to use
@@ -89,7 +89,7 @@ public class HConnectionTestingUtility {
    * {@link HConnection#getAdmin(ServerName)} is called, returns the passed
    * {@link ClientProtos.ClientService.BlockingInterface} instance when
    * {@link HConnection#getClient(ServerName)} is called (Be sure to call
-   * {@link HConnectionManager#deleteConnection(HConnectionKey, boolean)}
+   * {@link HConnectionManager#deleteConnection(Configuration)}
    * when done with this mocked Connection.
    * @throws IOException
    */
@@ -124,7 +124,7 @@ public class HConnectionTestingUtility {
    * Get a Mockito spied-upon {@link HConnection} that goes with the passed
    * <code>conf</code> configuration instance.
    * Be sure to shutdown the connection when done by calling
-   * {@link HConnectionManager#deleteConnection(HConnectionKey, boolean)} else it
+   * {@link HConnectionManager#deleteConnection(Configuration)} else it
    * will stick around; this is probably not what you want.
    * @param conf configuration
    * @return HConnection object for <code>conf</code>

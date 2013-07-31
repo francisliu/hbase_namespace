@@ -27,7 +27,14 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Increment;
+import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Durability;
+import org.apache.hadoop.hbase.filter.ParseFilter;
 import org.apache.hadoop.hbase.test.MetricsAssertHelper;
 import org.apache.hadoop.hbase.thrift.ThriftMetrics;
 import org.apache.hadoop.hbase.thrift2.generated.TColumn;
@@ -43,6 +50,9 @@ import org.apache.hadoop.hbase.thrift2.generated.TIncrement;
 import org.apache.hadoop.hbase.thrift2.generated.TPut;
 import org.apache.hadoop.hbase.thrift2.generated.TResult;
 import org.apache.hadoop.hbase.thrift2.generated.TScan;
+import org.apache.hadoop.hbase.thrift2.generated.TMutation;
+import org.apache.hadoop.hbase.thrift2.generated.TRowMutations;
+import org.apache.hadoop.hbase.thrift2.generated.TDurability;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.thrift.TException;
 import org.junit.AfterClass;
@@ -56,7 +66,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
+import static org.apache.hadoop.hbase.thrift2.ThriftUtilities.getFromThrift;
+import static org.apache.hadoop.hbase.thrift2.ThriftUtilities.putFromThrift;
+import static org.apache.hadoop.hbase.thrift2.ThriftUtilities.scanFromThrift;
+import static org.apache.hadoop.hbase.thrift2.ThriftUtilities.incrementFromThrift;
+import static org.apache.hadoop.hbase.thrift2.ThriftUtilities.deleteFromThrift;
 import static org.junit.Assert.*;
 import static java.nio.ByteBuffer.wrap;
 
@@ -464,7 +481,7 @@ public class TestThriftHBaseServiceHandler {
     TDelete delete = new TDelete(wrap(rowName));
 
     assertFalse(handler.checkAndDelete(table, wrap(rowName), wrap(familyAname),
-      wrap(qualifierAname), wrap(valueAname), delete));
+        wrap(qualifierAname), wrap(valueAname), delete));
 
     TGet get = new TGet(wrap(rowName));
     TResult result = handler.get(table, get);
@@ -626,7 +643,6 @@ public class TestThriftHBaseServiceHandler {
     int scanId = handler.openScanner(table, scan);
     List<TResult> results = null;
     for (int i = 0; i < 10; i++) {
-      System.out.println("batch: " + i);
       // get batch for single row (10x10 is what we expect)
       results = handler.getScannerRows(scanId, 1);
       assertEquals(1, results.size());
@@ -637,7 +653,6 @@ public class TestThriftHBaseServiceHandler {
       for (int y = 0; y < 10; y++) {
         int colNum = y + (10 * i);
         String colNumPad = pad(colNum, (byte) 3);
-        System.out.println("col" + colNumPad + ": " + new String(cols.get(y).getQualifier()));
         assertArrayEquals(("col" + colNumPad).getBytes(), cols.get(y).getQualifier());
       }
     }
@@ -653,6 +668,72 @@ public class TestThriftHBaseServiceHandler {
       fail("Scanner id should be invalid");
     } catch (TIllegalArgument e) {
     }
+  }
+
+  @Test
+  public void testGetScannerResults() throws Exception {
+    ThriftHBaseServiceHandler handler = createHandler();
+    ByteBuffer table = wrap(tableAname);
+
+    // insert data
+    TColumnValue columnValue =
+        new TColumnValue(wrap(familyAname), wrap(qualifierAname), wrap(valueAname));
+    List<TColumnValue> columnValues = new ArrayList<TColumnValue>();
+    columnValues.add(columnValue);
+    for (int i = 0; i < 20; i++) {
+      TPut put =
+          new TPut(wrap(("testGetScannerResults" + pad(i, (byte) 2)).getBytes()), columnValues);
+      handler.put(table, put);
+    }
+
+    // create scan instance
+    TScan scan = new TScan();
+    List<TColumn> columns = new ArrayList<TColumn>();
+    TColumn column = new TColumn();
+    column.setFamily(familyAname);
+    column.setQualifier(qualifierAname);
+    columns.add(column);
+    scan.setColumns(columns);
+    scan.setStartRow("testGetScannerResults".getBytes());
+
+    // get 5 rows and check the returned results
+    scan.setStopRow("testGetScannerResults05".getBytes());
+    List<TResult> results = handler.getScannerResults(table, scan, 5);
+    assertEquals(5, results.size());
+    for (int i = 0; i < 5; i++) {
+      // check if the rows are returned and in order
+      assertArrayEquals(("testGetScannerResults" + pad(i, (byte) 2)).getBytes(), results.get(i)
+          .getRow());
+    }
+
+    // get 10 rows and check the returned results
+    scan.setStopRow("testGetScannerResults10".getBytes());
+    results = handler.getScannerResults(table, scan, 10);
+    assertEquals(10, results.size());
+    for (int i = 0; i < 10; i++) {
+      // check if the rows are returned and in order
+      assertArrayEquals(("testGetScannerResults" + pad(i, (byte) 2)).getBytes(), results.get(i)
+          .getRow());
+    }
+
+    // get 20 rows and check the returned results
+    scan.setStopRow("testGetScannerResults20".getBytes());
+    results = handler.getScannerResults(table, scan, 20);
+    assertEquals(20, results.size());
+    for (int i = 0; i < 20; i++) {
+      // check if the rows are returned and in order
+      assertArrayEquals(("testGetScannerResults" + pad(i, (byte) 2)).getBytes(), results.get(i)
+          .getRow());
+    }
+ }
+
+  @Test
+  public void testFilterRegistration() throws Exception {
+    Configuration conf = UTIL.getConfiguration();
+    conf.set("hbase.thrift.filters", "MyFilter:filterclass");
+    ThriftServer.registerFilters(conf);
+    Map<String, String> registeredFilters = ParseFilter.getAllFilters();
+    assertEquals("filterclass", registeredFilters.get("MyFilter"));
   }
 
   @Test
@@ -686,5 +767,174 @@ public class TestThriftHBaseServiceHandler {
     return m;
   }
 
+  @Test
+  public void testAttribute() throws Exception {
+    byte[] rowName = "testAttribute".getBytes();
+    byte[] attributeKey = "attribute1".getBytes();
+    byte[] attributeValue = "value1".getBytes();
+    Map<ByteBuffer, ByteBuffer> attributes = new HashMap<ByteBuffer, ByteBuffer>();
+    attributes.put(wrap(attributeKey), wrap(attributeValue));
+
+    TGet tGet = new TGet(wrap(rowName));
+    tGet.setAttributes(attributes);
+    Get get = getFromThrift(tGet);
+    assertArrayEquals(get.getAttribute("attribute1"), attributeValue);
+
+    List<TColumnValue> columnValues = new ArrayList<TColumnValue>();
+    columnValues.add(new TColumnValue(wrap(familyAname), wrap(qualifierAname), wrap(valueAname)));
+    TPut tPut = new TPut(wrap(rowName) , columnValues);
+    tPut.setAttributes(attributes);
+    Put put = putFromThrift(tPut);
+    assertArrayEquals(put.getAttribute("attribute1"), attributeValue);
+
+    TScan tScan = new TScan();
+    tScan.setAttributes(attributes);
+    Scan scan = scanFromThrift(tScan);
+    assertArrayEquals(scan.getAttribute("attribute1"), attributeValue);
+
+    List<TColumnIncrement> incrementColumns = new ArrayList<TColumnIncrement>();
+    incrementColumns.add(new TColumnIncrement(wrap(familyAname), wrap(qualifierAname)));
+    TIncrement tIncrement = new TIncrement(wrap(rowName), incrementColumns);
+    tIncrement.setAttributes(attributes);
+    Increment increment = incrementFromThrift(tIncrement);
+    assertArrayEquals(increment.getAttribute("attribute1"), attributeValue);
+
+    TDelete tDelete = new TDelete(wrap(rowName));
+    tDelete.setAttributes(attributes);
+    Delete delete = deleteFromThrift(tDelete);
+    assertArrayEquals(delete.getAttribute("attribute1"), attributeValue);
+  }
+
+  /**
+   * Put valueA to a row, make sure put has happened, then create a mutation object to put valueB
+   * and delete ValueA, then check that the row value is only valueB.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testMutateRow() throws Exception {
+    ThriftHBaseServiceHandler handler = createHandler();
+    byte[] rowName = "testMutateRow".getBytes();
+    ByteBuffer table = wrap(tableAname);
+
+    List<TColumnValue> columnValuesA = new ArrayList<TColumnValue>();
+    TColumnValue columnValueA = new TColumnValue(wrap(familyAname), wrap(qualifierAname),
+        wrap(valueAname));
+    columnValuesA.add(columnValueA);
+    TPut putA = new TPut(wrap(rowName), columnValuesA);
+    putA.setColumnValues(columnValuesA);
+
+    handler.put(table,putA);
+
+    TGet get = new TGet(wrap(rowName));
+    TResult result = handler.get(table, get);
+    assertArrayEquals(rowName, result.getRow());
+    List<TColumnValue> returnedColumnValues = result.getColumnValues();
+
+    List<TColumnValue> expectedColumnValues = new ArrayList<TColumnValue>();
+    expectedColumnValues.add(columnValueA);
+    assertTColumnValuesEqual(expectedColumnValues, returnedColumnValues);
+
+    List<TColumnValue> columnValuesB = new ArrayList<TColumnValue>();
+    TColumnValue columnValueB = new TColumnValue(wrap(familyAname), wrap(qualifierBname),
+        wrap(valueBname));
+    columnValuesB.add(columnValueB);
+    TPut putB = new TPut(wrap(rowName), columnValuesB);
+    putB.setColumnValues(columnValuesB);
+
+    TDelete delete = new TDelete(wrap(rowName));
+    List<TColumn> deleteColumns = new ArrayList<TColumn>();
+    TColumn deleteColumn = new TColumn(wrap(familyAname));
+    deleteColumn.setQualifier(qualifierAname);
+    deleteColumns.add(deleteColumn);
+    delete.setColumns(deleteColumns);
+
+    List<TMutation> mutations = new ArrayList<TMutation>();
+    TMutation mutationA = TMutation.put(putB);
+    mutations.add(mutationA);
+
+    TMutation mutationB = TMutation.deleteSingle(delete);
+    mutations.add(mutationB);
+
+    TRowMutations tRowMutations = new TRowMutations(wrap(rowName),mutations);
+    handler.mutateRow(table,tRowMutations);
+
+    result = handler.get(table, get);
+    assertArrayEquals(rowName, result.getRow());
+    returnedColumnValues = result.getColumnValues();
+
+    expectedColumnValues = new ArrayList<TColumnValue>();
+    expectedColumnValues.add(columnValueB);
+    assertTColumnValuesEqual(expectedColumnValues, returnedColumnValues);
+  }
+
+  /**
+   * Create TPut, TDelete , TIncrement objects, set durability then call ThriftUtility
+   * functions to get Put , Delete and Increment respectively. Use getDurability to make sure
+   * the returned objects have the appropriate durability setting.
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testDurability() throws Exception {
+    byte[] rowName = "testDurability".getBytes();
+    List<TColumnValue> columnValues = new ArrayList<TColumnValue>();
+    columnValues.add(new TColumnValue(wrap(familyAname), wrap(qualifierAname), wrap(valueAname)));
+
+    List<TColumnIncrement> incrementColumns = new ArrayList<TColumnIncrement>();
+    incrementColumns.add(new TColumnIncrement(wrap(familyAname), wrap(qualifierAname)));
+
+    TDelete tDelete = new TDelete(wrap(rowName));
+    tDelete.setDurability(TDurability.SKIP_WAL);
+    Delete delete = deleteFromThrift(tDelete);
+    assertEquals(delete.getDurability(), Durability.SKIP_WAL);
+
+    tDelete.setDurability(TDurability.ASYNC_WAL);
+    delete = deleteFromThrift(tDelete);
+    assertEquals(delete.getDurability(), Durability.ASYNC_WAL);
+
+    tDelete.setDurability(TDurability.SYNC_WAL);
+    delete = deleteFromThrift(tDelete);
+    assertEquals(delete.getDurability(), Durability.SYNC_WAL);
+
+    tDelete.setDurability(TDurability.FSYNC_WAL);
+    delete = deleteFromThrift(tDelete);
+    assertEquals(delete.getDurability(), Durability.FSYNC_WAL);
+
+    TPut tPut = new TPut(wrap(rowName), columnValues);
+    tPut.setDurability(TDurability.SKIP_WAL);
+    Put put = putFromThrift(tPut);
+    assertEquals(put.getDurability(), Durability.SKIP_WAL);
+
+    tPut.setDurability(TDurability.ASYNC_WAL);
+    put = putFromThrift(tPut);
+    assertEquals(put.getDurability(), Durability.ASYNC_WAL);
+
+    tPut.setDurability(TDurability.SYNC_WAL);
+    put = putFromThrift(tPut);
+    assertEquals(put.getDurability(), Durability.SYNC_WAL);
+
+    tPut.setDurability(TDurability.FSYNC_WAL);
+    put = putFromThrift(tPut);
+    assertEquals(put.getDurability(), Durability.FSYNC_WAL);
+
+    TIncrement tIncrement = new TIncrement(wrap(rowName), incrementColumns);
+
+    tIncrement.setDurability(TDurability.SKIP_WAL);
+    Increment increment = incrementFromThrift(tIncrement);
+    assertEquals(increment.getDurability(), Durability.SKIP_WAL);
+
+    tIncrement.setDurability(TDurability.ASYNC_WAL);
+    increment = incrementFromThrift(tIncrement);
+    assertEquals(increment.getDurability(), Durability.ASYNC_WAL);
+
+    tIncrement.setDurability(TDurability.SYNC_WAL);
+    increment = incrementFromThrift(tIncrement);
+    assertEquals(increment.getDurability(), Durability.SYNC_WAL);
+
+    tIncrement.setDurability(TDurability.FSYNC_WAL);
+    increment = incrementFromThrift(tIncrement);
+    assertEquals(increment.getDurability(), Durability.FSYNC_WAL);
+  }
 }
 

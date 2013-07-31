@@ -20,19 +20,23 @@ package org.apache.hadoop.hbase.master.handler;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RegionLoad;
+import org.apache.hadoop.hbase.ServerLoad;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.exceptions.RegionOpeningException;
 import org.apache.hadoop.hbase.executor.EventHandler;
 import org.apache.hadoop.hbase.executor.EventType;
 import org.apache.hadoop.hbase.master.CatalogJanitor;
 import org.apache.hadoop.hbase.master.MasterServices;
 import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.master.RegionStates;
+import org.apache.hadoop.hbase.master.ServerManager;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 /**
@@ -62,7 +66,7 @@ public class DispatchMergingRegionHandler extends EventHandler {
     this.region_b = region_b;
     this.forcible = forcible;
     this.timeout = server.getConfiguration().getInt(
-        "hbase.master.regionmerge.timeout", 30 * 1000);
+        "hbase.master.regionmerge.timeout", 120 * 1000);
   }
 
   @Override
@@ -97,12 +101,8 @@ public class DispatchMergingRegionHandler extends EventHandler {
       // Move region_b to region a's location, switch region_a and region_b if
       // region_a's load lower than region_b's, so we will always move lower
       // load region
-      RegionLoad loadOfRegionA = masterServices.getServerManager()
-          .getLoad(region_a_location).getRegionsLoad()
-          .get(region_a.getRegionName());
-      RegionLoad loadOfRegionB = masterServices.getServerManager()
-          .getLoad(region_b_location).getRegionsLoad()
-          .get(region_b.getRegionName());
+      RegionLoad loadOfRegionA = getRegionLoad(region_a_location, region_a);
+      RegionLoad loadOfRegionB = getRegionLoad(region_b_location, region_b);
       if (loadOfRegionA != null && loadOfRegionB != null
           && loadOfRegionA.getRequestsCount() < loadOfRegionB
               .getRequestsCount()) {
@@ -117,6 +117,7 @@ public class DispatchMergingRegionHandler extends EventHandler {
 
       RegionPlan regionPlan = new RegionPlan(region_b, region_b_location,
           region_a_location);
+      LOG.info("Moving regions to same server for merge: " + regionPlan.toString());
       masterServices.getAssignmentManager().balance(regionPlan);
       while (!masterServices.isStopped()) {
         try {
@@ -143,19 +144,27 @@ public class DispatchMergingRegionHandler extends EventHandler {
     }
 
     if (onSameRS) {
-      try{
-        masterServices.getServerManager().sendRegionsMerge(region_a_location,
-            region_a, region_b, forcible);
-        LOG.info("Successfully send MERGE REGIONS RPC to server "
-            + region_a_location.toString() + " for region "
-            + region_a.getRegionNameAsString() + ","
-            + region_b.getRegionNameAsString() + ", focible=" + forcible);
-      } catch (IOException ie) {
-        LOG.info("Failed send MERGE REGIONS RPC to server "
-            + region_a_location.toString() + " for region "
-            + region_a.getRegionNameAsString() + ","
-            + region_b.getRegionNameAsString() + ", focible=" + forcible + ", "
-            + ie.getMessage());
+      startTime = EnvironmentEdgeManager.currentTimeMillis();
+      while (!masterServices.isStopped()) {
+        try {
+          masterServices.getServerManager().sendRegionsMerge(region_a_location,
+              region_a, region_b, forcible);
+          LOG.info("Sent merge to server " + region_a_location + " for region " +
+            region_a.getEncodedName() + "," + region_b.getEncodedName() + ", focible=" + forcible);
+          break;
+        } catch (RegionOpeningException roe) {
+          if ((EnvironmentEdgeManager.currentTimeMillis() - startTime) > timeout) {
+            LOG.warn("Failed sending merge to " + region_a_location + " after " + timeout + "ms",
+              roe);
+            break;
+          }
+          // Do a retry since region should be online on RS immediately
+        } catch (IOException ie) {
+          LOG.warn("Failed sending merge to " + region_a_location + " for region " +
+            region_a.getEncodedName() + "," + region_b.getEncodedName() + ", focible=" + forcible,
+            ie);
+          break;
+        }
       }
     } else {
       LOG.info("Cancel merging regions " + region_a.getRegionNameAsString()
@@ -165,4 +174,15 @@ public class DispatchMergingRegionHandler extends EventHandler {
     }
   }
 
+  private RegionLoad getRegionLoad(ServerName sn, HRegionInfo hri) {
+    ServerManager serverManager =  masterServices.getServerManager();
+    ServerLoad load = serverManager.getLoad(sn);
+    if (load != null) {
+      Map<byte[], RegionLoad> regionsLoad = load.getRegionsLoad();
+      if (regionsLoad != null) {
+        return regionsLoad.get(hri.getRegionName());
+      }
+    }
+    return null;
+  }
 }

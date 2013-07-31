@@ -46,24 +46,23 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.Stoppable;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.coprocessor.Batch;
-import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
 import org.apache.hadoop.hbase.exceptions.RegionMovedException;
 import org.apache.hadoop.hbase.exceptions.RegionOpeningException;
-import org.apache.hadoop.hbase.exceptions.RegionServerStoppedException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
@@ -135,6 +134,7 @@ import org.apache.hadoop.hbase.protobuf.generated.MasterMonitorProtos.MasterMoni
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.IsMasterRunningRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterProtos.IsMasterRunningResponse;
+import org.apache.hadoop.hbase.regionserver.RegionServerStoppedException;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -682,7 +682,7 @@ public class HConnectionManager {
           return true;
         }
       };
-      MetaScanner.metaScan(conf, visitor, tableName);
+      MetaScanner.metaScan(conf, this, visitor, tableName);
       return available.get() && (regionCount.get() > 0);
     }
 
@@ -722,7 +722,7 @@ public class HConnectionManager {
           return true;
         }
       };
-      MetaScanner.metaScan(conf, visitor, tableName);
+      MetaScanner.metaScan(conf, this, visitor, tableName);
       // +1 needs to be added so that the empty start row is also taken into account
       return available.get() && (regionCount.get() == splitKeys.length + 1);
     }
@@ -751,8 +751,8 @@ public class HConnectionManager {
     @Override
     public List<HRegionLocation> locateRegions(final TableName tableName,
         final boolean useCache, final boolean offlined) throws IOException {
-      NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, tableName,
-        offlined);
+      NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, this,
+          tableName, offlined);
       final List<HRegionLocation> locations = new ArrayList<HRegionLocation>();
       for (HRegionInfo regionInfo : regions.keySet()) {
         locations.add(locateRegion(tableName, regionInfo.getStartKey(), useCache, true));
@@ -842,8 +842,8 @@ public class HConnectionManager {
       };
       try {
         // pre-fetch certain number of regions info at region cache.
-        MetaScanner.metaScan(conf, visitor, tableName, row,
-            this.prefetchRegionLimit);
+        MetaScanner.metaScan(conf, this, visitor, tableName, row,
+            this.prefetchRegionLimit, HConstants.META_TABLE_NAME);
       } catch (IOException e) {
         LOG.warn("Encountered problems when prefetch META table: ", e);
       }
@@ -1089,7 +1089,9 @@ public class HConnectionManager {
         for (Map<byte[], HRegionLocation> tableLocations :
             cachedRegionLocations.values()) {
           for (Entry<byte[], HRegionLocation> e : tableLocations.entrySet()) {
-            if (serverName.equals(e.getValue().getServerName())) {
+            HRegionLocation value = e.getValue();
+            if (value != null
+                && serverName.equals(value.getServerName())) {
               tableLocations.remove(e.getKey());
               deletedSomething = true;
             }
@@ -1984,18 +1986,6 @@ public class HConnectionManager {
         closeMasterService(adminMasterServiceState);
         closeMasterService(monitorMasterServiceState);
       }
-    }
-
-    @Override
-    public <T> T getRegionServerWithRetries(ServerCallable<T> callable)
-    throws IOException, RuntimeException {
-      return callable.withRetries();
-    }
-
-    @Override
-    public <T> T getRegionServerWithoutRetries(ServerCallable<T> callable)
-    throws IOException, RuntimeException {
-      return callable.withoutRetries();
     }
 
     void updateCachedLocation(HRegionInfo hri, HRegionLocation source,

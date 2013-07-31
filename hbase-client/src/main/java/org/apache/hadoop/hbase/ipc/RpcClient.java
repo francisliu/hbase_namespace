@@ -580,22 +580,19 @@ public class RpcClient {
         if (socket.getOutputStream() != null) {
           socket.getOutputStream().close();
         }
-      } catch (IOException e) {
-        LOG.warn("Not able to close an output stream", e);
+      } catch (IOException ignored) {  // Can happen if the socket is already closed
       }
       try {
         if (socket.getInputStream() != null) {
           socket.getInputStream().close();
         }
-      } catch (IOException e) {
-        LOG.warn("Not able to close an input stream", e);
+      } catch (IOException ignored) {  // Can happen if the socket is already closed
       }
       try {
         if (socket.getChannel() != null) {
           socket.getChannel().close();
         }
-      } catch (IOException e) {
-        LOG.warn("Not able to close a channel", e);
+      } catch (IOException ignored) {  // Can happen if the socket is already closed
       }
       try {
         socket.close();
@@ -899,7 +896,7 @@ public class RpcClient {
           e = (IOException)t;
           markClosed(e);
         } else {
-          e = new IOException("Coundn't set up IO Streams", t);
+          e = new IOException("Could not set up IO Streams", t);
           markClosed(e);
         }
         close();
@@ -999,6 +996,24 @@ public class RpcClient {
           Span s = Trace.currentTrace();
           builder.setTraceInfo(RPCTInfo.newBuilder().
             setParentId(s.getSpanId()).setTraceId(s.getTraceId()));
+        }
+        UserGroupInformation ticket = remoteId.getTicket().getUGI();
+        if (ticket != null) {
+          UserGroupInformation currentUser = UserGroupInformation.getCurrentUser();
+          String effectiveUser = currentUser == null ? null : currentUser.getShortUserName();
+          if (effectiveUser != null && !effectiveUser.equals(ticket.getShortUserName())) {
+            if (ticket.getRealUser() != null) {
+              LOG.warn("Current user " + effectiveUser
+                + " is different from the ticket user " + ticket.getShortUserName()
+                + ". But the ticket is already a proxy user with real user "
+                + ticket.getRealUser().getShortUserName());
+            } else {
+              // If the ticket is not a proxy user, and the current user
+              // is not the same as the ticket user, pass the current user
+              // over to the server as the actual effective user.
+              builder.setEffectiveUser(effectiveUser);
+            }
+          }
         }
         builder.setMethodName(call.md.getName());
         builder.setRequestParam(call.param != null);

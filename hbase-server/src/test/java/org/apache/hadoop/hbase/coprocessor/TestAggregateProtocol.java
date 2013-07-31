@@ -130,7 +130,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testMedianWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -151,7 +151,7 @@ public class TestAggregateProtocol {
    * be the most common use case.
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testRowCountWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -169,7 +169,7 @@ public class TestAggregateProtocol {
    * be null.
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testRowCountAllTable() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -186,7 +186,7 @@ public class TestAggregateProtocol {
    * -1.
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testRowCountWithInvalidRange1() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -211,7 +211,7 @@ public class TestAggregateProtocol {
    * non-null. The result should be 0, as it assumes a non-get query.
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testRowCountWithInvalidRange2() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -233,7 +233,7 @@ public class TestAggregateProtocol {
   /**
    * This should return a 0
    */
-  @Test
+  @Test (timeout=300000)
   public void testRowCountWithNullCF() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -250,7 +250,7 @@ public class TestAggregateProtocol {
     assertEquals(0, rowCount);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testRowCountWithNullCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -262,7 +262,7 @@ public class TestAggregateProtocol {
     assertEquals(20, rowCount);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testRowCountWithPrefixFilter() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -284,7 +284,7 @@ public class TestAggregateProtocol {
    * give max for the entire table.
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -298,7 +298,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithValidRange2() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -311,7 +311,7 @@ public class TestAggregateProtocol {
     assertEquals(14, max);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithValidRangeWithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -322,7 +322,7 @@ public class TestAggregateProtocol {
     assertEquals(190, maximum);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithValidRange2WithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -335,7 +335,7 @@ public class TestAggregateProtocol {
     assertEquals(60, max);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithValidRangeWithNullCF() {
     AggregationClient aClient = new AggregationClient(conf);
     final ColumnInterpreter<Long, Long, EmptyMsg, LongMsg, LongMsg> ci =
@@ -351,7 +351,7 @@ public class TestAggregateProtocol {
     // null column family, and max will be set to 0
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithInvalidRange() {
     AggregationClient aClient = new AggregationClient(conf);
     final ColumnInterpreter<Long, Long, EmptyMsg, LongMsg, LongMsg> ci =
@@ -369,7 +369,7 @@ public class TestAggregateProtocol {
     assertEquals(0, max);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithInvalidRange2() throws Throwable {
     long max = Long.MIN_VALUE;
     Scan scan = new Scan();
@@ -387,7 +387,7 @@ public class TestAggregateProtocol {
     assertEquals(0, max);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMaxWithFilter() throws Throwable {
     Long max = 0l;
     AggregationClient aClient = new AggregationClient(conf);
@@ -408,7 +408,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testMinWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -425,7 +425,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testMinWithValidRange2() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -438,7 +438,7 @@ public class TestAggregateProtocol {
     assertEquals(5, min);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMinWithValidRangeWithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -452,7 +452,7 @@ public class TestAggregateProtocol {
     assertEquals(0, min);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMinWithValidRange2WithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -465,7 +465,7 @@ public class TestAggregateProtocol {
     assertEquals(6, min);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMinWithValidRangeWithNullCF() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -482,7 +482,7 @@ public class TestAggregateProtocol {
     // null column family, and max will be set to 0
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMinWithInvalidRange() {
     AggregationClient aClient = new AggregationClient(conf);
     Long min = null;
@@ -499,7 +499,7 @@ public class TestAggregateProtocol {
     assertEquals(null, min);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMinWithInvalidRange2() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -516,7 +516,7 @@ public class TestAggregateProtocol {
     assertEquals(null, min);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testMinWithFilter() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -536,7 +536,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testSumWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -551,7 +551,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testSumWithValidRange2() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -564,7 +564,7 @@ public class TestAggregateProtocol {
     assertEquals(95, sum);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSumWithValidRangeWithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -576,7 +576,7 @@ public class TestAggregateProtocol {
     assertEquals(190 + 1900, sum);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSumWithValidRange2WithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -589,7 +589,7 @@ public class TestAggregateProtocol {
     assertEquals(6 + 60, sum);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSumWithValidRangeWithNullCF() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -606,7 +606,7 @@ public class TestAggregateProtocol {
     // null column family, and max will be set to 0
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSumWithInvalidRange() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -623,7 +623,7 @@ public class TestAggregateProtocol {
     assertEquals(null, sum);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testSumWithFilter() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Filter f = new PrefixFilter(Bytes.toBytes("foo:bar"));
@@ -643,7 +643,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -658,7 +658,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithValidRange2() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -671,7 +671,7 @@ public class TestAggregateProtocol {
     assertEquals(9.5, avg, 0);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithValidRangeWithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -683,7 +683,7 @@ public class TestAggregateProtocol {
     assertEquals(104.5, avg, 0);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithValidRange2WithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -696,7 +696,7 @@ public class TestAggregateProtocol {
     assertEquals(6 + 60, avg, 0);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithValidRangeWithNullCF() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -711,7 +711,7 @@ public class TestAggregateProtocol {
     // null column family, and max will be set to 0
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithInvalidRange() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -728,7 +728,7 @@ public class TestAggregateProtocol {
     assertEquals(null, avg);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testAvgWithFilter() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -748,7 +748,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testStdWithValidRange() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -763,7 +763,7 @@ public class TestAggregateProtocol {
   /**
    * @throws Throwable
    */
-  @Test
+  @Test (timeout=300000)
   public void testStdWithValidRange2() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -776,7 +776,7 @@ public class TestAggregateProtocol {
     assertEquals(2.87, std, 0.05d);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testStdWithValidRangeWithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -788,7 +788,7 @@ public class TestAggregateProtocol {
     assertEquals(63.42, std, 0.05d);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testStdWithValidRange2WithNoCQ() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -801,7 +801,7 @@ public class TestAggregateProtocol {
     assertEquals(0, std, 0);
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testStdWithValidRangeWithNullCF() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -818,7 +818,7 @@ public class TestAggregateProtocol {
     // null column family, and max will be set to 0
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testStdWithInvalidRange() {
     AggregationClient aClient = new AggregationClient(conf);
     Scan scan = new Scan();
@@ -835,7 +835,7 @@ public class TestAggregateProtocol {
     assertEquals(null, std);// control should go to the catch block
   }
 
-  @Test
+  @Test (timeout=300000)
   public void testStdWithFilter() throws Throwable {
     AggregationClient aClient = new AggregationClient(conf);
     Filter f = new PrefixFilter(Bytes.toBytes("foo:bar"));
@@ -848,6 +848,4 @@ public class TestAggregateProtocol {
     std = aClient.std(TEST_TABLE, ci, scan);
     assertEquals(Double.NaN, std, 0);
   }
-
 }
-

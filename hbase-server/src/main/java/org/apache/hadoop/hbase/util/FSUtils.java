@@ -59,7 +59,6 @@ import org.apache.hadoop.hbase.HDFSBlocksDistribution;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.RemoteExceptionHandler;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.exceptions.FileSystemVersionException;
 import org.apache.hadoop.hbase.fs.HFileSystem;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -89,6 +88,9 @@ public abstract class FSUtils {
   /** Full access permissions (starting point for a umask) */
   private static final String FULL_RWX_PERMISSIONS = "777";
 
+  /** Set to true on Windows platforms */
+  public static final boolean WINDOWS = System.getProperty("os.name").startsWith("Windows");
+
   protected FSUtils() {
     super();
   }
@@ -97,7 +99,7 @@ public abstract class FSUtils {
    * Compare of path component. Does not consider schema; i.e. if schemas different but <code>path
    * <code> starts with <code>rootPath<code>, then the function returns true
    * @param rootPath
-   * @param path 
+   * @param path
    * @return True if <code>path</code> starts with <code>rootPath</code>
    */
   public static boolean isStartingWithPath(final Path rootPath, final String path) {
@@ -406,7 +408,7 @@ public abstract class FSUtils {
   /**
    * We use reflection because {@link DistributedFileSystem#setSafeMode(
    * FSConstants.SafeModeAction action, boolean isChecked)} is not in hadoop 1.1
-   * 
+   *
    * @param dfs
    * @return whether we're in safe mode
    * @throws IOException
@@ -420,14 +422,14 @@ public abstract class FSUtils {
         org.apache.hadoop.hdfs.protocol.FSConstants.SafeModeAction.SAFEMODE_GET, true);
     } catch (Exception e) {
       if (e instanceof IOException) throw (IOException) e;
-      
+
       // Check whether dfs is on safemode.
       inSafeMode = dfs.setSafeMode(
-        org.apache.hadoop.hdfs.protocol.FSConstants.SafeModeAction.SAFEMODE_GET);      
+        org.apache.hadoop.hdfs.protocol.FSConstants.SafeModeAction.SAFEMODE_GET);
     }
-    return inSafeMode;    
+    return inSafeMode;
   }
-  
+
   /**
    * Check whether dfs is in safemode.
    * @param conf
@@ -460,7 +462,7 @@ public abstract class FSUtils {
     Path versionFile = new Path(rootdir, HConstants.VERSION_FILE_NAME);
     FileStatus[] status = null;
     try {
-      // hadoop 2.0 throws FNFE if directory does not exist.  
+      // hadoop 2.0 throws FNFE if directory does not exist.
       // hadoop 1.0 returns null if directory does not exist.
       status = fs.listStatus(versionFile);
     } catch (FileNotFoundException fnfe) {
@@ -1487,8 +1489,8 @@ public abstract class FSUtils {
    * @return Map keyed by StoreFile name with a value of the full Path.
    * @throws IOException When scanning the directory fails.
    */
-  public static Map<String, Path> getTableStoreFilePathMap(Map<String, Path> map, 
-    final FileSystem fs, final Path hbaseRootDir, TableName tableName)
+  public static Map<String, Path> getTableStoreFilePathMap(Map<String, Path> map,
+  final FileSystem fs, final Path hbaseRootDir, TableName tableName)
   throws IOException {
     if (map == null) {
       map = new HashMap<String, Path>();
@@ -1497,7 +1499,7 @@ public abstract class FSUtils {
     // only include the directory paths to tables
     Path tableDir = FSUtils.getTableDir(hbaseRootDir, tableName);
     // Inside a table, there are compaction.dir directories to skip.  Otherwise, all else
-    // should be regions. 
+    // should be regions.
     PathFilter df = new BlackListDirFilter(fs, HConstants.HBASE_NON_TABLE_DIRS);
     FileStatus[] regionDirs = fs.listStatus(tableDir);
     for (FileStatus regionDir : regionDirs) {
@@ -1521,7 +1523,7 @@ public abstract class FSUtils {
     return map;
   }
 
-  
+
   /**
    * Runs through the HBase rootdir and creates a reverse lookup map for
    * table StoreFile names to the full Path.
@@ -1542,7 +1544,7 @@ public abstract class FSUtils {
 
     // if this method looks similar to 'getTableFragmentation' that is because
     // it was borrowed from it.
-    
+
     // only include the directory paths to tables
     for (Path tableDir : FSUtils.getTableDirs(fs, hbaseRootDir)) {
       getTableStoreFilePathMap(map, fs, hbaseRootDir,

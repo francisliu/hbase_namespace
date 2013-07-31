@@ -39,16 +39,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.InvalidFamilyOperationException;
+import org.apache.hadoop.hbase.LargeTests;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.MiniHBaseCluster;
+import org.apache.hadoop.hbase.NotServingRegionException;
+import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.TableExistsException;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotDisabledException;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
-import org.apache.hadoop.hbase.exceptions.InvalidFamilyOperationException;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
-import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
-import org.apache.hadoop.hbase.exceptions.TableExistsException;
-import org.apache.hadoop.hbase.exceptions.TableNotDisabledException;
-import org.apache.hadoop.hbase.exceptions.TableNotEnabledException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.executor.EventHandler;
 import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.HMaster;
@@ -248,7 +258,7 @@ public class TestAdmin {
     boolean ok = false;
     try {
       ht.get(get);
-    } catch (org.apache.hadoop.hbase.exceptions.DoNotRetryIOException e) {
+    } catch (org.apache.hadoop.hbase.DoNotRetryIOException e) {
       ok = true;
     }
     assertTrue(ok);
@@ -294,7 +304,7 @@ public class TestAdmin {
     try {
       ht1.get(get);
       ht2.get(get);
-    } catch (org.apache.hadoop.hbase.exceptions.DoNotRetryIOException e) {
+    } catch (org.apache.hadoop.hbase.DoNotRetryIOException e) {
       ok = true;
     }
 
@@ -357,7 +367,16 @@ public class TestAdmin {
            assertTrue(exceptionThrown);
        }
    }
-  /**
+  
+  @Test
+  public void testIsEnabledOnNonexistentTable() throws IOException {
+    try {
+      assertFalse(admin.isTableEnabled(Bytes.toBytes("non-existing")));
+    } catch (IOException e) {
+    }
+  }
+   
+    /**
    * Verify schema modification takes.
    * @throws IOException
    * @throws InterruptedException
@@ -761,7 +780,7 @@ public class TestAdmin {
     }
     ladmin.close();
   }
-  
+
   @Test
   public void testTableAvailableWithRandomSplitKeys() throws Exception {
     byte[] tableName = Bytes.toBytes("testTableAvailableWithRandomSplitKeys");
@@ -928,6 +947,11 @@ public class TestAdmin {
   void splitTest(byte[] splitPoint, byte[][] familyNames, int[] rowCounts,
     int numVersions, int blockSize) throws Exception {
     TableName tableName = TableName.valueOf("testForceSplit");
+    StringBuilder sb = new StringBuilder();
+    // Add tail to String so can see better in logs where a test is running.
+    for (int i = 0; i < rowCounts.length; i++) {
+      sb.append("_").append(Integer.toString(rowCounts[i]));
+    }
     assertFalse(admin.tableExists(tableName));
     final HTable table = TEST_UTIL.createTable(tableName, familyNames,
       numVersions, blockSize);
@@ -954,7 +978,7 @@ public class TestAdmin {
 
     // get the initial layout (should just be one region)
     Map<HRegionInfo, ServerName> m = table.getRegionLocations();
-    System.out.println("Initial regions (" + m.size() + "): " + m);
+    LOG.info("Initial regions (" + m.size() + "): " + m);
     assertTrue(m.size() == 1);
 
     // Verify row count
@@ -972,6 +996,9 @@ public class TestAdmin {
     scanner = table.getScanner(scan);
     // Scan first row so we are into first region before split happens.
     scanner.next();
+
+    // Split the table
+    this.admin.split(tableName.getName(), splitPoint);
 
     final AtomicInteger count = new AtomicInteger(0);
     Thread t = new Thread("CheckForSplit") {
@@ -991,14 +1018,17 @@ public class TestAdmin {
           }
           if (regions == null) continue;
           count.set(regions.size());
-          if (count.get() >= 2) break;
+          if (count.get() >= 2) {
+            LOG.info("Found: " + regions);
+            break;
+          }
           LOG.debug("Cycle waiting on split");
         }
+        LOG.debug("CheckForSplit thread exited, current region count: " + count.get());
       }
     };
+    t.setPriority(Thread.NORM_PRIORITY - 2);
     t.start();
-    // Split the table
-    this.admin.split(tableName.getName(), splitPoint);
     t.join();
 
     // Verify row count
@@ -1035,9 +1065,15 @@ public class TestAdmin {
         // check if splitKey is based on the largest column family
         // in terms of it store size
         int deltaForLargestFamily = Math.abs(rowCount/2 - splitKey);
+        LOG.debug("SplitKey=" + splitKey + "&deltaForLargestFamily=" + deltaForLargestFamily +
+          ", r=" + r[0]);
         for (int index = 0; index < familyNames.length; index++) {
           int delta = Math.abs(rowCounts[index]/2 - splitKey);
-          assertTrue(delta >= deltaForLargestFamily);
+          if (delta < deltaForLargestFamily) {
+            assertTrue("Delta " + delta + " for family " + index
+              + " should be at least deltaForLargestFamily " + deltaForLargestFamily,
+              false);
+          }
         }
       }
     }
@@ -1060,7 +1096,7 @@ public class TestAdmin {
      new HColumnDescriptor("/cfamily/name");
   }
 
-  @Test(timeout=36000)
+  @Test(timeout=300000)
   public void testEnableDisableAddColumnDeleteColumn() throws Exception {
     ZooKeeperWatcher zkw = HBaseTestingUtility.getZooKeeperWatcher(TEST_UTIL);
     TableName tableName = TableName.valueOf("testMasterAdmin");
@@ -1072,7 +1108,7 @@ public class TestAdmin {
     this.admin.disableTable(tableName);
     try {
       new HTable(TEST_UTIL.getConfiguration(), tableName);
-    } catch (org.apache.hadoop.hbase.exceptions.DoNotRetryIOException e) {
+    } catch (org.apache.hadoop.hbase.DoNotRetryIOException e) {
       //expected
     }
 
@@ -1294,10 +1330,15 @@ public class TestAdmin {
             .getServerName().getServerName());
       }
     }
-    Thread.sleep(1000);
-    onlineRegions = ProtobufUtil.getOnlineRegions(rs);
+    boolean isInList = ProtobufUtil.getOnlineRegions(rs).contains(info);
+    long timeout = System.currentTimeMillis() + 10000;
+    while ((System.currentTimeMillis() < timeout) && (isInList)) {
+      Thread.sleep(100);
+      isInList = ProtobufUtil.getOnlineRegions(rs).contains(info);
+    }
+
     assertFalse("The region should not be present in online regions list.",
-        onlineRegions.contains(info));
+      isInList);
   }
 
   @Test
@@ -1347,7 +1388,7 @@ public class TestAdmin {
     }
 
     boolean isInList = ProtobufUtil.getOnlineRegions(rs).contains(info);
-    long timeout = System.currentTimeMillis() + 2000;
+    long timeout = System.currentTimeMillis() + 10000;
     while ((System.currentTimeMillis() < timeout) && (isInList)) {
       Thread.sleep(100);
       isInList = ProtobufUtil.getOnlineRegions(rs).contains(info);
@@ -1512,7 +1553,7 @@ public class TestAdmin {
   }
 
   @Test
-  public void testMoveToPreviouslyAssignedRS() throws IOException {
+  public void testMoveToPreviouslyAssignedRS() throws IOException, InterruptedException {
     byte[] tableName = Bytes.toBytes("testMoveToPreviouslyAssignedRS");
     MiniHBaseCluster cluster = TEST_UTIL.getHBaseCluster();
     HMaster master = cluster.getMaster();
@@ -1520,6 +1561,8 @@ public class TestAdmin {
     List<HRegionInfo> tableRegions = localAdmin.getTableRegions(tableName);
     HRegionInfo hri = tableRegions.get(0);
     AssignmentManager am = master.getAssignmentManager();
+    assertTrue("Region " + hri.getRegionNameAsString()
+      + " should be assigned properly", am.waitForAssignment(hri));
     ServerName server = am.getRegionStates().getRegionServerOfRegion(hri);
     localAdmin.move(hri.getEncodedNameAsBytes(), Bytes.toBytes(server.getServerName()));
     assertEquals("Current region server and region server before move should be same.", server,
@@ -1574,7 +1617,7 @@ public class TestAdmin {
   }
 
   private HRegionServer startAndWriteData(String tableName, byte[] value)
-      throws IOException {
+  throws IOException, InterruptedException {
     // When the META table can be opened, the region servers are running
     new HTable(
       TEST_UTIL.getConfiguration(), HConstants.META_TABLE_NAME).close();

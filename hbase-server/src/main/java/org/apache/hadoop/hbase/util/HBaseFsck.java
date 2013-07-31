@@ -65,7 +65,9 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ServerName;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.MetaEditor;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -80,8 +82,6 @@ import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.exceptions.MasterNotRunningException;
-import org.apache.hadoop.hbase.exceptions.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.io.hfile.HFile;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
@@ -506,7 +506,7 @@ public class HBaseFsck extends Configured implements Tool {
     for (FileStatus cf : dirs) {
       String cfName= cf.getPath().getName();
       // TODO Figure out what the special dirs are
-      if (cfName.startsWith(".") || cfName.equals("splitlog")) continue;
+      if (cfName.startsWith(".") || cfName.equals(HConstants.SPLIT_LOGDIR_NAME)) continue;
 
       FileStatus[] hfiles = fs.listStatus(cf.getPath());
       for (FileStatus hfile : hfiles) {
@@ -1070,7 +1070,7 @@ public class HBaseFsck extends Configured implements Tool {
         "You may need to restore the previously sidelined .META.");
       return false;
     }
-    meta.put(puts.toArray(new Put[0]));
+    meta.batchMutate(puts.toArray(new Put[0]));
     HRegion.closeHRegion(meta);
     LOG.info("Success! .META. table rebuilt.");
     LOG.info("Old .META. is moved into " + backupDir);
@@ -2910,7 +2910,7 @@ public class HBaseFsck extends Configured implements Tool {
   }
 
   public interface ErrorReporter {
-    public static enum ERROR_CODE {
+    enum ERROR_CODE {
       UNKNOWN, NO_META_REGION, NULL_META_REGION, NO_VERSION_FILE, NOT_IN_META_HDFS, NOT_IN_META,
       NOT_IN_META_OR_DEPLOYED, NOT_IN_HDFS_OR_DEPLOYED, NOT_IN_HDFS, SERVER_DOES_NOT_MATCH_META, NOT_DEPLOYED,
       MULTI_DEPLOYED, SHOULD_NOT_BE_DEPLOYED, MULTI_META_REGION, RS_CONNECT_FAILURE,
@@ -2919,20 +2919,26 @@ public class HBaseFsck extends Configured implements Tool {
       ORPHAN_HDFS_REGION, LINGERING_SPLIT_PARENT, NO_TABLEINFO_FILE, LINGERING_REFERENCE_HFILE,
       WRONG_USAGE, EMPTY_META_CELL, EXPIRED_TABLE_LOCK
     }
-    public void clear();
-    public void report(String message);
-    public void reportError(String message);
-    public void reportError(ERROR_CODE errorCode, String message);
-    public void reportError(ERROR_CODE errorCode, String message, TableInfo table);
-    public void reportError(ERROR_CODE errorCode, String message, TableInfo table, HbckInfo info);
-    public void reportError(ERROR_CODE errorCode, String message, TableInfo table, HbckInfo info1, HbckInfo info2);
-    public int summarize();
-    public void detail(String details);
-    public ArrayList<ERROR_CODE> getErrorList();
-    public void progress();
-    public void print(String message);
-    public void resetErrors();
-    public boolean tableHasErrors(TableInfo table);
+    void clear();
+    void report(String message);
+    void reportError(String message);
+    void reportError(ERROR_CODE errorCode, String message);
+    void reportError(ERROR_CODE errorCode, String message, TableInfo table);
+    void reportError(ERROR_CODE errorCode, String message, TableInfo table, HbckInfo info);
+    void reportError(
+      ERROR_CODE errorCode,
+      String message,
+      TableInfo table,
+      HbckInfo info1,
+      HbckInfo info2
+    );
+    int summarize();
+    void detail(String details);
+    ArrayList<ERROR_CODE> getErrorList();
+    void progress();
+    void print(String message);
+    void resetErrors();
+    boolean tableHasErrors(TableInfo table);
   }
 
   static class PrintingErrorReporter implements ErrorReporter {
@@ -3230,7 +3236,7 @@ public class HBaseFsck extends Configured implements Tool {
    * Display the full report from fsck. This displays all live and dead region
    * servers, and all known regions.
    */
-  public void setDisplayFullReport() {
+  public static void setDisplayFullReport() {
     details = true;
   }
 

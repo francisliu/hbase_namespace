@@ -28,8 +28,8 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.Server;
-import org.apache.hadoop.hbase.exceptions.TableNotEnabledException;
-import org.apache.hadoop.hbase.exceptions.TableNotFoundException;
+import org.apache.hadoop.hbase.TableNotEnabledException;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.executor.EventHandler;
@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.MasterCoprocessorHost;
 import org.apache.hadoop.hbase.master.RegionStates;
 import org.apache.hadoop.hbase.master.TableLockManager;
+import org.apache.hadoop.hbase.master.RegionState.State;
 import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
 import org.apache.zookeeper.KeeperException;
 import org.cloudera.htrace.Trace;
@@ -201,7 +202,9 @@ public class DisableTableHandler extends EventHandler {
       RegionStates regionStates = assignmentManager.getRegionStates();
       for (HRegionInfo region: regions) {
         if (regionStates.isRegionInTransition(region)
-            && !regionStates.isRegionFailedToClose(region)) continue;
+            && !regionStates.isRegionInState(region, State.FAILED_CLOSE)) {
+          continue;
+        }
         final HRegionInfo hri = region;
         pool.execute(Trace.wrap(new Runnable() {
           public void run() {

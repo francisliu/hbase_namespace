@@ -33,13 +33,14 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.NotServingRegionException;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.SplitLogCounters;
 import org.apache.hadoop.hbase.SplitLogTask;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.RetriesExhaustedException;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.exceptions.NotServingRegionException;
 import org.apache.hadoop.hbase.master.SplitLogManager;
 import org.apache.hadoop.hbase.regionserver.wal.HLogSplitter;
 import org.apache.hadoop.hbase.regionserver.wal.HLogUtil;
@@ -169,8 +170,14 @@ public class SplitLogWorker extends ZooKeeperListener implements Runnable {
     try {
       LOG.info("SplitLogWorker " + this.serverName + " starting");
       this.watcher.registerListener(this);
-      // initialize a new connection for splitlogworker configuration
-      HConnectionManager.getConnection(conf);
+      boolean distributedLogReplay = this.conf.getBoolean(
+        HConstants.DISTRIBUTED_LOG_REPLAY_KEY,
+          HConstants.DEFAULT_DISTRIBUTED_LOG_REPLAY_CONFIG);
+      if (distributedLogReplay) {
+        // initialize a new connection for splitlogworker configuration
+        HConnectionManager.getConnection(conf);
+      }
+
       // wait for master to create the splitLogZnode
       int res = -1;
       while (res == -1 && !exitWorker) {
@@ -240,6 +247,7 @@ public class SplitLogWorker extends ZooKeeperListener implements Runnable {
           return;
         }
       }
+      SplitLogCounters.tot_wkr_task_grabing.incrementAndGet();
       synchronized (taskReadyLock) {
         while (seq_start == taskReadySeq) {
           try {
@@ -640,13 +648,13 @@ public class SplitLogWorker extends ZooKeeperListener implements Runnable {
    * is better to have workers prepare the task and then have the
    * {@link SplitLogManager} commit the work in SplitLogManager.TaskFinisher
    */
-  static public interface TaskExecutor {
-    static public enum Status {
+  public interface TaskExecutor {
+    enum Status {
       DONE(),
       ERR(),
       RESIGNED(),
       PREEMPTED()
     }
-    public Status exec(String name, CancelableProgressable p);
+    Status exec(String name, CancelableProgressable p);
   }
 }

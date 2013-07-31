@@ -41,6 +41,7 @@ import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellScanner;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -60,7 +61,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.metrics.ScanMetrics;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
 import org.apache.hadoop.hbase.filter.ByteArrayComparable;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
@@ -550,6 +550,8 @@ public final class ProtobufUtil {
             delete.deleteColumn(family, qualifier, ts);
           } else if (deleteType == DeleteType.DELETE_MULTIPLE_VERSIONS) {
             delete.deleteColumns(family, qualifier, ts);
+          } else if (deleteType == DeleteType.DELETE_FAMILY_VERSION) {
+            delete.deleteFamilyVersion(family, ts);
           } else {
             delete.deleteFamily(family, ts);
           }
@@ -1189,7 +1191,9 @@ public final class ProtobufUtil {
       return DeleteType.DELETE_MULTIPLE_VERSIONS;
     case DeleteFamily:
       return DeleteType.DELETE_FAMILY;
-      default:
+    case DeleteFamilyVersion:
+      return DeleteType.DELETE_FAMILY_VERSION;
+    default:
         throw new IOException("Unknown delete type: " + type);
     }
   }
@@ -1202,17 +1206,22 @@ public final class ProtobufUtil {
    * @throws IOException if failed to deserialize the parameter
    */
   @SuppressWarnings("unchecked")
-  public static Throwable toException(
-      final NameBytesPair parameter) throws IOException {
+  public static Throwable toException(final NameBytesPair parameter) throws IOException {
     if (parameter == null || !parameter.hasValue()) return null;
     String desc = parameter.getValue().toStringUtf8();
     String type = parameter.getName();
     try {
       Class<? extends Throwable> c =
         (Class<? extends Throwable>)Class.forName(type, true, CLASS_LOADER);
-      Constructor<? extends Throwable> cn =
-        c.getDeclaredConstructor(String.class);
-      return cn.newInstance(desc);
+      Constructor<? extends Throwable> cn = null;
+      try {
+        cn = c.getDeclaredConstructor(String.class);
+        return cn.newInstance(desc);
+      } catch (NoSuchMethodException e) {
+        // Could be a raw RemoteException. See HBASE-8987.
+        cn = c.getDeclaredConstructor(String.class, String.class);
+        return cn.newInstance(type, desc);
+      }
     } catch (Exception e) {
       throw new IOException(e);
     }

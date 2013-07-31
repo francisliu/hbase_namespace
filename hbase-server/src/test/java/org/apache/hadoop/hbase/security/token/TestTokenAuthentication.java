@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.ipc.RequestContext;
 import org.apache.hadoop.hbase.ipc.RpcServer.BlockingServiceAndInterface;
 import org.apache.hadoop.hbase.ipc.RpcServerInterface;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
+import org.apache.hadoop.hbase.ipc.SimpleRpcScheduler;
 import org.apache.hadoop.hbase.protobuf.generated.AuthenticationProtos;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
@@ -93,7 +94,7 @@ public class TestTokenAuthentication {
   }
   private static Log LOG = LogFactory.getLog(TestTokenAuthentication.class);
 
-  public static interface AuthenticationServiceSecurityInfo {}
+  public interface AuthenticationServiceSecurityInfo {}
 
   /**
    * Basic server process for RPC authentication testing
@@ -129,8 +130,10 @@ public class TestTokenAuthentication {
         AuthenticationProtos.AuthenticationService.newReflectiveBlockingService(this);
       sai.add(new BlockingServiceAndInterface(service,
         AuthenticationProtos.AuthenticationService.BlockingInterface.class));
+      SimpleRpcScheduler scheduler = new SimpleRpcScheduler(
+          conf, 3, 1, 0, null, HConstants.QOS_THRESHOLD);
       this.rpcServer =
-        new RpcServer(this, "tokenServer", sai, initialIsa, 3, 1, conf, HConstants.QOS_THRESHOLD);
+        new RpcServer(this, "tokenServer", sai, initialIsa, conf, scheduler);
       this.isa = this.rpcServer.getListenerAddress();
       this.sleeper = new Sleeper(1000, this);
     }
@@ -276,15 +279,15 @@ public class TestTokenAuthentication {
     }
 
     @Override
-    public AuthenticationProtos.WhoAmIResponse whoami(
+    public AuthenticationProtos.WhoAmIResponse whoAmI(
         RpcController controller, AuthenticationProtos.WhoAmIRequest request)
       throws ServiceException {
-      LOG.debug("whoami() request from "+RequestContext.getRequestUserName());
+      LOG.debug("whoAmI() request from "+RequestContext.getRequestUserName());
       // ignore passed in controller -- it's always null
       ServerRpcController serverController = new ServerRpcController();
       BlockingRpcCallback<AuthenticationProtos.WhoAmIResponse> callback =
           new BlockingRpcCallback<AuthenticationProtos.WhoAmIResponse>();
-      whoami(serverController, request, callback);
+      whoAmI(serverController, request, callback);
       try {
         serverController.checkFailed();
         return callback.get();
@@ -385,7 +388,7 @@ public class TestTokenAuthentication {
           AuthenticationProtos.AuthenticationService.BlockingInterface stub =
             AuthenticationProtos.AuthenticationService.newBlockingStub(channel);
           AuthenticationProtos.WhoAmIResponse response =
-            stub.whoami(null, AuthenticationProtos.WhoAmIRequest.getDefaultInstance());
+            stub.whoAmI(null, AuthenticationProtos.WhoAmIRequest.getDefaultInstance());
           String myname = response.getUsername();
           assertEquals("testuser", myname);
           String authMethod = response.getAuthMethod();

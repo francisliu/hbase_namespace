@@ -53,7 +53,7 @@ import org.apache.hadoop.hbase.regionserver.ConstantSizeRegionSplitPolicy;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
-import org.apache.hadoop.hbase.exceptions.UnknownSnapshotException;
+import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -115,8 +115,6 @@ public class TestSnapshotFromMaster {
     conf.setInt("hbase.hstore.compactionThreshold", 5);
     // block writes if we get to 12 store files
     conf.setInt("hbase.hstore.blockingStoreFiles", 12);
-    // drop the number of attempts for the hbase admin
-    conf.setInt("hbase.client.retries.number", 1);
     // Ensure no extra cleaners on by default (e.g. TimeToLiveHFileCleaner)
     conf.set(HFileCleaner.MASTER_HFILE_CLEANER_PLUGINS, "");
     conf.set(HConstants.HBASE_MASTER_LOGCLEANER_PLUGINS, "");
@@ -173,7 +171,7 @@ public class TestSnapshotFromMaster {
    * <li>If asking about a snapshot has hasn't occurred, you should get an error.</li>
    * </ol>
    */
-  @Test(timeout = 60000)
+  @Test(timeout = 300000)
   public void testIsDoneContract() throws Exception {
 
     IsSnapshotDoneRequest.Builder builder = IsSnapshotDoneRequest.newBuilder();
@@ -228,7 +226,7 @@ public class TestSnapshotFromMaster {
     assertTrue("Completed, on-disk snapshot not found", response.getDone());
   }
 
-  @Test
+  @Test(timeout = 300000)
   public void testGetCompletedSnapshots() throws Exception {
     // first check when there are no snapshots
     ListSnapshotRequest request = ListSnapshotRequest.newBuilder().build();
@@ -262,7 +260,7 @@ public class TestSnapshotFromMaster {
     assertEquals("Returned snapshots don't match created snapshots", expected, snapshots);
   }
 
-  @Test
+  @Test(timeout = 300000)
   public void testDeleteSnapshot() throws Exception {
 
     String snapshotName = "completed";
@@ -290,7 +288,7 @@ public class TestSnapshotFromMaster {
    * should be retained, while those that are not in a snapshot should be deleted.
    * @throws Exception on failure
    */
-  @Test
+  @Test(timeout = 300000)
   public void testSnapshotHFileArchiving() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     // make sure we don't fail on listing snapshots

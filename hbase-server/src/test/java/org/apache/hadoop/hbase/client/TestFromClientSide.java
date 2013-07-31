@@ -52,6 +52,7 @@ import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -89,8 +90,7 @@ import org.apache.hadoop.hbase.protobuf.generated.MultiRowMutation.MultiMutateRe
 import org.apache.hadoop.hbase.protobuf.generated.MultiRowMutation.MultiRowMutationService;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
-import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
-import org.apache.hadoop.hbase.exceptions.NoSuchColumnFamilyException;
+import org.apache.hadoop.hbase.regionserver.NoSuchColumnFamilyException;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -1722,6 +1722,160 @@ public class TestFromClientSide {
     assertTrue("Expected 9 keys but received " + result.size(),
         result.size() == 9);
 
+  }
+
+  @Test
+  public void testDeleteFamilyVersion() throws Exception {
+    HBaseAdmin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
+    byte [] TABLE = Bytes.toBytes("testDeleteFamilyVersion");
+
+    byte [][] QUALIFIERS = makeNAscii(QUALIFIER, 1);
+    byte [][] VALUES = makeN(VALUE, 5);
+    long [] ts = {1000, 2000, 3000, 4000, 5000};
+
+    HTable ht = TEST_UTIL.createTable(TABLE, FAMILY, 5);
+
+    Put put = new Put(ROW);
+    for (int q = 0; q < 1; q++)
+      for (int t = 0; t < 5; t++)
+        put.add(FAMILY, QUALIFIERS[q], ts[t], VALUES[t]);
+    ht.put(put);
+    admin.flush(TABLE);
+
+    Delete delete = new Delete(ROW);
+    delete.deleteFamilyVersion(FAMILY, ts[1]);  // delete version '2000'
+    delete.deleteFamilyVersion(FAMILY, ts[3]);  // delete version '4000'
+    ht.delete(delete);
+    admin.flush(TABLE);
+
+    for (int i = 0; i < 1; i++) {
+      Get get = new Get(ROW);
+      get.addColumn(FAMILY, QUALIFIERS[i]);
+      get.setMaxVersions(Integer.MAX_VALUE);
+      Result result = ht.get(get);
+      // verify version '1000'/'3000'/'5000' remains for all columns
+      assertNResult(result, ROW, FAMILY, QUALIFIERS[i],
+          new long [] {ts[0], ts[2], ts[4]},
+          new byte[][] {VALUES[0], VALUES[2], VALUES[4]},
+          0, 2);
+    }
+    ht.close();
+    admin.close();
+  }
+
+  @Test
+  public void testDeleteFamilyVersionWithOtherDeletes() throws Exception {
+    byte [] TABLE = Bytes.toBytes("testDeleteFamilyVersionWithOtherDeletes");
+
+    byte [][] QUALIFIERS = makeNAscii(QUALIFIER, 5);
+    byte [][] VALUES = makeN(VALUE, 5);
+    long [] ts = {1000, 2000, 3000, 4000, 5000};
+
+    HBaseAdmin admin = new HBaseAdmin(TEST_UTIL.getConfiguration());
+    HTable ht = TEST_UTIL.createTable(TABLE, FAMILY, 5);
+    Put put = null;
+    Result result = null;
+    Get get = null;
+    Delete delete = null;
+
+    // 1. put on ROW
+    put = new Put(ROW);
+    for (int q = 0; q < 5; q++)
+      for (int t = 0; t < 5; t++)
+        put.add(FAMILY, QUALIFIERS[q], ts[t], VALUES[t]);
+    ht.put(put);
+    admin.flush(TABLE);
+
+    // 2. put on ROWS[0]
+    byte [] ROW2 = Bytes.toBytes("myRowForTest");
+    put = new Put(ROW2);
+    for (int q = 0; q < 5; q++)
+      for (int t = 0; t < 5; t++)
+        put.add(FAMILY, QUALIFIERS[q], ts[t], VALUES[t]);
+    ht.put(put);
+    admin.flush(TABLE);
+
+    // 3. delete on ROW
+    delete = new Delete(ROW);
+    // delete version <= 2000 of all columns
+    // note: deleteFamily must be the first since it will mask
+    // the subsequent other type deletes!
+    delete.deleteFamily(FAMILY, ts[1]);
+    // delete version '4000' of all columns
+    delete.deleteFamilyVersion(FAMILY, ts[3]);
+   // delete version <= 3000 of column 0
+    delete.deleteColumns(FAMILY, QUALIFIERS[0], ts[2]);
+    // delete version <= 5000 of column 2
+    delete.deleteColumns(FAMILY, QUALIFIERS[2], ts[4]);
+    // delete version 5000 of column 4
+    delete.deleteColumn(FAMILY, QUALIFIERS[4], ts[4]);
+    ht.delete(delete);
+    admin.flush(TABLE);
+
+     // 4. delete on ROWS[0]
+    delete = new Delete(ROW2);
+    delete.deleteFamilyVersion(FAMILY, ts[1]);  // delete version '2000'
+    delete.deleteFamilyVersion(FAMILY, ts[3]);  // delete version '4000'
+    ht.delete(delete);
+    admin.flush(TABLE);
+
+    // 5. check ROW
+    get = new Get(ROW);
+    get.addColumn(FAMILY, QUALIFIERS[0]);
+    get.setMaxVersions(Integer.MAX_VALUE);
+    result = ht.get(get);
+    assertNResult(result, ROW, FAMILY, QUALIFIERS[0],
+        new long [] {ts[4]},
+        new byte[][] {VALUES[4]},
+        0, 0);
+
+    get = new Get(ROW);
+    get.addColumn(FAMILY, QUALIFIERS[1]);
+    get.setMaxVersions(Integer.MAX_VALUE);
+    result = ht.get(get);
+    assertNResult(result, ROW, FAMILY, QUALIFIERS[1],
+        new long [] {ts[2], ts[4]},
+        new byte[][] {VALUES[2], VALUES[4]},
+        0, 1);
+
+    get = new Get(ROW);
+    get.addColumn(FAMILY, QUALIFIERS[2]);
+    get.setMaxVersions(Integer.MAX_VALUE);
+    result = ht.get(get);
+    assertEquals(0, result.size());
+
+    get = new Get(ROW);
+    get.addColumn(FAMILY, QUALIFIERS[3]);
+    get.setMaxVersions(Integer.MAX_VALUE);
+    result = ht.get(get);
+    assertNResult(result, ROW, FAMILY, QUALIFIERS[3],
+        new long [] {ts[2], ts[4]},
+        new byte[][] {VALUES[2], VALUES[4]},
+        0, 1);
+
+    get = new Get(ROW);
+    get.addColumn(FAMILY, QUALIFIERS[4]);
+    get.setMaxVersions(Integer.MAX_VALUE);
+    result = ht.get(get);
+    assertNResult(result, ROW, FAMILY, QUALIFIERS[4],
+        new long [] {ts[2]},
+        new byte[][] {VALUES[2]},
+        0, 0);
+
+    // 6. check ROWS[0]
+    for (int i = 0; i < 5; i++) {
+      get = new Get(ROW2);
+      get.addColumn(FAMILY, QUALIFIERS[i]);
+      get.setMaxVersions(Integer.MAX_VALUE);
+      result = ht.get(get);
+      // verify version '1000'/'3000'/'5000' remains for all columns
+      assertNResult(result, ROW2, FAMILY, QUALIFIERS[i],
+          new long [] {ts[0], ts[2], ts[4]},
+          new byte[][] {VALUES[0], VALUES[2], VALUES[4]},
+          0, 2);
+    }
+    ht.close();
+    admin.close();
   }
 
   @Test
@@ -4452,7 +4606,7 @@ public class TestFromClientSide {
     }
   }
 
-  @Test
+  @Ignore ("Flakey: HBASE-8989") @Test
   public void testClientPoolThreadLocal() throws IOException {
     final byte[] tableName = Bytes.toBytes("testClientPoolThreadLocal");
 
@@ -4480,8 +4634,8 @@ public class TestFromClientSide {
       NavigableMap<Long, byte[]> navigableMap = result.getMap().get(FAMILY)
           .get(QUALIFIER);
 
-      assertEquals("The number of versions of '" + FAMILY + ":" + QUALIFIER
-          + " did not match " + versions, versions, navigableMap.size());
+      assertEquals("The number of versions of '" + FAMILY + ":" + QUALIFIER + " did not match " +
+        versions + "; " + put.toString() + ", " + get.toString(), versions, navigableMap.size());
       for (Map.Entry<Long, byte[]> entry : navigableMap.entrySet()) {
         assertTrue("The value at time " + entry.getKey()
             + " did not match what was put",
@@ -4506,8 +4660,8 @@ public class TestFromClientSide {
             NavigableMap<Long, byte[]> navigableMap = result.getMap()
                 .get(FAMILY).get(QUALIFIER);
 
-            assertEquals("The number of versions of '" + FAMILY + ":"
-                + QUALIFIER + " did not match " + versionsCopy, versionsCopy,
+            assertEquals("The number of versions of '" + Bytes.toString(FAMILY) + ":"
+                + Bytes.toString(QUALIFIER) + " did not match " + versionsCopy, versionsCopy,
                 navigableMap.size());
             for (Map.Entry<Long, byte[]> entry : navigableMap.entrySet()) {
               assertTrue("The value at time " + entry.getKey()

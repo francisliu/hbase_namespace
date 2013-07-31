@@ -24,6 +24,10 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.mapreduce.replication.VerifyReplication;
+import org.apache.hadoop.hbase.protobuf.generated.WALProtos;
+import org.apache.hadoop.hbase.regionserver.wal.HLogKey;
+import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
+import org.apache.hadoop.hbase.replication.regionserver.Replication;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
@@ -240,6 +244,7 @@ public class TestReplicationSmallTests extends TestReplicationBase {
     assertEquals(NB_ROWS_IN_BATCH, res1.length);
 
     for (int i = 0; i < NB_RETRIES; i++) {
+      scan = new Scan();
       if (i==NB_RETRIES-1) {
         fail("Waited too much time for normal batch replication");
       }
@@ -253,75 +258,6 @@ public class TestReplicationSmallTests extends TestReplicationBase {
         break;
       }
     }
-  }
-
-  /**
-   * Test stopping replication, trying to insert, make sure nothing's
-   * replicated, enable it, try replicating and it should work
-   * @throws Exception
-   */
-  @Test(timeout=300000)
-  public void testStartStop() throws Exception {
-
-    // Test stopping replication
-    setIsReplication(false);
-
-    Put put = new Put(Bytes.toBytes("stop start"));
-    put.add(famName, row, row);
-    htable1.put(put);
-
-    Get get = new Get(Bytes.toBytes("stop start"));
-    for (int i = 0; i < NB_RETRIES; i++) {
-      if (i==NB_RETRIES-1) {
-        break;
-      }
-      Result res = htable2.get(get);
-      if(res.size() >= 1) {
-        fail("Replication wasn't stopped");
-
-      } else {
-        LOG.info("Row not replicated, let's wait a bit more...");
-        Thread.sleep(SLEEP_TIME);
-      }
-    }
-
-    // Test restart replication
-    setIsReplication(true);
-
-    htable1.put(put);
-
-    for (int i = 0; i < NB_RETRIES; i++) {
-      if (i==NB_RETRIES-1) {
-        fail("Waited too much time for put replication");
-      }
-      Result res = htable2.get(get);
-      if(res.size() == 0) {
-        LOG.info("Row not available");
-        Thread.sleep(SLEEP_TIME);
-      } else {
-        assertArrayEquals(res.value(), row);
-        break;
-      }
-    }
-
-    put = new Put(Bytes.toBytes("do not rep"));
-    put.add(noRepfamName, row, row);
-    htable1.put(put);
-
-    get = new Get(Bytes.toBytes("do not rep"));
-    for (int i = 0; i < NB_RETRIES; i++) {
-      if (i == NB_RETRIES-1) {
-        break;
-      }
-      Result res = htable2.get(get);
-      if (res.size() >= 1) {
-        fail("Not supposed to be replicated");
-      } else {
-        LOG.info("Row not replicated, let's wait a bit more...");
-        Thread.sleep(SLEEP_TIME);
-      }
-    }
-
   }
 
   /**
@@ -447,10 +383,10 @@ public class TestReplicationSmallTests extends TestReplicationBase {
 
     assertEquals(NB_ROWS_IN_BIG_BATCH, res.length);
 
-    scan = new Scan();
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < NB_RETRIES; i++) {
+      scan = new Scan();
 
       scanner = htable2.getScanner(scan);
       res = scanner.next(NB_ROWS_IN_BIG_BATCH);
@@ -527,6 +463,19 @@ public class TestReplicationSmallTests extends TestReplicationBase {
         findCounter(VerifyReplication.Verifier.Counters.GOODROWS).getValue());
     assertEquals(NB_ROWS_IN_BATCH, job.getCounters().
         findCounter(VerifyReplication.Verifier.Counters.BADROWS).getValue());
+  }
+
+  /**
+   * Test for HBASE-9038, Replication.scopeWALEdits would NPE if it wasn't filtering out
+   * the compaction WALEdit
+   * @throws Exception
+   */
+  @Test(timeout=300000)
+  public void testCompactionWALEdits() throws Exception {
+    WALProtos.CompactionDescriptor compactionDescriptor =
+        WALProtos.CompactionDescriptor.getDefaultInstance();
+    WALEdit edit = WALEdit.createCompaction(compactionDescriptor);
+    Replication.scopeWALEdits(htable1.getTableDescriptor(), new HLogKey(), edit);
   }
 
 }
