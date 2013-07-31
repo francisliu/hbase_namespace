@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 
+import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -29,6 +30,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.SmallTests;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.IsSnapshotDoneRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.IsSnapshotDoneResponse;
@@ -129,11 +132,28 @@ public class TestSnapshotFromAdmin {
     failSnapshotStart(admin, builder.setName("-snapshot").build());
     failSnapshotStart(admin, builder.setName("snapshot fails").build());
     failSnapshotStart(admin, builder.setName("snap$hot").build());
+    failSnapshotStart(admin, builder.setName("snap:hot").build());
     // check the table name also get verified
-    failSnapshotStart(admin, builder.setName("snapshot").setTable(".table").build());
-    failSnapshotStart(admin, builder.setName("snapshot").setTable("-table").build());
-    failSnapshotStart(admin, builder.setName("snapshot").setTable("table fails").build());
-    failSnapshotStart(admin, builder.setName("snapshot").setTable("tab%le").build());
+    failSnapshotStart(admin, builder.setName("snapshot")
+        .setTable(HBaseProtos.TableName.newBuilder()
+            .setNamespace(ByteString.copyFromUtf8(""))
+            .setTableQualifier(ByteString.copyFromUtf8(".table")).build())
+        .build());
+    failSnapshotStart(admin, builder.setName("snapshot")
+        .setTable(HBaseProtos.TableName.newBuilder()
+            .setNamespace(ByteString.copyFromUtf8(""))
+            .setTableQualifier(ByteString.copyFromUtf8("-table")).build())
+        .build());
+    failSnapshotStart(admin, builder.setName("snapshot")
+        .setTable(HBaseProtos.TableName.newBuilder()
+            .setNamespace(ByteString.copyFromUtf8(""))
+            .setTableQualifier(ByteString.copyFromUtf8("table fails")).build())
+        .build());
+    failSnapshotStart(admin, builder.setName("snapshot")
+        .setTable(HBaseProtos.TableName.newBuilder()
+            .setNamespace(ByteString.copyFromUtf8(""))
+            .setTableQualifier(ByteString.copyFromUtf8("tab%le")).build())
+        .build());
 
     // mock the master connection
     MasterAdminKeepAliveConnection master = Mockito.mock(MasterAdminKeepAliveConnection.class);
@@ -148,7 +168,8 @@ public class TestSnapshotFromAdmin {
         Mockito.any(IsSnapshotDoneRequest.class))).thenReturn(doneResponse);
 
       // make sure that we can use valid names
-    admin.snapshot(builder.setName("snapshot").setTable("table").build());
+    admin.snapshot(builder.setName("snapshot")
+        .setTable(ProtobufUtil.toProtoBuf(TableName.valueOf("table"))).build());
   }
 
   private void failSnapshotStart(HBaseAdmin admin, SnapshotDescription snapshot) throws IOException {

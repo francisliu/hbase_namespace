@@ -658,15 +658,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Get the name of the table as a String
-   *
-   * @return name of table as a String
-   */
-  public String getNameAsString() {
-    return name.getNameAsString();
-  }
-
-  /**
    * This get the class associated with the region split policy which
    * determines when a region split should occur.  The class used by
    * default is defined in {@link org.apache.hadoop.hbase.regionserver.RegionSplitPolicy}
@@ -1403,7 +1394,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   public TableSchema convert() {
     TableSchema.Builder builder = TableSchema.newBuilder();
-    builder.setName(ByteString.copyFrom(getTableName().getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf(getTableName()));
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e: this.values.entrySet()) {
       BytesBytesPair.Builder aBuilder = BytesBytesPair.newBuilder();
       aBuilder.setFirst(ByteString.copyFrom(e.getKey().get()));
@@ -1434,7 +1425,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       hcds[index++] = HColumnDescriptor.convert(cfs);
     }
     HTableDescriptor htd = new HTableDescriptor(
-        TableName.valueOf(ts.getName().toByteArray()),
+        ProtobufUtil.fromProtoBuf(ts.getTableName()),
         hcds);
     for (BytesBytesPair a: ts.getAttributesList()) {
       htd.setValue(a.getFirst().toByteArray(), a.getSecond().toByteArray());

@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.snapshot.DisabledTableSnapshotHandler;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotHFileCleaner;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.DeleteSnapshotRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.IsSnapshotDoneRequest;
@@ -184,7 +185,7 @@ public class TestSnapshotFromMaster {
 
     // and that we get the same issue, even if we specify a name
     SnapshotDescription desc = SnapshotDescription.newBuilder()
-      .setName(snapshotName).setTable(TABLE_NAME.getNameAsString()).build();
+      .setName(snapshotName).setTable(ProtobufUtil.toProtoBuf(TABLE_NAME)).build();
     builder.setSnapshot(desc);
     SnapshotTestingUtils.expectSnapshotDoneException(master, builder.build(),
       UnknownSnapshotException.class);

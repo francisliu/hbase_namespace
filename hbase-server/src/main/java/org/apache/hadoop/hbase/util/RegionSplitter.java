@@ -684,7 +684,7 @@ public class RegionSplitter {
           // check every Column Family for that region
           boolean refFound = false;
           for (HColumnDescriptor c : htd.getFamilies()) {
-            if ((refFound = regionFs.hasReferences(htd.getNameAsString()))) {
+            if ((refFound = regionFs.hasReferences(htd.getTableName().getNameAsString()))) {
               break;
             }
           }

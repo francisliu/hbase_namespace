@@ -83,13 +83,16 @@ public final class TableName implements Comparable<TableName> {
     return tableName;
   }
 
-  private static void isLegalTableQualifierName(final byte[] qualifierName){
+  public static void isLegalTableQualifierName(final byte[] qualifierName){
     isLegalTableQualifierName(qualifierName, 0, qualifierName.length);
   }
 
-  private static void isLegalTableQualifierName(final byte[] qualifierName,
+  public static void isLegalTableQualifierName(final byte[] qualifierName,
                                                 int offset,
                                                 int length){
+    if(length - offset < 1) {
+      throw new IllegalArgumentException("Table qualifier must not be empty");
+    }
     if (qualifierName[offset] == '.' || qualifierName[offset] == '-') {
       throw new IllegalArgumentException("Illegal first character <" + qualifierName[0] +
           "> at 0. Namespaces can only start with alphanumeric " +
@@ -167,6 +170,9 @@ public final class TableName implements Comparable<TableName> {
 
   public static TableName valueOf(byte[] namespace, byte[] qualifier) {
     TableName ret = new TableName();
+    if(namespace == null || namespace.length < 1) {
+      namespace = NamespaceDescriptor.DEFAULT_NAMESPACE_NAME;
+    }
     ret.namespace = namespace;
     ret.namespaceAsString = Bytes.toString(namespace);
     ret.qualifier = qualifier;
@@ -182,8 +188,11 @@ public final class TableName implements Comparable<TableName> {
 
   public static TableName valueOf(String namespaceAsString, String qualifierAsString) {
     TableName ret = new TableName();
-    ret.namespace = Bytes.toBytes(namespaceAsString);
+    if(namespaceAsString == null || namespaceAsString.length() < 1) {
+      namespaceAsString = NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR;
+    }
     ret.namespaceAsString = namespaceAsString;
+    ret.namespace = Bytes.toBytes(namespaceAsString);
     ret.qualifier = Bytes.toBytes(qualifierAsString);
     ret.qualifierAsString = qualifierAsString;
 

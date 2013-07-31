@@ -1814,7 +1814,7 @@ public class TestAccessController {
     // check for wrong table region
     CheckPermissionsRequest checkRequest = CheckPermissionsRequest.newBuilder()
       .addPermission(AccessControlProtos.Permission.newBuilder()
-        .setTable(ByteString.copyFrom(TEST_TABLE.getTableName().getName()))
+        .setTableName(ProtobufUtil.toProtoBuf(TEST_TABLE.getTableName()))
         .addAction(AccessControlProtos.Permission.Action.CREATE)
       ).build();
     acl = new HTable(conf, AccessControlLists.ACL_TABLE_NAME);

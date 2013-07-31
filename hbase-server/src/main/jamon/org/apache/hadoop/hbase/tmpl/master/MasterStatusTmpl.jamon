@@ -49,6 +49,7 @@ org.apache.hadoop.hbase.HBaseConfiguration;
 org.apache.hadoop.hbase.TableName;
 org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 org.apache.hadoop.hbase.master.DeadServer;
+org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 </%import>
 <%if format.equals("json") %>
   <& ../common/TaskMonitorTmpl; filter = filter; format = "json" &>
@@ -346,9 +347,9 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
     </tr>
     <%for HTableDescriptor htDesc : tables%>
     <tr>
-        <td><a href=table.jsp?name=<% htDesc.getNameAsString() %>><% htDesc.getNameAsString() %></a> </td>
+        <td><a href=table.jsp?name=<% htDesc.getTableName().getNameAsString() %>><% htDesc.getTableName().getNameAsString() %></a> </td>
         <%if (frags != null) %>
-            <td align="center"><% frags.get(htDesc.getNameAsString()) != null ? frags.get(htDesc.getNameAsString()).intValue() + "%" : "n/a" %></td>
+            <td align="center"><% frags.get(htDesc.getTableName().getNameAsString()) != null ? frags.get(htDesc.getTableName().getNameAsString()).intValue() + "%" : "n/a" %></td>
         </%if>
         <td><% master.getAssignmentManager().getRegionStates().getRegionsOfTable(htDesc
         .getTableName()).size() %>
@@ -372,9 +373,13 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
         <th>Creation Time</th>
     </tr>
     <%for SnapshotDescription snapshotDesc : snapshots%>
+    <%java>
+        TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshotDesc.getTable());
+    </%java>
     <tr>
         <td><a href="snapshot.jsp?name=<% snapshotDesc.getName() %>"><% snapshotDesc.getName() %></a> </td>
-        <td><a href="table.jsp?name=<% snapshotDesc.getTable() %>"><% snapshotDesc.getTable() %></a></td>
+        <td><a href="table.jsp?name=<% snapshotTable.getNameAsString() %>"><% snapshotTable.getNameAsString() %></a>
+        </td>
         <td><% new Date(snapshotDesc.getCreationTime()) %></td>
     </tr>
     </%for>

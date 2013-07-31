@@ -300,7 +300,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     List<HTableDescriptor> matched = new LinkedList<HTableDescriptor>();
     HTableDescriptor[] tables = listTables();
     for (HTableDescriptor table : tables) {
-      if (pattern.matcher(table.getNameAsString()).matches()) {
+      if (pattern.matcher(table.getTableName().getNameAsString()).matches()) {
         matched.add(table);
       }
     }
@@ -428,7 +428,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     try {
       createTableAsync(desc, splitKeys);
     } catch (SocketTimeoutException ste) {
-      LOG.warn("Creating " + desc.getNameAsString() + " took too long", ste);
+      LOG.warn("Creating " + desc.getTableName() + " took too long", ste);
     }
     int numRegs = splitKeys == null ? 1 : splitKeys.length + 1;
     int prevRegCount = 0;
@@ -492,7 +492,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     }
     throw new TableNotEnabledException(
       "Retries exhausted while still waiting for table: "
-      + desc.getNameAsString() + " to be enabled");
+      + desc.getTableName() + " to be enabled");
   }
 
   /**
@@ -669,7 +669,7 @@ public class HBaseAdmin implements Abortable, Closeable {
       try {
         deleteTable(table.getTableName());
       } catch (IOException ex) {
-        LOG.info("Failed to delete table " + table.getNameAsString(), ex);
+        LOG.info("Failed to delete table " + table.getTableName(), ex);
         failed.add(table);
       }
     }
@@ -808,7 +808,7 @@ public class HBaseAdmin implements Abortable, Closeable {
         try {
           enableTable(table.getTableName());
         } catch (IOException ex) {
-          LOG.info("Failed to enable table " + table.getNameAsString(), ex);
+          LOG.info("Failed to enable table " + table.getTableName(), ex);
           failed.add(table);
         }
       }
@@ -940,7 +940,7 @@ public class HBaseAdmin implements Abortable, Closeable {
         try {
           disableTable(table.getTableName());
         } catch (IOException ex) {
-          LOG.info("Failed to disable table " + table.getNameAsString(), ex);
+          LOG.info("Failed to disable table " + table.getTableName(), ex);
           failed.add(table);
         }
       }
@@ -1872,7 +1872,7 @@ public class HBaseAdmin implements Abortable, Closeable {
   throws IOException {
     if (!tableName.equals(htd.getTableName())) {
       throw new IllegalArgumentException("the specified table name '" + tableName.getNameAsString() +
-        "' doesn't match with the HTD one: " + htd.getNameAsString());
+        "' doesn't match with the HTD one: " + htd.getTableName());
     }
 
     executeCallable(new MasterAdminCallable<Void>(getConnection()) {
@@ -2456,7 +2456,7 @@ public class HBaseAdmin implements Abortable, Closeable {
                       SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException {
     SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-    builder.setTable(tableName.getNameAsString());
+    builder.setTable(ProtobufUtil.toProtoBuf(tableName));
     builder.setName(snapshotName);
     builder.setType(type);
     snapshot(builder.build());
@@ -2627,7 +2627,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     TableName tableName = null;
     for (SnapshotDescription snapshotInfo: listSnapshots()) {
       if (snapshotInfo.getName().equals(snapshotName)) {
-        tableName = TableName.valueOf(snapshotInfo.getTable());
+        tableName = ProtobufUtil.fromProtoBuf(snapshotInfo.getTable());
         break;
       }
     }
@@ -2739,7 +2739,7 @@ public class HBaseAdmin implements Abortable, Closeable {
       tableName)
       throws IOException, RestoreSnapshotException {
     SnapshotDescription snapshot = SnapshotDescription.newBuilder()
-        .setName(snapshotName).setTable(tableName.getNameAsString()).build();
+        .setName(snapshotName).setTable(ProtobufUtil.toProtoBuf(tableName)).build();
 
     // actually restore the snapshot
     internalRestoreSnapshotAsync(snapshot);

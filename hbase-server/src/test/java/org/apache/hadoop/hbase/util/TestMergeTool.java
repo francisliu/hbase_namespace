@@ -194,7 +194,7 @@ public class TestMergeTool extends HBaseTestCase {
     LOG.info(msg);
     LOG.info("fs2=" + this.conf.get("fs.defaultFS"));
     int errCode = ToolRunner.run(this.conf, merger,
-      new String[] {this.desc.getNameAsString(), regionName1, regionName2}
+      new String[] {this.desc.getTableName().getNameAsString(), regionName1, regionName2}
     );
     assertTrue("'" + msg + "' failed with errCode " + errCode, errCode == 0);
     HRegionInfo mergedInfo = merger.getMergedHRegionInfo();

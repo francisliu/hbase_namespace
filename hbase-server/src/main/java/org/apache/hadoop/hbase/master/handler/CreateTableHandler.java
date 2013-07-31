@@ -139,7 +139,7 @@ public class CreateTableHandler extends EventHandler {
       name = server.getServerName().toString();
     }
     return getClass().getSimpleName() + "-" + name + "-" + getSeqid() + "-" +
-      this.hTableDescriptor.getNameAsString();
+      this.hTableDescriptor.getTableName();
   }
 
   @Override
@@ -180,7 +180,7 @@ public class CreateTableHandler extends EventHandler {
       } catch (KeeperException e) {
         // Keeper exception should not happen here
         LOG.error("Got a keeper exception while removing the ENABLING table znode "
-            + this.hTableDescriptor.getNameAsString(), e);
+            + this.hTableDescriptor.getTableName(), e);
       }
     }
   }

@@ -89,7 +89,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
 
     this.status = TaskMonitor.get().createStatus(
       "Restoring  snapshot '" + snapshot.getName() + "' to table "
-          + hTableDescriptor.getNameAsString());
+          + hTableDescriptor.getTableName());
   }
 
   public RestoreSnapshotHandler prepare() throws IOException {
@@ -111,7 +111,6 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
     FileSystem fs = fileSystemManager.getFileSystem();
     Path rootDir = fileSystemManager.getRootDir();
     TableName tableName = hTableDescriptor.getTableName();
-    Path tableDir = FSUtils.getTableDir(rootDir, tableName);
 
     try {
       // 1. Update descriptor
@@ -122,7 +121,7 @@ public class RestoreSnapshotHandler extends TableEventHandler implements Snapsho
       Path snapshotDir = SnapshotDescriptionUtils.getCompletedSnapshotDir(snapshot, rootDir);
       RestoreSnapshotHelper restoreHelper = new RestoreSnapshotHelper(
           masterServices.getConfiguration(), fs,
-          snapshot, snapshotDir, hTableDescriptor, rootDir, tableDir, monitor, status);
+          snapshot, snapshotDir, hTableDescriptor, rootDir, monitor, status);
       RestoreSnapshotHelper.RestoreMetaChanges metaChanges = restoreHelper.restoreHdfsRegions();
 
       // 3. Applies changes to .META.

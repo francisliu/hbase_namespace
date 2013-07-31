@@ -1726,7 +1726,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     }
     // remove the "old" region from FS
     Path tableDir = new Path(getDefaultRootDirPath().toString()
-        + System.getProperty("file.separator") + htd.getNameAsString()
+        + System.getProperty("file.separator") + htd.getTableName()
         + System.getProperty("file.separator") + regionToDeleteInFS);
     FileSystem.get(c).delete(tableDir);
     // flush cache of regions

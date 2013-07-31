@@ -47,6 +47,7 @@ import org.apache.hadoop.hbase.master.TableLockManager;
 import org.apache.hadoop.hbase.master.TableLockManager.TableLock;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
@@ -83,6 +84,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
   protected final TableLockManager tableLockManager;
   protected final TableLock tableLock;
   protected final MonitoredTask status;
+  protected final TableName snapshotTable;
 
   /**
    * @param snapshot descriptor of the snapshot to take
@@ -97,6 +99,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
     this.master = masterServices;
     this.metricsMaster = metricsMaster;
     this.snapshot = snapshot;
+    this.snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
     this.conf = this.master.getConfiguration();
     this.fs = this.master.getMasterFileSystem().getFileSystem();
     this.rootDir = this.master.getMasterFileSystem().getRootDir();
@@ -106,23 +109,22 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
 
     this.tableLockManager = master.getTableLockManager();
     this.tableLock = this.tableLockManager.writeLock(
-        TableName.valueOf(snapshot.getTable()),
+        snapshotTable,
         EventType.C_M_SNAPSHOT_TABLE.toString());
 
     // prepare the verify
     this.verifier = new MasterSnapshotVerifier(masterServices, snapshot, rootDir);
     // update the running tasks
     this.status = TaskMonitor.get().createStatus(
-      "Taking " + snapshot.getType() + " snapshot on table: " + snapshot.getTable());
+      "Taking " + snapshot.getType() + " snapshot on table: " + snapshotTable);
   }
 
   private HTableDescriptor loadTableDescriptor()
       throws FileNotFoundException, IOException {
-    final String name = snapshot.getTable();
     HTableDescriptor htd =
-      this.master.getTableDescriptors().get(TableName.valueOf(name));
+      this.master.getTableDescriptors().get(snapshotTable);
     if (htd == null) {
-      throw new IOException("HTableDescriptor missing for " + name);
+      throw new IOException("HTableDescriptor missing for " + snapshotTable);
     }
     return htd;
   }
@@ -151,7 +153,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
   @Override
   public void process() {
     String msg = "Running " + snapshot.getType() + " table snapshot " + snapshot.getName() + " "
-        + eventType + " on table " + snapshot.getTable();
+        + eventType + " on table " + snapshotTable;
     LOG.info(msg);
     status.setStatus(msg);
     try {
@@ -165,7 +167,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
 
       List<Pair<HRegionInfo, ServerName>> regionsAndLocations =
           MetaReader.getTableRegionsAndLocations(this.server.getCatalogTracker(),
-            TableName.valueOf(snapshot.getTable()), true);
+              snapshotTable, true);
 
       // run the snapshot
       snapshotRegions(regionsAndLocations);
@@ -183,12 +185,12 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
 
       // complete the snapshot, atomically moving from tmp to .snapshot dir.
       completeSnapshot(this.snapshotDir, this.workingDir, this.fs);
-      status.markComplete("Snapshot " + snapshot.getName() + " of table " + snapshot.getTable()
+      status.markComplete("Snapshot " + snapshot.getName() + " of table " + snapshotTable
           + " completed");
       metricsMaster.addSnapshot(status.getCompletionTimestamp() - status.getStartTime());
     } catch (Exception e) {
       status.abort("Failed to complete snapshot " + snapshot.getName() + " on table " +
-          snapshot.getTable() + " because " + e.getMessage());
+          snapshotTable + " because " + e.getMessage());
       String reason = "Failed taking snapshot " + ClientSnapshotDescriptionUtils.toString(snapshot)
           + " due to exception:" + e.getMessage();
       LOG.error(reason, e);

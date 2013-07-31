@@ -382,7 +382,7 @@ public class AccessController extends BaseRegionObserver
 
     if (!result.isAllowed()) {
       throw new AccessDeniedException("Insufficient permissions (table=" +
-        env.getRegion().getTableDesc().getNameAsString()+
+        env.getRegion().getTableDesc().getTableName()+
         ((families != null && families.size() > 0) ? ", family: " +
         result.toFamilyString() : "") + ", action=" +
         perm.toString() + ")");
@@ -919,7 +919,7 @@ public class AccessController extends BaseRegionObserver
       } else {
         logResult(authResult);
         throw new AccessDeniedException("Insufficient permissions (table=" +
-          e.getRegion().getTableDesc().getNameAsString() + ", action=READ)");
+          e.getRegion().getTableDesc().getTableName() + ", action=READ)");
       }
     } else {
       // log auth success
@@ -1165,7 +1165,7 @@ public class AccessController extends BaseRegionObserver
     logResult(authResult);
     if (!authResult.isAllowed()) {
       throw new AccessDeniedException("Insufficient permissions (table=" +
-        e.getRegion().getTableDesc().getNameAsString() + ", action=WRITE)");
+        e.getRegion().getTableDesc().getTableName() + ", action=WRITE)");
     }
   }
 
@@ -1181,7 +1181,7 @@ public class AccessController extends BaseRegionObserver
     logResult(authResult);
     if (!authResult.isAllowed()) {
       throw new AccessDeniedException("Insufficient permissions (table=" +
-        e.getRegion().getTableDesc().getNameAsString() + ", action=WRITE)");
+        e.getRegion().getTableDesc().getTableName() + ", action=WRITE)");
     }
   }
 
@@ -1257,8 +1257,8 @@ public class AccessController extends BaseRegionObserver
                                  RpcCallback<AccessControlProtos.UserPermissionsResponse> done) {
     AccessControlProtos.UserPermissionsResponse response = null;
     TableName table = null;
-    if (request.hasTable()) {
-      table = TableName.valueOf(request.getTable().toByteArray());
+    if (request.hasTableName()) {
+      table = ProtobufUtil.fromProtoBuf(request.getTableName());
     }
     try {
       // only allowed to be called on _acl_ region

@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.snapshot;
 import java.io.IOException;
 import java.util.Collections;
 
+import com.google.protobuf.ByteString;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -29,6 +30,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.FSUtils;
@@ -284,7 +286,17 @@ public class SnapshotDescriptionUtils {
       FSDataInputStream in = null;
       try {
         in = fs.open(snapshotInfo);
-        return SnapshotDescription.parseFrom(in);
+        SnapshotDescription desc = SnapshotDescription.parseFrom(in);
+        if(!desc.hasTable() && desc.hasOldTable()) {
+          desc = HBaseProtos.SnapshotDescription
+                            .newBuilder(desc)
+                            .setTable(HBaseProtos.TableName
+                                                  .newBuilder()
+                                                  .setNamespace(ByteString.EMPTY)
+                                                  .setTableQualifier(desc.getOldTable()).build())
+                            .build();
+        }
+        return desc;
       } finally {
         if (in != null) in.close();
       }

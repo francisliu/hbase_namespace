@@ -22,6 +22,7 @@ package org.apache.hadoop.hbase.snapshot;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -39,15 +40,18 @@ public class ClientSnapshotDescriptionUtils {
    */
   public static void assertSnapshotRequestIsValid(HBaseProtos.SnapshotDescription snapshot)
       throws IllegalArgumentException {
-    // FIXME these method names is really bad - trunk will probably change
-    // .META. and -ROOT- snapshots are not allowed
-    if (HTableDescriptor.isSystemTable(TableName.valueOf(snapshot.getTable()))) {
-      throw new IllegalArgumentException("System table snapshots are not allowed");
-    }
     // make sure the snapshot name is valid
-    TableName.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshot.getName()));
-    // make sure the table name is valid
-    TableName.isLegalFullyQualifiedTableName(Bytes.toBytes(snapshot.getTable()));
+    TableName.isLegalTableQualifierName(Bytes.toBytes(snapshot.getName()));
+    if(snapshot.hasTable()) {
+      // make sure the table name is valid
+      TableName.isLegalNamespaceName(snapshot.getTable().getNamespace().toByteArray());
+      TableName.isLegalTableQualifierName(snapshot.getTable().getTableQualifier().toByteArray());
+      // FIXME these method names is really bad - trunk will probably change
+      // .META. and -ROOT- snapshots are not allowed
+      if (HTableDescriptor.isSystemTable(ProtobufUtil.fromProtoBuf(snapshot.getTable()))) {
+        throw new IllegalArgumentException("System table snapshots are not allowed");
+      }
+    }
   }
 
   /**
@@ -61,7 +65,8 @@ public class ClientSnapshotDescriptionUtils {
     if (ssd == null) {
       return null;
     }
-    return "{ ss=" + ssd.getName() + " table=" + ssd.getTable()
-        + " type=" + ssd.getType() + " }";
+    return "{ ss=" + ssd.getName() +
+           " table=" + (ssd.hasTable()?ProtobufUtil.fromProtoBuf(ssd.getTable()):"") +
+           " type=" + ssd.getType() + " }";
   }
 }

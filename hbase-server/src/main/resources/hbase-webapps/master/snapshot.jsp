@@ -36,13 +36,15 @@
   import="org.apache.hadoop.util.StringUtils"
   import="java.util.List"
   import="java.util.Map"
-  import="org.apache.hadoop.hbase.HConstants"%><%
+  import="org.apache.hadoop.hbase.HConstants"%>
+<%@ page import="org.apache.hadoop.hbase.TableName" %><%
   HMaster master = (HMaster)getServletContext().getAttribute(HMaster.MASTER);
   Configuration conf = master.getConfiguration();
   HBaseAdmin hbadmin = new HBaseAdmin(conf);
   boolean readOnly = conf.getBoolean("hbase.master.ui.readonly", false);
   String snapshotName = request.getParameter("name");
   SnapshotDescription snapshot = null;
+  TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
   SnapshotInfo.SnapshotStats stats = null;
   for (SnapshotDescription snapshotDesc: hbadmin.listSnapshots()) {
     if (snapshotName.equals(snapshotDesc.getName())) {
@@ -162,7 +164,8 @@
         <th>State</th>
     </tr>
     <tr>
-        <td><a href="table.jsp?name=<%= snapshot.getTable() %>"><%= snapshot.getTable() %></a></td>
+        <td><a href="table.jsp?name=<%= snapshotTable.getNameAsString() %>">
+            <%= snapshotTable.getNameAsString() %></a></td>
         <td><%= new Date(snapshot.getCreationTime()) %></td>
         <td><%= snapshot.getType() %></td>
         <td><%= snapshot.getVersion() %></td>

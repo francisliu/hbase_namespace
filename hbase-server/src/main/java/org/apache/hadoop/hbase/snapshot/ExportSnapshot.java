@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.io.HFileLink;
 import org.apache.hadoop.hbase.io.HLogLink;
 import org.apache.hadoop.hbase.mapreduce.JobUtil;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -151,7 +152,7 @@ public final class ExportSnapshot extends Configured implements Tool {
       if (HFileLink.isHFileLink(inputPath) || StoreFileInfo.isReference(inputPath)) {
         String family = inputPath.getParent().getName();
         TableName table =
-            TableName.valueOf(HFileLink.getReferencedTableName(inputPath.getName()));
+            HFileLink.getReferencedTableName(inputPath.getName());
         String region = HFileLink.getReferencedRegionName(inputPath.getName());
         String hfile = HFileLink.getReferencedHFileName(inputPath.getName());
         path = new Path(FSUtils.getTableDir(new Path("./"), table),
@@ -376,7 +377,7 @@ public final class ExportSnapshot extends Configured implements Tool {
 
     final List<Pair<Path, Long>> files = new ArrayList<Pair<Path, Long>>();
     final TableName table =
-        TableName.valueOf(snapshotDesc.getTable());
+        ProtobufUtil.fromProtoBuf(snapshotDesc.getTable());
     final Configuration conf = getConf();
 
     // Get snapshot files

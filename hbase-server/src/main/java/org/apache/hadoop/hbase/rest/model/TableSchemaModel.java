@@ -84,7 +84,7 @@ public class TableSchemaModel implements Serializable, ProtobufMessageHandler {
    * @param htd the table descriptor
    */
   public TableSchemaModel(HTableDescriptor htd) {
-    setName(htd.getNameAsString());
+    setName(htd.getTableName().getNameAsString());
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e:
         htd.getValues().entrySet()) {
       addAttribute(Bytes.toString(e.getKey().get()), 

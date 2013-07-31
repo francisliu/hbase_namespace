@@ -322,7 +322,7 @@ public abstract class TableLockManager {
         String tableLockZNode = ZKUtil.joinZNode(zkWatcher.tableLockZNode, tableName.getNameAsString());
 
         ZooKeeperProtos.TableLock data = ZooKeeperProtos.TableLock.newBuilder()
-          .setTableName(ByteString.copyFrom(tableName.getName()))
+          .setTableName(ProtobufUtil.toProtoBuf(tableName))
           .setLockOwner(ProtobufUtil.toServerName(serverName))
           .setThreadId(Thread.currentThread().getId())
           .setPurpose(purpose)

@@ -116,7 +116,7 @@ public class TestMetaMigrationConvertingToPB {
     //name under windows. So we rename it back. See src/test/data//TestMetaMigrationConvertingToPB.README and
     //https://issues.apache.org/jira/browse/HBASE-6821
     doFsCommand(shell, new String [] {"-mv", new Path(hbaseRootDir, "-META-").toString(),
-      new Path(hbaseRootDir, HConstants.META_TABLE_NAME.getNameAsString()).toString()});
+      new Path(hbaseRootDir, ".META.").toString()});
     // See whats in minihdfs.
     doFsCommand(shell, new String [] {"-lsr", "/"});
     TEST_UTIL.startMiniHBaseCluster(1, 1);

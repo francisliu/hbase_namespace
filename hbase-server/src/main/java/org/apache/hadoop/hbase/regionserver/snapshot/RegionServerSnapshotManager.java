@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.procedure.ProcedureMemberRpcs;
 import org.apache.hadoop.hbase.procedure.Subprocedure;
 import org.apache.hadoop.hbase.procedure.SubprocedureFactory;
 import org.apache.hadoop.hbase.procedure.ZKProcedureMemberRpcs;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
@@ -226,8 +227,7 @@ public class RegionServerSnapshotManager {
    * @throws IOException
    */
   private List<HRegion> getRegionsToSnapshot(SnapshotDescription snapshot) throws IOException {
-    byte[] table = Bytes.toBytes(snapshot.getTable());
-    return rss.getOnlineRegions(TableName.valueOf(table));
+    return rss.getOnlineRegions(ProtobufUtil.fromProtoBuf(snapshot.getTable()));
   }
 
   /**

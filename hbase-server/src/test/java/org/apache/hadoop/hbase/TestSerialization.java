@@ -97,7 +97,7 @@ public class TestSerialization {
     byte [] mb = Writables.getBytes(htd);
     HTableDescriptor deserializedHtd =
       (HTableDescriptor)Writables.getWritable(mb, new HTableDescriptor());
-    assertEquals(htd.getNameAsString(), deserializedHtd.getNameAsString());
+    assertEquals(htd.getTableName(), deserializedHtd.getTableName());
   }
 
   /**

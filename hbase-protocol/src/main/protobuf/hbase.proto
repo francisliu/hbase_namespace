@@ -26,11 +26,19 @@ option optimize_for = SPEED;
 import "Cell.proto";
 
 /**
+ * Table Name
+ */
+message TableName {
+  required bytes namespace = 1;
+  required bytes tableQualifier = 2;
+}
+
+/**
  * Table Schema
  * Inspired by the rest TableSchema
  */
 message TableSchema {
-  optional bytes name = 1;
+  optional TableName tableName = 1;
   repeated BytesBytesPair attributes = 2;
   repeated ColumnFamilySchema column_families = 3;
   repeated NameStringPair configuration = 4;
@@ -51,7 +59,7 @@ message ColumnFamilySchema {
  */
 message RegionInfo {
   required uint64 region_id = 1;
-  required bytes table_name = 2;
+  required TableName table_name = 2;
   optional bytes start_key = 3;
   optional bytes end_key = 4;
   optional bool offline = 5;
@@ -147,7 +155,8 @@ message NameInt64Pair {
  */
 message SnapshotDescription {
   required string name = 1;
-  optional string table = 2; // not needed for delete, but checked for in taking snapshot
+  optional bytes oldTable = 2; // not needed for delete, but checked for in taking snapshot
+  optional TableName table = 6; //new table
   optional int64 creation_time = 3 [default = 0];
   enum Type {
     DISABLED = 0;

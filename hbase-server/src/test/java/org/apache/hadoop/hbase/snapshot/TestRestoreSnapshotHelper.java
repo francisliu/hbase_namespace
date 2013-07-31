@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.io.HFileLink;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
@@ -93,13 +94,13 @@ public class TestRestoreSnapshotHelper {
 
     // Test clone a snapshot
     HTableDescriptor htdClone = createTableDescriptor("testtb-clone");
-    testRestore(snapshotDir, htd.getNameAsString(), htdClone);
+    testRestore(snapshotDir, htd.getTableName().getNameAsString(), htdClone);
     verifyRestore(rootDir, htd, htdClone);
 
     // Test clone a clone ("link to link")
     Path cloneDir = FSUtils.getTableDir(rootDir, htdClone.getTableName());
     HTableDescriptor htdClone2 = createTableDescriptor("testtb-clone2");
-    testRestore(cloneDir, htdClone.getNameAsString(), htdClone2);
+    testRestore(cloneDir, htdClone.getTableName().getNameAsString(), htdClone2);
     verifyRestore(rootDir, htd, htdClone2);
   }
 
@@ -109,7 +110,7 @@ public class TestRestoreSnapshotHelper {
     assertEquals(2, files.length);
     assertTrue(files[0] + " should be a HFileLink", HFileLink.isHFileLink(files[0]));
     assertTrue(files[1] + " should be a Referene", StoreFileInfo.isReference(files[1]));
-    assertEquals(sourceHtd.getNameAsString(), HFileLink.getReferencedTableName(files[0]));
+    assertEquals(sourceHtd.getTableName(), HFileLink.getReferencedTableName(files[0]));
     assertEquals(TEST_HFILE, HFileLink.getReferencedHFileName(files[0]));
     Path refPath = getReferredToFile(files[1]);
     assertTrue(refPath.getName() + " should be a HFileLink", HFileLink.isHFileLink(refPath.getName()));
@@ -124,14 +125,14 @@ public class TestRestoreSnapshotHelper {
    */
   public void testRestore(final Path snapshotDir, final String sourceTableName,
       final HTableDescriptor htdClone) throws IOException {
-    LOG.debug("pre-restore table=" + htdClone.getNameAsString() + " snapshot=" + snapshotDir);
+    LOG.debug("pre-restore table=" + htdClone.getTableName() + " snapshot=" + snapshotDir);
     FSUtils.logFileSystemState(fs, rootDir, LOG);
 
     FSTableDescriptors.createTableDescriptor(htdClone, conf);
     RestoreSnapshotHelper helper = getRestoreHelper(rootDir, snapshotDir, sourceTableName, htdClone);
     helper.restoreHdfsRegions();
 
-    LOG.debug("post-restore table=" + htdClone.getNameAsString() + " snapshot=" + snapshotDir);
+    LOG.debug("post-restore table=" + htdClone.getTableName() + " snapshot=" + snapshotDir);
     FSUtils.logFileSystemState(fs, rootDir, LOG);
   }
 
@@ -146,10 +147,12 @@ public class TestRestoreSnapshotHelper {
     MonitoredTask status = Mockito.mock(MonitoredTask.class);
 
     SnapshotDescription sd = SnapshotDescription.newBuilder()
-      .setName("snapshot").setTable(sourceTableName).build();
+      .setName("snapshot")
+      .setTable(ProtobufUtil.toProtoBuf(TableName.valueOf(sourceTableName)))
+      .build();
 
     return new RestoreSnapshotHelper(conf, fs, sd, snapshotDir,
-      htdClone, rootDir, FSUtils.getTableDir(rootDir, htdClone.getTableName()), monitor, status);
+      htdClone, rootDir, monitor, status);
   }
 
   private void createSnapshot(final Path rootDir, final Path snapshotDir, final HTableDescriptor htd)

@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Durability;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.ipc.RpcServer;
@@ -232,7 +233,9 @@ public class TestFlushSnapshotFromClient {
   public void testAsyncFlushSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("asyncSnapshot")
-        .setTable(STRING_TABLE_NAME).setType(SnapshotDescription.Type.FLUSH).build();
+        .setTable(ProtobufUtil.toProtoBuf(TABLE_NAME))
+        .setType(SnapshotDescription.Type.FLUSH)
+        .build();
 
     // take the snapshot async
     admin.takeSnapshotAsync(snapshot);
@@ -453,7 +456,8 @@ public class TestFlushSnapshotFromClient {
     SnapshotDescription[] descs = new SnapshotDescription[ssNum];
     for (int i = 0; i < ssNum; i++) {
       SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-      builder.setTable((i % 2) == 0 ? STRING_TABLE_NAME : STRING_TABLE2_NAME);
+      builder.setTable(ProtobufUtil.toProtoBuf(
+          TableName.valueOf((i % 2) == 0 ? STRING_TABLE_NAME : STRING_TABLE2_NAME)));
       builder.setName("ss"+i);
       builder.setType(SnapshotDescription.Type.FLUSH);
       descs[i] = builder.build();

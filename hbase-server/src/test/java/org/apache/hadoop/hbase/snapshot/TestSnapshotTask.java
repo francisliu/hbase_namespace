@@ -23,8 +23,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import org.apache.hadoop.hbase.SmallTests;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.snapshot.SnapshotTask;
 import org.junit.Test;
@@ -41,7 +43,7 @@ public class TestSnapshotTask {
   public void testErrorPropagation() throws Exception {
     ForeignExceptionDispatcher error = mock(ForeignExceptionDispatcher.class);
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("snapshot")
-        .setTable("table").build();
+        .setTable(ProtobufUtil.toProtoBuf(TableName.valueOf("table"))).build();
     final Exception thrown = new Exception("Failed!");
     SnapshotTask fail = new SnapshotTask(snapshot, error) {
       @Override

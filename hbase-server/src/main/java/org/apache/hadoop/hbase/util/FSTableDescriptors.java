@@ -194,7 +194,7 @@ public class FSTableDescriptors implements TableDescriptors {
         LOG.warn("Trouble retrieving htd", fnfe);
       }
       if (htd == null) continue;
-      htds.put(htd.getNameAsString(), htd);
+      htds.put(htd.getTableName().getNameAsString(), htd);
     }
     return htds;
   }
@@ -230,7 +230,7 @@ public class FSTableDescriptors implements TableDescriptors {
     if (HConstants.META_TABLE_NAME.equals(htd.getTableName())) {
       throw new NotImplementedException();
     }
-    if (HConstants.HBASE_NON_USER_TABLE_DIRS.contains(htd.getNameAsString())) {
+    if (HConstants.HBASE_NON_USER_TABLE_DIRS.contains(htd.getTableName().getNameAsString())) {
       throw new NotImplementedException();
     }
     if (!this.fsreadonly) updateHTableDescriptor(this.fs, this.rootdir, htd);

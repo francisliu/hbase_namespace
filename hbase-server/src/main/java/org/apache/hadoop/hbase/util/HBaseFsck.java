@@ -703,8 +703,7 @@ public class HBaseFsck extends Configured implements Tool {
         errors.detail("Number of Tables in flux: " + numSkipped.get());
       }
       for (HTableDescriptor td : allTables) {
-        String tableName = td.getNameAsString();
-        errors.detail("  Table: " + tableName + "\t" +
+        errors.detail("  Table: " + td.getTableName() + "\t" +
                            (td.isReadOnly() ? "ro" : "rw") + "\t" +
                             (td.isMetaRegion() ? "META" : "    ") + "\t" +
                            " families: " + td.getFamilies().size());

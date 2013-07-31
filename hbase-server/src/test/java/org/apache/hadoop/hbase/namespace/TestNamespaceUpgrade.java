@@ -165,15 +165,23 @@ public class TestNamespaceUpgrade {
     String newNS = "newNS";
     TEST_UTIL.getHBaseAdmin().createNamespace(NamespaceDescriptor.create(newNS).build());
     for(String table: tables) {
+      int count = 0;
+      for(Result res: new HTable(TEST_UTIL.getConfiguration(), table).getScanner(new
+          Scan())) {
+        assertEquals(currentKeys[count++], Bytes.toString(res.getRow()));
+      }
       TEST_UTIL.getHBaseAdmin().snapshot(table+"_snapshot3", table);
       final String newTableName =
           newNS+TableName.NAMESPACE_DELIM+table.replaceAll("[.]", "_")+"_clone3";
       TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot3", newTableName);
-      int count = 0;
+      Thread.sleep(1000);
+      count = 0;
       for(Result res: new HTable(TEST_UTIL.getConfiguration(), newTableName).getScanner(new
           Scan())) {
         assertEquals(currentKeys[count++], Bytes.toString(res.getRow()));
       }
+      FSUtils.logFileSystemState(TEST_UTIL.getTestFileSystem(), TEST_UTIL.getDefaultRootDirPath()
+          , LOG);
       Assert.assertEquals(newTableName, currentKeys.length, count);
       TEST_UTIL.getHBaseAdmin().flush(newTableName);
       TEST_UTIL.getHBaseAdmin().majorCompact(newTableName);
@@ -197,6 +205,8 @@ public class TestNamespaceUpgrade {
       TEST_UTIL.getHBaseAdmin().snapshot(table+"_snapshot4", srcTable);
       String newTableName = nextNS+TableName.NAMESPACE_DELIM+table.replaceAll("[.]","_")+"_clone4";
       TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot4", newTableName);
+      FSUtils.logFileSystemState(TEST_UTIL.getTestFileSystem(), TEST_UTIL.getDefaultRootDirPath()
+          , LOG);
       int count = 0;
       for(Result res: new HTable(TEST_UTIL.getConfiguration(), newTableName).getScanner(new
           Scan())) {

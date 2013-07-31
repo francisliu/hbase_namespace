@@ -57,6 +57,7 @@ import org.apache.hadoop.hbase.procedure.Procedure;
 import org.apache.hadoop.hbase.procedure.ProcedureCoordinator;
 import org.apache.hadoop.hbase.procedure.ProcedureCoordinatorRpcs;
 import org.apache.hadoop.hbase.procedure.ZKProcedureCoordinatorRpcs;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type;
 import org.apache.hadoop.hbase.snapshot.ClientSnapshotDescriptionUtils;
@@ -396,7 +397,7 @@ public class SnapshotManager implements Stoppable {
     FileSystem fs = master.getMasterFileSystem().getFileSystem();
     Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
     TableName snapshotTable =
-        TableName.valueOf(snapshot.getTable());
+        ProtobufUtil.fromProtoBuf(snapshot.getTable());
 
     // make sure we aren't already running a snapshot
     if (isTakingSnapshot(snapshotTable)) {
@@ -482,7 +483,7 @@ public class SnapshotManager implements Stoppable {
     try {
       handler.prepare();
       this.executorService.submit(handler);
-      this.snapshotHandlers.put(TableName.valueOf(snapshot.getTable()), handler);
+      this.snapshotHandlers.put(ProtobufUtil.fromProtoBuf(snapshot.getTable()), handler);
     } catch (Exception e) {
       // cleanup the working directory by trying to delete it from the fs.
       Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
@@ -523,7 +524,7 @@ public class SnapshotManager implements Stoppable {
     HTableDescriptor desc = null;
     try {
       desc = master.getTableDescriptors().get(
-          TableName.valueOf(snapshot.getTable()));
+          ProtobufUtil.fromProtoBuf(snapshot.getTable()));
     } catch (FileNotFoundException e) {
       String msg = "Table:" + snapshot.getTable() + " info doesn't exist!";
       LOG.error(msg);
@@ -548,7 +549,7 @@ public class SnapshotManager implements Stoppable {
     }
 
     // if the table is enabled, then have the RS run actually the snapshot work
-    TableName snapshotTable = TableName.valueOf(snapshot.getTable());
+    TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
     AssignmentManager assignmentMgr = master.getAssignmentManager();
     if (assignmentMgr.getZKTable().isEnabledTable(snapshotTable)) {
       LOG.debug("Table enabled, starting distributed snapshot.");
@@ -674,7 +675,7 @@ public class SnapshotManager implements Stoppable {
     // read snapshot information
     SnapshotDescription fsSnapshot = SnapshotDescriptionUtils.readSnapshotInfo(fs, snapshotDir);
     HTableDescriptor snapshotTableDesc = FSTableDescriptors.getTableDescriptor(fs, snapshotDir);
-    TableName tableName = TableName.valueOf(reqSnapshot.getTable());
+    TableName tableName = ProtobufUtil.fromProtoBuf(reqSnapshot.getTable());
 
     // stop tracking "abandoned" handlers
     cleanupSentinels();
@@ -682,9 +683,11 @@ public class SnapshotManager implements Stoppable {
     // Execute the restore/clone operation
     if (MetaReader.tableExists(master.getCatalogTracker(), tableName)) {
       if (master.getAssignmentManager().getZKTable().isEnabledTable(
-          TableName.valueOf(fsSnapshot.getTable()))) {
+          ProtobufUtil.fromProtoBuf(fsSnapshot.getTable()))) {
         throw new UnsupportedOperationException("Table '" +
-          fsSnapshot.getTable() + "' must be disabled in order to perform a restore operation.");
+            ProtobufUtil.fromProtoBuf(fsSnapshot.getTable()) + "' must be disabled in order to " +
+            "perform a restore operation" +
+            ".");
       }
 
       // call coproc pre hook
@@ -779,7 +782,8 @@ public class SnapshotManager implements Stoppable {
     }
 
     LOG.debug("Verify snapshot=" + snapshot.getName() + " against="
-        + sentinel.getSnapshot().getName() + " table=" + snapshot.getTable());
+        + sentinel.getSnapshot().getName() + " table=" +
+        ProtobufUtil.fromProtoBuf(snapshot.getTable()));
 
     // If the restore is failed, rethrow the exception
     sentinel.rethrowExceptionIfFailed();
@@ -812,7 +816,7 @@ public class SnapshotManager implements Stoppable {
       return null;
     }
 
-    TableName snapshotTable = TableName.valueOf(snapshot.getTable());
+    TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
     SnapshotSentinel h = sentinels.get(snapshotTable);
     if (h == null) {
       return null;

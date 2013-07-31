@@ -907,7 +907,7 @@ public final class RequestConverter {
   public static AddColumnRequest buildAddColumnRequest(
       final TableName tableName, final HColumnDescriptor column) {
     AddColumnRequest.Builder builder = AddColumnRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf(tableName));
     builder.setColumnFamilies(column.convert());
     return builder.build();
   }
@@ -922,7 +922,7 @@ public final class RequestConverter {
   public static DeleteColumnRequest buildDeleteColumnRequest(
       final TableName tableName, final byte [] columnName) {
     DeleteColumnRequest.Builder builder = DeleteColumnRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf((tableName)));
     builder.setColumnName(ByteString.copyFrom(columnName));
     return builder.build();
   }
@@ -937,7 +937,7 @@ public final class RequestConverter {
   public static ModifyColumnRequest buildModifyColumnRequest(
       final TableName tableName, final HColumnDescriptor column) {
     ModifyColumnRequest.Builder builder = ModifyColumnRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf((tableName)));
     builder.setColumnFamilies(column.convert());
     return builder.build();
   }
@@ -1022,7 +1022,7 @@ public final class RequestConverter {
    */
   public static DeleteTableRequest buildDeleteTableRequest(final TableName tableName) {
     DeleteTableRequest.Builder builder = DeleteTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf(tableName));
     return builder.build();
   }
 
@@ -1034,7 +1034,7 @@ public final class RequestConverter {
    */
   public static EnableTableRequest buildEnableTableRequest(final TableName tableName) {
     EnableTableRequest.Builder builder = EnableTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf(tableName));
     return builder.build();
   }
 
@@ -1046,7 +1046,7 @@ public final class RequestConverter {
    */
   public static DisableTableRequest buildDisableTableRequest(final TableName tableName) {
     DisableTableRequest.Builder builder = DisableTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf((tableName)));
     return builder.build();
   }
 
@@ -1080,7 +1080,7 @@ public final class RequestConverter {
   public static ModifyTableRequest buildModifyTableRequest(
       final TableName tableName, final HTableDescriptor hTableDesc) {
     ModifyTableRequest.Builder builder = ModifyTableRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf((tableName)));
     builder.setTableSchema(hTableDesc.convert());
     return builder.build();
   }
@@ -1094,7 +1094,7 @@ public final class RequestConverter {
   public static GetSchemaAlterStatusRequest buildGetSchemaAlterStatusRequest(
       final TableName tableName) {
     GetSchemaAlterStatusRequest.Builder builder = GetSchemaAlterStatusRequest.newBuilder();
-    builder.setTableName(ByteString.copyFrom(tableName.getName()));
+    builder.setTableName(ProtobufUtil.toProtoBuf((tableName)));
     return builder.build();
   }
 
@@ -1109,7 +1109,7 @@ public final class RequestConverter {
     GetTableDescriptorsRequest.Builder builder = GetTableDescriptorsRequest.newBuilder();
     if (tableNames != null) {
       for (TableName tableName : tableNames) {
-        builder.addTableNames(tableName.getNameAsString());
+        builder.addTableNames(ProtobufUtil.toProtoBuf(tableName));
       }
     }
     return builder.build();
@@ -1124,7 +1124,7 @@ public final class RequestConverter {
   public static GetTableDescriptorsRequest buildGetTableDescriptorsRequest(
       final TableName tableName) {
     return GetTableDescriptorsRequest.newBuilder()
-      .addTableNames(tableName.getNameAsString())
+      .addTableNames(ProtobufUtil.toProtoBuf(tableName))
       .build();
   }
 
@@ -1220,7 +1220,7 @@ public final class RequestConverter {
       permissionBuilder.addAction(a);
     }
     if (tableName != null) {
-      permissionBuilder.setTable(ByteString.copyFrom(tableName.getName()));
+      permissionBuilder.setTableName(ProtobufUtil.toProtoBuf(tableName));
     }
     if (family != null) {
       permissionBuilder.setFamily(ByteString.copyFrom(family));
@@ -1256,7 +1256,7 @@ public final class RequestConverter {
       permissionBuilder.addAction(a);
     }
     if (tableName != null) {
-      permissionBuilder.setTable(ByteString.copyFrom(tableName.getName()));
+      permissionBuilder.setTableName(ProtobufUtil.toProtoBuf(tableName));
     }
     if (family != null) {
       permissionBuilder.setFamily(ByteString.copyFrom(family));

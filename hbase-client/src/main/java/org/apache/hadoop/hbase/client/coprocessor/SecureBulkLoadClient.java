@@ -25,6 +25,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.ipc.BlockingRpcCallback;
 import org.apache.hadoop.hbase.ipc.ServerRpcController;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos;
 import org.apache.hadoop.hbase.protobuf.generated.SecureBulkLoadProtos;
 import org.apache.hadoop.hbase.security.SecureBulkLoadUtil;
@@ -62,7 +63,7 @@ public class SecureBulkLoadClient {
 
               SecureBulkLoadProtos.PrepareBulkLoadRequest request =
                   SecureBulkLoadProtos.PrepareBulkLoadRequest.newBuilder()
-                  .setTableName(com.google.protobuf.ByteString.copyFrom(tableName.getName())).build();
+                  .setTableName(ProtobufUtil.toProtoBuf(tableName)).build();
 
               instance.prepareBulkLoad(controller,
                   request,
