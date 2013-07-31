@@ -457,7 +457,7 @@ public class TestFlushSnapshotFromClient {
     for (int i = 0; i < ssNum; i++) {
       SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
       builder.setTable(ProtobufUtil.toProtoBuf(
-          TableName.valueOf((i % 2) == 0 ? STRING_TABLE_NAME : STRING_TABLE2_NAME)));
+          (i % 2) == 0 ? TABLE_NAME : TABLE2_NAME));
       builder.setName("ss"+i);
       builder.setType(SnapshotDescription.Type.FLUSH);
       descs[i] = builder.build();
@@ -470,6 +470,8 @@ public class TestFlushSnapshotFromClient {
 
     // wait until all have been submitted
     toBeSubmitted.await();
+    LOG.info("-->sleeping");
+    Thread.sleep(10000);
 
     // loop until all are done.
     while (true) {
@@ -503,9 +505,9 @@ public class TestFlushSnapshotFromClient {
     int t1SnapshotsCount = 0;
     int t2SnapshotsCount = 0;
     for (SnapshotDescription ss : taken) {
-      if (ss.getTable().equals(STRING_TABLE_NAME)) {
+      if (ProtobufUtil.fromProtoBuf(ss.getTable()).equals(TABLE_NAME)) {
         t1SnapshotsCount++;
-      } else if (ss.getTable().equals(STRING_TABLE2_NAME)) {
+      } else if (ProtobufUtil.fromProtoBuf(ss.getTable()).equals(TABLE2_NAME)) {
         t2SnapshotsCount++;
       }
     }

@@ -42,7 +42,7 @@ module Hbase
     #----------------------------------------------------------------------------------------------
     # Returns a list of tables in hbase
     def list(regex = ".*")
-        @admin.listTables(regex).map { |t| t.getNameAsString }
+        @admin.listTables(regex).map { |t| t.getTableName().getNameAsString }
     end
 
     #----------------------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ module Hbase
     # Disables all tables matching the given regex
     def disable_all(regex)
       regex = regex.to_s
-      @admin.disableTables(regex).map { |t| t.getNameAsString }
+      @admin.disableTables(regex).map { |t| t.getTableName().getNameAsString }
     end
 
     #---------------------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ module Hbase
     # Drops a table
     def drop_all(regex)
       regex = regex.to_s
-      failed  = @admin.deleteTables(regex).map { |t| t.getNameAsString }
+      failed  = @admin.deleteTables(regex).map { |t| t.getTableName().getNameAsString }
       return failed
     end
 
@@ -201,7 +201,7 @@ module Hbase
       has_columns = false
 
       # Start defining the table
-      htd = org.apache.hadoop.hbase.HTableDescriptor.new(table_name)
+      htd = org.apache.hadoop.hbase.HTableDescriptor.new(org.apache.hadoop.hbase.TableName.valueOf(table_name))
       splits = nil
       # Args are either columns or splits, add them to the table definition
       # TODO: add table options support
@@ -368,7 +368,7 @@ module Hbase
 
       status = Pair.new()
       begin
-        status = @admin.getAlterStatus(table_name.to_java_bytes)
+        status = @admin.getAlterStatus(org.apache.hadoop.hbase.TableName.valueOf(table_name))
         if status.getSecond() != 0
           puts "#{status.getSecond() - status.getFirst()}/#{status.getSecond()} regions updated."
         else
@@ -744,7 +744,7 @@ module Hbase
     # Returns a list of tables in namespace
     def list_namespace_tables(namespace_name)
       unless namespace_name.nil?
-        return @admin.getTableDescriptorsByNamespace(namespace_name).map { |t| t.getNameAsString }
+        return @admin.getTableDescriptorsByNamespace(namespace_name).map { |t| t.getTableName().getNameAsString }
       end
 
       raise(ArgumentError, "Failed to find namespace named #{namespace_name}")

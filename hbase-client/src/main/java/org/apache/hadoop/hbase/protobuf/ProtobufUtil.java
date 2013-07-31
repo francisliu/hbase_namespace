@@ -1594,13 +1594,13 @@ public final class ProtobufUtil {
 
     byte[] qualifier = null;
     byte[] family = null;
-    byte[] table = null;
+    TableName table = null;
 
-    if (proto.hasTableName()) table = proto.getTableName().toByteArray();
+    if (proto.hasTableName()) table = ProtobufUtil.fromProtoBuf(proto.getTableName());
     if (proto.hasFamily()) family = proto.getFamily().toByteArray();
     if (proto.hasQualifier()) qualifier = proto.getQualifier().toByteArray();
 
-    return new TablePermission(TableName.valueOf(table), family, qualifier,
+    return new TablePermission(table, family, qualifier,
         actions.toArray(new Permission.Action[actions.size()]));
   }
 
