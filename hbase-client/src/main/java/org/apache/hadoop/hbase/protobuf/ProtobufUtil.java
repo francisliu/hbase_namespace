@@ -2003,7 +2003,7 @@ public final class ProtobufUtil {
   public static HBaseProtos.NamespaceDescriptor toProtoNamespaceDescriptor(NamespaceDescriptor ns) {
     HBaseProtos.NamespaceDescriptor.Builder b =
         HBaseProtos.NamespaceDescriptor.newBuilder()
-            .setName(ns.getName());
+            .setName(ByteString.copyFromUtf8(ns.getName()));
     for(Map.Entry<String, String> entry: ns.getConfiguration().entrySet()) {
       b.addConfiguration(HBaseProtos.NameStringPair.newBuilder()
           .setName(entry.getKey())
@@ -2015,7 +2015,7 @@ public final class ProtobufUtil {
   public static NamespaceDescriptor toNamespaceDescriptor(
       HBaseProtos.NamespaceDescriptor desc) throws IOException {
     NamespaceDescriptor.Builder b =
-      NamespaceDescriptor.create(desc.getName());
+      NamespaceDescriptor.create(desc.getName().toStringUtf8());
     for(HBaseProtos.NameStringPair prop : desc.getConfigurationList()) {
       b.addConfiguration(prop.getName(), prop.getValue());
     }

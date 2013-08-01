@@ -10655,9 +10655,9 @@ public final class HBaseProtos {
   public interface NamespaceDescriptorOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
     
-    // required string name = 1;
+    // required bytes name = 1;
     boolean hasName();
-    String getName();
+    com.google.protobuf.ByteString getName();
     
     // repeated .NameStringPair configuration = 2;
     java.util.List<org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.NameStringPair> 
@@ -10698,36 +10698,14 @@ public final class HBaseProtos {
     }
     
     private int bitField0_;
-    // required string name = 1;
+    // required bytes name = 1;
     public static final int NAME_FIELD_NUMBER = 1;
-    private java.lang.Object name_;
+    private com.google.protobuf.ByteString name_;
     public boolean hasName() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
-    public String getName() {
-      java.lang.Object ref = name_;
-      if (ref instanceof String) {
-        return (String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
-        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-          name_ = s;
-        }
-        return s;
-      }
-    }
-    private com.google.protobuf.ByteString getNameBytes() {
-      java.lang.Object ref = name_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-        name_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public com.google.protobuf.ByteString getName() {
+      return name_;
     }
     
     // repeated .NameStringPair configuration = 2;
@@ -10752,7 +10730,7 @@ public final class HBaseProtos {
     }
     
     private void initFields() {
-      name_ = "";
+      name_ = com.google.protobuf.ByteString.EMPTY;
       configuration_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
@@ -10778,7 +10756,7 @@ public final class HBaseProtos {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getNameBytes());
+        output.writeBytes(1, name_);
       }
       for (int i = 0; i < configuration_.size(); i++) {
         output.writeMessage(2, configuration_.get(i));
@@ -10794,7 +10772,7 @@ public final class HBaseProtos {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getNameBytes());
+          .computeBytesSize(1, name_);
       }
       for (int i = 0; i < configuration_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
@@ -10964,7 +10942,7 @@ public final class HBaseProtos {
       
       public Builder clear() {
         super.clear();
-        name_ = "";
+        name_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
         if (configurationBuilder_ == null) {
           configuration_ = java.util.Collections.emptyList();
@@ -11126,22 +11104,15 @@ public final class HBaseProtos {
       
       private int bitField0_;
       
-      // required string name = 1;
-      private java.lang.Object name_ = "";
+      // required bytes name = 1;
+      private com.google.protobuf.ByteString name_ = com.google.protobuf.ByteString.EMPTY;
       public boolean hasName() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public String getName() {
-        java.lang.Object ref = name_;
-        if (!(ref instanceof String)) {
-          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-          name_ = s;
-          return s;
-        } else {
-          return (String) ref;
-        }
+      public com.google.protobuf.ByteString getName() {
+        return name_;
       }
-      public Builder setName(String value) {
+      public Builder setName(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -11155,11 +11126,6 @@ public final class HBaseProtos {
         name_ = getDefaultInstance().getName();
         onChanged();
         return this;
-      }
-      void setName(com.google.protobuf.ByteString value) {
-        bitField0_ |= 0x00000001;
-        name_ = value;
-        onChanged();
       }
       
       // repeated .NameStringPair configuration = 2;
@@ -11498,7 +11464,7 @@ public final class HBaseProtos {
       "\n\010long_msg\030\001 \002(\003\"\'\n\rBigDecimalMsg\022\026\n\016big" +
       "decimal_msg\030\001 \002(\014\"5\n\004UUID\022\026\n\016least_sig_b" +
       "its\030\001 \002(\004\022\025\n\rmost_sig_bits\030\002 \002(\004\"K\n\023Name" +
-      "spaceDescriptor\022\014\n\004name\030\001 \002(\t\022&\n\rconfigu" +
+      "spaceDescriptor\022\014\n\004name\030\001 \002(\014\022&\n\rconfigu" +
       "ration\030\002 \003(\0132\017.NameStringPair*r\n\013Compare" +
       "Type\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020\001\022\t\n\005EQU" +
       "AL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_OR_EQUAL\020" +

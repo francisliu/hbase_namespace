@@ -2560,7 +2560,6 @@ public class HBaseAdmin implements Abortable, Closeable {
     return executeCallable(new MasterAdminCallable<TakeSnapshotResponse>(getConnection()) {
       @Override
       public TakeSnapshotResponse call() throws ServiceException {
-        LOG.debug("-->"+masterAdmin);
         return masterAdmin.snapshot(null, request);
       }
     });

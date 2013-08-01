@@ -184,6 +184,6 @@ message UUID {
 }
 
 message NamespaceDescriptor {
-  required string name = 1;
+  required bytes name = 1;
   repeated NameStringPair configuration = 2;
 }
