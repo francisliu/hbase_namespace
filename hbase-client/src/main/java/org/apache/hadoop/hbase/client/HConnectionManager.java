@@ -462,10 +462,6 @@ public class HConnectionManager {
     // Client rpc instance.
     private RpcClient rpcClient;
 
-    /**
-     * Map of table to table {@link HRegionLocation}s.  The table key is made
-     * by doing a {@link Bytes#mapKey(byte[])} of the table's name.
-     */
     private final Map<TableName, SoftValueSortedMap<byte[], HRegionLocation>>
         cachedRegionLocations =
       new HashMap<TableName, SoftValueSortedMap<byte[], HRegionLocation>>();

@@ -1596,7 +1596,7 @@ public final class ProtobufUtil {
     byte[] family = null;
     TableName table = null;
 
-    if (proto.hasTableName()) table = ProtobufUtil.fromProtoBuf(proto.getTableName());
+    if (proto.hasTableName()) table = ProtobufUtil.toTableName(proto.getTableName());
     if (proto.hasFamily()) family = proto.getFamily().toByteArray();
     if (proto.hasQualifier()) qualifier = proto.getQualifier().toByteArray();
 
@@ -1615,7 +1615,7 @@ public final class ProtobufUtil {
     if (perm instanceof TablePermission) {
       TablePermission tablePerm = (TablePermission)perm;
       if (tablePerm.hasTable()) {
-        builder.setTableName(ProtobufUtil.toProtoBuf(tablePerm.getTable()));
+        builder.setTableName(ProtobufUtil.toProtoTableName(tablePerm.getTable()));
       }
       if (tablePerm.hasFamily()) {
         builder.setFamily(ByteString.copyFrom(tablePerm.getFamily()));
@@ -1704,7 +1704,7 @@ public final class ProtobufUtil {
       permissionBuilder.addAction(toPermissionAction(a));
     }
     if (perm.hasTable()) {
-      permissionBuilder.setTableName(ProtobufUtil.toProtoBuf(perm.getTable()));
+      permissionBuilder.setTableName(ProtobufUtil.toProtoTableName(perm.getTable()));
     }
     if (perm.hasFamily()) {
       permissionBuilder.setFamily(ByteString.copyFrom(perm.getFamily()));
@@ -1733,7 +1733,7 @@ public final class ProtobufUtil {
     byte[] family = null;
     TableName table = null;
 
-    if (permission.hasTableName()) table = ProtobufUtil.fromProtoBuf(permission.getTableName());
+    if (permission.hasTableName()) table = ProtobufUtil.toTableName(permission.getTableName());
     if (permission.hasFamily()) family = permission.getFamily().toByteArray();
     if (permission.hasQualifier()) qualifier = permission.getQualifier().toByteArray();
 
@@ -1838,7 +1838,7 @@ public final class ProtobufUtil {
     AccessControlProtos.UserPermissionsRequest.Builder builder =
       AccessControlProtos.UserPermissionsRequest.newBuilder();
     if (t != null) {
-      builder.setTableName(ProtobufUtil.toProtoBuf(t));
+      builder.setTableName(ProtobufUtil.toProtoTableName(t));
     }
     AccessControlProtos.UserPermissionsRequest request = builder.build();
     AccessControlProtos.UserPermissionsResponse response =
@@ -2000,7 +2000,7 @@ public final class ProtobufUtil {
       cell.getValue().toByteArray());
   }
 
-  public static HBaseProtos.NamespaceDescriptor toProtoBuf(NamespaceDescriptor ns) {
+  public static HBaseProtos.NamespaceDescriptor toProtoNamespaceDescriptor(NamespaceDescriptor ns) {
     HBaseProtos.NamespaceDescriptor.Builder b =
         HBaseProtos.NamespaceDescriptor.newBuilder()
             .setName(ns.getName());
@@ -2112,12 +2112,12 @@ public final class ProtobufUtil {
         ", type=" + proto.getMutateType().toString();
   }
 
-  public static TableName fromProtoBuf(HBaseProtos.TableName tableNamePB) {
+  public static TableName toTableName(HBaseProtos.TableName tableNamePB) {
     return TableName.valueOf(tableNamePB.getNamespace().toByteArray(),
         tableNamePB.getTableQualifier().toByteArray());
   }
 
-  public static HBaseProtos.TableName toProtoBuf(TableName tableName) {
+  public static HBaseProtos.TableName toProtoTableName(TableName tableName) {
     return HBaseProtos.TableName.newBuilder()
         .setNamespace(ByteString.copyFrom(tableName.getNamespace()))
         .setTableQualifier(ByteString.copyFrom(tableName.getQualifier())).build();

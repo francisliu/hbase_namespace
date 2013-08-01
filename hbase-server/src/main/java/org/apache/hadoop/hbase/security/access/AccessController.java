@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1258,7 +1257,7 @@ public class AccessController extends BaseRegionObserver
     AccessControlProtos.UserPermissionsResponse response = null;
     TableName table = null;
     if (request.hasTableName()) {
-      table = ProtobufUtil.fromProtoBuf(request.getTableName());
+      table = ProtobufUtil.toTableName(request.getTableName());
     }
     try {
       // only allowed to be called on _acl_ region

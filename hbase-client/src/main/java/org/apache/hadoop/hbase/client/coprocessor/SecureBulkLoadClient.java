@@ -63,7 +63,7 @@ public class SecureBulkLoadClient {
 
               SecureBulkLoadProtos.PrepareBulkLoadRequest request =
                   SecureBulkLoadProtos.PrepareBulkLoadRequest.newBuilder()
-                  .setTableName(ProtobufUtil.toProtoBuf(tableName)).build();
+                  .setTableName(ProtobufUtil.toProtoTableName(tableName)).build();
 
               instance.prepareBulkLoad(controller,
                   request,

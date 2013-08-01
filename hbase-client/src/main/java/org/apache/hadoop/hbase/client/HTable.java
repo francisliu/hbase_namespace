@@ -52,7 +52,6 @@ import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.MutateResponse;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.CompareType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
-import org.apache.hadoop.hbase.util.ReflectionUtils;
 import org.apache.hadoop.hbase.util.Threads;
 
 import java.io.Closeable;
@@ -470,7 +469,7 @@ public class HTable implements HTableInterface {
   }
 
   @Override
-  public TableName getTableNameAsPOJO() {
+  public TableName getName() {
     return tableName;
   }
 
@@ -585,7 +584,7 @@ public class HTable implements HTableInterface {
    */
   public NavigableMap<HRegionInfo, ServerName> getRegionLocations() throws IOException {
     // TODO: Odd that this returns a Map of HRI to SN whereas getRegionLocation, singular, returns an HRegionLocation.
-    return MetaScanner.allTableRegions(getConfiguration(), this.connection, getTableNameAsPOJO(), false);
+    return MetaScanner.allTableRegions(getConfiguration(), this.connection, getName(), false);
   }
 
   /**
@@ -695,7 +694,7 @@ public class HTable implements HTableInterface {
       scan.setCaching(getScannerCaching());
     }
     return new ClientScanner(getConfiguration(), scan,
-        getTableNameAsPOJO(), this.connection);
+        getName(), this.connection);
   }
 
   /**
@@ -725,7 +724,7 @@ public class HTable implements HTableInterface {
   @Override
   public Result get(final Get get) throws IOException {
     RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
-        getTableNameAsPOJO(), get.getRow()) {
+        getName(), get.getRow()) {
       public Result call() throws IOException {
         return ProtobufUtil.get(getStub(), getLocation().getRegionInfo().getRegionName(), get);
       }
@@ -929,7 +928,7 @@ public class HTable implements HTableInterface {
   @Override
   public void mutateRow(final RowMutations rm) throws IOException {
     RegionServerCallable<Void> callable =
-        new RegionServerCallable<Void>(connection, getTableNameAsPOJO(), rm.getRow()) {
+        new RegionServerCallable<Void>(connection, getName(), rm.getRow()) {
       public Void call() throws IOException {
         try {
           MultiRequest request = RequestConverter.buildMultiRequest(
@@ -954,7 +953,7 @@ public class HTable implements HTableInterface {
           "Invalid arguments to append, no columns specified");
     }
     RegionServerCallable<Result> callable =
-      new RegionServerCallable<Result>(this.connection, getTableNameAsPOJO(), append.getRow()) {
+      new RegionServerCallable<Result>(this.connection, getName(), append.getRow()) {
         public Result call() throws IOException {
           try {
             MutateRequest request = RequestConverter.buildMutateRequest(
@@ -981,7 +980,7 @@ public class HTable implements HTableInterface {
           "Invalid arguments to increment, no columns specified");
     }
     RegionServerCallable<Result> callable = new RegionServerCallable<Result>(this.connection,
-        getTableNameAsPOJO(), increment.getRow()) {
+        getName(), increment.getRow()) {
       public Result call() throws IOException {
         try {
           MutateRequest request = RequestConverter.buildMutateRequest(
@@ -1028,7 +1027,7 @@ public class HTable implements HTableInterface {
     }
     
     RegionServerCallable<Long> callable =
-      new RegionServerCallable<Long>(connection, getTableNameAsPOJO(), row) {
+      new RegionServerCallable<Long>(connection, getName(), row) {
         public Long call() throws IOException {
           try {
             MutateRequest request = RequestConverter.buildMutateRequest(
@@ -1056,7 +1055,7 @@ public class HTable implements HTableInterface {
       final Put put)
   throws IOException {
     RegionServerCallable<Boolean> callable =
-      new RegionServerCallable<Boolean>(connection, getTableNameAsPOJO(), row) {
+      new RegionServerCallable<Boolean>(connection, getName(), row) {
         public Boolean call() throws IOException {
           try {
             MutateRequest request = RequestConverter.buildMutateRequest(
@@ -1082,7 +1081,7 @@ public class HTable implements HTableInterface {
       final Delete delete)
   throws IOException {
     RegionServerCallable<Boolean> callable =
-      new RegionServerCallable<Boolean>(connection, getTableNameAsPOJO(), row) {
+      new RegionServerCallable<Boolean>(connection, getName(), row) {
         public Boolean call() throws IOException {
           try {
             MutateRequest request = RequestConverter.buildMutateRequest(
@@ -1104,7 +1103,7 @@ public class HTable implements HTableInterface {
   @Override
   public boolean exists(final Get get) throws IOException {
     RegionServerCallable<Boolean> callable =
-        new RegionServerCallable<Boolean>(connection, getTableNameAsPOJO(), get.getRow()) {
+        new RegionServerCallable<Boolean>(connection, getName(), get.getRow()) {
       public Boolean call() throws IOException {
         try {
           GetRequest request = RequestConverter.buildGetRequest(
@@ -1208,7 +1207,7 @@ public class HTable implements HTableInterface {
       Callable<List<Boolean>> callable = new Callable<List<Boolean>>() {
         public List<Boolean> call() throws Exception {
           RegionServerCallable<List<Boolean>> callable =
-            new RegionServerCallable<List<Boolean>>(connection, getTableNameAsPOJO(),
+            new RegionServerCallable<List<Boolean>>(connection, getName(),
               getsByRegionEntry.getValue().get(0).getRow()) {
             public List<Boolean> call() throws IOException {
               try {
@@ -1223,7 +1222,7 @@ public class HTable implements HTableInterface {
             }
           };
           return rpcCallerFactory.<List<Boolean>> newCaller().callWithRetries(callable,
-            operationTimeout);
+              operationTimeout);
         }
       };
       futures.put(getsByRegionEntry.getKey(), pool.submit(callable));

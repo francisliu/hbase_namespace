@@ -42,7 +42,6 @@ import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.hadoop.hbase.zookeeper.lock.ZKInterProcessReadWriteLock;
 import org.apache.zookeeper.KeeperException;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
@@ -322,7 +321,7 @@ public abstract class TableLockManager {
         String tableLockZNode = ZKUtil.joinZNode(zkWatcher.tableLockZNode, tableName.getNameAsString());
 
         ZooKeeperProtos.TableLock data = ZooKeeperProtos.TableLock.newBuilder()
-          .setTableName(ProtobufUtil.toProtoBuf(tableName))
+          .setTableName(ProtobufUtil.toProtoTableName(tableName))
           .setLockOwner(ProtobufUtil.toServerName(serverName))
           .setThreadId(Thread.currentThread().getId())
           .setPurpose(purpose)

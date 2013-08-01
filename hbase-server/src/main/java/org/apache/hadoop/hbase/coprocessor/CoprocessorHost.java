@@ -488,8 +488,8 @@ public abstract class CoprocessorHost<E extends CoprocessorEnvironment> {
       }
 
       @Override
-      public TableName getTableNameAsPOJO() {
-        return table.getTableNameAsPOJO();
+      public TableName getName() {
+        return table.getName();
       }
 
       @Override

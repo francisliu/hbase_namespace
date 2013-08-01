@@ -135,22 +135,22 @@ public class TestSnapshotFromAdmin {
     failSnapshotStart(admin, builder.setName("snap:hot").build());
     // check the table name also get verified
     failSnapshotStart(admin, builder.setName("snapshot")
-        .setTable(HBaseProtos.TableName.newBuilder()
+        .setTableName(HBaseProtos.TableName.newBuilder()
             .setNamespace(ByteString.copyFromUtf8(""))
             .setTableQualifier(ByteString.copyFromUtf8(".table")).build())
         .build());
     failSnapshotStart(admin, builder.setName("snapshot")
-        .setTable(HBaseProtos.TableName.newBuilder()
+        .setTableName(HBaseProtos.TableName.newBuilder()
             .setNamespace(ByteString.copyFromUtf8(""))
             .setTableQualifier(ByteString.copyFromUtf8("-table")).build())
         .build());
     failSnapshotStart(admin, builder.setName("snapshot")
-        .setTable(HBaseProtos.TableName.newBuilder()
+        .setTableName(HBaseProtos.TableName.newBuilder()
             .setNamespace(ByteString.copyFromUtf8(""))
             .setTableQualifier(ByteString.copyFromUtf8("table fails")).build())
         .build());
     failSnapshotStart(admin, builder.setName("snapshot")
-        .setTable(HBaseProtos.TableName.newBuilder()
+        .setTableName(HBaseProtos.TableName.newBuilder()
             .setNamespace(ByteString.copyFromUtf8(""))
             .setTableQualifier(ByteString.copyFromUtf8("tab%le")).build())
         .build());
@@ -165,11 +165,11 @@ public class TestSnapshotFromAdmin {
     IsSnapshotDoneResponse doneResponse = IsSnapshotDoneResponse.newBuilder().setDone(true).build();
     Mockito.when(
       master.isSnapshotDone((RpcController) Mockito.isNull(),
-        Mockito.any(IsSnapshotDoneRequest.class))).thenReturn(doneResponse);
+          Mockito.any(IsSnapshotDoneRequest.class))).thenReturn(doneResponse);
 
       // make sure that we can use valid names
     admin.snapshot(builder.setName("snapshot")
-        .setTable(ProtobufUtil.toProtoBuf(TableName.valueOf("table"))).build());
+        .setTableName(ProtobufUtil.toProtoTableName(TableName.valueOf("table"))).build());
   }
 
   private void failSnapshotStart(HBaseAdmin admin, SnapshotDescription snapshot) throws IOException {

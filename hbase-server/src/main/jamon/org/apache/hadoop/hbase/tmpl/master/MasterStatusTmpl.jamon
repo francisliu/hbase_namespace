@@ -298,7 +298,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
 
 <%def catalogTables>
 <%java>
- List<HTableDescriptor> hTableList = admin.getTableDescriptorsByNamespace(NamespaceDescriptor
+ HTableDescriptor[] sysTables = admin.getTableDescriptorsByNamespace(NamespaceDescriptor
  .SYSTEM_NAMESPACE_NAME_STR);
 </%java>
 
@@ -311,7 +311,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
     </%if>
     <th>Description</th>
 </tr>
-<%for HTableDescriptor systemTable : hTableList%>
+<%for HTableDescriptor systemTable : sysTables%>
 <tr>
 <%java>TableName tableName = systemTable.getTableName();</%java>
     <td><a href="table.jsp?name=<% tableName %>"><% tableName %></a></td>
@@ -374,7 +374,7 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
     </tr>
     <%for SnapshotDescription snapshotDesc : snapshots%>
     <%java>
-        TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshotDesc.getTable());
+        TableName snapshotTable = ProtobufUtil.toTableName(snapshotDesc.getTableName());
     </%java>
     <tr>
         <td><a href="snapshot.jsp?name=<% snapshotDesc.getName() %>"><% snapshotDesc.getName() %></a> </td>

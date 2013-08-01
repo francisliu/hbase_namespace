@@ -397,7 +397,7 @@ public class SnapshotManager implements Stoppable {
     FileSystem fs = master.getMasterFileSystem().getFileSystem();
     Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
     TableName snapshotTable =
-        ProtobufUtil.fromProtoBuf(snapshot.getTable());
+        ProtobufUtil.toTableName(snapshot.getTableName());
 
     // make sure we aren't already running a snapshot
     if (isTakingSnapshot(snapshotTable)) {
@@ -483,7 +483,7 @@ public class SnapshotManager implements Stoppable {
     try {
       handler.prepare();
       this.executorService.submit(handler);
-      this.snapshotHandlers.put(ProtobufUtil.fromProtoBuf(snapshot.getTable()), handler);
+      this.snapshotHandlers.put(ProtobufUtil.toTableName(snapshot.getTableName()), handler);
     } catch (Exception e) {
       // cleanup the working directory by trying to delete it from the fs.
       Path workingDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
@@ -524,17 +524,17 @@ public class SnapshotManager implements Stoppable {
     HTableDescriptor desc = null;
     try {
       desc = master.getTableDescriptors().get(
-          ProtobufUtil.fromProtoBuf(snapshot.getTable()));
+          ProtobufUtil.toTableName(snapshot.getTableName()));
     } catch (FileNotFoundException e) {
-      String msg = "Table:" + snapshot.getTable() + " info doesn't exist!";
+      String msg = "Table:" + snapshot.getTableName() + " info doesn't exist!";
       LOG.error(msg);
       throw new SnapshotCreationException(msg, e, snapshot);
     } catch (IOException e) {
       throw new SnapshotCreationException("Error while geting table description for table "
-          + snapshot.getTable(), e, snapshot);
+          + snapshot.getTableName(), e, snapshot);
     }
     if (desc == null) {
-      throw new SnapshotCreationException("Table '" + snapshot.getTable()
+      throw new SnapshotCreationException("Table '" + snapshot.getTableName()
           + "' doesn't exist, can't take snapshot.", snapshot);
     }
 
@@ -549,7 +549,7 @@ public class SnapshotManager implements Stoppable {
     }
 
     // if the table is enabled, then have the RS run actually the snapshot work
-    TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
+    TableName snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
     AssignmentManager assignmentMgr = master.getAssignmentManager();
     if (assignmentMgr.getZKTable().isEnabledTable(snapshotTable)) {
       LOG.debug("Table enabled, starting distributed snapshot.");
@@ -562,9 +562,9 @@ public class SnapshotManager implements Stoppable {
       snapshotDisabledTable(snapshot);
       LOG.debug("Started snapshot: " + ClientSnapshotDescriptionUtils.toString(snapshot));
     } else {
-      LOG.error("Can't snapshot table '" + snapshot.getTable()
+      LOG.error("Can't snapshot table '" + snapshot.getTableName()
           + "', isn't open or closed, we don't know what to do!");
-      TablePartiallyOpenException tpoe = new TablePartiallyOpenException(snapshot.getTable()
+      TablePartiallyOpenException tpoe = new TablePartiallyOpenException(snapshot.getTableName()
           + " isn't fully open.");
       throw new SnapshotCreationException("Table is not entirely open or closed", tpoe, snapshot);
     }
@@ -675,7 +675,7 @@ public class SnapshotManager implements Stoppable {
     // read snapshot information
     SnapshotDescription fsSnapshot = SnapshotDescriptionUtils.readSnapshotInfo(fs, snapshotDir);
     HTableDescriptor snapshotTableDesc = FSTableDescriptors.getTableDescriptor(fs, snapshotDir);
-    TableName tableName = ProtobufUtil.fromProtoBuf(reqSnapshot.getTable());
+    TableName tableName = ProtobufUtil.toTableName(reqSnapshot.getTableName());
 
     // stop tracking "abandoned" handlers
     cleanupSentinels();
@@ -683,9 +683,9 @@ public class SnapshotManager implements Stoppable {
     // Execute the restore/clone operation
     if (MetaReader.tableExists(master.getCatalogTracker(), tableName)) {
       if (master.getAssignmentManager().getZKTable().isEnabledTable(
-          ProtobufUtil.fromProtoBuf(fsSnapshot.getTable()))) {
+          ProtobufUtil.toTableName(fsSnapshot.getTableName()))) {
         throw new UnsupportedOperationException("Table '" +
-            ProtobufUtil.fromProtoBuf(fsSnapshot.getTable()) + "' must be disabled in order to " +
+            ProtobufUtil.toTableName(fsSnapshot.getTableName()) + "' must be disabled in order to " +
             "perform a restore operation" +
             ".");
       }
@@ -783,7 +783,7 @@ public class SnapshotManager implements Stoppable {
 
     LOG.debug("Verify snapshot=" + snapshot.getName() + " against="
         + sentinel.getSnapshot().getName() + " table=" +
-        ProtobufUtil.fromProtoBuf(snapshot.getTable()));
+        ProtobufUtil.toTableName(snapshot.getTableName()));
 
     // If the restore is failed, rethrow the exception
     sentinel.rethrowExceptionIfFailed();
@@ -812,11 +812,11 @@ public class SnapshotManager implements Stoppable {
   private synchronized SnapshotSentinel removeSentinelIfFinished(
       final Map<TableName, SnapshotSentinel> sentinels,
       final SnapshotDescription snapshot) {
-    if (!snapshot.hasTable()) {
+    if (!snapshot.hasTableName()) {
       return null;
     }
 
-    TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
+    TableName snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
     SnapshotSentinel h = sentinels.get(snapshotTable);
     if (h == null) {
       return null;

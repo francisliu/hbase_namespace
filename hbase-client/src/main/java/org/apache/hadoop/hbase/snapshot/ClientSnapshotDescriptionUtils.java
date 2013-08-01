@@ -42,13 +42,13 @@ public class ClientSnapshotDescriptionUtils {
       throws IllegalArgumentException {
     // make sure the snapshot name is valid
     TableName.isLegalTableQualifierName(Bytes.toBytes(snapshot.getName()));
-    if(snapshot.hasTable()) {
+    if(snapshot.hasTableName()) {
       // make sure the table name is valid
-      TableName.isLegalNamespaceName(snapshot.getTable().getNamespace().toByteArray());
-      TableName.isLegalTableQualifierName(snapshot.getTable().getTableQualifier().toByteArray());
-      // FIXME these method names is really bad - trunk will probably change
-      // .META. and -ROOT- snapshots are not allowed
-      if (HTableDescriptor.isSystemTable(ProtobufUtil.fromProtoBuf(snapshot.getTable()))) {
+      TableName.isLegalNamespaceName(snapshot.getTableName().getNamespace().toByteArray());
+      System.out.println("-->"+snapshot.getTableName().getTableQualifier());
+      TableName.isLegalTableQualifierName(snapshot.getTableName().getTableQualifier().toByteArray());
+
+      if (HTableDescriptor.isSystemTable(ProtobufUtil.toTableName(snapshot.getTableName()))) {
         throw new IllegalArgumentException("System table snapshots are not allowed");
       }
     }
@@ -66,7 +66,7 @@ public class ClientSnapshotDescriptionUtils {
       return null;
     }
     return "{ ss=" + ssd.getName() +
-           " table=" + (ssd.hasTable()?ProtobufUtil.fromProtoBuf(ssd.getTable()):"") +
+           " table=" + (ssd.hasTableName()?ProtobufUtil.toTableName(ssd.getTableName()):"") +
            " type=" + ssd.getType() + " }";
   }
 }

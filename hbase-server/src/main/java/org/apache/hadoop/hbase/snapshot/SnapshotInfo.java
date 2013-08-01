@@ -112,7 +112,7 @@ public final class SnapshotInfo extends Configured implements Tool {
     SnapshotStats(final Configuration conf, final FileSystem fs, final SnapshotDescription snapshot)
     {
       this.snapshot = snapshot;
-      this.snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
+      this.snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
       this.conf = conf;
       this.fs = fs;
     }

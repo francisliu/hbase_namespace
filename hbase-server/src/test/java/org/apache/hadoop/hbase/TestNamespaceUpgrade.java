@@ -108,7 +108,7 @@ public class TestNamespaceUpgrade {
       }
       Assert.assertEquals(currentKeys.length, count);
     }
-    assertEquals(2, TEST_UTIL.getHBaseAdmin().listNamespaceDescriptors().size());
+    assertEquals(2, TEST_UTIL.getHBaseAdmin().listNamespaceDescriptors().length);
   }
 
   private static File untar(final File testdir) throws IOException {

@@ -363,7 +363,7 @@ public final class HConstants {
       TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
           TableName.NAMESPACE_DELIM + "namespace");
 
-  public static final String BASE_NAMESPACE_DIR = "data";
+  public static final String BASE_NAMESPACE_DIR = ".data";
 
   /** delimiter used between portions of a region name */
   public static final int META_ROW_DELIMITER = ',';

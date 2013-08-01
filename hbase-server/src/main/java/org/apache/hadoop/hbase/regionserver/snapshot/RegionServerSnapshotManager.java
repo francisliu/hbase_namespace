@@ -35,7 +35,6 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.master.snapshot.MasterSnapshotVerifier;
@@ -51,7 +50,6 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionServer;
 import org.apache.hadoop.hbase.regionserver.RegionServerServices;
 import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.zookeeper.KeeperException;
 
@@ -192,7 +190,7 @@ public class RegionServerSnapshotManager {
     // will hang and fail.
 
     LOG.debug("Launching subprocedure for snapshot " + snapshot.getName() + " from table "
-        + snapshot.getTable());
+        + snapshot.getTableName());
     ForeignExceptionDispatcher exnDispatcher = new ForeignExceptionDispatcher(snapshot.getName());
     Configuration conf = rss.getConfiguration();
     long timeoutMillis = conf.getLong(SNAPSHOT_TIMEOUT_MILLIS_KEY,
@@ -227,7 +225,7 @@ public class RegionServerSnapshotManager {
    * @throws IOException
    */
   private List<HRegion> getRegionsToSnapshot(SnapshotDescription snapshot) throws IOException {
-    return rss.getOnlineRegions(ProtobufUtil.fromProtoBuf(snapshot.getTable()));
+    return rss.getOnlineRegions(ProtobufUtil.toTableName(snapshot.getTableName()));
   }
 
   /**

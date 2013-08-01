@@ -223,7 +223,7 @@ public class SnapshotDescriptionUtils {
    */
   public static SnapshotDescription validate(SnapshotDescription snapshot, Configuration conf)
       throws IllegalArgumentException {
-    if (!snapshot.hasTable()) {
+    if (!snapshot.hasTableName()) {
       throw new IllegalArgumentException(
         "Descriptor doesn't apply to a table, so we can't build it.");
     }
@@ -272,11 +272,11 @@ public class SnapshotDescriptionUtils {
   }
 
   /**
-   * Read in the {@link SnapshotDescription} stored for the snapshot in the passed directory
+   * Read in the {@link org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription} stored for the snapshot in the passed directory
    * @param fs filesystem where the snapshot was taken
    * @param snapshotDir directory where the snapshot was stored
    * @return the stored snapshot description
-   * @throws org.apache.hadoop.hbase.snapshot.CorruptedSnapshotException if the
+   * @throws CorruptedSnapshotException if the
    * snapshot cannot be read
    */
   public static SnapshotDescription readSnapshotInfo(FileSystem fs, Path snapshotDir)
@@ -287,13 +287,13 @@ public class SnapshotDescriptionUtils {
       try {
         in = fs.open(snapshotInfo);
         SnapshotDescription desc = SnapshotDescription.parseFrom(in);
-        if(!desc.hasTable() && desc.hasOldTable()) {
-          desc = HBaseProtos.SnapshotDescription
+        if(!desc.hasTableName() && desc.hasTable()) {
+          desc = SnapshotDescription
                             .newBuilder(desc)
-                            .setTable(HBaseProtos.TableName
-                                                  .newBuilder()
-                                                  .setNamespace(ByteString.EMPTY)
-                                                  .setTableQualifier(desc.getOldTable()).build())
+                            .setTableName(HBaseProtos.TableName
+                                .newBuilder()
+                                .setNamespace(ByteString.EMPTY)
+                                .setTableQualifier(desc.getTable()).build())
                             .build();
         }
         return desc;

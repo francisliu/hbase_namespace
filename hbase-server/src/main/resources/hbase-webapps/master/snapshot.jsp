@@ -44,7 +44,7 @@
   boolean readOnly = conf.getBoolean("hbase.master.ui.readonly", false);
   String snapshotName = request.getParameter("name");
   SnapshotDescription snapshot = null;
-  TableName snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
+  TableName snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
   SnapshotInfo.SnapshotStats stats = null;
   for (SnapshotDescription snapshotDesc: hbadmin.listSnapshots()) {
     if (snapshotName.equals(snapshotDesc.getName())) {

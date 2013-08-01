@@ -107,7 +107,6 @@ import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.monitoring.MemoryBoundedLogMessageBuffer;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
-import org.apache.hadoop.hbase.master.TableNamespaceManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
@@ -1899,7 +1898,7 @@ MasterServices, Server {
   public DeleteTableResponse deleteTable(RpcController controller, DeleteTableRequest request)
   throws ServiceException {
     try {
-      deleteTable(ProtobufUtil.fromProtoBuf(request.getTableName()));
+      deleteTable(ProtobufUtil.toTableName(request.getTableName()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -1921,7 +1920,7 @@ MasterServices, Server {
     // may overlap with other table operations or the table operation may
     // have completed before querying this API. We need to refactor to a
     // transaction system in the future to avoid these ambiguities.
-    TableName tableName = ProtobufUtil.fromProtoBuf(req.getTableName());
+    TableName tableName = ProtobufUtil.toTableName(req.getTableName());
 
     try {
       Pair<Integer,Integer> pair = this.assignmentManager.getReopenStatus(tableName);
@@ -1955,7 +1954,7 @@ MasterServices, Server {
   public AddColumnResponse addColumn(RpcController controller, AddColumnRequest req)
   throws ServiceException {
     try {
-      addColumn(ProtobufUtil.fromProtoBuf(req.getTableName()),
+      addColumn(ProtobufUtil.toTableName(req.getTableName()),
         HColumnDescriptor.convert(req.getColumnFamilies()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -1984,7 +1983,7 @@ MasterServices, Server {
   public ModifyColumnResponse modifyColumn(RpcController controller, ModifyColumnRequest req)
   throws ServiceException {
     try {
-      modifyColumn(ProtobufUtil.fromProtoBuf(req.getTableName()),
+      modifyColumn(ProtobufUtil.toTableName(req.getTableName()),
         HColumnDescriptor.convert(req.getColumnFamilies()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -2011,7 +2010,7 @@ MasterServices, Server {
   public DeleteColumnResponse deleteColumn(RpcController controller, DeleteColumnRequest req)
   throws ServiceException {
     try {
-      deleteColumn(ProtobufUtil.fromProtoBuf(req.getTableName()),
+      deleteColumn(ProtobufUtil.toTableName(req.getTableName()),
           req.getColumnName().toByteArray());
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -2036,7 +2035,7 @@ MasterServices, Server {
   public EnableTableResponse enableTable(RpcController controller, EnableTableRequest request)
   throws ServiceException {
     try {
-      enableTable(ProtobufUtil.fromProtoBuf(request.getTableName()));
+      enableTable(ProtobufUtil.toTableName(request.getTableName()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -2060,7 +2059,7 @@ MasterServices, Server {
   public DisableTableResponse disableTable(RpcController controller, DisableTableRequest request)
   throws ServiceException {
     try {
-      disableTable(ProtobufUtil.fromProtoBuf(request.getTableName()));
+      disableTable(ProtobufUtil.toTableName(request.getTableName()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
     }
@@ -2120,7 +2119,7 @@ MasterServices, Server {
   public ModifyTableResponse modifyTable(RpcController controller, ModifyTableRequest req)
   throws ServiceException {
     try {
-      modifyTable(ProtobufUtil.fromProtoBuf(req.getTableName()),
+      modifyTable(ProtobufUtil.toTableName(req.getTableName()),
         HTableDescriptor.convert(req.getTableSchema()));
     } catch (IOException ioe) {
       throw new ServiceException(ioe);
@@ -2607,7 +2606,7 @@ MasterServices, Server {
     List<HTableDescriptor> descriptors = new ArrayList<HTableDescriptor>();
     List<TableName> tableNameList = new ArrayList<TableName>();
     for(HBaseProtos.TableName tableNamePB: req.getTableNamesList()) {
-      tableNameList.add(ProtobufUtil.fromProtoBuf(tableNamePB));
+      tableNameList.add(ProtobufUtil.toTableName(tableNamePB));
     }
     boolean bypass = false;
     if (this.cpHost != null) {
@@ -3024,7 +3023,7 @@ MasterServices, Server {
     try {
       return MasterAdminProtos.GetNamespaceDescriptorResponse.newBuilder()
           .setNamespaceDescriptor(
-              ProtobufUtil.toProtoBuf(getNamespaceDescriptor(request.getNamespaceName())))
+              ProtobufUtil.toProtoNamespaceDescriptor(getNamespaceDescriptor(request.getNamespaceName())))
           .build();
     } catch (IOException e) {
       throw new ServiceException(e);
@@ -3039,7 +3038,7 @@ MasterServices, Server {
       MasterAdminProtos.ListNamespaceDescriptorsResponse.Builder response =
           MasterAdminProtos.ListNamespaceDescriptorsResponse.newBuilder();
       for(NamespaceDescriptor ns: listNamespaceDescriptors()) {
-        response.addNamespaceDescriptor(ProtobufUtil.toProtoBuf(ns));
+        response.addNamespaceDescriptor(ProtobufUtil.toProtoNamespaceDescriptor(ns));
       }
       return response.build();
     } catch (IOException e) {

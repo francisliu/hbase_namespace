@@ -37,16 +37,12 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
 import org.apache.hadoop.hbase.ipc.RpcClient;
 import org.apache.hadoop.hbase.ipc.RpcServer;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -56,13 +52,11 @@ import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.ConstantSizeRegionSplitPolicy;
-import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
-import org.apache.hadoop.hbase.util.MD5Hash;
 import org.apache.log4j.Level;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -168,7 +162,7 @@ public class TestFlushSnapshotFromClient {
 
     LOG.debug("FS state before snapshot:");
     FSUtils.logFileSystemState(UTIL.getTestFileSystem(),
-      FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
+        FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
 
     // take a snapshot of the enabled table
     String snapshotString = "offlineTableSnapshot";
@@ -185,10 +179,10 @@ public class TestFlushSnapshotFromClient {
     Path rootDir = UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getRootDir();
     LOG.debug("FS state after snapshot:");
     FSUtils.logFileSystemState(UTIL.getTestFileSystem(),
-      FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
+        FSUtils.getRootDir(UTIL.getConfiguration()), LOG);
 
     SnapshotTestingUtils.confirmSnapshotValid(snapshots.get(0), TABLE_NAME, TEST_FAM, rootDir,
-      admin, fs, false, new Path(rootDir, HConstants.HREGION_LOGDIR_NAME), snapshotServers);
+        admin, fs, false, new Path(rootDir, HConstants.HREGION_LOGDIR_NAME), snapshotServers);
   }
 
   @Test (timeout=300000)
@@ -224,7 +218,7 @@ public class TestFlushSnapshotFromClient {
   public void testAsyncFlushSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("asyncSnapshot")
-        .setTable(ProtobufUtil.toProtoBuf(TABLE_NAME))
+        .setTableName(ProtobufUtil.toProtoTableName(TABLE_NAME))
         .setType(SnapshotDescription.Type.FLUSH)
         .build();
 
@@ -438,7 +432,7 @@ public class TestFlushSnapshotFromClient {
     SnapshotDescription[] descs = new SnapshotDescription[ssNum];
     for (int i = 0; i < ssNum; i++) {
       SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-      builder.setTable(ProtobufUtil.toProtoBuf(
+      builder.setTableName(ProtobufUtil.toProtoTableName(
           (i % 2) == 0 ? TABLE_NAME : TABLE2_NAME));
       builder.setName("ss"+i);
       builder.setType(SnapshotDescription.Type.FLUSH);
@@ -487,9 +481,9 @@ public class TestFlushSnapshotFromClient {
     int t1SnapshotsCount = 0;
     int t2SnapshotsCount = 0;
     for (SnapshotDescription ss : taken) {
-      if (ProtobufUtil.fromProtoBuf(ss.getTable()).equals(TABLE_NAME)) {
+      if (ProtobufUtil.toTableName(ss.getTableName()).equals(TABLE_NAME)) {
         t1SnapshotsCount++;
-      } else if (ProtobufUtil.fromProtoBuf(ss.getTable()).equals(TABLE2_NAME)) {
+      } else if (ProtobufUtil.toTableName(ss.getTableName()).equals(TABLE2_NAME)) {
         t2SnapshotsCount++;
       }
     }

@@ -216,7 +216,7 @@ public class TestEndToEndSplitTransaction {
 
     RegionSplitter(HTable table) throws IOException {
       this.table = table;
-      this.tableName = table.getTableNameAsPOJO();
+      this.tableName = table.getName();
       this.family = table.getTableDescriptor().getFamiliesKeys().iterator().next();
       admin = TEST_UTIL.getHBaseAdmin();
       rs = TEST_UTIL.getMiniHBaseCluster().getRegionServer(0);

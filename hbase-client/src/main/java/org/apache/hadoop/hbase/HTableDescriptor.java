@@ -307,6 +307,32 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
+   * Construct a table descriptor specifying a byte array table name
+   * @param name Table name.
+   * @throws IllegalArgumentException if passed a table name
+   * that is made of other than 'word' characters, underscore or period: i.e.
+   * <code>[a-zA-Z_0-9-.].
+   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
+   */
+  @Deprecated
+  public HTableDescriptor(final byte[] name) {
+    this(TableName.valueOf(name));
+  }
+
+  /**
+   * Construct a table descriptor specifying a byte array table name
+   * @param name Table name.
+   * @throws IllegalArgumentException if passed a table name
+   * that is made of other than 'word' characters, underscore or period: i.e.
+   * <code>[a-zA-Z_0-9-.].
+   * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
+   */
+  @Deprecated
+  public HTableDescriptor(final String name) {
+    this(TableName.valueOf(name));
+  }
+
+  /**
    * Construct a table descriptor by cloning the descriptor passed as a parameter.
    * <p>
    * Makes a deep copy of the supplied descriptor.
@@ -338,7 +364,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   private void setMetaFlags(final TableName name) {
     setMetaRegion(isRootRegion() ||
-      name.equals(HConstants.META_TABLE_NAME));
+        name.equals(HConstants.META_TABLE_NAME));
   }
 
   /**
@@ -649,12 +675,30 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
+   * Get the name of the table
+   *
+   * @return TableName
+   */
+  public TableName getTableName() {
+    return name;
+  }
+
+  /**
    * Get the name of the table as a byte array.
    *
    * @return name of table
    */
-  public TableName getTableName() {
-    return name;
+  public byte[] getName() {
+    return name.getName();
+  }
+
+  /**
+   * Get the name of the table as a String
+   *
+   * @return name of table as a String
+   */
+  public String getNameAsString() {
+    return name.getNameAsString();
   }
 
   /**
@@ -1394,7 +1438,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   public TableSchema convert() {
     TableSchema.Builder builder = TableSchema.newBuilder();
-    builder.setTableName(ProtobufUtil.toProtoBuf(getTableName()));
+    builder.setTableName(ProtobufUtil.toProtoTableName(getTableName()));
     for (Map.Entry<ImmutableBytesWritable, ImmutableBytesWritable> e: this.values.entrySet()) {
       BytesBytesPair.Builder aBuilder = BytesBytesPair.newBuilder();
       aBuilder.setFirst(ByteString.copyFrom(e.getKey().get()));
@@ -1425,7 +1469,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       hcds[index++] = HColumnDescriptor.convert(cfs);
     }
     HTableDescriptor htd = new HTableDescriptor(
-        ProtobufUtil.fromProtoBuf(ts.getTableName()),
+        ProtobufUtil.toTableName(ts.getTableName()),
         hcds);
     for (BytesBytesPair a: ts.getAttributesList()) {
       htd.setValue(a.getFirst().toByteArray(), a.getSecond().toByteArray());

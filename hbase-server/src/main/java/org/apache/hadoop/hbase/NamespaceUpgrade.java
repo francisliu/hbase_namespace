@@ -62,15 +62,6 @@ public class NamespaceUpgrade implements Tool {
         new Path(rootDir, HConstants.HFILE_ARCHIVE_DIRECTORY),
         new Path(rootDir, HConstants.HBASE_TEMP_DIRECTORY)};
 
-    for(Path baseDir: baseDirs) {
-      //special handling for table that's named 'data'
-      if(fs.exists(new Path(baseDir, new Path("data", FSTableDescriptors.TABLEINFO_NAME)))) {
-        if(!fs.rename(new Path(baseDir, "data"), new Path(baseDir, ".data"))) {
-          throw new IOException("Failed to rename 'data' to '.data' with baseDir:"+baseDir);
-        }
-      }
-    }
-
     Path newMetaRegionDir = HRegion.getRegionDir(rootDir, HRegionInfo.FIRST_META_REGIONINFO);
     //if new meta region exists then migration was completed successfully
     if (!fs.exists(newMetaRegionDir) && fs.exists(rootDir)) {
@@ -105,12 +96,6 @@ public class NamespaceUpgrade implements Tool {
                 throw new IOException("Failed to move "+oldTableDir+" to namespace dir "+nsDir);
               }
             }
-          }
-        }
-        //special handling of "data" table since we are taking this name over
-        if(fs.exists(new Path(baseDir, ".data"))) {
-          if(!fs.rename(new Path(baseDir, ".data"), new Path(defNsDir,"data"))) {
-            throw new IOException("Failed to rename '.data' to 'data' with baseDir:"+baseDir);
           }
         }
       }

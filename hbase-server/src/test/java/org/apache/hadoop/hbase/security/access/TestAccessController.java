@@ -95,7 +95,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import com.google.protobuf.BlockingRpcChannel;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
 /**
@@ -1814,7 +1813,7 @@ public class TestAccessController {
     // check for wrong table region
     CheckPermissionsRequest checkRequest = CheckPermissionsRequest.newBuilder()
       .addPermission(AccessControlProtos.Permission.newBuilder()
-        .setTableName(ProtobufUtil.toProtoBuf(TEST_TABLE.getTableName()))
+        .setTableName(ProtobufUtil.toProtoTableName(TEST_TABLE.getTableName()))
         .addAction(AccessControlProtos.Permission.Action.CREATE)
       ).build();
     acl = new HTable(conf, AccessControlLists.ACL_TABLE_NAME);

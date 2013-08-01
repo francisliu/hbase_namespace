@@ -47,15 +47,12 @@ import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
 import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Pair;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -196,7 +193,7 @@ public class TestExportSnapshot {
 
     final SnapshotDescription sd = SnapshotDescription.newBuilder()
         .setName(snapshotName)
-        .setTable(ProtobufUtil.toProtoBuf(tableWithRefsName)).build();
+        .setTableName(ProtobufUtil.toProtoTableName(tableWithRefsName)).build();
 
     FileSystem fs = TEST_UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getFileSystem();
     Path rootDir = TEST_UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getRootDir();

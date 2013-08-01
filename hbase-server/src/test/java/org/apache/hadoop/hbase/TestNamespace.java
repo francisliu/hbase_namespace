@@ -114,15 +114,15 @@ public class TestNamespace {
     assertEquals(ns.getName(), NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
     assertNotNull(zkNamespaceManager.get(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR));
 
-    assertEquals(2, admin.listNamespaceDescriptors().size());
+    assertEquals(2, admin.listNamespaceDescriptors().length);
 
     //verify existence of system tables
     Set<TableName> systemTables = Sets.newHashSet(
         HConstants.META_TABLE_NAME,
         HConstants.NAMESPACE_TABLE_NAME);
-    List<HTableDescriptor> descs =
+    HTableDescriptor[] descs =
         admin.getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
-    assertEquals(systemTables.size(), descs.size());
+    assertEquals(systemTables.size(), descs.length);
     for (HTableDescriptor desc : descs) {
       assertTrue(systemTables.contains(desc.getTableName()));
     }
@@ -181,7 +181,7 @@ public class TestNamespace {
 
     //create namespace and verify
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
-    assertEquals(3, admin.listNamespaceDescriptors().size());
+    assertEquals(3, admin.listNamespaceDescriptors().length);
     TEST_UTIL.waitFor(60000, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
@@ -191,7 +191,7 @@ public class TestNamespace {
     assertNotNull(zkNamespaceManager.get(nsName));
     //remove namespace and verify
     admin.deleteNamespace(nsName);
-    assertEquals(2, admin.listNamespaceDescriptors().size());
+    assertEquals(2, admin.listNamespaceDescriptors().length);
     assertEquals(2, zkNamespaceManager.list().size());
     assertNull(zkNamespaceManager.get(nsName));
   }

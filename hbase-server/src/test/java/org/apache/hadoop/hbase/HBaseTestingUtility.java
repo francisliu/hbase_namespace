@@ -1712,7 +1712,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     int count = 0;
     for (int i = 0; i < startKeys.length; i++) {
       int j = (i + 1) % startKeys.length;
-      HRegionInfo hri = new HRegionInfo(table.getTableNameAsPOJO(),
+      HRegionInfo hri = new HRegionInfo(table.getName(),
         startKeys[i], startKeys[j]);
       MetaEditor.addRegionToMeta(meta, hri);
       newRegions.add(hri);
@@ -2763,7 +2763,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
       LOG.info("Initiating flush #" + iFlush + " for table " + tableName);
       table.flushCommits();
       if (hbaseCluster != null) {
-        getMiniHBaseCluster().flushcache(table.getTableNameAsPOJO());
+        getMiniHBaseCluster().flushcache(table.getName());
       }
     }
 

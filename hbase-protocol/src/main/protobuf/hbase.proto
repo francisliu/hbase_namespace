@@ -30,7 +30,7 @@ import "Cell.proto";
  */
 message TableName {
   required bytes namespace = 1;
-  required bytes tableQualifier = 2;
+  required bytes table_qualifier = 2;
 }
 
 /**
@@ -38,7 +38,7 @@ message TableName {
  * Inspired by the rest TableSchema
  */
 message TableSchema {
-  optional TableName tableName = 1;
+  optional TableName table_name = 1;
   repeated BytesBytesPair attributes = 2;
   repeated ColumnFamilySchema column_families = 3;
   repeated NameStringPair configuration = 4;
@@ -155,8 +155,8 @@ message NameInt64Pair {
  */
 message SnapshotDescription {
   required string name = 1;
-  optional bytes oldTable = 2; // not needed for delete, but checked for in taking snapshot
-  optional TableName table = 6; //new table
+  optional bytes table = 2; // not needed for delete, but checked for in taking snapshot
+  optional TableName table_name = 6; //new table, to deprecate #2
   optional int64 creation_time = 3 [default = 0];
   enum Type {
     DISABLED = 0;

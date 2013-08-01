@@ -33,7 +33,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription;
-import org.apache.hadoop.hbase.snapshot.ReferenceRegionHFilesTask;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -65,7 +64,7 @@ public class TestReferenceRegionHFilesTask {
     fs.mkdirs(snapshotRegionDir);
 
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("name")
-        .setTable(ProtobufUtil.toProtoBuf(TableName.valueOf("table"))).build();
+        .setTableName(ProtobufUtil.toProtoTableName(TableName.valueOf("table"))).build();
     ForeignExceptionDispatcher monitor = Mockito.mock(ForeignExceptionDispatcher.class);
     ReferenceRegionHFilesTask task = new ReferenceRegionHFilesTask(snapshot, monitor, regionDir,
         fs, snapshotRegionDir);

@@ -62,7 +62,6 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.RegionServerCallable;
-import org.apache.hadoop.hbase.client.RpcRetryingCaller;
 import org.apache.hadoop.hbase.client.RpcRetryingCallerFactory;
 import org.apache.hadoop.hbase.client.coprocessor.SecureBulkLoadClient;
 import org.apache.hadoop.hbase.io.HalfStoreFileReader;
@@ -201,7 +200,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
   {
     final HConnection conn = table.getConnection();
 
-    if (!conn.isTableAvailable(table.getTableNameAsPOJO())) {
+    if (!conn.isTableAvailable(table.getName())) {
       throw new TableNotFoundException("Table " +
           Bytes.toStringBinary(table.getTableName()) +
           "is not currently available.");
@@ -262,7 +261,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
         if(User.isSecurityEnabled()) {
          userToken = fs.getDelegationToken("renewer");
         }
-        bulkToken = new SecureBulkLoadClient(table).prepareBulkLoad(table.getTableNameAsPOJO());
+        bulkToken = new SecureBulkLoadClient(table).prepareBulkLoad(table.getName());
       }
 
       // Assumes that region splits can happen while this occurs.
@@ -341,7 +340,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
       final Callable<List<LoadQueueItem>> call = new Callable<List<LoadQueueItem>>() {
         public List<LoadQueueItem> call() throws Exception {
           List<LoadQueueItem> toRetry =
-              tryAtomicRegionLoad(conn, table.getTableNameAsPOJO(), first, lqis);
+              tryAtomicRegionLoad(conn, table.getName(), first, lqis);
           return toRetry;
         }
       };
@@ -439,7 +438,7 @@ public class LoadIncrementalHFiles extends Configured implements Tool {
     LOG.info("HFile at " + hfilePath + " no longer fits inside a single " +
     "region. Splitting...");
 
-    String uniqueName = getUniqueName(table.getTableNameAsPOJO());
+    String uniqueName = getUniqueName(table.getName());
     HColumnDescriptor familyDesc = table.getTableDescriptor().getFamily(item.family);
     Path botOut = new Path(tmpDir, uniqueName + ".bottom");
     Path topOut = new Path(tmpDir, uniqueName + ".top");

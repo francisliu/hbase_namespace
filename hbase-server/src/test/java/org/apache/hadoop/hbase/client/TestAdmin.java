@@ -58,7 +58,6 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.executor.EventHandler;
 import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.HMaster;
@@ -247,10 +246,10 @@ public class TestAdmin {
     get.addColumn(HConstants.CATALOG_FAMILY, qualifier);
     ht.get(get);
 
-    this.admin.disableTable(ht.getTableNameAsPOJO());
+    this.admin.disableTable(ht.getName());
     assertTrue("Table must be disabled.", TEST_UTIL.getHBaseCluster()
         .getMaster().getAssignmentManager().getZKTable().isDisabledTable(
-            ht.getTableNameAsPOJO()));
+            ht.getName()));
 
     // Test that table is disabled
     get = new Get(row);
@@ -265,7 +264,7 @@ public class TestAdmin {
     this.admin.enableTable(table);
     assertTrue("Table must be enabled.", TEST_UTIL.getHBaseCluster()
         .getMaster().getAssignmentManager().getZKTable().isEnabledTable(
-            ht.getTableNameAsPOJO()));
+            ht.getName()));
 
     // Test that table is enabled
     try {

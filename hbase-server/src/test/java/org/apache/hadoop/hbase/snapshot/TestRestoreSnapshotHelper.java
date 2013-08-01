@@ -148,7 +148,7 @@ public class TestRestoreSnapshotHelper {
 
     SnapshotDescription sd = SnapshotDescription.newBuilder()
       .setName("snapshot")
-      .setTable(ProtobufUtil.toProtoBuf(TableName.valueOf(sourceTableName)))
+      .setTableName(ProtobufUtil.toProtoTableName(TableName.valueOf(sourceTableName)))
       .build();
 
     return new RestoreSnapshotHelper(conf, fs, sd, snapshotDir,

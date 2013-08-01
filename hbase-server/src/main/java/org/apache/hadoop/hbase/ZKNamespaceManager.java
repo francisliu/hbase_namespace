@@ -180,7 +180,7 @@ public class ZKNamespaceManager extends ZooKeeperListener {
     try {
       ZKUtil.createWithParents(watcher, zNode);
       ZKUtil.updateExistingNodeData(watcher, zNode,
-          ProtobufUtil.toProtoBuf(ns).toByteArray(), -1);
+          ProtobufUtil.toProtoNamespaceDescriptor(ns).toByteArray(), -1);
     } catch (KeeperException e) {
       LOG.error("Failed updating permissions for namespace "+ns.getName(), e);
       throw new IOException("Failed updating permissions for namespace "+ns.getName(), e);

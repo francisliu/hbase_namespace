@@ -207,12 +207,12 @@ public class OfflineMetaRebuildTestCore {
       byte[] startKey, byte[] endKey) throws IOException {
     HTable meta = new HTable(conf, HConstants.META_TABLE_NAME);
     HTableDescriptor htd = htbl.getTableDescriptor();
-    HRegionInfo hri = new HRegionInfo(htbl.getTableNameAsPOJO(), startKey, endKey);
+    HRegionInfo hri = new HRegionInfo(htbl.getName(), startKey, endKey);
 
     LOG.info("manually adding regioninfo and hdfs data: " + hri.toString());
     Path rootDir = FSUtils.getRootDir(conf);
     FileSystem fs = rootDir.getFileSystem(conf);
-    Path p = new Path(FSUtils.getTableDir(rootDir, htbl.getTableNameAsPOJO()),
+    Path p = new Path(FSUtils.getTableDir(rootDir, htbl.getName()),
         hri.getEncodedName());
     fs.mkdirs(p);
     Path riPath = new Path(p, HRegionFileSystem.REGION_INFO_FILE);

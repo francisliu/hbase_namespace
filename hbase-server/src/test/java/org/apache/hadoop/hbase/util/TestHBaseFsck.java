@@ -1242,9 +1242,9 @@ public class TestHBaseFsck {
           executorService);
       HRegionInfo hri = location.getRegionInfo();
 
-      HRegionInfo a = new HRegionInfo(tbl.getTableNameAsPOJO(),
+      HRegionInfo a = new HRegionInfo(tbl.getName(),
         Bytes.toBytes("B"), Bytes.toBytes("BM"));
-      HRegionInfo b = new HRegionInfo(tbl.getTableNameAsPOJO(),
+      HRegionInfo b = new HRegionInfo(tbl.getName(),
         Bytes.toBytes("BM"), Bytes.toBytes("C"));
 
       hri.setOffline(true);

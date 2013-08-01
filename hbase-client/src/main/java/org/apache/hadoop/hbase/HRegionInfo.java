@@ -835,7 +835,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   public static RegionInfo convert(final HRegionInfo info) {
     if (info == null) return null;
     RegionInfo.Builder builder = RegionInfo.newBuilder();
-    builder.setTableName(ProtobufUtil.toProtoBuf(info.getTableName()));
+    builder.setTableName(ProtobufUtil.toProtoTableName(info.getTableName()));
     builder.setRegionId(info.getRegionId());
     if (info.getStartKey() != null) {
       builder.setStartKey(ByteString.copyFrom(info.getStartKey()));
@@ -858,7 +858,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   public static HRegionInfo convert(final RegionInfo proto) {
     if (proto == null) return null;
     TableName tableName =
-        ProtobufUtil.fromProtoBuf(proto.getTableName());
+        ProtobufUtil.toTableName(proto.getTableName());
     if (tableName.equals(HConstants.META_TABLE_NAME)) {
       return FIRST_META_REGIONINFO;
     }

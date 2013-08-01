@@ -294,7 +294,7 @@ public class TestHCM {
     HTable table = new HTable(conf, TABLE_NAME);
 
     TEST_UTIL.createMultiRegions(table, FAM_NAM);
-    TEST_UTIL.waitUntilAllRegionsAssigned(table.getTableNameAsPOJO());
+    TEST_UTIL.waitUntilAllRegionsAssigned(table.getName());
     Put put = new Put(ROW);
     put.add(FAM_NAM, ROW, ROW);
     table.put(put);

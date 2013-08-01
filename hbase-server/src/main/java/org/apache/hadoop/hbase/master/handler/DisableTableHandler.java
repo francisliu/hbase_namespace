@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.Server;
@@ -32,6 +33,7 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
 import org.apache.hadoop.hbase.catalog.MetaReader;
+import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.apache.hadoop.hbase.executor.EventHandler;
 import org.apache.hadoop.hbase.executor.EventType;
 import org.apache.hadoop.hbase.master.AssignmentManager;
@@ -71,6 +73,9 @@ public class DisableTableHandler extends EventHandler {
 
   public DisableTableHandler prepare()
       throws TableNotFoundException, TableNotEnabledException, IOException {
+    if(tableName.equals(HConstants.META_TABLE_NAME)) {
+      throw new ConstraintException("Cannot disable catalog table");
+    }
     //acquire the table write lock, blocking
     this.tableLock = this.tableLockManager.writeLock(tableName,
         EventType.C_M_DISABLE_TABLE.toString());

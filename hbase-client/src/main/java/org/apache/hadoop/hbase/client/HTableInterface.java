@@ -53,7 +53,7 @@ public interface HTableInterface extends Closeable {
   /**
    * Gets the fully qualified table name instance of this table.
    */
-  TableName getTableNameAsPOJO();
+  TableName getName();
 
   /**
    * Returns the {@link Configuration} object used by this instance.

@@ -131,8 +131,6 @@ import org.apache.zookeeper.KeeperException;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ServiceException;
 
-import java.util.ArrayList;
-
 /**
  * Provides an interface to manage HBase database table metadata + general
  * administrative functions.  Use HBaseAdmin to create, drop, list, enable and
@@ -869,9 +867,6 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   public void disableTable(final TableName tableName)
   throws IOException {
-    if(tableName.equals(HConstants.META_TABLE_NAME)) {
-      throw new IllegalArgumentException("Cannot disable catalog table");
-    }
     disableTableAsync(tableName);
     // Wait until table is disabled
     boolean disabled = false;
@@ -2051,7 +2046,7 @@ public class HBaseAdmin implements Abortable, Closeable {
         masterAdmin.createNamespace(null,
             MasterAdminProtos.CreateNamespaceRequest.newBuilder()
                 .setNamespaceDescriptor(ProtobufUtil
-                    .toProtoBuf(descriptor)).build());
+                    .toProtoNamespaceDescriptor(descriptor)).build());
         return null;
       }
     });
@@ -2069,7 +2064,7 @@ public class HBaseAdmin implements Abortable, Closeable {
         masterAdmin.modifyNamespace(null,
             MasterAdminProtos.ModifyNamespaceRequest.newBuilder()
                 .setNamespaceDescriptor(ProtobufUtil
-                    .toProtoBuf(descriptor)).build());
+                    .toProtoNamespaceDescriptor(descriptor)).build());
         return null;
       }
     });
@@ -2116,18 +2111,18 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @return
    * @throws IOException
    */
-  public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
+  public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
     return
-        executeCallable(new MasterAdminCallable<List<NamespaceDescriptor>>(getConnection()) {
+        executeCallable(new MasterAdminCallable<NamespaceDescriptor[]>(getConnection()) {
           @Override
-          public List<NamespaceDescriptor> call() throws Exception {
+          public NamespaceDescriptor[] call() throws Exception {
             List<HBaseProtos.NamespaceDescriptor> list =
                 masterAdmin.listNamespaceDescriptors(null,
                     MasterAdminProtos.ListNamespaceDescriptorsRequest.newBuilder().build())
                     .getNamespaceDescriptorList();
-            List<NamespaceDescriptor> res = new ArrayList<NamespaceDescriptor>(list.size());
-            for(HBaseProtos.NamespaceDescriptor ns: list) {
-              res.add(ProtobufUtil.toNamespaceDescriptor(ns));
+            NamespaceDescriptor[] res = new NamespaceDescriptor[list.size()];
+            for(int i = 0; i < list.size(); i++) {
+              res[i] = ProtobufUtil.toNamespaceDescriptor(list.get(i));
             }
             return res;
           }
@@ -2140,19 +2135,20 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @return
    * @throws IOException
    */
-  public List<HTableDescriptor> getTableDescriptorsByNamespace(final String name) throws IOException {
+  public HTableDescriptor[] getTableDescriptorsByNamespace(final String name) throws IOException {
     return
-        executeCallable(new MasterAdminCallable<List<HTableDescriptor>>(getConnection()) {
+        executeCallable(new MasterAdminCallable<HTableDescriptor[]>(getConnection()) {
           @Override
-          public List<HTableDescriptor> call() throws Exception {
+          public HTableDescriptor[] call() throws Exception {
             List<TableSchema> list =
                 masterAdmin.getTableDescriptorsByNamespace(null,
                     MasterAdminProtos.GetTableDescriptorsByNamespaceRequest.newBuilder()
                         .setNamespaceName(name).build())
                             .getTableSchemaList();
-            List<HTableDescriptor> res = new ArrayList<HTableDescriptor>(list.size());
-            for(TableSchema ts: list) {
-              res.add(HTableDescriptor.convert(ts));
+            HTableDescriptor[] res = new HTableDescriptor[list.size()];
+            for(int i=0; i < list.size(); i++) {
+
+              res[i] = HTableDescriptor.convert(list.get(i));
             }
             return res;
           }
@@ -2462,7 +2458,7 @@ public class HBaseAdmin implements Abortable, Closeable {
                       SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException {
     SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-    builder.setTable(ProtobufUtil.toProtoBuf(tableName));
+    builder.setTableName(ProtobufUtil.toProtoTableName(tableName));
     builder.setName(snapshotName);
     builder.setType(type);
     snapshot(builder.build());
@@ -2564,6 +2560,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     return executeCallable(new MasterAdminCallable<TakeSnapshotResponse>(getConnection()) {
       @Override
       public TakeSnapshotResponse call() throws ServiceException {
+        LOG.debug("-->"+masterAdmin);
         return masterAdmin.snapshot(null, request);
       }
     });
@@ -2633,7 +2630,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     TableName tableName = null;
     for (SnapshotDescription snapshotInfo: listSnapshots()) {
       if (snapshotInfo.getName().equals(snapshotName)) {
-        tableName = ProtobufUtil.fromProtoBuf(snapshotInfo.getTable());
+        tableName = ProtobufUtil.toTableName(snapshotInfo.getTableName());
         break;
       }
     }
@@ -2745,7 +2742,7 @@ public class HBaseAdmin implements Abortable, Closeable {
       tableName)
       throws IOException, RestoreSnapshotException {
     SnapshotDescription snapshot = SnapshotDescription.newBuilder()
-        .setName(snapshotName).setTable(ProtobufUtil.toProtoBuf(tableName)).build();
+        .setName(snapshotName).setTableName(ProtobufUtil.toProtoTableName(tableName)).build();
 
     // actually restore the snapshot
     internalRestoreSnapshotAsync(snapshot);

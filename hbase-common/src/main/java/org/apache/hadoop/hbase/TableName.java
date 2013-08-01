@@ -59,18 +59,23 @@ public final class TableName implements Comparable<TableName> {
   private TableName() {}
 
   /**
-   * Check passed byte buffer, "tableName", is legal user-space table name.
+   * Check passed byte array, "tableName", is legal user-space table name.
    * @return Returns passed <code>tableName</code> param
-   * @throws NullPointerException If passed <code>tableName</code> is null
-   * @throws IllegalArgumentException if passed a tableName
-   * that is made of other than 'word' characters or underscores: i.e.
-   * <code>[a-zA-Z_0-9.]</code>. '.' are used to delimit the namespace
-   * from the table name. A namespace name can contain '.' though it is
-   * not recommended and left valid for backwards compatibility.
+   * @throws IllegalArgumentException if passed a tableName is null or
+   * is made of other than 'word' characters or underscores: i.e.
+   * <code>[a-zA-Z_0-9.-:]</code>. The ':' is used to delimit the namespace
+   * from the table name and can be used for nothing else.
+   *
+   * Namespace names can only contain 'word' characters
+   * <code>[a-zA-Z_0-9]</code> or '_'
+   *
+   * Qualifier names can only contain 'word' characters
+   * <code>[a-zA-Z_0-9]</code> or '_', '.' or '-'.
+   * The name may not start with '.' or '-'.
    *
    * Valid fully qualified table names:
-   * foo.bar, namespace=>foo, table=>bar
-   * org.foo.bar, namespace=org.foo, table=>bar
+   * foo:bar, namespace=>foo, table=>bar
+   * org:foo.bar, namespace=org, table=>foo.bar
    */
   public static byte [] isLegalFullyQualifiedTableName(final byte[] tableName) {
     if (tableName == null || tableName.length <= 0) {
@@ -91,18 +96,27 @@ public final class TableName implements Comparable<TableName> {
     isLegalTableQualifierName(qualifierName, 0, qualifierName.length);
   }
 
+  /**
+   * Qualifier names can only contain 'word' characters
+   * <code>[a-zA-Z_0-9]</code> or '_', '.' or '-'.
+   * The name may not start with '.' or '-'.
+   *
+   * @param qualifierName byte array containing the qualifier name
+   * @param start start index
+   * @param end end index (exclusive)
+   */
   public static void isLegalTableQualifierName(final byte[] qualifierName,
-                                                int offset,
-                                                int length){
-    if(length - offset < 1) {
+                                                int start,
+                                                int end){
+    if(end - start < 1) {
       throw new IllegalArgumentException("Table qualifier must not be empty");
     }
-    if (qualifierName[offset] == '.' || qualifierName[offset] == '-') {
+    if (qualifierName[start] == '.' || qualifierName[start] == '-') {
       throw new IllegalArgumentException("Illegal first character <" + qualifierName[0] +
           "> at 0. Namespaces can only start with alphanumeric " +
           "characters': i.e. [a-zA-Z_0-9]: " + Bytes.toString(qualifierName));
     }
-    for (int i = offset; i < length; i++) {
+    for (int i = start; i < end; i++) {
       if (Character.isLetterOrDigit(qualifierName[i]) ||
           qualifierName[i] == '_' ||
           qualifierName[i] == '-' ||
@@ -112,7 +126,7 @@ public final class TableName implements Comparable<TableName> {
       throw new IllegalArgumentException("Illegal character <" + qualifierName[i] +
         "> at " + i + ". User-space table qualifiers can only contain " +
         "'alphanumeric characters': i.e. [a-zA-Z_0-9-.]: " +
-          Bytes.toString(qualifierName, offset, length));
+          Bytes.toString(qualifierName, start, end));
     }
   }
 
@@ -121,8 +135,7 @@ public final class TableName implements Comparable<TableName> {
   }
 
   /**
-   * Valid namespace characters are [a-zA-Z_0-9-.]
-   * Namespaces cannot start with the characters '.' and '-'.
+   * Valid namespace characters are [a-zA-Z_0-9]
    * @param namespaceName
    * @param offset
    * @param length
@@ -215,16 +228,7 @@ public final class TableName implements Comparable<TableName> {
   public static TableName valueOf(String name) {
     //TODO we should need to convert it to bytes again
     isLegalFullyQualifiedTableName(Bytes.toBytes(name));
-    int index = -1;
-    for(int i=1;i<name.length();i++) {
-      if (name.charAt(i) == NAMESPACE_DELIM && index == -1) {
-        index = i;
-      }
-      if (name.charAt(i) != NAMESPACE_DELIM &&
-         name.charAt(i-1) == NAMESPACE_DELIM) {
-        index = i-1;
-      }
-    }
+    int index = name.indexOf(NAMESPACE_DELIM);
     if (index != -1) {
       return TableName.valueOf(name.substring(0, index), name.substring(index + 1));
     }

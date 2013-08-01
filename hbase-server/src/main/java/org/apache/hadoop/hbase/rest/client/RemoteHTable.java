@@ -235,7 +235,7 @@ public class RemoteHTable implements HTableInterface {
   }
 
   @Override
-  public TableName getTableNameAsPOJO() {
+  public TableName getName() {
     return TableName.valueOf(name);
   }
 

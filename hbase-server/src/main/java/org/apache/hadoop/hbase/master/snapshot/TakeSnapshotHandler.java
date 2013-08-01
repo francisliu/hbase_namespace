@@ -99,7 +99,7 @@ public abstract class TakeSnapshotHandler extends EventHandler implements Snapsh
     this.master = masterServices;
     this.metricsMaster = metricsMaster;
     this.snapshot = snapshot;
-    this.snapshotTable = ProtobufUtil.fromProtoBuf(snapshot.getTable());
+    this.snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
     this.conf = this.master.getConfiguration();
     this.fs = this.master.getMasterFileSystem().getFileSystem();
     this.rootDir = this.master.getMasterFileSystem().getRootDir();

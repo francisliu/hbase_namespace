@@ -93,7 +93,7 @@ public class SnapshotTestingUtils {
     List<SnapshotDescription> returnedSnapshots = new ArrayList<SnapshotDescription>();
     for (SnapshotDescription sd : snapshots) {
       if (snapshotName.equals(sd.getName()) &&
-          tableName.equals(ProtobufUtil.fromProtoBuf(sd.getTable()))) {
+          tableName.equals(ProtobufUtil.toTableName(sd.getTableName()))) {
         returnedSnapshots.add(sd);
       }
     }
@@ -108,7 +108,7 @@ public class SnapshotTestingUtils {
   public static void assertOneSnapshotThatMatches(HBaseAdmin admin,
       SnapshotDescription snapshot) throws IOException {
     assertOneSnapshotThatMatches(admin, snapshot.getName(),
-        ProtobufUtil.fromProtoBuf(snapshot.getTable()));
+        ProtobufUtil.toTableName(snapshot.getTableName()));
   }
 
   /**
@@ -123,7 +123,7 @@ public class SnapshotTestingUtils {
 
     assertEquals("Should only have 1 snapshot", 1, snapshots.size());
     assertEquals(snapshotName, snapshots.get(0).getName());
-    assertEquals(tableName, ProtobufUtil.fromProtoBuf(snapshots.get(0).getTable()));
+    assertEquals(tableName, ProtobufUtil.toTableName(snapshots.get(0).getTableName()));
 
     return snapshots;
   }
@@ -502,7 +502,7 @@ public class SnapshotTestingUtils {
     }
     table.flushCommits();
 
-    waitForTableToBeOnline(util, table.getTableNameAsPOJO());
+    waitForTableToBeOnline(util, table.getName());
   }
 
   private static void putData(final HTable table, final byte[][] families,

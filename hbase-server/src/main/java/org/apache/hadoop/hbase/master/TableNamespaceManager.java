@@ -40,8 +40,6 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.constraint.ConstraintException;
-import org.apache.hadoop.hbase.master.MasterServices;
-import org.apache.hadoop.hbase.master.NamespaceJanitor;
 import org.apache.hadoop.hbase.master.handler.CreateTableHandler;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
@@ -49,7 +47,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.FSUtils;
-import org.apache.hadoop.hbase.util.Threads;
 
 /**
  * This is a helper class used to manage the namespace
@@ -141,7 +138,7 @@ public class TableNamespaceManager {
     Put p = new Put(Bytes.toBytes(ns.getName()));
     p.add(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
         HTableDescriptor.NAMESPACE_COL_DESC_BYTES,
-        ProtobufUtil.toProtoBuf(ns).toByteArray());
+        ProtobufUtil.toProtoNamespaceDescriptor(ns).toByteArray());
     table.put(p);
     try {
       zkNamespaceManager.update(ns);
