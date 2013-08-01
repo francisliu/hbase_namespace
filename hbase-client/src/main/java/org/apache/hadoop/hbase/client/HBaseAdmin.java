@@ -161,6 +161,8 @@ public class HBaseAdmin implements Abortable, Closeable {
   private boolean aborted;
   private boolean cleanupConnectionOnClose = false; // close the connection in close()
 
+  private RpcRetryingCallerFactory rpcCallerFactory;
+
   /**
    * Constructor.
    * See {@link #HBaseAdmin(HConnection connection)}
@@ -193,6 +195,7 @@ public class HBaseAdmin implements Abortable, Closeable {
         HConstants.DEFAULT_HBASE_CLIENT_RETRIES_NUMBER);
     this.retryLongerMultiplier = this.conf.getInt(
         "hbase.client.retries.longer.multiplier", 10);
+    this.rpcCallerFactory = RpcRetryingCallerFactory.instantiate(this.conf);
   }
 
   /**
@@ -2910,10 +2913,9 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   abstract static class MasterAdminCallable<V> extends MasterCallable<V> {
     protected MasterAdminKeepAliveConnection masterAdmin;
-    private final HConnection connection;
 
     public MasterAdminCallable(final HConnection connection) {
-      this.connection = connection;
+      super(connection);
     }
 
     @Override
@@ -2932,10 +2934,9 @@ public class HBaseAdmin implements Abortable, Closeable {
    */
   abstract static class MasterMonitorCallable<V> extends MasterCallable<V> {
     protected MasterMonitorKeepAliveConnection masterMonitor;
-    private final HConnection connection;
 
     public MasterMonitorCallable(final HConnection connection) {
-      this.connection = connection;
+      super(connection);
     }
 
     @Override
@@ -2955,6 +2956,12 @@ public class HBaseAdmin implements Abortable, Closeable {
    * @param <V>
    */
   abstract static class MasterCallable<V> implements RetryingCallable<V>, Closeable {
+    protected HConnection connection;
+
+    public MasterCallable(final HConnection connection) {
+      this.connection = connection;
+    }
+
     @Override
     public void throwable(Throwable t, boolean retrying) {
     }
@@ -2971,9 +2978,9 @@ public class HBaseAdmin implements Abortable, Closeable {
   }
 
   private <V> V executeCallable(MasterCallable<V> callable) throws IOException {
-    RpcRetryingCaller<V> caller = new RpcRetryingCaller<V>();
+    RpcRetryingCaller<V> caller = rpcCallerFactory.newCaller();
     try {
-      return caller.callWithRetries(callable, getConfiguration());
+      return caller.callWithRetries(callable);
     } finally {
       callable.close();
     }

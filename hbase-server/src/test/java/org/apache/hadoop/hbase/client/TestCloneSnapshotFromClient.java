@@ -34,8 +34,8 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.snapshot.SnapshotDoesNotExistException;
+import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.MD5Hash;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -60,7 +60,7 @@ public class TestCloneSnapshotFromClient {
   private byte[] snapshotName2;
   private int snapshot0Rows;
   private int snapshot1Rows;
-  private byte[] tableName;
+  private TableName tableName;
   private HBaseAdmin admin;
 
   @BeforeClass
@@ -91,14 +91,14 @@ public class TestCloneSnapshotFromClient {
     this.admin = TEST_UTIL.getHBaseAdmin();
 
     long tid = System.currentTimeMillis();
-    tableName = Bytes.toBytes("testtb-" + tid);
+    tableName = TableName.valueOf("testtb-" + tid);
     emptySnapshot = Bytes.toBytes("emptySnaptb-" + tid);
     snapshotName0 = Bytes.toBytes("snaptb0-" + tid);
     snapshotName1 = Bytes.toBytes("snaptb1-" + tid);
     snapshotName2 = Bytes.toBytes("snaptb2-" + tid);
 
     // create Table and disable it
-    createTable(tableName, FAMILY);
+    SnapshotTestingUtils.createTable(TEST_UTIL, tableName, FAMILY);
     admin.disableTable(tableName);
 
     // take an empty snapshot
@@ -108,7 +108,7 @@ public class TestCloneSnapshotFromClient {
     try {
       // enable table and insert data
       admin.enableTable(tableName);
-      loadData(table, 500, FAMILY);
+      SnapshotTestingUtils.loadData(TEST_UTIL, table, 500, FAMILY);
       snapshot0Rows = TEST_UTIL.countRows(table);
       admin.disableTable(tableName);
 
@@ -117,7 +117,7 @@ public class TestCloneSnapshotFromClient {
 
       // enable table and insert more data
       admin.enableTable(tableName);
-      loadData(table, 500, FAMILY);
+      SnapshotTestingUtils.loadData(TEST_UTIL, table, 500, FAMILY);
       snapshot1Rows = TEST_UTIL.countRows(table);
       admin.disableTable(tableName);
 
@@ -136,13 +136,8 @@ public class TestCloneSnapshotFromClient {
     if (admin.tableExists(tableName)) {
       TEST_UTIL.deleteTable(tableName);
     }
-    admin.deleteSnapshot(snapshotName0);
-    admin.deleteSnapshot(snapshotName1);
-
-    // Ensure the archiver to be empty
-    MasterFileSystem mfs = TEST_UTIL.getMiniHBaseCluster().getMaster().getMasterFileSystem();
-    mfs.getFileSystem().delete(
-      new Path(mfs.getRootDir(), HConstants.HFILE_ARCHIVE_DIRECTORY), true);
+    SnapshotTestingUtils.deleteAllSnapshots(admin);
+    SnapshotTestingUtils.deleteArchiveDirectory(TEST_UTIL);
   }
 
   @Test(expected=SnapshotDoesNotExistException.class)
@@ -154,27 +149,26 @@ public class TestCloneSnapshotFromClient {
 
   @Test
   public void testCloneSnapshot() throws IOException, InterruptedException {
-    byte[] clonedTableName = Bytes.toBytes("clonedtb-" + System.currentTimeMillis());
+    TableName clonedTableName = TableName.valueOf("clonedtb-" + System.currentTimeMillis());
     testCloneSnapshot(clonedTableName, snapshotName0, snapshot0Rows);
     testCloneSnapshot(clonedTableName, snapshotName1, snapshot1Rows);
     testCloneSnapshot(clonedTableName, emptySnapshot, 0);
   }
 
-  private void testCloneSnapshot(final byte[] tableName, final byte[] snapshotName,
+  private void testCloneSnapshot(final TableName tableName, final byte[] snapshotName,
       int snapshotRows) throws IOException, InterruptedException {
     // create a new table from snapshot
     admin.cloneSnapshot(snapshotName, tableName);
-    verifyRowCount(tableName, snapshotRows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, tableName, snapshotRows);
 
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
+    TEST_UTIL.deleteTable(tableName);
   }
 
   @Test
   public void testCloneSnapshotCrossNamespace() throws IOException, InterruptedException {
     String nsName = "testCloneSnapshotCrossNamespace";
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
-    byte[] clonedTableName = Bytes.toBytes(nsName+".clonedtb-" + System.currentTimeMillis());
+    TableName clonedTableName = TableName.valueOf(nsName+".clonedtb-" + System.currentTimeMillis());
     testCloneSnapshot(clonedTableName, snapshotName0, snapshot0Rows);
     testCloneSnapshot(clonedTableName, snapshotName1, snapshot1Rows);
     testCloneSnapshot(clonedTableName, emptySnapshot, 0);
@@ -186,96 +180,57 @@ public class TestCloneSnapshotFromClient {
   @Test
   public void testCloneLinksAfterDelete() throws IOException, InterruptedException {
     // Clone a table from the first snapshot
-    byte[] clonedTableName = Bytes.toBytes("clonedtb1-" + System.currentTimeMillis());
+    TableName clonedTableName = TableName.valueOf("clonedtb1-" + System.currentTimeMillis());
     admin.cloneSnapshot(snapshotName0, clonedTableName);
-    verifyRowCount(clonedTableName, snapshot0Rows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, clonedTableName, snapshot0Rows);
 
     // Take a snapshot of this cloned table.
     admin.disableTable(clonedTableName);
     admin.snapshot(snapshotName2, clonedTableName);
 
     // Clone the snapshot of the cloned table
-    byte[] clonedTableName2 = Bytes.toBytes("clonedtb2-" + System.currentTimeMillis());
+    TableName clonedTableName2 = TableName.valueOf("clonedtb2-" + System.currentTimeMillis());
     admin.cloneSnapshot(snapshotName2, clonedTableName2);
-    verifyRowCount(clonedTableName2, snapshot0Rows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, clonedTableName2, snapshot0Rows);
     admin.disableTable(clonedTableName2);
 
     // Remove the original table
-    admin.disableTable(tableName);
-    admin.deleteTable(tableName);
+    TEST_UTIL.deleteTable(tableName);
     waitCleanerRun();
 
     // Verify the first cloned table
     admin.enableTable(clonedTableName);
-    verifyRowCount(clonedTableName, snapshot0Rows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, clonedTableName, snapshot0Rows);
 
     // Verify the second cloned table
     admin.enableTable(clonedTableName2);
-    verifyRowCount(clonedTableName2, snapshot0Rows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, clonedTableName2, snapshot0Rows);
     admin.disableTable(clonedTableName2);
 
     // Delete the first cloned table
-    admin.disableTable(clonedTableName);
-    admin.deleteTable(clonedTableName);
+    TEST_UTIL.deleteTable(clonedTableName);
     waitCleanerRun();
 
     // Verify the second cloned table
     admin.enableTable(clonedTableName2);
-    verifyRowCount(clonedTableName2, snapshot0Rows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, clonedTableName2, snapshot0Rows);
 
     // Clone a new table from cloned
-    byte[] clonedTableName3 = Bytes.toBytes("clonedtb3-" + System.currentTimeMillis());
+    TableName clonedTableName3 = TableName.valueOf("clonedtb3-" + System.currentTimeMillis());
     admin.cloneSnapshot(snapshotName2, clonedTableName3);
-    verifyRowCount(clonedTableName3, snapshot0Rows);
+    SnapshotTestingUtils.verifyRowCount(TEST_UTIL, clonedTableName3, snapshot0Rows);
 
     // Delete the cloned tables
-    admin.disableTable(clonedTableName2);
-    admin.deleteTable(clonedTableName2);
-    admin.disableTable(clonedTableName3);
-    admin.deleteTable(clonedTableName3);
+    TEST_UTIL.deleteTable(clonedTableName2);
+    TEST_UTIL.deleteTable(clonedTableName3);
     admin.deleteSnapshot(snapshotName2);
   }
 
   // ==========================================================================
   //  Helpers
   // ==========================================================================
-  private void createTable(final byte[] tableName, final byte[]... families) throws IOException {
-    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tableName));
-    for (byte[] family: families) {
-      HColumnDescriptor hcd = new HColumnDescriptor(family);
-      htd.addFamily(hcd);
-    }
-    byte[][] splitKeys = new byte[16][];
-    byte[] hex = Bytes.toBytes("0123456789abcdef");
-    for (int i = 0; i < 16; ++i) {
-      splitKeys[i] = new byte[] { hex[i] };
-    }
-    admin.createTable(htd, splitKeys);
-  }
-
-  public void loadData(final HTable table, int rows, byte[]... families) throws IOException {
-    byte[] qualifier = Bytes.toBytes("q");
-    table.setAutoFlush(false);
-    while (rows-- > 0) {
-      byte[] value = Bytes.add(Bytes.toBytes(System.currentTimeMillis()), Bytes.toBytes(rows));
-      byte[] key = Bytes.toBytes(MD5Hash.getMD5AsHex(value));
-      Put put = new Put(key);
-      put.setDurability(Durability.SKIP_WAL);
-      for (byte[] family: families) {
-        put.add(family, qualifier, value);
-      }
-      table.put(put);
-    }
-    table.flushCommits();
-  }
 
   private void waitCleanerRun() throws InterruptedException {
     TEST_UTIL.getMiniHBaseCluster().getMaster().getHFileCleaner().choreForTesting();
-  }
-
-  private void verifyRowCount(final byte[] tableName, long expectedRows) throws IOException {
-    HTable table = new HTable(TEST_UTIL.getConfiguration(), tableName);
-    assertEquals(expectedRows, TEST_UTIL.countRows(table));
-    table.close();
   }
 }

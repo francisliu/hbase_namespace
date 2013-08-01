@@ -2131,11 +2131,10 @@ public class HConnectionManager {
     }
 
     // For tests.
-    protected <R> AsyncProcess createAsyncProcess(TableName tableName,
-        ExecutorService pool,
-        AsyncProcess.AsyncProcessCallback<R> callback,
-        Configuration conf) {
-      return new AsyncProcess<R>(this, tableName, pool, callback, conf);
+    protected <R> AsyncProcess createAsyncProcess(TableName tableName, ExecutorService pool,
+           AsyncProcess.AsyncProcessCallback<R> callback, Configuration conf) {
+      return new AsyncProcess<R>(this, tableName, pool, callback, conf,
+          RpcRetryingCallerFactory.instantiate(conf));
     }
 
 

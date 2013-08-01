@@ -67,7 +67,7 @@ public class ClientScanner extends AbstractClientScanner {
     private final TableName tableName;
     private final int scannerTimeout;
     private boolean scanMetricsPublished = false;
-    private ScannerCaller caller = new ScannerCaller();
+    private RpcRetryingCaller<Result []> caller;
 
     /**
      * Create a new ClientScanner for the specified table. An HConnection will be
@@ -84,6 +84,7 @@ public class ClientScanner extends AbstractClientScanner {
       this(conf, scan, tableName, HConnectionManager.getConnection(conf));
     }
 
+
     /**
      * Create a new ClientScanner for the specified table
      * Note that the passed {@link Scan}'s start row maybe changed changed.
@@ -94,8 +95,22 @@ public class ClientScanner extends AbstractClientScanner {
      * @param connection Connection identifying the cluster
      * @throws IOException
      */
-    public ClientScanner(final Configuration conf, final Scan scan,
-        final TableName tableName, HConnection connection) throws IOException {
+  public ClientScanner(final Configuration conf, final Scan scan, final TableName tableName,
+      HConnection connection) throws IOException {
+    this(conf, scan, tableName, connection, new RpcRetryingCallerFactory(conf));
+  }
+
+  /**
+   * Create a new ClientScanner for the specified table Note that the passed {@link Scan}'s start
+   * row maybe changed changed.
+   * @param conf The {@link Configuration} to use.
+   * @param scan {@link Scan} to use in this scanner
+   * @param tableName The table that we wish to scan
+   * @param connection Connection identifying the cluster
+   * @throws IOException
+   */
+  public ClientScanner(final Configuration conf, final Scan scan, final TableName tableName,
+      HConnection connection, RpcRetryingCallerFactory rpcFactory) throws IOException {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Scan table=" + tableName
             + ", startRow=" + Bytes.toStringBinary(scan.getStartRow()));
@@ -131,6 +146,8 @@ public class ClientScanner extends AbstractClientScanner {
             HConstants.HBASE_CLIENT_SCANNER_CACHING,
             HConstants.DEFAULT_HBASE_CLIENT_SCANNER_CACHING);
       }
+
+    this.caller = rpcFactory.<Result[]> newCaller();
 
       // initialize the scanner
       nextScanner(false);
@@ -181,7 +198,7 @@ public class ClientScanner extends AbstractClientScanner {
       // Close the previous scanner if it's open
       if (this.callable != null) {
         this.callable.setClose();
-        this.caller.callWithRetries(callable, getConnection().getConfiguration());
+        this.caller.callWithRetries(callable);
         this.callable = null;
       }
 
@@ -218,7 +235,7 @@ public class ClientScanner extends AbstractClientScanner {
         callable = getScannerCallable(localStartKey);
         // Open a scanner on the region server starting at the
         // beginning of the region
-        this.caller.callWithRetries(callable, getConnection().getConfiguration());
+        this.caller.callWithRetries(callable);
         this.currentRegion = callable.getHRegionInfo();
         if (this.scanMetrics != null) {
           this.scanMetrics.countOfRegions.incrementAndGet();
@@ -278,10 +295,10 @@ public class ClientScanner extends AbstractClientScanner {
             // Server returns a null values if scanning is to stop.  Else,
             // returns an empty array if scanning is to go on and we've just
             // exhausted current region.
-            values = this.caller.callWithRetries(callable, getConnection().getConfiguration());
+            values = this.caller.callWithRetries(callable);
             if (skipFirst && values != null && values.length == 1) {
               skipFirst = false; // Already skipped, unset it before scanning again
-              values = this.caller.callWithRetries(callable, getConnection().getConfiguration());
+              values = this.caller.callWithRetries(callable);
             }
             retryAfterOutOfOrderException  = true;
           } catch (DoNotRetryIOException e) {
@@ -404,7 +421,7 @@ public class ClientScanner extends AbstractClientScanner {
       if (callable != null) {
         callable.setClose();
         try {
-          this.caller.callWithRetries(callable, getConnection().getConfiguration());
+          this.caller.callWithRetries(callable);
         } catch (IOException e) {
           // We used to catch this error, interpret, and rethrow. However, we
           // have since decided that it's not nice for a scanner's close to
