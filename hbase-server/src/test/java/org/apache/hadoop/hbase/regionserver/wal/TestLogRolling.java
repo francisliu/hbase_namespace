@@ -597,6 +597,8 @@ public class TestLogRolling  {
     HRegion region = server.getOnlineRegions(table2.getTableNameAsPOJO()).get(0);
     Store s = region.getStore(HConstants.CATALOG_FAMILY);
 
+    //have to flush namespace to ensure it doesn't affect wall tests
+    admin.flush(HConstants.NAMESPACE_TABLE_NAME.getName());
 
     // Put some stuff into table2, to make sure we have some files to compact.
     for (int i = 1; i <= 2; ++i) {

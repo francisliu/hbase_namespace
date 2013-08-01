@@ -1,4 +1,22 @@
-package org.apache.hadoop.hbase.namespace;
+/*
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.apache.hadoop.hbase;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
@@ -15,6 +33,7 @@ import org.apache.hadoop.hbase.MediumTests;
 import org.apache.hadoop.hbase.MiniHBaseCluster;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.Waiter;
+import org.apache.hadoop.hbase.ZKNamespaceManager;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -22,6 +41,9 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.zookeeper.ZKUtil;
+import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -49,6 +71,7 @@ public class TestNamespace {
   @BeforeClass
   public static void setUp() throws Exception {
     TEST_UTIL = new HBaseTestingUtility();
+    TEST_UTIL.getConfiguration().setInt("hbase.namespacejanitor.interval", 5000);
     TEST_UTIL.startMiniCluster(NUM_SLAVES_BASE);
     admin = TEST_UTIL.getHBaseAdmin();
     cluster = TEST_UTIL.getHBaseCluster();
@@ -66,11 +89,11 @@ public class TestNamespace {
 
   @Before
   public void beforeMethod() throws IOException {
-    for(HTableDescriptor desc: admin.listTables(prefix+".*")) {
+    for (HTableDescriptor desc : admin.listTables(prefix+".*")) {
       admin.disableTable(desc.getTableName());
       admin.deleteTable(desc.getTableName());
     }
-    for(NamespaceDescriptor ns: admin.listNamespaceDescriptors()) {
+    for (NamespaceDescriptor ns : admin.listNamespaceDescriptors()) {
       if (ns.getName().startsWith(prefix)) {
         admin.deleteNamespace(ns.getName());
       }
@@ -100,7 +123,7 @@ public class TestNamespace {
     List<HTableDescriptor> descs =
         admin.getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
     assertEquals(systemTables.size(), descs.size());
-    for(HTableDescriptor desc : descs) {
+    for (HTableDescriptor desc : descs) {
       assertTrue(systemTables.contains(desc.getTableName()));
     }
     //verify system tables aren't listed
@@ -109,20 +132,21 @@ public class TestNamespace {
     //Try creating default and system namespaces. 
     boolean exceptionCaught = false;
     try {
-    admin.createNamespace(NamespaceDescriptor.DEFAULT_NAMESPACE);
-    } catch (IOException exp){
+      admin.createNamespace(NamespaceDescriptor.DEFAULT_NAMESPACE);
+    } catch (IOException exp) {
       LOG.warn(exp);
       exceptionCaught = true;
-    }finally {
+    } finally {
       assertTrue(exceptionCaught);
     }
+
     exceptionCaught = false;
     try {
-    admin.createNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE);
-    } catch (IOException exp){
+      admin.createNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE);
+    } catch (IOException exp) {
       LOG.warn(exp);
       exceptionCaught = true;
-    }finally {
+    } finally {
       assertTrue(exceptionCaught);
     }
   }
@@ -138,6 +162,7 @@ public class TestNamespace {
     } finally {
       assertTrue(exceptionCaught);
     }
+
     try {
       admin.deleteNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
     } catch (IOException exp) {
@@ -213,9 +238,10 @@ public class TestNamespace {
     admin.createTable(desc);
     TEST_UTIL.waitTableAvailable(desc.getTableName().getName(), 10000);
     FileSystem fs = FileSystem.get(TEST_UTIL.getConfiguration());
-    assertTrue(fs.exists(new Path(master.getMasterFileSystem().getRootDir(),
-        new Path(HConstants.BASE_NAMESPACE_DIR,
-            new Path(nsName, desc.getTableName().getQualifierAsString())))));
+    assertTrue(fs.exists(
+        new Path(master.getMasterFileSystem().getRootDir(),
+            new Path(HConstants.BASE_NAMESPACE_DIR,
+                new Path(nsName, desc.getTableName().getQualifierAsString())))));
     assertEquals(1, admin.listTables().length);
 
     //verify non-empty namespace can't be removed
@@ -223,7 +249,7 @@ public class TestNamespace {
       admin.deleteNamespace(nsName);
       fail("Expected non-empty namespace constraint exception");
     } catch (Exception ex) {
-      LOG.info("Caught expected exception: "+ex);
+      LOG.info("Caught expected exception: " + ex);
     }
 
     //sanity check try to write and read from table
@@ -263,6 +289,19 @@ public class TestNamespace {
     assertTrue(admin.tableExists(Bytes.toBytes(tableName)));
     admin.disableTable(desc.getTableName());
     admin.deleteTable(desc.getTableName());
+  }
+
+  @Test
+  public void testNamespaceJanitor() throws Exception {
+    FileSystem fs = TEST_UTIL.getTestFileSystem();
+    Path fakeNSPath =
+        FSUtils.getNamespaceDir(FSUtils.getRootDir(TEST_UTIL.getConfiguration()), "foo");
+    assertTrue(fs.mkdirs(fakeNSPath));
+    String fakeZnode = ZKUtil.joinZNode(ZooKeeperWatcher.namespaceZNode, "foo");
+    ZKUtil.createWithParents(TEST_UTIL.getZooKeeperWatcher(), fakeZnode);
+    Thread.sleep(10000);
+    assertFalse(fs.exists(fakeNSPath));
+    assertEquals(-1, ZKUtil.checkExists(TEST_UTIL.getZooKeeperWatcher(), fakeZnode));
   }
 
 }

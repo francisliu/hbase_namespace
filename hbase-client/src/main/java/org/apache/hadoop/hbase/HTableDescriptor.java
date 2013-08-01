@@ -1316,9 +1316,9 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     }
   }
 
-  public static String NAMESPACE_FAMILY_INFO = "info";
+  public static String NAMESPACE_FAMILY_INFO = "i";
   public static byte[] NAMESPACE_FAMILY_INFO_BYTES = Bytes.toBytes(NAMESPACE_FAMILY_INFO);
-  public static byte[] NAMESPACE_COL_DESC_BYTES = Bytes.toBytes("descriptor");
+  public static byte[] NAMESPACE_COL_DESC_BYTES = Bytes.toBytes("d");
 
   /** Table descriptor for namespace table */
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(

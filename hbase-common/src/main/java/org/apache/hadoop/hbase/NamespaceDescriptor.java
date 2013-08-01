@@ -32,6 +32,10 @@ import java.util.TreeSet;
 
 /**
  * Namespace POJO class. Used to represent and define namespaces.
+ *
+ * Descriptors will be persisted in an hbase table.
+ * This works since namespaces are essentially metadata of a group of tables
+ * as opposed to a more tangible container.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving

@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.namespace;
+package org.apache.hadoop.hbase;
 
 import static org.junit.Assert.*;
 
@@ -40,6 +40,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.util.ToolRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -94,6 +95,9 @@ public class TestNamespaceUpgrade {
       new String [] {"-put", untar.toURI().toString(), hbaseRootDir.toString()});
     // See whats in minihdfs.
     doFsCommand(shell, new String [] {"-lsr", "/"});
+    Configuration toolConf = TEST_UTIL.getConfiguration();
+    conf.set(HConstants.HBASE_DIR, TEST_UTIL.getDefaultRootDirPath().toString());
+    ToolRunner.run(toolConf, new NamespaceUpgrade(), new String[]{"--upgrade"});
     TEST_UTIL.startMiniHBaseCluster(1, 1);
 
 

@@ -514,6 +514,9 @@ public class HBaseAdmin implements Abortable, Closeable {
   public void createTableAsync(
     final HTableDescriptor desc, final byte [][] splitKeys)
   throws IOException {
+    if(desc.getTableName() == null) {
+      throw new IllegalArgumentException("TableName cannot be null");
+    }
     if(splitKeys != null && splitKeys.length > 0) {
       Arrays.sort(splitKeys, Bytes.BYTES_COMPARATOR);
       // Verify there are no duplicate split keys

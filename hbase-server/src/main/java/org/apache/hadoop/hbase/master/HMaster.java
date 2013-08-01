@@ -80,12 +80,7 @@ import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
 import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitorBase;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.coprocessor.CoprocessorHost;
-import org.apache.hadoop.hbase.exceptions.DeserializationException;
-import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.exceptions.MergeRegionException;
-import org.apache.hadoop.hbase.PleaseHoldException;
-import org.apache.hadoop.hbase.TableNotDisabledException;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.exceptions.UnknownProtocolException;
 import org.apache.hadoop.hbase.executor.ExecutorService;
 import org.apache.hadoop.hbase.executor.ExecutorType;
@@ -112,8 +107,7 @@ import org.apache.hadoop.hbase.master.snapshot.SnapshotManager;
 import org.apache.hadoop.hbase.monitoring.MemoryBoundedLogMessageBuffer;
 import org.apache.hadoop.hbase.monitoring.MonitoredTask;
 import org.apache.hadoop.hbase.monitoring.TaskMonitor;
-import org.apache.hadoop.hbase.namespace.NamespaceUpgrade;
-import org.apache.hadoop.hbase.namespace.TableNamespaceManager;
+import org.apache.hadoop.hbase.master.TableNamespaceManager;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.RequestConverter;
 import org.apache.hadoop.hbase.protobuf.ResponseConverter;
@@ -288,6 +282,7 @@ MasterServices, Server {
 
   /** Namespace stuff */
   private TableNamespaceManager tableNamespaceManager;
+  private NamespaceJanitor namespaceJanitorChore;
 
   /**
    * This servers address.
@@ -384,6 +379,9 @@ MasterServices, Server {
 
   /** The following is used in master recovery scenario to re-register listeners */
   private List<ZooKeeperListener> registeredZKListenersBeforeRecovery;
+
+  /** monitor lock exclusively used by monitor apis */
+  private Object nsLock = new Object();
 
   /**
    * Initializes the HMaster. The steps are as follows:
@@ -765,7 +763,6 @@ MasterServices, Server {
      */
 
     status.setStatus("Initializing Master file system");
-    new NamespaceUpgrade().upgradeTableDirs(conf, FSUtils.getRootDir(conf));
 
     this.masterActiveTime = System.currentTimeMillis();
     // TODO: Do this using Dependency Injection, using PicoContainer, Guice or Spring.
@@ -897,7 +894,9 @@ MasterServices, Server {
       this.clusterStatusChore = getAndStartClusterStatusChore(this);
       this.balancerChore = getAndStartBalancerChore(this);
       this.catalogJanitorChore = new CatalogJanitor(this, this);
+      this.namespaceJanitorChore = new NamespaceJanitor(this);
       startCatalogJanitorChore();
+      startNamespaceJanitorChore();
     }
 
     status.markComplete("Initialization successful");
@@ -926,6 +925,14 @@ MasterServices, Server {
    */
   protected void startCatalogJanitorChore() {
     Threads.setDaemonThreadRunning(catalogJanitorChore.getThread());
+  }
+
+  /**
+   * Useful for testing purpose also where we have
+   * master restart scenarios.
+   */
+  protected void startNamespaceJanitorChore() {
+    Threads.setDaemonThreadRunning(namespaceJanitorChore.getThread());
   }
 
   /**
@@ -1358,6 +1365,9 @@ MasterServices, Server {
     }
     if (this.clusterStatusPublisherChore != null){
       clusterStatusPublisherChore.interrupt();
+    }
+    if (this.namespaceJanitorChore != null){
+      namespaceJanitorChore.interrupt();
     }
   }
 
@@ -3065,7 +3075,7 @@ MasterServices, Server {
         return;
       }
     }
-    synchronized (this) {
+    synchronized (nsLock) {
       tableNamespaceManager.create(descriptor);
     }
     if (cpHost != null) {
@@ -3080,7 +3090,7 @@ MasterServices, Server {
         return;
       }
     }
-    synchronized (this) {
+    synchronized (nsLock) {
       tableNamespaceManager.update(descriptor);
     }
     if (cpHost != null) {
@@ -3094,7 +3104,7 @@ MasterServices, Server {
         return;
       }
     }
-    synchronized (this) {
+    synchronized (nsLock) {
       tableNamespaceManager.remove(name);
     }
     if (cpHost != null) {
@@ -3103,19 +3113,19 @@ MasterServices, Server {
   }
 
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
-    synchronized (this) {
+    synchronized (nsLock) {
       return tableNamespaceManager.get(name);
     }
   }
 
   public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
-    synchronized (this) {
+    synchronized (nsLock) {
       return Lists.newArrayList(tableNamespaceManager.list());
     }
   }
 
   public List<HTableDescriptor> getTableDescriptorsByNamespace(String name) throws IOException {
-    synchronized (this) {
+    synchronized (nsLock) {
       return Lists.newArrayList(tableDescriptors.getByNamespace(name).values());
     }
   }

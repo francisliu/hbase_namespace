@@ -37,10 +37,14 @@ public final class TableName implements Comparable<TableName> {
   // A non-capture group so that this can be embedded.
   // regex is a bit more complicated to support nuance of tables
   // in default namespace
+  //Allows only letters, digits and '_'
   public static final String VALID_NAMESPACE_REGEX =
       "(?:[a-zA-Z_0-9]+)";
+  //Allows only letters, digits, '_', '-' and '.'
   public static final String VALID_TABLE_QUALIFIER_REGEX =
       "(?:[a-zA-Z_0-9][a-zA-Z_0-9-.]*)";
+  //Concatenation of NAMESPACE_REGEX and TABLE_QUALIFIER_REGEX,
+  //with NAMESPACE_DELIM as delimiter
   public static final String VALID_USER_TABLE_REGEX =
       "(?:(?:(?:"+VALID_NAMESPACE_REGEX+"\\"+NAMESPACE_DELIM+")?)" +
          "(?:"+VALID_TABLE_QUALIFIER_REGEX+"))";

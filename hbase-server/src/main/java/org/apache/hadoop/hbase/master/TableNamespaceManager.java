@@ -16,10 +16,9 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.namespace;
+package org.apache.hadoop.hbase.master;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.NavigableSet;
 
 import org.apache.commons.logging.Log;
@@ -28,12 +27,12 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.ZKNamespaceManager;
 import org.apache.hadoop.hbase.catalog.MetaReader;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
@@ -41,8 +40,8 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.constraint.ConstraintException;
-import org.apache.hadoop.hbase.master.MasterFileSystem;
 import org.apache.hadoop.hbase.master.MasterServices;
+import org.apache.hadoop.hbase.master.NamespaceJanitor;
 import org.apache.hadoop.hbase.master.handler.CreateTableHandler;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
@@ -50,12 +49,13 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import com.google.common.collect.Sets;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.util.Threads;
 
 /**
  * This is a helper class used to manage the namespace
  * metadata that is stored in {@see HConstants.NAMESPACE_TABLE_NAME}
  * It also mirrors updates to the ZK store by forwarding updates to
- * {@link ZKNamespaceManager}
+ * {@link org.apache.hadoop.hbase.ZKNamespaceManager}
  */
 @InterfaceAudience.Private
 public class TableNamespaceManager {
@@ -65,10 +65,12 @@ public class TableNamespaceManager {
   private MasterServices masterServices;
   private HTable table;
   private ZKNamespaceManager zkNamespaceManager;
+  private NamespaceJanitor namespaceJanitor;
 
   public TableNamespaceManager(MasterServices masterServices) throws IOException {
     this.masterServices = masterServices;
     this.conf = masterServices.getConfiguration();
+    namespaceJanitor = new NamespaceJanitor(masterServices);
   }
 
   public void start() throws IOException {

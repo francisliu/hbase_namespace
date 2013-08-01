@@ -17,23 +17,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.namespace;
+package org.apache.hadoop.hbase;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
 import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.util.Tool;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,8 +40,8 @@ import java.util.List;
  * Upgrades old 0.94 filesystem layout to namespace layout
  * Does the following:
  *
- * - creates system namespace directory and move META table there
- * renaming META table to hbase.meta,
+ * - creates system namespace directory and move .META. table there
+ * renaming .META. table to hbase:meta,
  * this in turn would require to re-encode the region directory name
  * - creates default namespace directory, all tables without '.' in them will be moved here
  * - For each table that contains a '.', parse it as a fully-qualified table name
@@ -51,8 +49,10 @@ import java.util.List;
  * - During startup TableNamespaceManager, will populate the namespace table
  * with the appropriate namespace descriptors
  */
-public class NamespaceUpgrade {
+public class NamespaceUpgrade implements Tool {
   private static final Log LOG = LogFactory.getLog(NamespaceUpgrade.class);
+
+  private static Configuration conf;
 
   public void upgradeTableDirs(Configuration conf, Path rootDir) throws IOException {
     FileSystem fs = FileSystem.get(conf);
@@ -164,5 +164,25 @@ public class NamespaceUpgrade {
         }
       }
     }
+  }
+
+  @Override
+  public int run(String[] args) throws Exception {
+    if(args.length < 1 || !args[0].equals("--upgrade")) {
+      System.out.println("Usage: <CMD> --upgrade");
+      return 0;
+    }
+    upgradeTableDirs(conf, FSUtils.getRootDir(conf));
+    return 0;
+  }
+
+  @Override
+  public void setConf(Configuration conf) {
+    this.conf = conf;
+  }
+
+  @Override
+  public Configuration getConf() {
+    return conf;
   }
 }

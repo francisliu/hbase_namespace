@@ -16,13 +16,12 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.namespace;
+package org.apache.hadoop.hbase;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -39,15 +38,16 @@ import java.util.concurrent.ConcurrentSkipListMap;
 
 
 /**
- * Class used to manage namespace descriptor information
- * stored in zookeeper. This information will be consumed
- * by regionservers to act on namespace related
- * parameters (ie enforcing quota).
- * Information in ZK is reconstructed from namespace
- * table whenever {@link TableNamespaceManager} is started.
+ * Class servers two purposes:
+ *
+ * 1. Broadcast NamespaceDescriptor information via ZK
+ * (Done by the Master)
+ * 2. Consume broadcasted NamespaceDescriptor changes
+ * (Done by the RegionServers)
+ *
  */
 @InterfaceAudience.Private
-class ZKNamespaceManager extends ZooKeeperListener {
+public class ZKNamespaceManager extends ZooKeeperListener {
   private static Log LOG = LogFactory.getLog(ZKNamespaceManager.class);
   private final String nsZNode;
   private NavigableMap<String,NamespaceDescriptor> cache;

@@ -95,7 +95,7 @@ public class TestRegionPlacement {
   @Test
   public void testFavoredNodesPresentForRoundRobinAssignment() {
     LoadBalancer balancer = LoadBalancerFactory.getLoadBalancer(TEST_UTIL.getConfiguration());
-    HRegionInfo regionInfo = new HRegionInfo(TableName.valueOf("oneregion"));
+    balancer.setMasterServices(TEST_UTIL.getMiniHBaseCluster().getMaster());
     List<ServerName> servers = new ArrayList<ServerName>();
     for (int i = 0; i < SLAVES; i++) {
       ServerName server = TEST_UTIL.getMiniHBaseCluster().getRegionServer(i).getServerName();
@@ -106,21 +106,15 @@ public class TestRegionPlacement {
     regions.add(region);
     Map<ServerName,List<HRegionInfo>> assignmentMap = balancer.roundRobinAssignment(regions,
         servers);
-    ServerName serverBefore = null;
-    for(Map.Entry<ServerName, List<HRegionInfo>> entry: assignmentMap.entrySet()) {
-      if(entry.getValue().size() > 0) {
-        serverBefore = entry.getKey();
-      }
-    }
+    Set<ServerName> serverBefore = assignmentMap.keySet();
     List<ServerName> favoredNodesBefore =
         ((FavoredNodeLoadBalancer)balancer).getFavoredNodes(region);
     assertTrue(favoredNodesBefore.size() == 3);
     // the primary RS should be the one that the balancer's assignment returns
-    assertTrue(ServerName.isSameHostnameAndPort(serverBefore,
+    assertTrue(ServerName.isSameHostnameAndPort(serverBefore.iterator().next(),
         favoredNodesBefore.get(PRIMARY)));
     // now remove the primary from the list of available servers
-    List<ServerName> removedServers = removeMatchingServers(serverBefore,
-        servers);
+    List<ServerName> removedServers = removeMatchingServers(serverBefore, servers);
     // call roundRobinAssignment with the modified servers list
     assignmentMap = balancer.roundRobinAssignment(regions, servers);
     List<ServerName> favoredNodesAfter =
@@ -130,17 +124,12 @@ public class TestRegionPlacement {
     // to the roundRobinAssignment method in the balancer (relevant for AssignmentManager.assign
     // failures)
     assertTrue(favoredNodesAfter.containsAll(favoredNodesBefore));
-    ServerName serverAfter = null;
-    for(Map.Entry<ServerName, List<HRegionInfo>> entry: assignmentMap.entrySet()) {
-      if(entry.getValue().size() > 0) {
-        serverAfter = entry.getKey();
-      }
-    }
+    Set<ServerName> serverAfter = assignmentMap.keySet();
     // We expect the new RegionServer assignee to be one of the favored nodes
     // chosen earlier.
-    assertTrue(ServerName.isSameHostnameAndPort(serverAfter,
+    assertTrue(ServerName.isSameHostnameAndPort(serverAfter.iterator().next(),
                  favoredNodesBefore.get(SECONDARY)) ||
-               ServerName.isSameHostnameAndPort(serverAfter,
+               ServerName.isSameHostnameAndPort(serverAfter.iterator().next(),
                  favoredNodesBefore.get(TERTIARY)));
 
     // put back the primary in the list of available servers
@@ -148,13 +137,8 @@ public class TestRegionPlacement {
     // now roundRobinAssignment with the modified servers list should return the primary
     // as the regionserver assignee
     assignmentMap = balancer.roundRobinAssignment(regions, servers);
-    ServerName serverWithPrimary = null;
-    for(Map.Entry<ServerName, List<HRegionInfo>> entry: assignmentMap.entrySet()) {
-      if(entry.getValue().size() > 0) {
-        serverWithPrimary = entry.getKey();
-      }
-    }
-    assertTrue(serverBefore.equals(serverWithPrimary));
+    Set<ServerName> serverWithPrimary = assignmentMap.keySet();
+    assertTrue(serverBefore.containsAll(serverWithPrimary));
 
     // Make all the favored nodes unavailable for assignment
     removeMatchingServers(favoredNodesAfter, servers);

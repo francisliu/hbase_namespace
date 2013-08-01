@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.NamespaceUpgrade;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -52,6 +53,7 @@ import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.master.HMaster;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.util.ToolRunner;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -119,6 +121,12 @@ public class TestMetaMigrationConvertingToPB {
       new Path(hbaseRootDir, ".META.").toString()});
     // See whats in minihdfs.
     doFsCommand(shell, new String [] {"-lsr", "/"});
+
+    //upgrade to namespace as well
+    Configuration toolConf = TEST_UTIL.getConfiguration();
+    conf.set(HConstants.HBASE_DIR, TEST_UTIL.getDefaultRootDirPath().toString());
+    ToolRunner.run(toolConf, new NamespaceUpgrade(), new String[]{"--upgrade"});
+
     TEST_UTIL.startMiniHBaseCluster(1, 1);
     // Assert we are running against the copied-up filesystem.  The copied-up
     // rootdir should have had a table named 'TestTable' in it.  Assert it
