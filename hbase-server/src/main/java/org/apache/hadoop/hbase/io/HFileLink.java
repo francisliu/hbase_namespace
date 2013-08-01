@@ -147,10 +147,7 @@ public class HFileLink extends FileLink {
    */
   public static boolean isHFileLink(String fileName) {
     Matcher m = LINK_NAME_PATTERN.matcher(fileName);
-    LOG.debug("isHfileLink:"+fileName+"?"+m.matches());
     if (!m.matches()) return false;
-//    LOG.debug("isHfileLink:"+(m.groupCount() > 2 && m.group(4) != null && m.group(3) != null && m
-//        .group(2) != null));
     return m.groupCount() > 2 && m.group(4) != null && m.group(3) != null && m.group(2) != null;
   }
 
@@ -171,7 +168,6 @@ public class HFileLink extends FileLink {
     }
 
     // Convert the HFileLink name into a real table/region/cf/hfile path.
-    LOG.debug("-->getRelativeTablePath"+m.group(1)+","+m.group(2));
     TableName tableName = TableName.valueOf(m.group(1), m.group(2));
     String regionName = m.group(3);
     String hfileName = m.group(4);
@@ -220,7 +216,6 @@ public class HFileLink extends FileLink {
     if (!m.matches()) {
       throw new IllegalArgumentException(fileName + " is not a valid HFileLink name!");
     }
-    LOG.debug("-->getRelativeTablePath"+m.group(1)+","+m.group(2));
     return(TableName.valueOf(m.group(1), m.group(2)));
   }
 
@@ -250,7 +245,6 @@ public class HFileLink extends FileLink {
     String s = String.format("%s=%s-%s",
         tableName.getNameAsString().replace(TableName.NAMESPACE_DELIM, '='),
         regionName, hfileName);
-    LOG.debug("-->createHFileLinkName"+s);
     return s;
   }
 
@@ -345,7 +339,7 @@ public class HFileLink extends FileLink {
       throw new IllegalArgumentException(hfileLinkName + " is not a valid HFileLink name!");
     }
     return create(conf, fs, dstFamilyPath, TableName.valueOf(m.group(1), m.group(2)),
-        m.group(3), m.group(3));
+        m.group(3), m.group(4));
   }
 
   /**
@@ -380,8 +374,6 @@ public class HFileLink extends FileLink {
         regionPath.getName(), hfileName);
     Path linkTableDir = FSUtils.getTableDir(rootDir, linkTableName);
     Path regionDir = HRegion.getRegionDir(linkTableDir, linkRegionName);
-    LOG.debug("-->getHFileFromBackReference"+new Path(new Path(regionDir,
-            familyPath.getName()), linkName));
     return new Path(new Path(regionDir, familyPath.getName()), linkName);
   }
 
