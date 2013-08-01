@@ -88,28 +88,11 @@ public class TableNamespaceManager {
     zkNamespaceManager = new ZKNamespaceManager(masterServices.getZooKeeper());
     zkNamespaceManager.start();
 
-    boolean fullyInitialized = true;
     if (get(NamespaceDescriptor.DEFAULT_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.DEFAULT_NAMESPACE);
-      fullyInitialized = false;
     }
     if (get(NamespaceDescriptor.SYSTEM_NAMESPACE.getName()) == null) {
       create(NamespaceDescriptor.SYSTEM_NAMESPACE);
-      fullyInitialized = false;
-    }
-    //this part is for migrating to namespace aware hbase
-    //we create namespaces for all the tables which have dots
-    if (!fullyInitialized) {
-      MasterFileSystem mfs = masterServices.getMasterFileSystem();
-      List<Path> dirs = FSUtils.getTableDirs(mfs.getFileSystem(), mfs.getRootDir());
-      for(Path p: dirs) {
-        NamespaceDescriptor ns =
-            NamespaceDescriptor.create(TableName.valueOf(p.getName()).getNamespaceAsString())
-                        .build();
-        if (get(ns.getName()) == null) {
-          create(ns);
-        }
-      }
     }
 
     for(Result result: table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {

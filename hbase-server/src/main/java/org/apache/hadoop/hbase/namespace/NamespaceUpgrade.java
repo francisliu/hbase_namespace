@@ -32,6 +32,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
+import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
 
 import java.io.IOException;
@@ -55,11 +56,24 @@ public class NamespaceUpgrade {
 
   public void upgradeTableDirs(Configuration conf, Path rootDir) throws IOException {
     FileSystem fs = FileSystem.get(conf);
+    Path sysNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
+    Path defNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
+    Path baseDirs[] = {rootDir,
+        new Path(rootDir, HConstants.HFILE_ARCHIVE_DIRECTORY),
+        new Path(rootDir, HConstants.HBASE_TEMP_DIRECTORY)};
+
+    for(Path baseDir: baseDirs) {
+      //special handling for table that's named 'data'
+      if(fs.exists(new Path(baseDir, new Path("data", FSTableDescriptors.TABLEINFO_NAME)))) {
+        if(!fs.rename(new Path(baseDir, "data"), new Path(baseDir, ".data"))) {
+          throw new IOException("Failed to rename 'data' to '.data' with baseDir:"+baseDir);
+        }
+      }
+    }
+
     Path newMetaRegionDir = HRegion.getRegionDir(rootDir, HRegionInfo.FIRST_META_REGIONINFO);
     //if new meta region exists then migration was completed successfully
     if (!fs.exists(newMetaRegionDir) && fs.exists(rootDir)) {
-      Path sysNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
-      Path defNsDir = FSUtils.getNamespaceDir(rootDir, NamespaceDescriptor.DEFAULT_NAMESPACE_NAME_STR);
       if (!fs.exists(sysNsDir)) {
         if (!fs.mkdirs(sysNsDir)) {
           throw new IOException("Failed to create system namespace dir: "+sysNsDir);
@@ -74,9 +88,6 @@ public class NamespaceUpgrade {
       List<String> sysTables = Lists.newArrayList("-ROOT-",".META.");
 
       //migrate tables including archive and tmp
-      Path baseDirs[] = {rootDir,
-          new Path(rootDir, HConstants.HFILE_ARCHIVE_DIRECTORY),
-          new Path(rootDir, HConstants.HBASE_TEMP_DIRECTORY)};
       for(Path baseDir: baseDirs) {
         List<Path> oldTableDirs = FSUtils.getLocalTableDirs(fs, baseDir);
         for(Path oldTableDir: oldTableDirs) {
@@ -94,6 +105,12 @@ public class NamespaceUpgrade {
                 throw new IOException("Failed to move "+oldTableDir+" to namespace dir "+nsDir);
               }
             }
+          }
+        }
+        //special handling of "data" table since we are taking this name over
+        if(fs.exists(new Path(baseDir, ".data"))) {
+          if(!fs.rename(new Path(baseDir, ".data"), new Path(defNsDir,"data"))) {
+            throw new IOException("Failed to rename '.data' to 'data' with baseDir:"+baseDir);
           }
         }
       }
