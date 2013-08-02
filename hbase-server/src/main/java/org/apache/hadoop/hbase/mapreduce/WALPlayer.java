@@ -80,7 +80,7 @@ public class WALPlayer extends Configured implements Tool {
     throws IOException {
       try {
         // skip all other tables
-        if (table.equals(key.getTablename())) {
+        if (Bytes.equals(table, key.getTablename().getName())) {
           for (KeyValue kv : value.getKeyValues()) {
             if (WALEdit.isMetaEditFamily(kv.getFamily())) continue;
             context.write(new ImmutableBytesWritable(kv.getRow()), kv);

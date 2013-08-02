@@ -1089,8 +1089,7 @@ public class TestDistributedLogSplitting {
       HRegionServer hrs = rst.getRegionServer();
       List<HRegionInfo> hris = ProtobufUtil.getOnlineRegions(hrs);
       for (HRegionInfo hri : hris) {
-        if (hri.getTableName().getNamespaceAsString().equals(
-            NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR)) {
+        if (HTableDescriptor.isSystemTable(hri.getTableName())) {
           continue;
         }
         LOG.debug("adding data to rs = " + rst.getName() +
@@ -1112,8 +1111,12 @@ public class TestDistributedLogSplitting {
     TableName fullTName = TableName.valueOf(tname);
     // remove root and meta region
     regions.remove(HRegionInfo.FIRST_META_REGIONINFO);
-    byte[] table = Bytes.toBytes(tname);
-    HTableDescriptor htd = new HTableDescriptor(TableName.valueOf(tname));
+    for(HRegionInfo regionInfo : regions) {
+      if(HTableDescriptor.isSystemTable(regionInfo.getTableName())) {
+         regions.remove(regionInfo);
+      }
+    }
+    HTableDescriptor htd = new HTableDescriptor(fullTName);
     byte[] value = new byte[edit_size];
 
     List<HRegionInfo> hris = new ArrayList<HRegionInfo>();

@@ -316,7 +316,8 @@ AssignmentManager assignmentManager = master.getAssignmentManager();
 <%java>TableName tableName = systemTable.getTableName();</%java>
     <td><a href="table.jsp?name=<% tableName %>"><% tableName %></a></td>
     <%if (frags != null)%>
-        <td align="center"><% frags.get(tableName) != null ? frags.get(tableName).intValue() + "%" : "n/a" %></td>
+        <td align="center"><% frags.get(tableName.getNameAsString()) != null ? frags.get(tableName.getNameAsString())
+        .intValue() + "%" : "n/a" %></td>
     </%if>
     <%java>String description = null;
         if (tableName.equals(HConstants.META_TABLE_NAME)){

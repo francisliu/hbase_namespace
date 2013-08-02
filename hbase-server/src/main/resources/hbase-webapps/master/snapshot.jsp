@@ -44,12 +44,13 @@
   boolean readOnly = conf.getBoolean("hbase.master.ui.readonly", false);
   String snapshotName = request.getParameter("name");
   SnapshotDescription snapshot = null;
-  TableName snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
   SnapshotInfo.SnapshotStats stats = null;
+  TableName snapshotTable = null;
   for (SnapshotDescription snapshotDesc: hbadmin.listSnapshots()) {
     if (snapshotName.equals(snapshotDesc.getName())) {
       snapshot = snapshotDesc;
       stats = SnapshotInfo.getSnapshotStats(conf, snapshot);
+      snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
       break;
     }
   }

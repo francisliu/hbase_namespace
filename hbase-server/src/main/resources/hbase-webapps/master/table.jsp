@@ -188,7 +188,7 @@
     </div>
     <div class="row">
 <%
-  if(fqtn.equals(HConstants.META_TABLE_NAME)) {
+  if(fqtn.equals(HConstants.META_TABLE_NAME.getNameAsString())) {
 %>
 <%= tableHeader %>
 <%

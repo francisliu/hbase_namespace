@@ -128,10 +128,10 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
    * @return The comparator.
    */
   public static KeyComparator getRowComparator(TableName tableName) {
-    if(HConstants.ROOT_TABLE_NAME.getName().equals(tableName)) {
+    if(HConstants.ROOT_TABLE_NAME.equals(tableName)) {
       return ROOT_COMPARATOR.getRawComparator();
     }
-    if(HConstants.META_TABLE_NAME.getName().equals(tableName)) {
+    if(HConstants.META_TABLE_NAME.equals(tableName)) {
       return META_COMPARATOR.getRawComparator();
     }
     return COMPARATOR.getRawComparator();

@@ -2493,7 +2493,7 @@ public class AssignmentManager extends ZooKeeperListener {
     Set<TableName> disabledOrDisablingOrEnabling = ZKTable.getDisabledOrDisablingTables(watcher);
     disabledOrDisablingOrEnabling.addAll(ZKTable.getEnablingTables(watcher));
     // Scan META for all user regions, skipping any disabled tables
-    Map<HRegionInfo, ServerName> allRegions = null;
+    Map<HRegionInfo, ServerName> allRegions;
     if (this.shouldAssignRegionsWithFavoredNodes) {
       allRegions = FavoredNodeAssignmentHelper.fullScan(
         catalogTracker, disabledOrDisablingOrEnabling, true, (FavoredNodeLoadBalancer)balancer);
@@ -2501,6 +2501,9 @@ public class AssignmentManager extends ZooKeeperListener {
       allRegions = MetaReader.fullScan(
         catalogTracker, disabledOrDisablingOrEnabling, true);
     }
+
+    if (allRegions == null) return;
+
     //remove system tables because they would have been assigned earlier
     for(Iterator<HRegionInfo> iter = allRegions.keySet().iterator();
         iter.hasNext();) {
@@ -2508,7 +2511,8 @@ public class AssignmentManager extends ZooKeeperListener {
         iter.remove();
       }
     }
-    if (allRegions == null || allRegions.isEmpty()) return;
+
+    if (allRegions.isEmpty()) return;
 
     // Determine what type of assignment to do on startup
     boolean retainAssignment = server.getConfiguration().

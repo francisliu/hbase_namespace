@@ -292,17 +292,12 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Construct a table descriptor specifying a byte array table name
+   * Construct a table descriptor specifying a TableName object
    * @param name Table name.
-   * @throws IllegalArgumentException if passed a table name
-   * that is made of other than 'word' characters, underscore or period: i.e.
-   * <code>[a-zA-Z_0-9-.].
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
   public HTableDescriptor(final TableName name) {
     super();
-    this.name = name;
-    setMetaFlags(this.name);
     setName(name);
   }
 
@@ -320,7 +315,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Construct a table descriptor specifying a byte array table name
+   * Construct a table descriptor specifying a String table name
    * @param name Table name.
    * @throws IllegalArgumentException if passed a table name
    * that is made of other than 'word' characters, underscore or period: i.e.
@@ -448,9 +443,8 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    * or <code> .META. </code>
    */
   public static boolean isSystemTable(final TableName tableName) {
-    return tableName.getNameAsString()
-        .startsWith(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
-            TableName.NAMESPACE_DELIM);
+    return tableName.getNamespaceAsString()
+        .equals(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR);
   }
 
   /**
@@ -718,10 +712,12 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    *
    * @param name name of table
    */
+  @Deprecated
   public void setName(byte[] name) {
     setName(TableName.valueOf(name));
   }
 
+  @Deprecated
   public void setName(TableName name) {
     this.name = name;
     setMetaFlags(this.name);
@@ -1360,9 +1356,9 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     }
   }
 
-  public static String NAMESPACE_FAMILY_INFO = "i";
-  public static byte[] NAMESPACE_FAMILY_INFO_BYTES = Bytes.toBytes(NAMESPACE_FAMILY_INFO);
-  public static byte[] NAMESPACE_COL_DESC_BYTES = Bytes.toBytes("d");
+  public final static String NAMESPACE_FAMILY_INFO = "i";
+  public final static byte[] NAMESPACE_FAMILY_INFO_BYTES = Bytes.toBytes(NAMESPACE_FAMILY_INFO);
+  public final static byte[] NAMESPACE_COL_DESC_BYTES = Bytes.toBytes("d");
 
   /** Table descriptor for namespace table */
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(

@@ -482,6 +482,10 @@ public class TableAuthManager {
   }
 
   public void remove(byte[] table) {
+    remove(TableName.valueOf(table));
+  }
+
+  public void remove(TableName table) {
     tableCache.remove(table);
   }
 
