@@ -446,8 +446,6 @@ public class TestFlushSnapshotFromClient {
 
     // wait until all have been submitted
     toBeSubmitted.await();
-    LOG.info("-->sleeping");
-    Thread.sleep(10000);
 
     // loop until all are done.
     while (true) {

@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.apache.hadoop.hbase.master.handler.CreateTableHandler;
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
@@ -62,22 +63,18 @@ public class TableNamespaceManager {
   private MasterServices masterServices;
   private HTable table;
   private ZKNamespaceManager zkNamespaceManager;
-  private NamespaceJanitor namespaceJanitor;
 
   public TableNamespaceManager(MasterServices masterServices) throws IOException {
     this.masterServices = masterServices;
     this.conf = masterServices.getConfiguration();
-    namespaceJanitor = new NamespaceJanitor(masterServices);
   }
 
   public void start() throws IOException {
     TableName tableName = HConstants.NAMESPACE_TABLE_NAME;
-    boolean newTable = false;
     try {
       if (!MetaReader.tableExists(masterServices.getCatalogTracker(),
           tableName)) {
         LOG.info("Namespace table not found. Creating...");
-        newTable = true;
         createNamespaceTable(masterServices);
       }
     } catch (InterruptedException e) {
@@ -94,7 +91,8 @@ public class TableNamespaceManager {
       create(NamespaceDescriptor.SYSTEM_NAMESPACE);
     }
 
-    for(Result result: table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {
+    ResultScanner scanner = table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES);
+    for(Result result : scanner) {
       NamespaceDescriptor ns =
           ProtobufUtil.toNamespaceDescriptor(
               HBaseProtos.NamespaceDescriptor.parseFrom(
@@ -102,6 +100,7 @@ public class TableNamespaceManager {
                       HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue()));
       zkNamespaceManager.update(ns);
     }
+    scanner.close();
   }
 
 
@@ -180,12 +179,14 @@ public class TableNamespaceManager {
   public NavigableSet<NamespaceDescriptor> list() throws IOException {
     NavigableSet<NamespaceDescriptor> ret =
         Sets.newTreeSet(NamespaceDescriptor.NAMESPACE_DESCRIPTOR_COMPARATOR);
-    for(Result r: table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {
+    ResultScanner scanner = table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES);
+    for(Result r : scanner) {
         ret.add(ProtobufUtil.toNamespaceDescriptor(
             HBaseProtos.NamespaceDescriptor.parseFrom(
               r.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
                   HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue())));
     }
+    scanner.close();
     return ret;
   }
 

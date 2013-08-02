@@ -294,14 +294,28 @@ public class TestNamespace {
   @Test
   public void testNamespaceJanitor() throws Exception {
     FileSystem fs = TEST_UTIL.getTestFileSystem();
+
+    int fsCount = fs.listStatus(new Path(FSUtils.getRootDir(TEST_UTIL.getConfiguration()),
+        HConstants.BASE_NAMESPACE_DIR)).length;
     Path fakeNSPath =
         FSUtils.getNamespaceDir(FSUtils.getRootDir(TEST_UTIL.getConfiguration()), "foo");
     assertTrue(fs.mkdirs(fakeNSPath));
+
     String fakeZnode = ZKUtil.joinZNode(ZooKeeperWatcher.namespaceZNode, "foo");
+    int zkCount = ZKUtil.listChildrenNoWatch(TEST_UTIL.getZooKeeperWatcher(),
+        ZooKeeperWatcher.namespaceZNode).size();
     ZKUtil.createWithParents(TEST_UTIL.getZooKeeperWatcher(), fakeZnode);
     Thread.sleep(10000);
+
+    //verify namespace count is the same and orphan is removed
     assertFalse(fs.exists(fakeNSPath));
+    assertEquals(fsCount, fs.listStatus(new Path(FSUtils.getRootDir(TEST_UTIL.getConfiguration()),
+            HConstants.BASE_NAMESPACE_DIR)).length);
+
     assertEquals(-1, ZKUtil.checkExists(TEST_UTIL.getZooKeeperWatcher(), fakeZnode));
+    assertEquals(zkCount,
+        ZKUtil.listChildrenNoWatch(TEST_UTIL.getZooKeeperWatcher(),
+            ZooKeeperWatcher.namespaceZNode).size());
   }
 
 }

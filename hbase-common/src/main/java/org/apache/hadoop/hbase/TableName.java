@@ -226,7 +226,6 @@ public final class TableName implements Comparable<TableName> {
   }
 
   public static TableName valueOf(String name) {
-    //TODO we should need to convert it to bytes again
     isLegalFullyQualifiedTableName(Bytes.toBytes(name));
     int index = name.indexOf(NAMESPACE_DELIM);
     if (index != -1) {

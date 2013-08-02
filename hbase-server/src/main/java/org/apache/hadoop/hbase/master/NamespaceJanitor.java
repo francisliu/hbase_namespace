@@ -18,6 +18,7 @@
  */
 package org.apache.hadoop.hbase.master;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -25,38 +26,16 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Chore;
-import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.Server;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.master.TableNamespaceManager;
-import org.apache.hadoop.hbase.backup.HFileArchiver;
-import org.apache.hadoop.hbase.catalog.MetaEditor;
-import org.apache.hadoop.hbase.catalog.MetaReader;
-import org.apache.hadoop.hbase.client.MetaScanner;
-import org.apache.hadoop.hbase.client.MetaScanner.MetaScannerVisitor;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.regionserver.HRegionFileSystem;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
-import org.apache.hadoop.hbase.util.Pair;
-import org.apache.hadoop.hbase.util.PairOfSameType;
-import org.apache.hadoop.hbase.util.Triple;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
 import org.apache.zookeeper.KeeperException;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A janitor for the namespace artifacts.
@@ -117,12 +96,18 @@ public class NamespaceJanitor extends Chore {
   }
 
   private void removeOrphans() throws IOException, KeeperException {
+    //cache the info so we don't need to keep the master nsLock for long
+    //and not be wasteful with rpc calls
     FileSystem fs = services.getMasterFileSystem().getFileSystem();
+    Set<String> descs = Sets.newHashSet();
+    for(NamespaceDescriptor ns : services.listNamespaceDescriptors()) {
+      descs.add(ns.getName());
+    }
 
     //cleanup hdfs orphans
     for (FileStatus nsStatus : FSUtils.listStatus(fs,
         new Path(FSUtils.getRootDir(services.getConfiguration()), HConstants.BASE_NAMESPACE_DIR))) {
-      if (services.getNamespaceDescriptor(nsStatus.getPath().getName()) == null &&
+      if (!descs.contains(nsStatus.getPath().getName()) &&
           !NamespaceDescriptor.RESERVED_NAMESPACES.contains(nsStatus.getPath().getName())) {
         boolean isEmpty = true;
         for(FileStatus status : fs.listStatus(nsStatus.getPath())) {
@@ -149,7 +134,7 @@ public class NamespaceJanitor extends Chore {
 
     String baseZnode = ZooKeeperWatcher.namespaceZNode;
     for(String child : ZKUtil.listChildrenNoWatch(services.getZooKeeper(), baseZnode)) {
-      if (services.getNamespaceDescriptor(child) == null &&
+      if (!descs.contains(child) &&
           !NamespaceDescriptor.RESERVED_NAMESPACES.contains(child)) {
         String znode = ZKUtil.joinZNode(baseZnode, child);
         try {

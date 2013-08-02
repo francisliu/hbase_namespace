@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -65,6 +66,7 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.MetaScanner;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -1859,12 +1861,26 @@ public class TestHBaseFsck {
       setupTable(table);
 
       // Mess it up by removing the RegionInfo for one region.
+      final List<Delete> deletes = new LinkedList<Delete>();
       HTable meta = new HTable(conf, HTableDescriptor.META_TABLEDESC.getTableName());
-      ResultScanner scanner = meta.getScanner(new Scan());
-      Result result = scanner.next();
-      Delete delete = new Delete (result.getRow());
-      delete.deleteColumn(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);
-      meta.delete(delete);
+      MetaScanner.metaScan(conf, new MetaScanner.MetaScannerVisitor() {
+
+        @Override
+        public boolean processRow(Result rowResult) throws IOException {
+          if(!HTableDescriptor.isSystemTable(MetaScanner.getHRegionInfo(rowResult)
+              .getTableName())) {
+            Delete delete = new Delete(rowResult.getRow());
+            delete.deleteColumn(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);
+            deletes.add(delete);
+          }
+          return true;
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+      });
+      meta.delete(deletes);
 
       // Mess it up by creating a fake META entry with no associated RegionInfo
       meta.put(new Put(Bytes.toBytes(table + ",,1361911384013.810e28f59a57da91c66")).add(

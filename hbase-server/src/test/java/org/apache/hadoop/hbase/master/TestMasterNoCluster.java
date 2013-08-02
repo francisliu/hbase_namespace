@@ -400,6 +400,12 @@ public class TestMasterNoCluster {
             rs0, rs0, rs0.getServerName(), HRegionInfo.ROOT_REGIONINFO);
         return new CatalogTracker(zk, conf, connection, abortable);
       }
+
+      @Override
+      boolean assignSystemTables(MonitoredTask status)
+          throws IOException, InterruptedException, KeeperException {
+        return true;
+      }
     };
     master.start();
 
