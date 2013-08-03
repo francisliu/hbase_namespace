@@ -223,7 +223,7 @@ public class SnapshotDescriptionUtils {
    */
   public static SnapshotDescription validate(SnapshotDescription snapshot, Configuration conf)
       throws IllegalArgumentException {
-    if (!snapshot.hasTableName()) {
+    if (!snapshot.hasTable()) {
       throw new IllegalArgumentException(
         "Descriptor doesn't apply to a table, so we can't build it.");
     }
@@ -287,15 +287,6 @@ public class SnapshotDescriptionUtils {
       try {
         in = fs.open(snapshotInfo);
         SnapshotDescription desc = SnapshotDescription.parseFrom(in);
-        if(!desc.hasTableName() && desc.hasTable()) {
-          desc = SnapshotDescription
-                            .newBuilder(desc)
-                            .setTableName(HBaseProtos.TableName
-                                .newBuilder()
-                                .setNamespace(ByteString.EMPTY)
-                                .setTableQualifier(desc.getTable()).build())
-                            .build();
-        }
         return desc;
       } finally {
         if (in != null) in.close();

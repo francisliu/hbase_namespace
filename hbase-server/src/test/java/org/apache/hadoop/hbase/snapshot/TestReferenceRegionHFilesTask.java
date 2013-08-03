@@ -64,7 +64,7 @@ public class TestReferenceRegionHFilesTask {
     fs.mkdirs(snapshotRegionDir);
 
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("name")
-        .setTableName(ProtobufUtil.toProtoTableName(TableName.valueOf("table"))).build();
+        .setTable("table").build();
     ForeignExceptionDispatcher monitor = Mockito.mock(ForeignExceptionDispatcher.class);
     ReferenceRegionHFilesTask task = new ReferenceRegionHFilesTask(snapshot, monitor, regionDir,
         fs, snapshotRegionDir);

@@ -155,8 +155,7 @@ message NameInt64Pair {
  */
 message SnapshotDescription {
   required string name = 1;
-  optional bytes table = 2; // not needed for delete, but checked for in taking snapshot
-  optional TableName table_name = 6; //new table, to deprecate #2
+  optional string table = 2; // not needed for delete, but checked for in taking snapshot
   optional int64 creation_time = 3 [default = 0];
   enum Type {
     DISABLED = 0;

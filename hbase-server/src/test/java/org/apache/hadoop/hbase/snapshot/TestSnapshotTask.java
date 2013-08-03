@@ -41,7 +41,7 @@ public class TestSnapshotTask {
   public void testErrorPropagation() throws Exception {
     ForeignExceptionDispatcher error = mock(ForeignExceptionDispatcher.class);
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("snapshot")
-        .setTableName(ProtobufUtil.toProtoTableName(TableName.valueOf("table"))).build();
+        .setTable("table").build();
     final Exception thrown = new Exception("Failed!");
     SnapshotTask fail = new SnapshotTask(snapshot, error) {
       @Override

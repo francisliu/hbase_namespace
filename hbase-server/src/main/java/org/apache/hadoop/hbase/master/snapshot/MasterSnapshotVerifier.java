@@ -91,7 +91,7 @@ public final class MasterSnapshotVerifier {
     this.services = services;
     this.snapshot = snapshot;
     this.rootDir = rootDir;
-    this.tableName = ProtobufUtil.toTableName(snapshot.getTableName());
+    this.tableName = TableName.valueOf(snapshot.getTable());
   }
 
   /**

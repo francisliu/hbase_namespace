@@ -132,7 +132,7 @@ public class RestoreSnapshotHelper {
     this.fs = fs;
     this.conf = conf;
     this.snapshotDesc = snapshotDescription;
-    this.snapshotTable = ProtobufUtil.toTableName(snapshotDescription.getTableName());
+    this.snapshotTable = TableName.valueOf(snapshotDescription.getTable());
     this.snapshotDir = snapshotDir;
     this.tableDesc = tableDescriptor;
     this.rootDir = rootDir;

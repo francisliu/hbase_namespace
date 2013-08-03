@@ -171,7 +171,7 @@ public class TestSnapshotFromMaster {
 
     // and that we get the same issue, even if we specify a name
     SnapshotDescription desc = SnapshotDescription.newBuilder()
-      .setName(snapshotName).setTableName(ProtobufUtil.toProtoTableName(TABLE_NAME)).build();
+      .setName(snapshotName).setTable(TABLE_NAME.getNameAsString()).build();
     builder.setSnapshot(desc);
     SnapshotTestingUtils.expectSnapshotDoneException(master, builder.build(),
       UnknownSnapshotException.class);

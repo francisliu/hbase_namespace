@@ -218,7 +218,7 @@ public class TestFlushSnapshotFromClient {
   public void testAsyncFlushSnapshot() throws Exception {
     HBaseAdmin admin = UTIL.getHBaseAdmin();
     SnapshotDescription snapshot = SnapshotDescription.newBuilder().setName("asyncSnapshot")
-        .setTableName(ProtobufUtil.toProtoTableName(TABLE_NAME))
+        .setTable(TABLE_NAME.getNameAsString())
         .setType(SnapshotDescription.Type.FLUSH)
         .build();
 
@@ -432,8 +432,7 @@ public class TestFlushSnapshotFromClient {
     SnapshotDescription[] descs = new SnapshotDescription[ssNum];
     for (int i = 0; i < ssNum; i++) {
       SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-      builder.setTableName(ProtobufUtil.toProtoTableName(
-          (i % 2) == 0 ? TABLE_NAME : TABLE2_NAME));
+      builder.setTable(((i % 2) == 0 ? TABLE_NAME : TABLE2_NAME).getNameAsString());
       builder.setName("ss"+i);
       builder.setType(SnapshotDescription.Type.FLUSH);
       descs[i] = builder.build();
@@ -479,9 +478,9 @@ public class TestFlushSnapshotFromClient {
     int t1SnapshotsCount = 0;
     int t2SnapshotsCount = 0;
     for (SnapshotDescription ss : taken) {
-      if (ProtobufUtil.toTableName(ss.getTableName()).equals(TABLE_NAME)) {
+      if (TableName.valueOf(ss.getTable()).equals(TABLE_NAME)) {
         t1SnapshotsCount++;
-      } else if (ProtobufUtil.toTableName(ss.getTableName()).equals(TABLE2_NAME)) {
+      } else if (TableName.valueOf(ss.getTable()).equals(TABLE2_NAME)) {
         t2SnapshotsCount++;
       }
     }

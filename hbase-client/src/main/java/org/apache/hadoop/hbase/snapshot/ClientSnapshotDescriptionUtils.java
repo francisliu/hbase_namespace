@@ -42,12 +42,11 @@ public class ClientSnapshotDescriptionUtils {
       throws IllegalArgumentException {
     // make sure the snapshot name is valid
     TableName.isLegalTableQualifierName(Bytes.toBytes(snapshot.getName()));
-    if(snapshot.hasTableName()) {
-      // make sure the table name is valid
-      TableName.isLegalNamespaceName(snapshot.getTableName().getNamespace().toByteArray());
-      TableName.isLegalTableQualifierName(snapshot.getTableName().getTableQualifier().toByteArray());
+    if(snapshot.hasTable()) {
+      // make sure the table name is valid, this will implicitly check validity
+      TableName tableName = TableName.valueOf(snapshot.getTable());
 
-      if (HTableDescriptor.isSystemTable(ProtobufUtil.toTableName(snapshot.getTableName()))) {
+      if (HTableDescriptor.isSystemTable(tableName)) {
         throw new IllegalArgumentException("System table snapshots are not allowed");
       }
     }
@@ -65,7 +64,7 @@ public class ClientSnapshotDescriptionUtils {
       return null;
     }
     return "{ ss=" + ssd.getName() +
-           " table=" + (ssd.hasTableName()?ProtobufUtil.toTableName(ssd.getTableName()):"") +
+           " table=" + (ssd.hasTable()?TableName.valueOf(ssd.getTable()):"") +
            " type=" + ssd.getType() + " }";
   }
 }

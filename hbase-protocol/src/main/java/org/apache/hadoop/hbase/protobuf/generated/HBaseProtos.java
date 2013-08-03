@@ -8220,14 +8220,9 @@ public final class HBaseProtos {
     boolean hasName();
     String getName();
     
-    // optional bytes table = 2;
+    // optional string table = 2;
     boolean hasTable();
-    com.google.protobuf.ByteString getTable();
-    
-    // optional .TableName table_name = 6;
-    boolean hasTableName();
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName();
-    org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder();
+    String getTable();
     
     // optional int64 creation_time = 3 [default = 0];
     boolean hasCreationTime();
@@ -8371,34 +8366,43 @@ public final class HBaseProtos {
       }
     }
     
-    // optional bytes table = 2;
+    // optional string table = 2;
     public static final int TABLE_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString table_;
+    private java.lang.Object table_;
     public boolean hasTable() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
-    public com.google.protobuf.ByteString getTable() {
-      return table_;
+    public String getTable() {
+      java.lang.Object ref = table_;
+      if (ref instanceof String) {
+        return (String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        String s = bs.toStringUtf8();
+        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+          table_ = s;
+        }
+        return s;
+      }
     }
-    
-    // optional .TableName table_name = 6;
-    public static final int TABLE_NAME_FIELD_NUMBER = 6;
-    private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName tableName_;
-    public boolean hasTableName() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName() {
-      return tableName_;
-    }
-    public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder() {
-      return tableName_;
+    private com.google.protobuf.ByteString getTableBytes() {
+      java.lang.Object ref = table_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+        table_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
     
     // optional int64 creation_time = 3 [default = 0];
     public static final int CREATION_TIME_FIELD_NUMBER = 3;
     private long creationTime_;
     public boolean hasCreationTime() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     public long getCreationTime() {
       return creationTime_;
@@ -8408,7 +8412,7 @@ public final class HBaseProtos {
     public static final int TYPE_FIELD_NUMBER = 4;
     private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type type_;
     public boolean hasType() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type getType() {
       return type_;
@@ -8418,7 +8422,7 @@ public final class HBaseProtos {
     public static final int VERSION_FIELD_NUMBER = 5;
     private int version_;
     public boolean hasVersion() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     public int getVersion() {
       return version_;
@@ -8426,8 +8430,7 @@ public final class HBaseProtos {
     
     private void initFields() {
       name_ = "";
-      table_ = com.google.protobuf.ByteString.EMPTY;
-      tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
+      table_ = "";
       creationTime_ = 0L;
       type_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type.FLUSH;
       version_ = 0;
@@ -8441,12 +8444,6 @@ public final class HBaseProtos {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (hasTableName()) {
-        if (!getTableName().isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
-      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -8458,19 +8455,16 @@ public final class HBaseProtos {
         output.writeBytes(1, getNameBytes());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, table_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt64(3, creationTime_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeEnum(4, type_.getNumber());
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeInt32(5, version_);
+        output.writeBytes(2, getTableBytes());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeMessage(6, tableName_);
+        output.writeInt64(3, creationTime_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeEnum(4, type_.getNumber());
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeInt32(5, version_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -8487,23 +8481,19 @@ public final class HBaseProtos {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, table_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(3, creationTime_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(4, type_.getNumber());
-      }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(5, version_);
+          .computeBytesSize(2, getTableBytes());
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, tableName_);
+          .computeInt64Size(3, creationTime_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(4, type_.getNumber());
+      }
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(5, version_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -8538,11 +8528,6 @@ public final class HBaseProtos {
         result = result && getTable()
             .equals(other.getTable());
       }
-      result = result && (hasTableName() == other.hasTableName());
-      if (hasTableName()) {
-        result = result && getTableName()
-            .equals(other.getTableName());
-      }
       result = result && (hasCreationTime() == other.hasCreationTime());
       if (hasCreationTime()) {
         result = result && (getCreationTime()
@@ -8574,10 +8559,6 @@ public final class HBaseProtos {
       if (hasTable()) {
         hash = (37 * hash) + TABLE_FIELD_NUMBER;
         hash = (53 * hash) + getTable().hashCode();
-      }
-      if (hasTableName()) {
-        hash = (37 * hash) + TABLE_NAME_FIELD_NUMBER;
-        hash = (53 * hash) + getTableName().hashCode();
       }
       if (hasCreationTime()) {
         hash = (37 * hash) + CREATION_TIME_FIELD_NUMBER;
@@ -8699,7 +8680,6 @@ public final class HBaseProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getTableNameFieldBuilder();
         }
       }
       private static Builder create() {
@@ -8710,20 +8690,14 @@ public final class HBaseProtos {
         super.clear();
         name_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
-        table_ = com.google.protobuf.ByteString.EMPTY;
+        table_ = "";
         bitField0_ = (bitField0_ & ~0x00000002);
-        if (tableNameBuilder_ == null) {
-          tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
-        } else {
-          tableNameBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000004);
         creationTime_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         type_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type.FLUSH;
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         version_ = 0;
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000010);
         return this;
       }
       
@@ -8773,21 +8747,13 @@ public final class HBaseProtos {
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        if (tableNameBuilder_ == null) {
-          result.tableName_ = tableName_;
-        } else {
-          result.tableName_ = tableNameBuilder_.build();
-        }
+        result.creationTime_ = creationTime_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.creationTime_ = creationTime_;
+        result.type_ = type_;
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000010;
-        }
-        result.type_ = type_;
-        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-          to_bitField0_ |= 0x00000020;
         }
         result.version_ = version_;
         result.bitField0_ = to_bitField0_;
@@ -8812,9 +8778,6 @@ public final class HBaseProtos {
         if (other.hasTable()) {
           setTable(other.getTable());
         }
-        if (other.hasTableName()) {
-          mergeTableName(other.getTableName());
-        }
         if (other.hasCreationTime()) {
           setCreationTime(other.getCreationTime());
         }
@@ -8832,12 +8795,6 @@ public final class HBaseProtos {
         if (!hasName()) {
           
           return false;
-        }
-        if (hasTableName()) {
-          if (!getTableName().isInitialized()) {
-            
-            return false;
-          }
         }
         return true;
       }
@@ -8876,7 +8833,7 @@ public final class HBaseProtos {
               break;
             }
             case 24: {
-              bitField0_ |= 0x00000008;
+              bitField0_ |= 0x00000004;
               creationTime_ = input.readInt64();
               break;
             }
@@ -8886,23 +8843,14 @@ public final class HBaseProtos {
               if (value == null) {
                 unknownFields.mergeVarintField(4, rawValue);
               } else {
-                bitField0_ |= 0x00000010;
+                bitField0_ |= 0x00000008;
                 type_ = value;
               }
               break;
             }
             case 40: {
-              bitField0_ |= 0x00000020;
+              bitField0_ |= 0x00000010;
               version_ = input.readInt32();
-              break;
-            }
-            case 50: {
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder subBuilder = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.newBuilder();
-              if (hasTableName()) {
-                subBuilder.mergeFrom(getTableName());
-              }
-              input.readMessage(subBuilder, extensionRegistry);
-              setTableName(subBuilder.buildPartial());
               break;
             }
           }
@@ -8947,15 +8895,22 @@ public final class HBaseProtos {
         onChanged();
       }
       
-      // optional bytes table = 2;
-      private com.google.protobuf.ByteString table_ = com.google.protobuf.ByteString.EMPTY;
+      // optional string table = 2;
+      private java.lang.Object table_ = "";
       public boolean hasTable() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
-      public com.google.protobuf.ByteString getTable() {
-        return table_;
+      public String getTable() {
+        java.lang.Object ref = table_;
+        if (!(ref instanceof String)) {
+          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+          table_ = s;
+          return s;
+        } else {
+          return (String) ref;
+        }
       }
-      public Builder setTable(com.google.protobuf.ByteString value) {
+      public Builder setTable(String value) {
         if (value == null) {
     throw new NullPointerException();
   }
@@ -8970,113 +8925,28 @@ public final class HBaseProtos {
         onChanged();
         return this;
       }
-      
-      // optional .TableName table_name = 6;
-      private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
-      private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> tableNameBuilder_;
-      public boolean hasTableName() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName getTableName() {
-        if (tableNameBuilder_ == null) {
-          return tableName_;
-        } else {
-          return tableNameBuilder_.getMessage();
-        }
-      }
-      public Builder setTableName(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
-        if (tableNameBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          tableName_ = value;
-          onChanged();
-        } else {
-          tableNameBuilder_.setMessage(value);
-        }
-        bitField0_ |= 0x00000004;
-        return this;
-      }
-      public Builder setTableName(
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder builderForValue) {
-        if (tableNameBuilder_ == null) {
-          tableName_ = builderForValue.build();
-          onChanged();
-        } else {
-          tableNameBuilder_.setMessage(builderForValue.build());
-        }
-        bitField0_ |= 0x00000004;
-        return this;
-      }
-      public Builder mergeTableName(org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName value) {
-        if (tableNameBuilder_ == null) {
-          if (((bitField0_ & 0x00000004) == 0x00000004) &&
-              tableName_ != org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance()) {
-            tableName_ =
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.newBuilder(tableName_).mergeFrom(value).buildPartial();
-          } else {
-            tableName_ = value;
-          }
-          onChanged();
-        } else {
-          tableNameBuilder_.mergeFrom(value);
-        }
-        bitField0_ |= 0x00000004;
-        return this;
-      }
-      public Builder clearTableName() {
-        if (tableNameBuilder_ == null) {
-          tableName_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.getDefaultInstance();
-          onChanged();
-        } else {
-          tableNameBuilder_.clear();
-        }
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder getTableNameBuilder() {
-        bitField0_ |= 0x00000004;
+      void setTable(com.google.protobuf.ByteString value) {
+        bitField0_ |= 0x00000002;
+        table_ = value;
         onChanged();
-        return getTableNameFieldBuilder().getBuilder();
-      }
-      public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder getTableNameOrBuilder() {
-        if (tableNameBuilder_ != null) {
-          return tableNameBuilder_.getMessageOrBuilder();
-        } else {
-          return tableName_;
-        }
-      }
-      private com.google.protobuf.SingleFieldBuilder<
-          org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder> 
-          getTableNameFieldBuilder() {
-        if (tableNameBuilder_ == null) {
-          tableNameBuilder_ = new com.google.protobuf.SingleFieldBuilder<
-              org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder, org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableNameOrBuilder>(
-                  tableName_,
-                  getParentForChildren(),
-                  isClean());
-          tableName_ = null;
-        }
-        return tableNameBuilder_;
       }
       
       // optional int64 creation_time = 3 [default = 0];
       private long creationTime_ ;
       public boolean hasCreationTime() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       public long getCreationTime() {
         return creationTime_;
       }
       public Builder setCreationTime(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000004;
         creationTime_ = value;
         onChanged();
         return this;
       }
       public Builder clearCreationTime() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         creationTime_ = 0L;
         onChanged();
         return this;
@@ -9085,7 +8955,7 @@ public final class HBaseProtos {
       // optional .SnapshotDescription.Type type = 4 [default = FLUSH];
       private org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type type_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type.FLUSH;
       public boolean hasType() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       public org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type getType() {
         return type_;
@@ -9094,13 +8964,13 @@ public final class HBaseProtos {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         type_ = value;
         onChanged();
         return this;
       }
       public Builder clearType() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         type_ = org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Type.FLUSH;
         onChanged();
         return this;
@@ -9109,19 +8979,19 @@ public final class HBaseProtos {
       // optional int32 version = 5;
       private int version_ ;
       public boolean hasVersion() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+        return ((bitField0_ & 0x00000010) == 0x00000010);
       }
       public int getVersion() {
         return version_;
       }
       public Builder setVersion(int value) {
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000010;
         version_ = value;
         onChanged();
         return this;
       }
       public Builder clearVersion() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000010);
         version_ = 0;
         onChanged();
         return this;
@@ -11455,22 +11325,21 @@ public final class HBaseProtos {
       "ir\022\014\n\004name\030\001 \002(\t\022\r\n\005value\030\002 \001(\014\"/\n\016Bytes" +
       "BytesPair\022\r\n\005first\030\001 \002(\014\022\016\n\006second\030\002 \002(\014" +
       "\",\n\rNameInt64Pair\022\014\n\004name\030\001 \001(\t\022\r\n\005value" +
-      "\030\002 \001(\003\"\316\001\n\023SnapshotDescription\022\014\n\004name\030\001" +
-      " \002(\t\022\r\n\005table\030\002 \001(\014\022\036\n\ntable_name\030\006 \001(\0132" +
-      "\n.TableName\022\030\n\rcreation_time\030\003 \001(\003:\0010\022.\n" +
-      "\004type\030\004 \001(\0162\031.SnapshotDescription.Type:\005",
-      "FLUSH\022\017\n\007version\030\005 \001(\005\"\037\n\004Type\022\014\n\010DISABL" +
-      "ED\020\000\022\t\n\005FLUSH\020\001\"\n\n\010EmptyMsg\"\033\n\007LongMsg\022\020" +
-      "\n\010long_msg\030\001 \002(\003\"\'\n\rBigDecimalMsg\022\026\n\016big" +
-      "decimal_msg\030\001 \002(\014\"5\n\004UUID\022\026\n\016least_sig_b" +
-      "its\030\001 \002(\004\022\025\n\rmost_sig_bits\030\002 \002(\004\"K\n\023Name" +
-      "spaceDescriptor\022\014\n\004name\030\001 \002(\014\022&\n\rconfigu" +
-      "ration\030\002 \003(\0132\017.NameStringPair*r\n\013Compare" +
-      "Type\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020\001\022\t\n\005EQU" +
-      "AL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_OR_EQUAL\020" +
-      "\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B>\n*org.apache.",
-      "hadoop.hbase.protobuf.generatedB\013HBasePr" +
-      "otosH\001\240\001\001"
+      "\030\002 \001(\003\"\256\001\n\023SnapshotDescription\022\014\n\004name\030\001" +
+      " \002(\t\022\r\n\005table\030\002 \001(\t\022\030\n\rcreation_time\030\003 \001" +
+      "(\003:\0010\022.\n\004type\030\004 \001(\0162\031.SnapshotDescriptio" +
+      "n.Type:\005FLUSH\022\017\n\007version\030\005 \001(\005\"\037\n\004Type\022\014",
+      "\n\010DISABLED\020\000\022\t\n\005FLUSH\020\001\"\n\n\010EmptyMsg\"\033\n\007L" +
+      "ongMsg\022\020\n\010long_msg\030\001 \002(\003\"\'\n\rBigDecimalMs" +
+      "g\022\026\n\016bigdecimal_msg\030\001 \002(\014\"5\n\004UUID\022\026\n\016lea" +
+      "st_sig_bits\030\001 \002(\004\022\025\n\rmost_sig_bits\030\002 \002(\004" +
+      "\"K\n\023NamespaceDescriptor\022\014\n\004name\030\001 \002(\014\022&\n" +
+      "\rconfiguration\030\002 \003(\0132\017.NameStringPair*r\n" +
+      "\013CompareType\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020" +
+      "\001\022\t\n\005EQUAL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_O" +
+      "R_EQUAL\020\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B>\n*org" +
+      ".apache.hadoop.hbase.protobuf.generatedB",
+      "\013HBaseProtosH\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -11586,7 +11455,7 @@ public final class HBaseProtos {
           internal_static_SnapshotDescription_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_SnapshotDescription_descriptor,
-              new java.lang.String[] { "Name", "Table", "TableName", "CreationTime", "Type", "Version", },
+              new java.lang.String[] { "Name", "Table", "CreationTime", "Type", "Version", },
               org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.class,
               org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.SnapshotDescription.Builder.class);
           internal_static_EmptyMsg_descriptor =

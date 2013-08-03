@@ -2497,7 +2497,7 @@ public class HBaseAdmin implements Abortable, Closeable {
                       SnapshotDescription.Type type) throws IOException, SnapshotCreationException,
       IllegalArgumentException {
     SnapshotDescription.Builder builder = SnapshotDescription.newBuilder();
-    builder.setTableName(ProtobufUtil.toProtoTableName(tableName));
+    builder.setTable(tableName.getNameAsString());
     builder.setName(snapshotName);
     builder.setType(type);
     snapshot(builder.build());
@@ -2668,7 +2668,7 @@ public class HBaseAdmin implements Abortable, Closeable {
     TableName tableName = null;
     for (SnapshotDescription snapshotInfo: listSnapshots()) {
       if (snapshotInfo.getName().equals(snapshotName)) {
-        tableName = ProtobufUtil.toTableName(snapshotInfo.getTableName());
+        tableName = TableName.valueOf(snapshotInfo.getTable());
         break;
       }
     }
@@ -2780,7 +2780,7 @@ public class HBaseAdmin implements Abortable, Closeable {
       tableName)
       throws IOException, RestoreSnapshotException {
     SnapshotDescription snapshot = SnapshotDescription.newBuilder()
-        .setName(snapshotName).setTableName(ProtobufUtil.toProtoTableName(tableName)).build();
+        .setName(snapshotName).setTable(tableName.getNameAsString()).build();
 
     // actually restore the snapshot
     internalRestoreSnapshotAsync(snapshot);

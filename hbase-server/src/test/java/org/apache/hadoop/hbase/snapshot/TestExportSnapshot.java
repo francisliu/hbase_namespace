@@ -193,7 +193,7 @@ public class TestExportSnapshot {
 
     final SnapshotDescription sd = SnapshotDescription.newBuilder()
         .setName(snapshotName)
-        .setTableName(ProtobufUtil.toProtoTableName(tableWithRefsName)).build();
+        .setTable(tableWithRefsName.getNameAsString()).build();
 
     FileSystem fs = TEST_UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getFileSystem();
     Path rootDir = TEST_UTIL.getHBaseCluster().getMaster().getMasterFileSystem().getRootDir();

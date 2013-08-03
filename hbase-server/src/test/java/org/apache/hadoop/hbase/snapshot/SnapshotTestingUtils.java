@@ -93,7 +93,7 @@ public class SnapshotTestingUtils {
     List<SnapshotDescription> returnedSnapshots = new ArrayList<SnapshotDescription>();
     for (SnapshotDescription sd : snapshots) {
       if (snapshotName.equals(sd.getName()) &&
-          tableName.equals(ProtobufUtil.toTableName(sd.getTableName()))) {
+          tableName.equals(TableName.valueOf(sd.getTable()))) {
         returnedSnapshots.add(sd);
       }
     }
@@ -108,7 +108,7 @@ public class SnapshotTestingUtils {
   public static void assertOneSnapshotThatMatches(HBaseAdmin admin,
       SnapshotDescription snapshot) throws IOException {
     assertOneSnapshotThatMatches(admin, snapshot.getName(),
-        ProtobufUtil.toTableName(snapshot.getTableName()));
+        TableName.valueOf(snapshot.getTable()));
   }
 
   /**
@@ -123,7 +123,7 @@ public class SnapshotTestingUtils {
 
     assertEquals("Should only have 1 snapshot", 1, snapshots.size());
     assertEquals(snapshotName, snapshots.get(0).getName());
-    assertEquals(tableName, ProtobufUtil.toTableName(snapshots.get(0).getTableName()));
+    assertEquals(tableName, TableName.valueOf(snapshots.get(0).getTable()));
 
     return snapshots;
   }

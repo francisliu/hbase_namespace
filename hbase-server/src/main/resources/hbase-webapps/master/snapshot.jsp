@@ -50,7 +50,7 @@
     if (snapshotName.equals(snapshotDesc.getName())) {
       snapshot = snapshotDesc;
       stats = SnapshotInfo.getSnapshotStats(conf, snapshot);
-      snapshotTable = ProtobufUtil.toTableName(snapshot.getTableName());
+      snapshotTable = TableName.valueOf(snapshot.getTable());
       break;
     }
   }

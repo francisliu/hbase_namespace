@@ -377,7 +377,7 @@ public final class ExportSnapshot extends Configured implements Tool {
 
     final List<Pair<Path, Long>> files = new ArrayList<Pair<Path, Long>>();
     final TableName table =
-        ProtobufUtil.toTableName(snapshotDesc.getTableName());
+        TableName.valueOf(snapshotDesc.getTable());
     final Configuration conf = getConf();
 
     // Get snapshot files

@@ -35,6 +35,7 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.DaemonThreadFactory;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.errorhandling.ForeignException;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionDispatcher;
 import org.apache.hadoop.hbase.master.snapshot.MasterSnapshotVerifier;
@@ -190,7 +191,7 @@ public class RegionServerSnapshotManager {
     // will hang and fail.
 
     LOG.debug("Launching subprocedure for snapshot " + snapshot.getName() + " from table "
-        + snapshot.getTableName());
+        + snapshot.getTable());
     ForeignExceptionDispatcher exnDispatcher = new ForeignExceptionDispatcher(snapshot.getName());
     Configuration conf = rss.getConfiguration();
     long timeoutMillis = conf.getLong(SNAPSHOT_TIMEOUT_MILLIS_KEY,
@@ -225,7 +226,7 @@ public class RegionServerSnapshotManager {
    * @throws IOException
    */
   private List<HRegion> getRegionsToSnapshot(SnapshotDescription snapshot) throws IOException {
-    return rss.getOnlineRegions(ProtobufUtil.toTableName(snapshot.getTableName()));
+    return rss.getOnlineRegions(TableName.valueOf(snapshot.getTable()));
   }
 
   /**
