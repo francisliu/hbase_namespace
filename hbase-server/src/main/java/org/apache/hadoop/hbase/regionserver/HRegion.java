@@ -5185,7 +5185,8 @@ public class HRegion implements HeapSize { // , Writable{
    */
   public byte[] checkSplit() {
     // Can't split META
-    if (this.getRegionInfo().isMetaTable()) {
+    if (this.getRegionInfo().isMetaTable() ||
+        TableName.NAMESPACE_TABLE_NAME.equals(this.getRegionInfo().getTableName())) {
       if (shouldForceSplit()) {
         LOG.warn("Cannot split meta region in HBase 0.20 and above");
       }

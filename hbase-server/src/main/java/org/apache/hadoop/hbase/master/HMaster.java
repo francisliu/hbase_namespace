@@ -1067,7 +1067,7 @@ MasterServices, Server {
       if (currServer != null) {
         regionLocation = verifyRegionLocation(currServer, regionInfo);
       }
-      LOG.info("-->"+rit+","+regionLocation);
+
       if (!rit && !regionLocation) {
         beingExpired = expireIfOnline(currServer);
         if (beingExpired) {

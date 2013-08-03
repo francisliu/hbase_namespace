@@ -92,15 +92,18 @@ public class TableNamespaceManager {
     }
 
     ResultScanner scanner = table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES);
-    for(Result result : scanner) {
-      NamespaceDescriptor ns =
-          ProtobufUtil.toNamespaceDescriptor(
-              HBaseProtos.NamespaceDescriptor.parseFrom(
-                  result.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
-                      HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue()));
-      zkNamespaceManager.update(ns);
+    try {
+      for(Result result : scanner) {
+        NamespaceDescriptor ns =
+            ProtobufUtil.toNamespaceDescriptor(
+                HBaseProtos.NamespaceDescriptor.parseFrom(
+                    result.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
+                        HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue()));
+        zkNamespaceManager.update(ns);
+      }
+    } finally {
+      scanner.close();
     }
-    scanner.close();
   }
 
 
@@ -180,13 +183,16 @@ public class TableNamespaceManager {
     NavigableSet<NamespaceDescriptor> ret =
         Sets.newTreeSet(NamespaceDescriptor.NAMESPACE_DESCRIPTOR_COMPARATOR);
     ResultScanner scanner = table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES);
-    for(Result r : scanner) {
-        ret.add(ProtobufUtil.toNamespaceDescriptor(
-            HBaseProtos.NamespaceDescriptor.parseFrom(
-              r.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
-                  HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue())));
+    try {
+      for(Result r : scanner) {
+          ret.add(ProtobufUtil.toNamespaceDescriptor(
+              HBaseProtos.NamespaceDescriptor.parseFrom(
+                r.getColumnLatest(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
+                    HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue())));
+      }
+    } finally {
+      scanner.close();
     }
-    scanner.close();
     return ret;
   }
 
