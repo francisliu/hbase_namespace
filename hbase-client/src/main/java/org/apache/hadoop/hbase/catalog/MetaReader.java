@@ -188,7 +188,7 @@ public class MetaReader {
    */
   static HTable getMetaHTable(final CatalogTracker ct)
   throws IOException {
-    return getHTable(ct, HConstants.META_TABLE_NAME);
+    return getHTable(ct, TableName.META_TABLE_NAME);
   }
 
   /**
@@ -424,7 +424,7 @@ public class MetaReader {
   getTableRegionsAndLocations(final CatalogTracker catalogTracker,
       final TableName tableName, final boolean excludeOfflinedSplitParents)
   throws IOException, InterruptedException {
-    if (tableName.equals(HConstants.META_TABLE_NAME)) {
+    if (tableName.equals(TableName.META_TABLE_NAME)) {
       // If meta, do a bit of special handling.
       ServerName serverName = catalogTracker.getMetaLocation();
       List<Pair<HRegionInfo, ServerName>> list =

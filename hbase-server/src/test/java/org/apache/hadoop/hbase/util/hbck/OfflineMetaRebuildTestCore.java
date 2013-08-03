@@ -34,7 +34,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.LargeTests;
@@ -190,7 +189,7 @@ public class OfflineMetaRebuildTestCore {
             hri.getEncodedName());
         fs.delete(p, true);
 
-        HTable meta = new HTable(conf, HConstants.META_TABLE_NAME);
+        HTable meta = new HTable(conf, TableName.META_TABLE_NAME);
         Delete delete = new Delete(deleteRow);
         meta.delete(delete);
         meta.close();
@@ -205,7 +204,7 @@ public class OfflineMetaRebuildTestCore {
 
   protected HRegionInfo createRegion(Configuration conf, final HTable htbl,
       byte[] startKey, byte[] endKey) throws IOException {
-    HTable meta = new HTable(conf, HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(conf, TableName.META_TABLE_NAME);
     HTableDescriptor htd = htbl.getTableDescriptor();
     HRegionInfo hri = new HRegionInfo(htbl.getName(), startKey, endKey);
 
@@ -230,7 +229,7 @@ public class OfflineMetaRebuildTestCore {
     // Mess it up by blowing up meta.
     HBaseAdmin admin = TEST_UTIL.getHBaseAdmin();
     Scan s = new Scan();
-    HTable meta = new HTable(conf, HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(conf, TableName.META_TABLE_NAME);
     ResultScanner scanner = meta.getScanner(s);
     List<Delete> dels = new ArrayList<Delete>();
     for (Result r : scanner) {

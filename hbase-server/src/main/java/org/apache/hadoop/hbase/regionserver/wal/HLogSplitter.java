@@ -1486,7 +1486,7 @@ public class HLogSplitter {
               put.setClusterId(entry.getKey().getClusterId());
               preRow = put;
             }
-            preKey = loc.getHostnamePort() + KEY_DELIMITER + table.getNameAsString();
+            preKey = loc.getHostnamePort() + KEY_DELIMITER + table;
             preLoc = loc;
           }
           if (kv.isDelete()) {

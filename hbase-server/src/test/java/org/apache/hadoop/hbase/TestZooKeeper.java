@@ -258,10 +258,10 @@ public class TestZooKeeper {
   public void testMultipleZK()
   throws IOException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     HTable localMeta =
-      new HTable(new Configuration(TEST_UTIL.getConfiguration()), HConstants.META_TABLE_NAME);
+      new HTable(new Configuration(TEST_UTIL.getConfiguration()), TableName.META_TABLE_NAME);
     Configuration otherConf = new Configuration(TEST_UTIL.getConfiguration());
     otherConf.set(HConstants.ZOOKEEPER_QUORUM, "127.0.0.1");
-    HTable ipMeta = new HTable(otherConf, HConstants.META_TABLE_NAME);
+    HTable ipMeta = new HTable(otherConf, TableName.META_TABLE_NAME);
 
     // dummy, just to open the connection
     final byte [] row = new byte [] {'r'};

@@ -224,10 +224,10 @@ public class FSTableDescriptors implements TableDescriptors {
 
   @Override
   public void add(HTableDescriptor htd) throws IOException {
-    if (HConstants.ROOT_TABLE_NAME.equals(htd.getTableName())) {
+    if (TableName.ROOT_TABLE_NAME.equals(htd.getTableName())) {
       throw new NotImplementedException();
     }
-    if (HConstants.META_TABLE_NAME.equals(htd.getTableName())) {
+    if (TableName.META_TABLE_NAME.equals(htd.getTableName())) {
       throw new NotImplementedException();
     }
     if (HConstants.HBASE_NON_USER_TABLE_DIRS.contains(htd.getTableName().getNameAsString())) {
@@ -415,8 +415,8 @@ public class FSTableDescriptors implements TableDescriptors {
   static TableDescriptorModtime getTableDescriptorModtime(FileSystem fs,
       Path hbaseRootDir, TableName tableName) throws NullPointerException, IOException{
     // ignore both -ROOT- and .META. tables
-    if (tableName.compareTo(HConstants.ROOT_TABLE_NAME) == 0
-        || tableName.compareTo(HConstants.META_TABLE_NAME) == 0) {
+    if (tableName.compareTo(TableName.ROOT_TABLE_NAME) == 0
+        || tableName.compareTo(TableName.META_TABLE_NAME) == 0) {
       return null;
     }
     return getTableDescriptorModtime(fs,

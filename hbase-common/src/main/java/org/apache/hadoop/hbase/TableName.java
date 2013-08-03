@@ -34,6 +34,7 @@ public final class TableName implements Comparable<TableName> {
   /** Namespace delimiter */
   //this should always be only 1 byte long
   public final static char NAMESPACE_DELIM = ':';
+
   // A non-capture group so that this can be embedded.
   // regex is a bit more complicated to support nuance of tables
   // in default namespace
@@ -48,6 +49,18 @@ public final class TableName implements Comparable<TableName> {
   public static final String VALID_USER_TABLE_REGEX =
       "(?:(?:(?:"+VALID_NAMESPACE_REGEX+"\\"+NAMESPACE_DELIM+")?)" +
          "(?:"+VALID_TABLE_QUALIFIER_REGEX+"))";
+
+  /** The root table's name.*/
+  public static final TableName ROOT_TABLE_NAME =
+      valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root");
+
+  /** The META table's name. */
+  public static final TableName META_TABLE_NAME =
+      valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta");
+
+  /** The Namespace table's name. */
+  public static final TableName NAMESPACE_TABLE_NAME =
+      valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "namespace");
 
   private byte[] name;
   private String nameAsString;

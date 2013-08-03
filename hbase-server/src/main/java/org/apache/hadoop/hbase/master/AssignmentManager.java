@@ -2686,7 +2686,7 @@ public class AssignmentManager extends ZooKeeperListener {
     if (enablingTables.size() != 0) {
       for (TableName tableName : enablingTables) {
         // Recover by calling EnableTableHandler
-        LOG.info("The table " + tableName.getNameAsString()
+        LOG.info("The table " + tableName
             + " is in ENABLING state.  Hence recovering by moving the table"
             + " to ENABLED state.");
         // enableTable in sync way during master startup,
@@ -3186,7 +3186,7 @@ public class AssignmentManager extends ZooKeeperListener {
       this.zkTable.setEnabledTable(tableName);
     } catch (KeeperException e) {
       // here we can abort as it is the start up flow
-      String errorMsg = "Unable to ensure that the table " + tableName.getNameAsString()
+      String errorMsg = "Unable to ensure that the table " + tableName
           + " will be" + " enabled because of a ZooKeeper issue";
       LOG.error(errorMsg);
       this.server.abort(errorMsg, e);

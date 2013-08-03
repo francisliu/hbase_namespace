@@ -304,9 +304,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   /**
    * Construct a table descriptor specifying a byte array table name
    * @param name Table name.
-   * @throws IllegalArgumentException if passed a table name
-   * that is made of other than 'word' characters, underscore or period: i.e.
-   * <code>[a-zA-Z_0-9-.].
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
   @Deprecated
@@ -317,9 +314,6 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   /**
    * Construct a table descriptor specifying a String table name
    * @param name Table name.
-   * @throws IllegalArgumentException if passed a table name
-   * that is made of other than 'word' characters, underscore or period: i.e.
-   * <code>[a-zA-Z_0-9-.].
    * @see <a href="HADOOP-1581">HADOOP-1581 HBASE: Un-openable tablename bug</a>
    */
   @Deprecated
@@ -359,7 +353,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
    */
   private void setMetaFlags(final TableName name) {
     setMetaRegion(isRootRegion() ||
-        name.equals(HConstants.META_TABLE_NAME));
+        name.equals(TableName.META_TABLE_NAME));
   }
 
   /**
@@ -387,10 +381,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Checks if this table is either <code> -ROOT- </code> or <code> .META. </code>
+   * Checks if this table is either <code> .META. </code>
    * region.
    *
-   * @return true if this is either a <code> -ROOT- </code> or <code> .META. </code>
+   * @return true if this is either a <code> .META. </code>
    * region
    */
   public boolean isMetaRegion() {
@@ -437,10 +431,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /**
    * Checks of the tableName being passed represents either
-   * <code > -ROOT- </code> or <code> .META. </code>
+   * <code> .META. </code>
    *
-   * @return true if a tablesName is either <code> -ROOT- </code>
-   * or <code> .META. </code>
+   * @return true if a tablesName is a member of the hbase
+   * namesapce
    */
   public static boolean isSystemTable(final TableName tableName) {
     return tableName.getNamespaceAsString()
@@ -1318,9 +1312,28 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
       remove(match);
   }
 
+  /**
+   * Returns the {@link Path} object representing the table directory under
+   * path rootdir
+   *
+   * Deprecated use FSUtils.getTableDir() instead.
+   *
+   * @param rootdir qualified path of HBase root directory
+   * @param tableName name of table
+   * @return {@link Path} for table
+   */
+  @Deprecated
+  public static Path getTableDir(Path rootdir, final byte [] tableName) {
+    //This is bad I had to mirror code from FSUTils.getTableDir since
+    //there is no module dependency between hbase-client and hbase-server
+    TableName name = TableName.valueOf(tableName);
+    return new Path(rootdir, new Path(HConstants.BASE_NAMESPACE_DIR,
+              new Path(name.getNamespaceAsString(), new Path(name.getQualifierAsString()))));
+  }
+
   /** Table descriptor for <core>-ROOT-</code> catalog table */
   public static final HTableDescriptor ROOT_TABLEDESC = new HTableDescriptor(
-      HConstants.ROOT_TABLE_NAME,
+      TableName.ROOT_TABLE_NAME,
       new HColumnDescriptor[] {
           new HColumnDescriptor(HConstants.CATALOG_FAMILY)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1333,7 +1346,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for <code>.META.</code> catalog table */
   public static final HTableDescriptor META_TABLEDESC = new HTableDescriptor(
-      HConstants.META_TABLE_NAME,
+      TableName.META_TABLE_NAME,
       new HColumnDescriptor[] {
           new HColumnDescriptor(HConstants.CATALOG_FAMILY)
               // Ten is arbitrary number.  Keep versions to help debugging.
@@ -1362,7 +1375,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
 
   /** Table descriptor for namespace table */
   public static final HTableDescriptor NAMESPACE_TABLEDESC = new HTableDescriptor(
-      HConstants.NAMESPACE_TABLE_NAME,
+      TableName.NAMESPACE_TABLE_NAME,
       new HColumnDescriptor[] {
           new HColumnDescriptor(NAMESPACE_FAMILY_INFO)
               // Ten is arbitrary number.  Keep versions to help debugging.

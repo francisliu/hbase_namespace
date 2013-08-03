@@ -1702,7 +1702,7 @@ public class TestHRegion extends HBaseTestCase {
   public void stestGet_Root() throws IOException {
     //Setting up region
     String method = this.getName();
-    this.region = initHRegion(HConstants.ROOT_TABLE_NAME,
+    this.region = initHRegion(TableName.ROOT_TABLE_NAME,
       method, conf, HConstants.CATALOG_FAMILY);
     try {
       //Add to memstore

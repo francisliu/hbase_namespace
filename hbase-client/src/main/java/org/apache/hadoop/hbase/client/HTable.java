@@ -118,7 +118,7 @@ import java.util.concurrent.TimeUnit;
 @InterfaceStability.Stable
 public class HTable implements HTableInterface {
   private static final Log LOG = LogFactory.getLog(HTable.class);
-  HConnection connection;
+  protected HConnection connection;
   private final TableName tableName;
   private volatile Configuration configuration;
   protected List<Row> writeAsyncBuffer = new LinkedList<Row>();

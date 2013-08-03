@@ -247,7 +247,7 @@ public class Merge extends Configured implements Tool {
       return -1;
     }
     tableName = TableName.valueOf(Bytes.toBytes(remainingArgs[0]));
-    isMetaTable = tableName.compareTo(HConstants.META_TABLE_NAME) == 0;
+    isMetaTable = tableName.compareTo(TableName.META_TABLE_NAME) == 0;
 
     region1 = Bytes.toBytesBinary(remainingArgs[1]);
     region2 = Bytes.toBytesBinary(remainingArgs[2]);

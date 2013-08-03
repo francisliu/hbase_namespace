@@ -291,7 +291,7 @@ public class HBaseFsck extends Configured implements Tool {
    */
   public void connect() throws IOException {
     admin = new HBaseAdmin(getConf());
-    meta = new HTable(getConf(), HConstants.META_TABLE_NAME);
+    meta = new HTable(getConf(), TableName.META_TABLE_NAME);
     status = admin.getClusterStatus();
     connection = admin.getConnection();
   }
@@ -974,7 +974,7 @@ public class HBaseFsck extends Configured implements Tool {
       TableName name = e.getKey();
 
       // skip ".META."
-      if (name.compareTo(HConstants.META_TABLE_NAME) == 0) {
+      if (name.compareTo(TableName.META_TABLE_NAME) == 0) {
         continue;
       }
 
@@ -1220,7 +1220,7 @@ public class HBaseFsck extends Configured implements Tool {
     fs.mkdirs(backupDir);
 
     try {
-      sidelineTable(fs, HConstants.META_TABLE_NAME, hbaseDir, backupDir);
+      sidelineTable(fs, TableName.META_TABLE_NAME, hbaseDir, backupDir);
     } catch (IOException e) {
         LOG.fatal("... failed to sideline meta. Currently in inconsistent state.  To restore "
             + "try to rename .META. in " + backupDir.getName() + " to "
@@ -1281,7 +1281,7 @@ public class HBaseFsck extends Configured implements Tool {
       TableName tableName = FSUtils.getTableName(path);
        if ((!checkMetaOnly &&
            isTableIncluded(tableName)) ||
-           tableName.equals(HConstants.META_TABLE_NAME)) {
+           tableName.equals(TableName.META_TABLE_NAME)) {
          tableDirs.add(fs.getFileStatus(path));
        }
     }
@@ -1327,7 +1327,7 @@ public class HBaseFsck extends Configured implements Tool {
    */
   private boolean recordMetaRegion() throws IOException {
     HRegionLocation metaLocation = connection.locateRegion(
-      HConstants.META_TABLE_NAME, HConstants.EMPTY_START_ROW);
+      TableName.META_TABLE_NAME, HConstants.EMPTY_START_ROW);
 
     // Check if Meta region is valid and existing
     if (metaLocation == null || metaLocation.getRegionInfo() == null ||
@@ -2460,7 +2460,7 @@ public class HBaseFsck extends Configured implements Tool {
     HTableDescriptor[] htd = new HTableDescriptor[0];
      try {
        LOG.info("getHTableDescriptors == tableNames => " + tableNames);
-       htd = new HBaseAdmin(getConf()).getTableDescriptors(tableNames);
+       htd = new HBaseAdmin(getConf()).getTableDescriptorsByTableName(tableNames);
      } catch (IOException e) {
        LOG.debug("Exception getting table descriptors", e);
      }
@@ -2512,7 +2512,7 @@ public class HBaseFsck extends Configured implements Tool {
     // If something is wrong
     if (metaRegions.size() != 1) {
       HRegionLocation rootLocation = connection.locateRegion(
-        HConstants.ROOT_TABLE_NAME, HConstants.EMPTY_START_ROW);
+        TableName.ROOT_TABLE_NAME, HConstants.EMPTY_START_ROW);
       HbckInfo root =
           regionInfoMap.get(rootLocation.getRegionInfo().getEncodedName());
 

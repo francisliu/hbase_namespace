@@ -1007,7 +1007,7 @@ MasterServices, Server {
         this.catalogTracker.getMetaLocation());
     }
 
-    enableCatalogTables(HConstants.META_TABLE_NAME);
+    enableCatalogTables(TableName.META_TABLE_NAME);
     LOG.info(".META. assigned=" + assigned + ", rit=" + rit +
       ", location=" + catalogTracker.getMetaLocation());
     status.setStatus("META assigned.");
@@ -1879,7 +1879,7 @@ MasterServices, Server {
   }
 
   private static boolean isCatalogTable(final TableName tableName) {
-    return tableName.equals(HConstants.META_TABLE_NAME);
+    return tableName.equals(TableName.META_TABLE_NAME);
   }
 
   @Override

@@ -70,7 +70,22 @@ import org.apache.hadoop.hbase.protobuf.generated.AdminProtos.AdminService;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.ClientService;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.CoprocessorServiceRequest;
 import org.apache.hadoop.hbase.protobuf.generated.ClientProtos.CoprocessorServiceResponse;
-import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ModifyNamespaceResponse;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.ModifyNamespaceRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.CreateNamespaceResponse;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.CreateNamespaceRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.DeleteNamespaceResponse;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.DeleteNamespaceRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.GetNamespaceDescriptorResponse;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.GetNamespaceDescriptorRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos
+    .ListNamespaceDescriptorsResponse;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos
+    .ListNamespaceDescriptorsRequest;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos
+    .GetTableDescriptorsByNamespaceResponse;
+import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos
+    .GetTableDescriptorsByNamespaceRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AddColumnRequest;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AddColumnResponse;
 import org.apache.hadoop.hbase.protobuf.generated.MasterAdminProtos.AssignRegionRequest;
@@ -462,6 +477,9 @@ public class HConnectionManager {
     // Client rpc instance.
     private RpcClient rpcClient;
 
+    /**
+      * Map of table to table {@link HRegionLocation}s.
+      */
     private final Map<TableName, SoftValueSortedMap<byte[], HRegionLocation>>
         cachedRegionLocations =
       new HashMap<TableName, SoftValueSortedMap<byte[], HRegionLocation>>();
@@ -644,13 +662,30 @@ public class HConnectionManager {
     }
 
     @Override
+    public HRegionLocation getRegionLocation(final byte[] tableName,
+        final byte [] row, boolean reload)
+    throws IOException {
+      return getRegionLocation(TableName.valueOf(tableName), row, reload);
+    }
+
+    @Override
     public boolean isTableEnabled(TableName tableName) throws IOException {
       return this.registry.isTableOnlineState(tableName, true);
     }
 
     @Override
+    public boolean isTableEnabled(byte[] tableName) throws IOException {
+      return isTableEnabled(TableName.valueOf(tableName));
+    }
+
+    @Override
     public boolean isTableDisabled(TableName tableName) throws IOException {
       return this.registry.isTableOnlineState(tableName, false);
+    }
+
+    @Override
+    public boolean isTableDisabled(byte[] tableName) throws IOException {
+      return isTableDisabled(TableName.valueOf(tableName));
     }
 
     @Override
@@ -680,6 +715,11 @@ public class HConnectionManager {
       };
       MetaScanner.metaScan(conf, this, visitor, tableName);
       return available.get() && (regionCount.get() > 0);
+    }
+
+    @Override
+    public boolean isTableAvailable(final byte[] tableName) throws IOException {
+      return isTableAvailable(TableName.valueOf(tableName));
     }
 
     @Override
@@ -724,6 +764,12 @@ public class HConnectionManager {
     }
 
     @Override
+    public boolean isTableAvailable(final byte[] tableName, final byte[][] splitKeys)
+        throws IOException {
+      return isTableAvailable(TableName.valueOf(tableName), splitKeys);
+    }
+
+    @Override
     public HRegionLocation locateRegion(final byte[] regionName) throws IOException {
       return locateRegion(HRegionInfo.getTableName(regionName),
           HRegionInfo.getStartKey(regionName), false, true);
@@ -745,6 +791,12 @@ public class HConnectionManager {
     }
 
     @Override
+    public List<HRegionLocation> locateRegions(final byte[] tableName)
+    throws IOException {
+      return locateRegions(TableName.valueOf(tableName));
+    }
+
+    @Override
     public List<HRegionLocation> locateRegions(final TableName tableName,
         final boolean useCache, final boolean offlined) throws IOException {
       NavigableMap<HRegionInfo, ServerName> regions = MetaScanner.allTableRegions(conf, this,
@@ -757,6 +809,12 @@ public class HConnectionManager {
     }
 
     @Override
+    public List<HRegionLocation> locateRegions(final byte[] tableName,
+       final boolean useCache, final boolean offlined) throws IOException {
+      return locateRegions(TableName.valueOf(tableName), useCache, offlined);
+    }
+
+    @Override
     public HRegionLocation locateRegion(final TableName tableName,
         final byte [] row)
     throws IOException{
@@ -764,9 +822,15 @@ public class HConnectionManager {
     }
 
     @Override
-    public HRegionLocation relocateRegion(final TableName tableName,
+    public HRegionLocation locateRegion(final byte[] tableName,
         final byte [] row)
     throws IOException{
+      return locateRegion(TableName.valueOf(tableName), row);
+    }
+
+    @Override
+    public HRegionLocation relocateRegion(final TableName tableName,
+        final byte [] row) throws IOException{
       // Since this is an explicit request not to use any caching, finding
       // disabled tables should not be desirable.  This will ensure that an exception is thrown when
       // the first time a disabled table is interacted with.
@@ -777,6 +841,13 @@ public class HConnectionManager {
       return locateRegion(tableName, row, false, true);
     }
 
+    @Override
+    public HRegionLocation relocateRegion(final byte[] tableName,
+        final byte [] row) throws IOException {
+      return relocateRegion(TableName.valueOf(tableName), row);
+    }
+
+
     private HRegionLocation locateRegion(final TableName tableName,
       final byte [] row, boolean useCache, boolean retry)
     throws IOException {
@@ -786,11 +857,11 @@ public class HConnectionManager {
             "table name cannot be null or zero length");
       }
 
-      if (tableName.equals(HConstants.META_TABLE_NAME)) {
+      if (tableName.equals(TableName.META_TABLE_NAME)) {
         return this.registry.getMetaRegionLocation();
       } else {
         // Region not in the cache - have to go to the meta RS
-        return locateRegionInMeta(HConstants.META_TABLE_NAME, tableName, row,
+        return locateRegionInMeta(TableName.META_TABLE_NAME, tableName, row,
           useCache, userRegionLock, retry);
       }
     }
@@ -839,7 +910,7 @@ public class HConnectionManager {
       try {
         // pre-fetch certain number of regions info at region cache.
         MetaScanner.metaScan(conf, this, visitor, tableName, row,
-            this.prefetchRegionLimit, HConstants.META_TABLE_NAME);
+            this.prefetchRegionLimit, TableName.META_TABLE_NAME);
       } catch (IOException e) {
         LOG.warn("Encountered problems when prefetch META table: ", e);
       }
@@ -896,7 +967,7 @@ public class HConnectionManager {
               }
               // If the parent table is META, we may want to pre-fetch some
               // region info into the global region cache for this table.
-              if (parentTable.equals(HConstants.META_TABLE_NAME)
+              if (parentTable.equals(TableName.META_TABLE_NAME)
                   && (getRegionCachePrefetch(tableName))) {
                 prefetchRegionCache(tableName, row);
               }
@@ -922,14 +993,14 @@ public class HConnectionManager {
           HRegionInfo regionInfo = MetaScanner.getHRegionInfo(regionInfoRow);
           if (regionInfo == null) {
             throw new IOException("HRegionInfo was null or empty in " +
-              parentTable.getNameAsString() + ", row=" + regionInfoRow);
+              parentTable + ", row=" + regionInfoRow);
           }
 
           // possible we got a region of a different table...
           if (!regionInfo.getTableName().equals(tableName)) {
             throw new TableNotFoundException(
-                  "Table '" + tableName.getNameAsString() + "' was not found, got: " +
-                  regionInfo.getTableName().getNameAsString() + ".");
+                  "Table '" + tableName + "' was not found, got: " +
+                  regionInfo.getTableName() + ".");
           }
           if (regionInfo.isSplit()) {
             throw new RegionOfflineException("the only available region for" +
@@ -946,7 +1017,7 @@ public class HConnectionManager {
           ServerName serverName = HRegionInfo.getServerName(regionInfoRow);
           if (serverName == null) {
             throw new NoServerForRegionException("No server address listed " +
-              "in " + parentTable.getNameAsString() + " for region " +
+              "in " + parentTable + " for region " +
               regionInfo.getRegionNameAsString() + " containing row " +
               Bytes.toStringBinary(row));
           }
@@ -974,7 +1045,7 @@ public class HConnectionManager {
           if (tries < numTries - 1) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("locateRegionInMeta parentTable=" +
-                parentTable.getNameAsString() + ", metaLocation=" +
+                parentTable + ", metaLocation=" +
                 ((metaLocation == null)? "null": "{" + metaLocation + "}") +
                 ", attempt=" + tries + " of " +
                 this.numTries + " failed; retrying after sleep of " +
@@ -1068,7 +1139,7 @@ public class HConnectionManager {
       if ((rl != null) && LOG.isDebugEnabled()) {
         LOG.debug("Removed " + rl.getHostname() + ":" + rl.getPort()
           + " as a location of " + rl.getRegionInfo().getRegionNameAsString() +
-          " for tableName=" + tableName.getNameAsString() + " from cache");
+          " for tableName=" + tableName + " from cache");
       }
     }
 
@@ -1132,6 +1203,11 @@ public class HConnectionManager {
       synchronized (this.cachedRegionLocations) {
         this.cachedRegionLocations.remove(tableName);
       }
+    }
+
+    @Override
+    public void clearRegionCache(final byte[] tableName) {
+      clearRegionCache(TableName.valueOf(tableName));
     }
 
     /**
@@ -1847,32 +1923,32 @@ public class HConnectionManager {
         }
 
         @Override
-        public MasterAdminProtos.ModifyNamespaceResponse modifyNamespace(RpcController controller, MasterAdminProtos.ModifyNamespaceRequest request) throws ServiceException {
+        public ModifyNamespaceResponse modifyNamespace(RpcController controller, ModifyNamespaceRequest request) throws ServiceException {
           return stub.modifyNamespace(controller, request);
         }
 
         @Override
-        public MasterAdminProtos.CreateNamespaceResponse createNamespace(RpcController controller, MasterAdminProtos.CreateNamespaceRequest request) throws ServiceException {
+        public CreateNamespaceResponse createNamespace(RpcController controller, CreateNamespaceRequest request) throws ServiceException {
           return stub.createNamespace(controller, request);
         }
 
         @Override
-        public MasterAdminProtos.DeleteNamespaceResponse deleteNamespace(RpcController controller, MasterAdminProtos.DeleteNamespaceRequest request) throws ServiceException {
+        public DeleteNamespaceResponse deleteNamespace(RpcController controller, DeleteNamespaceRequest request) throws ServiceException {
           return stub.deleteNamespace(controller, request);
         }
 
         @Override
-        public MasterAdminProtos.GetNamespaceDescriptorResponse getNamespaceDescriptor(RpcController controller, MasterAdminProtos.GetNamespaceDescriptorRequest request) throws ServiceException {
+        public GetNamespaceDescriptorResponse getNamespaceDescriptor(RpcController controller, GetNamespaceDescriptorRequest request) throws ServiceException {
           return stub.getNamespaceDescriptor(controller, request);
         }
 
         @Override
-        public MasterAdminProtos.ListNamespaceDescriptorsResponse listNamespaceDescriptors(RpcController controller, MasterAdminProtos.ListNamespaceDescriptorsRequest request) throws ServiceException {
+        public ListNamespaceDescriptorsResponse listNamespaceDescriptors(RpcController controller, ListNamespaceDescriptorsRequest request) throws ServiceException {
           return stub.listNamespaceDescriptors(controller, request);
         }
 
         @Override
-        public MasterAdminProtos.GetTableDescriptorsByNamespaceResponse getTableDescriptorsByNamespace(RpcController controller, MasterAdminProtos.GetTableDescriptorsByNamespaceRequest request) throws ServiceException {
+        public GetTableDescriptorsByNamespaceResponse getTableDescriptorsByNamespace(RpcController controller, GetTableDescriptorsByNamespaceRequest request) throws ServiceException {
           return stub.getTableDescriptorsByNamespace(controller, request);
         }
 
@@ -2030,7 +2106,7 @@ public class HConnectionManager {
           if (LOG.isDebugEnabled() && removedLocation != null) {
             LOG.debug("Removed " +
                 location.getRegionInfo().getRegionNameAsString() +
-                " for tableName=" + tableName.getNameAsString() +
+                " for tableName=" + tableName +
                 " from cache");
           }
         }
@@ -2080,6 +2156,12 @@ public class HConnectionManager {
     }
 
     @Override
+    public void updateCachedLocations(final byte[] tableName, byte[] rowkey,
+      final Object exception, final HRegionLocation source) {
+      updateCachedLocations(TableName.valueOf(tableName), rowkey, exception, source);
+    }
+
+    @Override
     @Deprecated
     public void processBatch(List<? extends Row> list,
         final TableName tableName,
@@ -2093,6 +2175,15 @@ public class HConnectionManager {
           "argument results must be the same size as argument list");
       }
       processBatchCallback(list, tableName, pool, results, null);
+    }
+
+    @Override
+    @Deprecated
+    public void processBatch(List<? extends Row> list,
+        final byte[] tableName,
+        ExecutorService pool,
+        Object[] results) throws IOException, InterruptedException {
+      processBatch(list, TableName.valueOf(tableName), pool, results);
     }
 
     /**
@@ -2124,6 +2215,18 @@ public class HConnectionManager {
       if (asyncProcess.hasError()) {
         throw asyncProcess.getErrors();
       }
+    }
+
+    @Override
+    @Deprecated
+    public <R> void processBatchCallback(
+      List<? extends Row> list,
+      byte[] tableName,
+      ExecutorService pool,
+      Object[] results,
+      Batch.Callback<R> callback)
+      throws IOException, InterruptedException {
+      processBatchCallback(list, TableName.valueOf(tableName), pool, results, callback);
     }
 
     // For tests.
@@ -2210,8 +2313,19 @@ public class HConnectionManager {
     }
 
     @Override
+    public void setRegionCachePrefetch(final byte[] tableName,
+        final boolean enable) {
+      setRegionCachePrefetch(TableName.valueOf(tableName), enable);
+    }
+
+    @Override
     public boolean getRegionCachePrefetch(TableName tableName) {
       return !regionCachePrefetchDisabledTables.contains(Bytes.mapKey(tableName.getName()));
+    }
+
+    @Override
+    public boolean getRegionCachePrefetch(byte[] tableName) {
+      return getRegionCachePrefetch(TableName.valueOf(tableName));
     }
 
     @Override
@@ -2339,7 +2453,7 @@ public class HConnectionManager {
     }
 
     @Override
-    public HTableDescriptor[] getHTableDescriptors(
+    public HTableDescriptor[] getHTableDescriptorsByTableName(
         List<TableName> tableNames) throws IOException {
       if (tableNames == null || tableNames.isEmpty()) return new HTableDescriptor[0];
       MasterMonitorKeepAliveConnection master = getKeepAliveMasterMonitorService();
@@ -2354,6 +2468,17 @@ public class HConnectionManager {
       }
     }
 
+    @Override
+    public HTableDescriptor[] getHTableDescriptors(
+        List<String> names) throws IOException {
+      List<TableName> tableNames = new ArrayList(names.size());
+      for(String name : names) {
+        tableNames.add(TableName.valueOf(name));
+      }
+
+      return getHTableDescriptorsByTableName(tableNames);
+    }
+
     /**
      * Connects to the master to get the table descriptor.
      * @param tableName table name
@@ -2365,7 +2490,7 @@ public class HConnectionManager {
     public HTableDescriptor getHTableDescriptor(final TableName tableName)
     throws IOException {
       if (tableName == null) return null;
-      if (tableName.equals(HConstants.META_TABLE_NAME)) {
+      if (tableName.equals(TableName.META_TABLE_NAME)) {
         return HTableDescriptor.META_TABLEDESC;
       }
       MasterMonitorKeepAliveConnection master = getKeepAliveMasterMonitorService();
@@ -2383,6 +2508,12 @@ public class HConnectionManager {
         return HTableDescriptor.convert(htds.getTableSchemaList().get(0));
       }
       throw new TableNotFoundException(tableName.getNameAsString());
+    }
+
+    @Override
+    public HTableDescriptor getHTableDescriptor(final byte[] tableName)
+    throws IOException {
+      return getHTableDescriptor(TableName.valueOf(tableName));
     }
   }
 

@@ -70,7 +70,7 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
   static final Log LOG = LogFactory.getLog(KeyValue.class);
 
   private static final int META_LENGTH =
-      HConstants.META_TABLE_NAME.getName().length; // 'hbase.meta' length
+      TableName.META_TABLE_NAME.getName().length; // 'hbase.meta' length
 
   // TODO: Group Key-only comparators and operations into a Key class, just
   // for neatness sake, if can figure what to call it.
@@ -128,10 +128,10 @@ public class KeyValue implements Cell, HeapSize, Cloneable {
    * @return The comparator.
    */
   public static KeyComparator getRowComparator(TableName tableName) {
-    if(HConstants.ROOT_TABLE_NAME.equals(tableName)) {
+    if(TableName.ROOT_TABLE_NAME.equals(tableName)) {
       return ROOT_COMPARATOR.getRawComparator();
     }
-    if(HConstants.META_TABLE_NAME.equals(tableName)) {
+    if(TableName.META_TABLE_NAME.equals(tableName)) {
       return META_COMPARATOR.getRawComparator();
     }
     return COMPARATOR.getRawComparator();

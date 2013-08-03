@@ -70,7 +70,7 @@ public class TableNamespaceManager {
   }
 
   public void start() throws IOException {
-    TableName tableName = HConstants.NAMESPACE_TABLE_NAME;
+    TableName tableName = TableName.NAMESPACE_TABLE_NAME;
     try {
       if (!MetaReader.tableExists(masterServices.getCatalogTracker(),
           tableName)) {

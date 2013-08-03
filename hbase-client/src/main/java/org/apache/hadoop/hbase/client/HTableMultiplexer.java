@@ -111,6 +111,10 @@ public class HTableMultiplexer {
     return put(tableName, put, this.retryNum);
   }
 
+  public boolean put(byte[] tableName, final Put put) throws IOException {
+    return put(TableName.valueOf(tableName), put);
+  }
+
   /**
    * The puts request will be buffered by their corresponding buffer queue. 
    * Return the list of puts which could not be queued.
@@ -140,6 +144,11 @@ public class HTableMultiplexer {
     }
     return failedPuts;
   }
+
+  public List<Put> put(byte[] tableName, final List<Put> puts) throws IOException {
+    return put(TableName.valueOf(tableName), puts);
+  }
+
 
   /**
    * The put request will be buffered by its corresponding buffer queue. And the put request will be
@@ -174,6 +183,11 @@ public class HTableMultiplexer {
       LOG.debug("Cannot process the put " + put + " because of " + e);
     }
     return false;
+  }
+
+  public boolean put(final byte[] tableName, final Put put, int retry)
+      throws IOException {
+    return put(TableName.valueOf(tableName), put, retry);
   }
 
   /**

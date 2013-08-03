@@ -96,7 +96,7 @@ public class ZKTable {
   throws KeeperException {
     synchronized (this.cache) {
       if (!isDisablingOrDisabledTable(tableName)) {
-        LOG.warn("Moving table " + tableName.getNameAsString() + " state to disabled but was " +
+        LOG.warn("Moving table " + tableName + " state to disabled but was " +
           "not first in disabling state: " + this.cache.get(tableName));
       }
       setTableState(tableName, ZooKeeperProtos.Table.State.DISABLED);
@@ -113,7 +113,7 @@ public class ZKTable {
   throws KeeperException {
     synchronized (this.cache) {
       if (!isEnabledOrDisablingTable(tableName)) {
-        LOG.warn("Moving table " + tableName.getNameAsString() + " state to disabling but was " +
+        LOG.warn("Moving table " + tableName + " state to disabling but was " +
           "not first in enabled state: " + this.cache.get(tableName));
       }
       setTableState(tableName, ZooKeeperProtos.Table.State.DISABLING);
@@ -130,7 +130,7 @@ public class ZKTable {
   throws KeeperException {
     synchronized (this.cache) {
       if (!isDisabledOrEnablingTable(tableName)) {
-        LOG.warn("Moving table " + tableName.getNameAsString() + " state to enabling but was " +
+        LOG.warn("Moving table " + tableName + " state to enabling but was " +
           "not first in disabled state: " + this.cache.get(tableName));
       }
       setTableState(tableName, ZooKeeperProtos.Table.State.ENABLING);
@@ -257,7 +257,7 @@ public class ZKTable {
   throws KeeperException {
     synchronized (this.cache) {
       if (this.cache.remove(tableName) == null) {
-        LOG.warn("Moving table " + tableName.getNameAsString() + " state to deleted but was " +
+        LOG.warn("Moving table " + tableName + " state to deleted but was " +
           "already deleted");
       }
       ZKUtil.deleteNodeFailSilent(this.watcher,

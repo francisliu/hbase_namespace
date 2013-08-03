@@ -21,6 +21,7 @@ package org.apache.hadoop.hbase;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.util.Bytes;
 
 /** Thrown when a table can not be located */
 @InterfaceAudience.Public
@@ -36,6 +37,10 @@ public class TableNotFoundException extends DoNotRetryIOException {
   /** @param s message */
   public TableNotFoundException(String s) {
     super(s);
+  }
+
+  public TableNotFoundException(byte[] tableName) {
+    super(Bytes.toString(tableName));
   }
 
   public TableNotFoundException(TableName tableName) {

@@ -80,7 +80,7 @@ public class MetaScanner {
       MetaScannerVisitor visitor, TableName userTableName)
   throws IOException {
     metaScan(configuration, connection, visitor, userTableName, null, Integer.MAX_VALUE,
-        HConstants.META_TABLE_NAME);
+        TableName.META_TABLE_NAME);
   }
 
   /**
@@ -103,7 +103,7 @@ public class MetaScanner {
       int rowLimit)
   throws IOException {
     metaScan(configuration, null, visitor, userTableName, row, rowLimit,
-      HConstants.META_TABLE_NAME);
+      TableName.META_TABLE_NAME);
   }
 
   /**
@@ -130,9 +130,9 @@ public class MetaScanner {
     int rowUpperLimit = rowLimit > 0 ? rowLimit: Integer.MAX_VALUE;
     HTable metaTable;
     if (connection == null) {
-      metaTable = new HTable(configuration, HConstants.META_TABLE_NAME, null);
+      metaTable = new HTable(configuration, TableName.META_TABLE_NAME, null);
     } else {
-      metaTable = new HTable(HConstants.META_TABLE_NAME, connection, null);      
+      metaTable = new HTable(TableName.META_TABLE_NAME, connection, null);
     }
     // Calculate startrow for scan.
     byte[] startRow;
@@ -143,14 +143,14 @@ public class MetaScanner {
         byte[] searchRow = HRegionInfo.createRegionName(tableName, row, HConstants.NINES, false);
         Result startRowResult = metaTable.getRowOrBefore(searchRow, HConstants.CATALOG_FAMILY);
         if (startRowResult == null) {
-          throw new TableNotFoundException("Cannot find row in "+HConstants
+          throw new TableNotFoundException("Cannot find row in "+ TableName
               .META_TABLE_NAME.getNameAsString()+" for table: "
-              + tableName.getNameAsString() + ", row=" + Bytes.toStringBinary(searchRow));
+              + tableName + ", row=" + Bytes.toStringBinary(searchRow));
         }
         HRegionInfo regionInfo = getHRegionInfo(startRowResult);
         if (regionInfo == null) {
           throw new IOException("HRegionInfo was null or empty in Meta for " +
-            tableName.getNameAsString() + ", row=" + Bytes.toStringBinary(searchRow));
+            tableName + ", row=" + Bytes.toStringBinary(searchRow));
         }
         byte[] rowBefore = regionInfo.getStartKey();
         startRow = HRegionInfo.createRegionName(tableName, rowBefore, HConstants.ZEROES, false);

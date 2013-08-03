@@ -1379,13 +1379,13 @@ public class ThriftServerRunner implements Runnable {
     @Override
     public TRegionInfo getRegionInfo(ByteBuffer searchRow) throws IOError {
       try {
-        HTable table = getTable(HConstants.META_TABLE_NAME.getName());
+        HTable table = getTable(TableName.META_TABLE_NAME.getName());
         byte[] row = getBytes(searchRow);
         Result startRowResult = table.getRowOrBefore(
           row, HConstants.CATALOG_FAMILY);
 
         if (startRowResult == null) {
-          throw new IOException("Cannot find row in "+HConstants.META_TABLE_NAME+", row="
+          throw new IOException("Cannot find row in "+ TableName.META_TABLE_NAME+", row="
                                 + Bytes.toStringBinary(row));
         }
 

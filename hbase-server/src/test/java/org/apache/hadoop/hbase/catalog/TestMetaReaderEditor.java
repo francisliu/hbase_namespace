@@ -219,10 +219,10 @@ public class TestMetaReaderEditor {
   @Test public void testGetRegionsCatalogTables()
   throws IOException, InterruptedException {
     List<HRegionInfo> regions =
-      MetaReader.getTableRegions(CT, HConstants.META_TABLE_NAME);
+      MetaReader.getTableRegions(CT, TableName.META_TABLE_NAME);
     assertTrue(regions.size() >= 1);
     assertTrue(MetaReader.getTableRegionsAndLocations(CT,
-      HConstants.META_TABLE_NAME).size() >= 1);
+      TableName.META_TABLE_NAME).size() >= 1);
   }
 
   @Test public void testTableExists() throws IOException {
@@ -236,7 +236,7 @@ public class TestMetaReaderEditor {
     admin.deleteTable(name);
     assertFalse(MetaReader.tableExists(CT, name));
     assertTrue(MetaReader.tableExists(CT,
-      HConstants.META_TABLE_NAME));
+      TableName.META_TABLE_NAME));
   }
 
   @Test public void testGetRegion() throws IOException, InterruptedException {

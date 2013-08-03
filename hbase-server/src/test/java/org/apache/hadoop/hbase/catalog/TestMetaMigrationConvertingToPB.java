@@ -342,7 +342,7 @@ public class TestMetaMigrationConvertingToPB {
       final TableName tableName, byte [][] startKeys)
   throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
-    HTable meta = new HTable(c, HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(c, TableName.META_TABLE_NAME);
 
     List<HRegionInfo> newRegions
         = new ArrayList<HRegionInfo>(startKeys.length);
@@ -416,7 +416,7 @@ public class TestMetaMigrationConvertingToPB {
       final TableName tableName,
       byte [][] startKeys) throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
-    HTable meta = new HTable(c, HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(c, TableName.META_TABLE_NAME);
 
     List<HRegionInfo> newRegions
         = new ArrayList<HRegionInfo>(startKeys.length);

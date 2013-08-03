@@ -270,7 +270,7 @@ public abstract class TableLockManager {
       public void acquire() throws IOException {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Attempt to acquire table " + (isShared ? "read" : "write") +
-            " lock on: " + tableName.getNameAsString() + " for:" + purpose);
+            " lock on: " + tableName + " for:" + purpose);
         }
 
         lock = createTableLock();
@@ -281,44 +281,45 @@ public abstract class TableLockManager {
           } else {
             if (!lock.tryAcquire(lockTimeoutMs)) {
               throw new LockTimeoutException("Timed out acquiring " +
-                (isShared ? "read" : "write") + "lock for table:" + tableName.getNameAsString() +
+                (isShared ? "read" : "write") + "lock for table:" + tableName +
                 "for:" + purpose + " after " + lockTimeoutMs + " ms.");
             }
           }
         } catch (InterruptedException e) {
-          LOG.warn("Interrupted acquiring a lock for " + tableName.getNameAsString(), e);
+          LOG.warn("Interrupted acquiring a lock for " + tableName, e);
           Thread.currentThread().interrupt();
           throw new InterruptedIOException("Interrupted acquiring a lock");
         }
         if (LOG.isTraceEnabled()) LOG.trace("Acquired table " + (isShared ? "read" : "write")
-            + " lock on " + tableName.getNameAsString() + " for " + purpose);
+            + " lock on " + tableName + " for " + purpose);
       }
 
       @Override
       public void release() throws IOException {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Attempt to release table " + (isShared ? "read" : "write")
-              + " lock on " + tableName.getNameAsString());
+              + " lock on " + tableName);
         }
         if (lock == null) {
-          throw new IllegalStateException("Table " + tableName.getNameAsString() +
+          throw new IllegalStateException("Table " + tableName +
             " is not locked!");
         }
 
         try {
           lock.release();
         } catch (InterruptedException e) {
-          LOG.warn("Interrupted while releasing a lock for " + tableName.getNameAsString());
+          LOG.warn("Interrupted while releasing a lock for " + tableName);
           Thread.currentThread().interrupt();
           throw new InterruptedIOException();
         }
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Released table lock on " + tableName.getNameAsString());
+          LOG.trace("Released table lock on " + tableName);
         }
       }
 
       private InterProcessLock createTableLock() {
-        String tableLockZNode = ZKUtil.joinZNode(zkWatcher.tableLockZNode, tableName.getNameAsString());
+        String tableLockZNode = ZKUtil.joinZNode(zkWatcher.tableLockZNode,
+            tableName.getNameAsString());
 
         ZooKeeperProtos.TableLock data = ZooKeeperProtos.TableLock.newBuilder()
           .setTableName(ProtobufUtil.toProtoTableName(tableName))

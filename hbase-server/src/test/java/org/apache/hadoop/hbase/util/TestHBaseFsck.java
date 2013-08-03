@@ -214,7 +214,7 @@ public class TestHBaseFsck {
   private HRegionInfo createRegion(Configuration conf, final HTableDescriptor
       htd, byte[] startKey, byte[] endKey)
       throws IOException {
-    HTable meta = new HTable(conf, HConstants.META_TABLE_NAME, executorService);
+    HTable meta = new HTable(conf, TableName.META_TABLE_NAME, executorService);
     HRegionInfo hri = new HRegionInfo(htd.getTableName(), startKey, endKey);
     MetaEditor.addRegionToMeta(meta, hri);
     meta.close();
@@ -308,7 +308,7 @@ public class TestHBaseFsck {
         }
 
         if (metaRow) {
-          HTable meta = new HTable(conf, HConstants.META_TABLE_NAME, executorService);
+          HTable meta = new HTable(conf, TableName.META_TABLE_NAME, executorService);
           Delete delete = new Delete(deleteRow);
           meta.delete(delete);
         }
@@ -754,7 +754,7 @@ public class TestHBaseFsck {
 
       assertNotNull(regionName);
       assertNotNull(serverName);
-      HTable meta = new HTable(conf, HConstants.META_TABLE_NAME, executorService);
+      HTable meta = new HTable(conf, TableName.META_TABLE_NAME, executorService);
       Put put = new Put(regionName);
       put.add(HConstants.CATALOG_FAMILY, HConstants.SERVER_QUALIFIER,
         Bytes.toBytes(serverName.getHostAndPort()));
@@ -1254,7 +1254,7 @@ public class TestHBaseFsck {
 
       MetaEditor.addRegionToMeta(meta, hri, a, b);
       meta.flushCommits();
-      TEST_UTIL.getHBaseAdmin().flush(HConstants.META_TABLE_NAME.getName());
+      TEST_UTIL.getHBaseAdmin().flush(TableName.META_TABLE_NAME.getName());
 
       HBaseFsck hbck = doFsck(conf, false);
       assertErrors(hbck, new ERROR_CODE[] {
@@ -1284,7 +1284,7 @@ public class TestHBaseFsck {
         HConstants.SPLITA_QUALIFIER).isEmpty());
       assertTrue(result.getColumn(HConstants.CATALOG_FAMILY,
         HConstants.SPLITB_QUALIFIER).isEmpty());
-      TEST_UTIL.getHBaseAdmin().flush(HConstants.META_TABLE_NAME.getName());
+      TEST_UTIL.getHBaseAdmin().flush(TableName.META_TABLE_NAME.getName());
 
       // fix other issues
       doFsck(conf, true);

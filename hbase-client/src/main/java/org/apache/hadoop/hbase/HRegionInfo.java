@@ -196,11 +196,11 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
 
   /** HRegionInfo for root region */
   public static final HRegionInfo ROOT_REGIONINFO =
-      new HRegionInfo(0L, HConstants.ROOT_TABLE_NAME);
+      new HRegionInfo(0L, TableName.ROOT_TABLE_NAME);
 
   /** HRegionInfo for first meta region */
   public static final HRegionInfo FIRST_META_REGIONINFO =
-      new HRegionInfo(1L, HConstants.META_TABLE_NAME);
+      new HRegionInfo(1L, TableName.META_TABLE_NAME);
 
   private void setHashCode() {
     int result = Arrays.hashCode(this.regionName);
@@ -859,7 +859,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     if (proto == null) return null;
     TableName tableName =
         ProtobufUtil.toTableName(proto.getTableName());
-    if (tableName.equals(HConstants.META_TABLE_NAME)) {
+    if (tableName.equals(TableName.META_TABLE_NAME)) {
       return FIRST_META_REGIONINFO;
     }
     long regionId = proto.getRegionId();

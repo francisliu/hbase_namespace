@@ -987,7 +987,7 @@ public class TestSplitTransactionOnCluster {
   }
 
   private void removeDaughterFromMeta(final byte [] regionName) throws IOException {
-    HTable metaTable = new HTable(TESTING_UTIL.getConfiguration(), HConstants.META_TABLE_NAME);
+    HTable metaTable = new HTable(TESTING_UTIL.getConfiguration(), TableName.META_TABLE_NAME);
     try {
       Delete d = new Delete(regionName);
       LOG.info("Deleted " + Bytes.toString(regionName));

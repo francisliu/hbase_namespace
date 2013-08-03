@@ -38,9 +38,11 @@ import org.apache.hadoop.hbase.util.Bytes;
 @InterfaceAudience.Public
 @InterfaceStability.Stable
 public final class HConstants {
+  //Bytes.UTF8_ENCODING should be updated if this changed
   /** When we encode strings, we always specify UTF8 encoding */
   public static final String UTF8_ENCODING = "UTF-8";
 
+  //Bytes.UTF8_CHARSET should be updated if this changed
   /** When we encode strings, we always specify UTF8 encoding */
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8_ENCODING);
   /**
@@ -349,19 +351,6 @@ public final class HConstants {
   // and meta regions always need to be on-line, this ensures that they will
   // be the first to be reassigned if the server(s) they are being served by
   // should go down.
-
-  /** The root table's name.*/
-  public static final TableName ROOT_TABLE_NAME =
-      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "root");
-
-  /** The META table's name. */
-  public static final TableName META_TABLE_NAME =
-      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "meta");
-
-  /** The Namespace table's name. */
-  public static final TableName NAMESPACE_TABLE_NAME =
-      TableName.valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR +
-          TableName.NAMESPACE_DELIM + "namespace");
 
   public static final String BASE_NAMESPACE_DIR = ".data";
 
@@ -841,7 +830,7 @@ public final class HConstants {
   /** Directories that are not HBase user table directories */
   public static final List<String> HBASE_NON_USER_TABLE_DIRS =
     Collections.unmodifiableList(Arrays.asList((String[])ArrayUtils.addAll(
-      new String[] { META_TABLE_NAME.getNameAsString(), ROOT_TABLE_NAME.getNameAsString() },
+      new String[] { TableName.META_TABLE_NAME.getNameAsString(), TableName.ROOT_TABLE_NAME.getNameAsString() },
       HBASE_NON_TABLE_DIRS.toArray())));
 
   /** Health script related settings. */

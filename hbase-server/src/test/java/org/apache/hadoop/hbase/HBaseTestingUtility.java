@@ -856,7 +856,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     this.hbaseCluster =
         new MiniHBaseCluster(c, numMasters, numSlaves, masterClass, regionserverClass);
     // Don't leave here till we've done a successful scan of the .META.
-    HTable t = new HTable(c, HConstants.META_TABLE_NAME);
+    HTable t = new HTable(c, TableName.META_TABLE_NAME);
     ResultScanner s = t.getScanner(new Scan());
     while (s.next() != null) {
       continue;
@@ -878,7 +878,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   public void restartHBaseCluster(int servers) throws IOException, InterruptedException {
     this.hbaseCluster = new MiniHBaseCluster(this.conf, servers);
     // Don't leave here till we've done a successful scan of the .META.
-    HTable t = new HTable(new Configuration(this.conf), HConstants.META_TABLE_NAME);
+    HTable t = new HTable(new Configuration(this.conf), TableName.META_TABLE_NAME);
     ResultScanner s = t.getScanner(new Scan());
     while (s.next() != null) {
       // do nothing
@@ -1693,7 +1693,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
       final byte[] columnFamily, byte [][] startKeys)
   throws IOException {
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
-    HTable meta = new HTable(c, HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(c, TableName.META_TABLE_NAME);
     HTableDescriptor htd = table.getTableDescriptor();
     if(!htd.hasFamily(columnFamily)) {
       HColumnDescriptor hcd = new HColumnDescriptor(columnFamily);
@@ -1758,7 +1758,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   public List<HRegionInfo> createMultiRegionsInMeta(final Configuration conf,
       final HTableDescriptor htd, byte [][] startKeys)
   throws IOException {
-    HTable meta = new HTable(conf, HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(conf, TableName.META_TABLE_NAME);
     Arrays.sort(startKeys, Bytes.BYTES_COMPARATOR);
     List<HRegionInfo> newRegions = new ArrayList<HRegionInfo>(startKeys.length);
     // add custom ones
@@ -1781,7 +1781,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    */
   public List<byte[]> getMetaTableRows() throws IOException {
     // TODO: Redo using MetaReader class
-    HTable t = new HTable(new Configuration(this.conf), HConstants.META_TABLE_NAME);
+    HTable t = new HTable(new Configuration(this.conf), TableName.META_TABLE_NAME);
     List<byte[]> rows = new ArrayList<byte[]>();
     ResultScanner s = t.getScanner(new Scan());
     for (Result result : s) {
@@ -1801,7 +1801,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    */
   public List<byte[]> getMetaTableRows(TableName tableName) throws IOException {
     // TODO: Redo using MetaReader.
-    HTable t = new HTable(new Configuration(this.conf), HConstants.META_TABLE_NAME);
+    HTable t = new HTable(new Configuration(this.conf), TableName.META_TABLE_NAME);
     List<byte[]> rows = new ArrayList<byte[]>();
     ResultScanner s = t.getScanner(new Scan());
     for (Result result : s) {
@@ -2100,7 +2100,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
     monitor.close();
 
     if (checkStatus) {
-      new HTable(new Configuration(conf), HConstants.META_TABLE_NAME).close();
+      new HTable(new Configuration(conf), TableName.META_TABLE_NAME).close();
     }
   }
 
@@ -2509,7 +2509,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
    */
   public void waitUntilAllRegionsAssigned(final TableName tableName, final long timeout)
       throws IOException {
-    final HTable meta = new HTable(getConfiguration(), HConstants.META_TABLE_NAME);
+    final HTable meta = new HTable(getConfiguration(), TableName.META_TABLE_NAME);
     try {
       waitFor(timeout, 200, true, new Predicate<IOException>() {
         @Override
@@ -2726,7 +2726,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
         numRegions);
 
     if (hbaseCluster != null) {
-      getMiniHBaseCluster().flushcache(HConstants.META_TABLE_NAME);
+      getMiniHBaseCluster().flushcache(TableName.META_TABLE_NAME);
     }
 
     for (int iFlush = 0; iFlush < numFlushes; ++iFlush) {
@@ -2899,7 +2899,7 @@ public class HBaseTestingUtility extends HBaseCommonTestingUtility {
   }
 
   public static int getMetaRSPort(Configuration conf) throws IOException {
-    HTable table = new HTable(conf, HConstants.META_TABLE_NAME);
+    HTable table = new HTable(conf, TableName.META_TABLE_NAME);
     HRegionLocation hloc = table.getRegionLocation(Bytes.toBytes(""));
     table.close();
     return hloc.getPort();

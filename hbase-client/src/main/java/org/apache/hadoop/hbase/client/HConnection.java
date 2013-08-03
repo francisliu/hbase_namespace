@@ -85,6 +85,9 @@ public interface HConnection extends Abortable, Closeable {
    */
   boolean isTableEnabled(TableName tableName) throws IOException;
 
+  @Deprecated
+  boolean isTableEnabled(byte[] tableName) throws IOException;
+
   /**
    * @param tableName table name
    * @return true if the table is disabled, false otherwise
@@ -92,12 +95,18 @@ public interface HConnection extends Abortable, Closeable {
    */
   boolean isTableDisabled(TableName tableName) throws IOException;
 
+  @Deprecated
+  boolean isTableDisabled(byte[] tableName) throws IOException;
+
   /**
    * @param tableName table name
    * @return true if all regions of the table are available, false otherwise
    * @throws IOException if a remote or network exception occurs
    */
   boolean isTableAvailable(TableName tableName) throws IOException;
+
+  @Deprecated
+  boolean isTableAvailable(byte[] tableName) throws IOException;
 
   /**
    * Use this api to check if the table has been created with the specified number of
@@ -112,6 +121,10 @@ public interface HConnection extends Abortable, Closeable {
    *           if a remote or network exception occurs
    */
   boolean isTableAvailable(TableName tableName, byte[][] splitKeys) throws
+      IOException;
+
+  @Deprecated
+  boolean isTableAvailable(byte[] tableName, byte[][] splitKeys) throws
       IOException;
 
   /**
@@ -134,6 +147,10 @@ public interface HConnection extends Abortable, Closeable {
   HTableDescriptor getHTableDescriptor(TableName tableName)
   throws IOException;
 
+  @Deprecated
+  HTableDescriptor getHTableDescriptor(byte[] tableName)
+  throws IOException;
+
   /**
    * Find the location of the region of <i>tableName</i> that <i>row</i>
    * lives in.
@@ -144,6 +161,10 @@ public interface HConnection extends Abortable, Closeable {
    * @throws IOException if a remote or network exception occurs
    */
   public HRegionLocation locateRegion(final TableName tableName,
+      final byte [] row) throws IOException;
+
+  @Deprecated
+  public HRegionLocation locateRegion(final byte[] tableName,
       final byte [] row) throws IOException;
 
   /**
@@ -158,6 +179,9 @@ public interface HConnection extends Abortable, Closeable {
    * cache.
    */
   void clearRegionCache(final TableName tableName);
+
+  @Deprecated
+  void clearRegionCache(final byte[] tableName);
 
   /**
    * Deletes cached locations for the specific region.
@@ -177,6 +201,10 @@ public interface HConnection extends Abortable, Closeable {
   HRegionLocation relocateRegion(final TableName tableName,
       final byte [] row) throws IOException;
 
+  @Deprecated
+  HRegionLocation relocateRegion(final byte[] tableName,
+      final byte [] row) throws IOException;
+
   /**
    * Update the location cache. This is used internally by HBase, in most cases it should not be
    *  used by the client application.
@@ -186,6 +214,10 @@ public interface HConnection extends Abortable, Closeable {
    * @param source the previous location
    */
   void updateCachedLocations(TableName tableName, byte[] rowkey,
+                                    Object exception, HRegionLocation source);
+
+  @Deprecated
+  void updateCachedLocations(byte[] tableName, byte[] rowkey,
                                     Object exception, HRegionLocation source);
 
   /**
@@ -206,6 +238,9 @@ public interface HConnection extends Abortable, Closeable {
    */
   List<HRegionLocation> locateRegions(final TableName tableName) throws IOException;
 
+  @Deprecated
+  List<HRegionLocation> locateRegions(final byte[] tableName) throws IOException;
+
   /**
    * Gets the locations of all regions in the specified table, <i>tableName</i>.
    * @param tableName table to get regions of
@@ -216,6 +251,11 @@ public interface HConnection extends Abortable, Closeable {
    * @throws IOException
    */
   public List<HRegionLocation> locateRegions(final TableName tableName,
+      final boolean useCache,
+      final boolean offlined) throws IOException;
+
+  @Deprecated
+  public List<HRegionLocation> locateRegions(final byte[] tableName,
       final boolean useCache,
       final boolean offlined) throws IOException;
 
@@ -271,6 +311,11 @@ public interface HConnection extends Abortable, Closeable {
     boolean reload)
   throws IOException;
 
+  @Deprecated
+  HRegionLocation getRegionLocation(byte[] tableName, byte [] row,
+    boolean reload)
+  throws IOException;
+
   /**
    * Process a mixed batch of Get, Put and Delete actions. All actions for a
    * RegionServer are forwarded in one RPC call.
@@ -290,6 +335,10 @@ public interface HConnection extends Abortable, Closeable {
   void processBatch(List<? extends Row> actions, final TableName tableName,
       ExecutorService pool, Object[] results) throws IOException, InterruptedException;
 
+  @Deprecated
+  void processBatch(List<? extends Row> actions, final byte[] tableName,
+      ExecutorService pool, Object[] results) throws IOException, InterruptedException;
+
   /**
    * Parameterized batch processing, allowing varying return types for different
    * {@link Row} implementations.
@@ -298,6 +347,13 @@ public interface HConnection extends Abortable, Closeable {
   @Deprecated
   public <R> void processBatchCallback(List<? extends Row> list,
       final TableName tableName,
+      ExecutorService pool,
+      Object[] results,
+      Batch.Callback<R> callback) throws IOException, InterruptedException;
+
+  @Deprecated
+  public <R> void processBatchCallback(List<? extends Row> list,
+      final byte[] tableName,
       ExecutorService pool,
       Object[] results,
       Batch.Callback<R> callback) throws IOException, InterruptedException;
@@ -312,6 +368,9 @@ public interface HConnection extends Abortable, Closeable {
   public void setRegionCachePrefetch(final TableName tableName,
       final boolean enable);
 
+  public void setRegionCachePrefetch(final byte[] tableName,
+      final boolean enable);
+
   /**
    * Check whether region cache prefetch is enabled or not.
    * @param tableName name of table to check
@@ -319,6 +378,8 @@ public interface HConnection extends Abortable, Closeable {
    * it is disabled.
    */
   boolean getRegionCachePrefetch(final TableName tableName);
+
+  boolean getRegionCachePrefetch(final byte[] tableName);
 
   /**
    * @return the number of region servers that are currently running
@@ -332,7 +393,11 @@ public interface HConnection extends Abortable, Closeable {
    * @return HTD[] table metadata
    * @throws IOException if a remote or network exception occurs
    */
-  HTableDescriptor[] getHTableDescriptors(List<TableName> tableNames) throws IOException;
+  HTableDescriptor[] getHTableDescriptorsByTableName(List<TableName> tableNames) throws IOException;
+
+  @Deprecated
+  HTableDescriptor[] getHTableDescriptors(List<String> tableNames) throws
+      IOException;
 
   /**
    * @return true if this connection is closed

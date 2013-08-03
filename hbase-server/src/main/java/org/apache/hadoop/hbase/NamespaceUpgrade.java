@@ -23,13 +23,11 @@ import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.snapshot.SnapshotDescriptionUtils;
-import org.apache.hadoop.hbase.util.FSTableDescriptors;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.util.Tool;
 
@@ -127,7 +125,7 @@ public class NamespaceUpgrade implements Tool {
         }
       }
 
-      Path newMetaDir = FSUtils.getTableDir(rootDir, HConstants.META_TABLE_NAME);
+      Path newMetaDir = FSUtils.getTableDir(rootDir, TableName.META_TABLE_NAME);
       Path oldMetaDir = new Path(rootDir, ".META.");
       if (fs.exists(oldMetaDir)) {
         LOG.info("Migrating meta table " + oldMetaDir.getName() + " to " + newMetaDir);

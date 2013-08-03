@@ -415,7 +415,7 @@ public class TestEndToEndSplitTransaction {
     long start = System.currentTimeMillis();
     log("blocking until region is split:" +  Bytes.toStringBinary(regionName));
     HRegionInfo daughterA = null, daughterB = null;
-    HTable metaTable = new HTable(conf, HConstants.META_TABLE_NAME);
+    HTable metaTable = new HTable(conf, TableName.META_TABLE_NAME);
 
     try {
       while (System.currentTimeMillis() - start < timeout) {

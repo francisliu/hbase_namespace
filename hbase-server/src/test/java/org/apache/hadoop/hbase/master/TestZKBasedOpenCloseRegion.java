@@ -358,7 +358,7 @@ public class TestZKBasedOpenCloseRegion {
 
   private static void waitUntilAllRegionsAssigned()
   throws IOException {
-    HTable meta = new HTable(TEST_UTIL.getConfiguration(), HConstants.META_TABLE_NAME);
+    HTable meta = new HTable(TEST_UTIL.getConfiguration(), TableName.META_TABLE_NAME);
     while (true) {
       int rows = 0;
       Scan scan = new Scan();
@@ -393,7 +393,7 @@ public class TestZKBasedOpenCloseRegion {
   private static int addToEachStartKey(final int expected) throws IOException {
     HTable t = new HTable(TEST_UTIL.getConfiguration(), TABLENAME);
     HTable meta = new HTable(TEST_UTIL.getConfiguration(),
-        HConstants.META_TABLE_NAME);
+        TableName.META_TABLE_NAME);
     int rows = 0;
     Scan scan = new Scan();
     scan.addColumn(HConstants.CATALOG_FAMILY, HConstants.REGIONINFO_QUALIFIER);

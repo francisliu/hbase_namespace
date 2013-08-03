@@ -34,7 +34,9 @@
   import="org.apache.hadoop.hbase.master.HMaster" 
   import="org.apache.hadoop.hbase.util.Bytes"
   import="org.apache.hadoop.hbase.util.FSUtils"
-  import="org.apache.hadoop.hbase.protobuf.ProtobufUtil"%><%
+  import="org.apache.hadoop.hbase.protobuf.ProtobufUtil"%>
+<%@ page import="org.apache.hadoop.hbase.TableName" %>
+<%
   HMaster master = (HMaster)getServletContext().getAttribute(HMaster.MASTER);
   Configuration conf = master.getConfiguration();
   HBaseAdmin hbadmin = new HBaseAdmin(conf);
@@ -188,7 +190,7 @@
     </div>
     <div class="row">
 <%
-  if(fqtn.equals(HConstants.META_TABLE_NAME.getNameAsString())) {
+  if(fqtn.equals(TableName.META_TABLE_NAME.getNameAsString())) {
 %>
 <%= tableHeader %>
 <%

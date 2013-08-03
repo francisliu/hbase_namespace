@@ -73,6 +73,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.NotServingRegionException;
 import org.apache.hadoop.hbase.RegionTooBusyException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.UnknownScannerException;
 import org.apache.hadoop.hbase.HConstants.OperationStatusCode;
 import org.apache.hadoop.hbase.HDFSBlocksDistribution;
@@ -90,7 +91,6 @@ import org.apache.hadoop.hbase.client.IsolationLevel;
 import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.RowMutations;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.errorhandling.ForeignExceptionSnare;
@@ -5119,7 +5119,7 @@ public class HRegion implements HeapSize { // , Writable{
   throws IOException {
     HRegion region = null;
     // Currently expects tables have one region only.
-    if (FSUtils.getTableName(p).equals(HConstants.META_TABLE_NAME)) {
+    if (FSUtils.getTableName(p).equals(TableName.META_TABLE_NAME)) {
       region = HRegion.newHRegion(p, log, fs, c,
         HRegionInfo.FIRST_META_REGIONINFO, HTableDescriptor.META_TABLEDESC, null);
     } else {

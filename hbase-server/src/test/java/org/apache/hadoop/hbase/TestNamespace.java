@@ -23,17 +23,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.HBaseCluster;
-import org.apache.hadoop.hbase.HBaseTestingUtility;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.MediumTests;
-import org.apache.hadoop.hbase.MiniHBaseCluster;
-import org.apache.hadoop.hbase.NamespaceDescriptor;
-import org.apache.hadoop.hbase.Waiter;
-import org.apache.hadoop.hbase.ZKNamespaceManager;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -51,7 +40,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -118,8 +106,8 @@ public class TestNamespace {
 
     //verify existence of system tables
     Set<TableName> systemTables = Sets.newHashSet(
-        HConstants.META_TABLE_NAME,
-        HConstants.NAMESPACE_TABLE_NAME);
+        TableName.META_TABLE_NAME,
+        TableName.NAMESPACE_TABLE_NAME);
     HTableDescriptor[] descs =
         admin.getTableDescriptorsByNamespace(NamespaceDescriptor.SYSTEM_NAMESPACE.getName());
     assertEquals(systemTables.size(), descs.length);

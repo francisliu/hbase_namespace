@@ -113,7 +113,7 @@ class HMerge {
             }
           });
     }
-    if (tableName.equals(HConstants.META_TABLE_NAME)) {
+    if (tableName.equals(TableName.META_TABLE_NAME)) {
       if (masterIsRunning) {
         throw new IllegalStateException(
             "Can not compact META table if instance is on-line");
@@ -236,7 +236,7 @@ class HMerge {
     throws IOException {
       super(conf, fs, tableName);
       this.tableName = tableName;
-      this.table = new HTable(conf, HConstants.META_TABLE_NAME);
+      this.table = new HTable(conf, TableName.META_TABLE_NAME);
       this.metaScanner = table.getScanner(HConstants.CATALOG_FAMILY,
           HConstants.REGIONINFO_QUALIFIER);
       this.latestRegion = null;

@@ -45,7 +45,6 @@ public class ClientSnapshotDescriptionUtils {
     if(snapshot.hasTableName()) {
       // make sure the table name is valid
       TableName.isLegalNamespaceName(snapshot.getTableName().getNamespace().toByteArray());
-      System.out.println("-->"+snapshot.getTableName().getTableQualifier());
       TableName.isLegalTableQualifierName(snapshot.getTableName().getTableQualifier().toByteArray());
 
       if (HTableDescriptor.isSystemTable(ProtobufUtil.toTableName(snapshot.getTableName()))) {

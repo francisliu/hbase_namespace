@@ -881,7 +881,7 @@ public class TestAdmin {
 
     // Check the assignment.
     HTable metaTable = new HTable(TEST_UTIL.getConfiguration(),
-        HConstants.META_TABLE_NAME);
+        TableName.META_TABLE_NAME);
     List<HRegionInfo> regionInfos = admin.getTableRegions(tableName);
     Map<String, Integer> serverMap = new HashMap<String, Integer>();
     for (HRegionInfo hri : regionInfos) {
@@ -1619,7 +1619,7 @@ public class TestAdmin {
   throws IOException, InterruptedException {
     // When the META table can be opened, the region servers are running
     new HTable(
-      TEST_UTIL.getConfiguration(), HConstants.META_TABLE_NAME).close();
+      TEST_UTIL.getConfiguration(), TableName.META_TABLE_NAME).close();
 
     // Create the test table and open it
     HTableDescriptor desc = new HTableDescriptor(TableName.valueOf(tableName));
@@ -1695,7 +1695,7 @@ public class TestAdmin {
   @Test
   public void testDisableCatalogTable() throws Exception {
     try {
-      this.admin.disableTable(HConstants.META_TABLE_NAME);
+      this.admin.disableTable(TableName.META_TABLE_NAME);
       fail("Expected to throw IllegalArgumentException");
     } catch (IllegalArgumentException e) {
     }

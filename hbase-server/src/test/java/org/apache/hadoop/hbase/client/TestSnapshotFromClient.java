@@ -20,7 +20,6 @@ package org.apache.hadoop.hbase.client;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -123,14 +122,14 @@ public class TestSnapshotFromClient {
     byte[] snapshotName = Bytes.toBytes("metaSnapshot");
 
     try {
-      admin.snapshot(snapshotName, HConstants.META_TABLE_NAME);
+      admin.snapshot(snapshotName, TableName.META_TABLE_NAME);
       fail("taking a snapshot of .META. should not be allowed");
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      admin.snapshot(snapshotName, HConstants.ROOT_TABLE_NAME);
+      admin.snapshot(snapshotName, TableName.ROOT_TABLE_NAME);
       fail("taking a snapshot of -ROOT- should not be allowed");
     } catch (IllegalArgumentException e) {
       // expected
