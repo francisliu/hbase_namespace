@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class ZKNamespaceManager extends ZooKeeperListener {
   private static Log LOG = LogFactory.getLog(ZKNamespaceManager.class);
   private final String nsZNode;
-  private NavigableMap<String,NamespaceDescriptor> cache;
+  private volatile NavigableMap<String,NamespaceDescriptor> cache;
 
   public ZKNamespaceManager(ZooKeeperWatcher zkw) throws IOException {
     super(zkw);
@@ -150,7 +150,6 @@ public class ZKNamespaceManager extends ZooKeeperListener {
   @Override
   public void nodeChildrenChanged(String path) {
     if (nsZNode.equals(path)) {
-      // table permissions changed
       try {
         List<ZKUtil.NodeAndData> nodes =
             ZKUtil.getChildDataAndWatchForNewChildren(watcher, nsZNode);
