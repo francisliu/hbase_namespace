@@ -860,10 +860,6 @@ MasterServices, Server {
     // Make sure system tables are assigned before proceeding.
     assignSystemTables(status);
 
-    //create namespace manager
-    tableNamespaceManager = new TableNamespaceManager(this);
-    tableNamespaceManager.start();
-
     enableServerShutdownHandler();
 
     status.setStatus("Submitting log splitting work for previously failed region servers");
@@ -1096,6 +1092,8 @@ MasterServices, Server {
         ", location=" + catalogTracker.getMetaLocation());
     }
     status.setStatus("System Regions assigned.");
+
+    initNamespace();
   }
 
   private void enableSSHandWaitForMeta() throws IOException, InterruptedException {
@@ -1148,6 +1146,12 @@ MasterServices, Server {
     LOG.info("Forcing expire of " + sn);
     serverManager.expireServer(sn);
     return true;
+  }
+
+  void initNamespace() throws IOException {
+    //create namespace manager
+    tableNamespaceManager = new TableNamespaceManager(this);
+    tableNamespaceManager.start();
   }
 
   /**

@@ -650,7 +650,8 @@ module Hbase
     # Enables/disables a region by name
     def online(region_name, on_off)
       # Open meta table
-      meta = org.apache.hadoop.hbase.client.HTable.new(org.apache.hadoop.hbase.HConstants::META_TABLE_NAME)
+      meta = org.apache.hadoop.hbase.client.HTable.new(
+          org.apache.hadoop.hbase.TableName::META_TABLE_NAME)
 
       # Read region info
       # FIXME: fail gracefully if can't find the region
@@ -796,12 +797,13 @@ module Hbase
         end
         method = arg[METHOD]
         if method == "unset"
-          nsb.removeValue(arg[NAME])
+          nsb.removeConfiguration(arg[NAME])
         elsif  method == "set"
           arg.delete(METHOD)
           for k,v in arg
             v = v.to_s unless v.nil?
-            nsb.addProperty(k, v)
+
+            nsb.addConfiguration(k, v)
           end
         else
           raise(ArgumentError, "Unknown method #{method}")

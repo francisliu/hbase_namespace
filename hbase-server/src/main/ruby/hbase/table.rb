@@ -467,7 +467,7 @@ EOF
     def is_meta_table?
       tn = @table.table_name
       org.apache.hadoop.hbase.util.Bytes.equals(tn,
-          org.apache.hadoop.hbase.HConstants::META_TABLE_NAME.getName)
+          org.apache.hadoop.hbase.TableName::META_TABLE_NAME.getName)
     end
 
     # Returns family and (when has it) qualifier for a column name
