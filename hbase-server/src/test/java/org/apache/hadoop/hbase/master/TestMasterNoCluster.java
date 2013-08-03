@@ -211,9 +211,8 @@ public class TestMasterNoCluster {
       }
 
       @Override
-      boolean assignSystemTables(MonitoredTask status)
+      void assignSystemTables(MonitoredTask status)
           throws IOException, InterruptedException, KeeperException {
-        return true;
       }
     };
     master.start();
@@ -303,9 +302,8 @@ public class TestMasterNoCluster {
       }
 
       @Override
-      boolean assignSystemTables(MonitoredTask status)
+      void assignSystemTables(MonitoredTask status)
           throws IOException, InterruptedException, KeeperException {
-        return true;
       }
     };
     master.start();
@@ -402,9 +400,8 @@ public class TestMasterNoCluster {
       }
 
       @Override
-      boolean assignSystemTables(MonitoredTask status)
+      void assignSystemTables(MonitoredTask status)
           throws IOException, InterruptedException, KeeperException {
-        return true;
       }
     };
     master.start();

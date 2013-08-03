@@ -1111,9 +1111,11 @@ public class TestDistributedLogSplitting {
     TableName fullTName = TableName.valueOf(tname);
     // remove root and meta region
     regions.remove(HRegionInfo.FIRST_META_REGIONINFO);
-    for(HRegionInfo regionInfo : regions) {
+
+    for(Iterator<HRegionInfo> iter = regions.iterator(); iter.hasNext(); ) {
+      HRegionInfo regionInfo = iter.next();
       if(HTableDescriptor.isSystemTable(regionInfo.getTableName())) {
-         regions.remove(regionInfo);
+         iter.remove();
       }
     }
     HTableDescriptor htd = new HTableDescriptor(fullTName);

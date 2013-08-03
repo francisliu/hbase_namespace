@@ -23,9 +23,22 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * Immutable POJO class for representing a fully-qualified table name.
+ * Immutable POJO class for representing a table name.
  * Which is of the form:
- * &lt;table namespace&gt;.&lt;table qualifier&gt;
+ * &lt;table namespace&gt;:&lt;table qualifier&gt;
+ *
+ * Two special namespaces:
+ *
+ * 1. hbase - system namespace, used to contain hbase internal tables
+ * 2. default - tables with no explicit specified namespace will
+ * automatically fall into this namespace.
+ *
+ * ie
+ *
+ * a) foo:bar, means namespace=foo and qualifier=bar
+ * b) bar, means namespace=default and qualifier=bar
+ * c) default:bar, means namespace=default and qualifier=bar
+ *
  */
 @InterfaceAudience.Public
 @InterfaceStability.Evolving
@@ -208,11 +221,8 @@ public final class TableName implements Comparable<TableName> {
     ret.qualifier = qualifier;
     ret.qualifierAsString = Bytes.toString(qualifier);
 
-    isLegalNamespaceName(namespace);
-    isLegalTableQualifierName(qualifier);
+    finishValueOf(ret);
 
-    ret.nameAsString = createFullyQualified(ret.namespaceAsString, ret.qualifierAsString);
-    ret.name = Bytes.toBytes(ret.nameAsString);
     return ret;
   }
 
@@ -226,12 +236,18 @@ public final class TableName implements Comparable<TableName> {
     ret.qualifier = Bytes.toBytes(qualifierAsString);
     ret.qualifierAsString = qualifierAsString;
 
-    isLegalNamespaceName(ret.namespace);
-    isLegalTableQualifierName(ret.qualifier);
+    finishValueOf(ret);
 
-    ret.nameAsString = createFullyQualified(ret.namespaceAsString, ret.qualifierAsString);
-    ret.name = Bytes.toBytes(ret.nameAsString);
     return ret;
+  }
+
+  private static void finishValueOf(TableName tableName) {
+    isLegalNamespaceName(tableName.namespace);
+    isLegalTableQualifierName(tableName.qualifier);
+
+    tableName.nameAsString =
+        createFullyQualified(tableName.namespaceAsString, tableName.qualifierAsString);
+    tableName.name = Bytes.toBytes(tableName.nameAsString);
   }
 
   public static TableName valueOf(byte[] name) {

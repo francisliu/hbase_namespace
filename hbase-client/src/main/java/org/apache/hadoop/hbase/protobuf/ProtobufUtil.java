@@ -2114,12 +2114,12 @@ public final class ProtobufUtil {
 
   public static TableName toTableName(HBaseProtos.TableName tableNamePB) {
     return TableName.valueOf(tableNamePB.getNamespace().toByteArray(),
-        tableNamePB.getTableQualifier().toByteArray());
+        tableNamePB.getQualifier().toByteArray());
   }
 
   public static HBaseProtos.TableName toProtoTableName(TableName tableName) {
     return HBaseProtos.TableName.newBuilder()
         .setNamespace(ByteString.copyFrom(tableName.getNamespace()))
-        .setTableQualifier(ByteString.copyFrom(tableName.getQualifier())).build();
+        .setQualifier(ByteString.copyFrom(tableName.getQualifier())).build();
   }
 }

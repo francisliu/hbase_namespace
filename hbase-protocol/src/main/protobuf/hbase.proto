@@ -30,7 +30,7 @@ import "Cell.proto";
  */
 message TableName {
   required bytes namespace = 1;
-  required bytes table_qualifier = 2;
+  required bytes qualifier = 2;
 }
 
 /**

@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase;
+package org.apache.hadoop.hbase.migration;
 
 import static org.junit.Assert.*;
 
@@ -33,7 +33,12 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.MediumTests;
+import org.apache.hadoop.hbase.NamespaceDescriptor;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.Waiter;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
@@ -98,8 +103,9 @@ public class TestNamespaceUpgrade {
     Configuration toolConf = TEST_UTIL.getConfiguration();
     conf.set(HConstants.HBASE_DIR, TEST_UTIL.getDefaultRootDirPath().toString());
     ToolRunner.run(toolConf, new NamespaceUpgrade(), new String[]{"--upgrade"});
-    TEST_UTIL.startMiniHBaseCluster(1, 1);
 
+    assertTrue(FSUtils.getVersion(fs, hbaseRootDir).equals(HConstants.FILE_SYSTEM_VERSION));
+    TEST_UTIL.startMiniHBaseCluster(1, 1);
 
     for(String table: tables) {
       int count = 0;
@@ -176,7 +182,7 @@ public class TestNamespaceUpgrade {
       }
       TEST_UTIL.getHBaseAdmin().snapshot(table+"_snapshot3", table);
       final String newTableName =
-          newNS+TableName.NAMESPACE_DELIM+table+"_clone3";
+          newNS+ TableName.NAMESPACE_DELIM+table+"_clone3";
       TEST_UTIL.getHBaseAdmin().cloneSnapshot(table+"_snapshot3", newTableName);
       Thread.sleep(1000);
       count = 0;

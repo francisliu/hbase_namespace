@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.StoreFileInfo;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
+import org.apache.hadoop.hbase.util.Pair;
 
 /**
  * HFileLink describes a link to an hfile.
@@ -71,7 +72,8 @@ public class HFileLink extends FileLink {
       HRegionInfo.ENCODED_REGION_NAME_REGEX, StoreFileInfo.HFILE_NAME_REGEX);
 
   /** Define the HFile Link name parser in the form of: table=region-hfile */
-  private static final Pattern LINK_NAME_PATTERN =
+  //made package private for testing
+  static final Pattern LINK_NAME_PATTERN =
     Pattern.compile(String.format("^(?:(%s)(?:\\=))?(%s)=(%s)-(%s)$",
       TableName.VALID_NAMESPACE_REGEX, TableName.VALID_TABLE_QUALIFIER_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX, StoreFileInfo.HFILE_NAME_REGEX));
@@ -84,13 +86,6 @@ public class HFileLink extends FileLink {
     Pattern.compile(String.format("^(?:(%s)(?:=))?(%s)=(%s)-(.+)$",
       TableName.VALID_NAMESPACE_REGEX, TableName.VALID_TABLE_QUALIFIER_REGEX,
       HRegionInfo.ENCODED_REGION_NAME_REGEX));
-
-  /**
-   * HFileLink FS delimiter for namespace
-   * HFileLink is the only place where table name is written as part of a file/directory name
-   * fully qualified. Since the chosen delimiter is ':' and it is not a valid filesystem
-   * character on windows we had to pick a different delimiter for table names in HFileLinks.
-   */
 
   private final Path archivePath;
   private final Path originPath;
@@ -345,8 +340,9 @@ public class HFileLink extends FileLink {
   /**
    * Create the back reference name
    */
-  private static String createBackReferenceName(final String tableNameStr,
-                                                final String regionName) {
+  //package-private for testing
+  static String createBackReferenceName(final String tableNameStr,
+                                        final String regionName) {
 
     return regionName + "." + tableNameStr.replace(TableName.NAMESPACE_DELIM, '=');
   }
@@ -360,11 +356,10 @@ public class HFileLink extends FileLink {
    * @throws IOException on unexpected error.
    */
   public static Path getHFileFromBackReference(final Path rootDir, final Path linkRefPath) {
-    int separatorIndex = linkRefPath.getName().indexOf('.');
-    String linkRegionName = linkRefPath.getName().substring(0, separatorIndex);
-    String tableSubstr = linkRefPath.getName().substring(separatorIndex + 1)
-        .replace('=', TableName.NAMESPACE_DELIM);
-    TableName linkTableName = TableName.valueOf(tableSubstr);
+    Pair<TableName, String> p = parseBackReferenceName(linkRefPath.getName());
+    TableName linkTableName = p.getFirst();
+    String linkRegionName = p.getSecond();
+
     String hfileName = getBackReferenceFileName(linkRefPath.getParent());
     Path familyPath = linkRefPath.getParent().getParent();
     Path regionPath = familyPath.getParent();
@@ -375,6 +370,15 @@ public class HFileLink extends FileLink {
     Path linkTableDir = FSUtils.getTableDir(rootDir, linkTableName);
     Path regionDir = HRegion.getRegionDir(linkTableDir, linkRegionName);
     return new Path(new Path(regionDir, familyPath.getName()), linkName);
+  }
+
+  static Pair<TableName, String> parseBackReferenceName(String name) {
+    int separatorIndex = name.indexOf('.');
+    String linkRegionName = name.substring(0, separatorIndex);
+    String tableSubstr = name.substring(separatorIndex + 1)
+        .replace('=', TableName.NAMESPACE_DELIM);
+    TableName linkTableName = TableName.valueOf(tableSubstr);
+    return new Pair<TableName, String>(linkTableName, linkRegionName);
   }
 
   /**

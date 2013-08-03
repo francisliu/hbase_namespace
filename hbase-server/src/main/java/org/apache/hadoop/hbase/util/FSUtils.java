@@ -931,13 +931,6 @@ public abstract class FSUtils {
   throws IOException {
     List<Path> tableDirs = getTableDirs(fs, hbaseRootDir);
     for (Path d : tableDirs) {
-      // Skip the .log directory.  All others should be tables.  Inside a table,
-      // there are compaction.dir directories to skip.  Otherwise, all else
-      // should be regions.  Then in each region, should only be family
-      // directories.  Under each of these, should be one file only.
-      if (d.getName().equals(HConstants.HREGION_LOGDIR_NAME)) {
-        continue;
-      }
       FileStatus[] regionDirs = fs.listStatus(d, new DirFilter(fs));
       for (FileStatus regionDir : regionDirs) {
         Path dd = regionDir.getPath();
@@ -1014,13 +1007,6 @@ public abstract class FSUtils {
     DirFilter df = new DirFilter(fs);
     List<Path> tableDirs = getTableDirs(fs, hbaseRootDir);
     for (Path d : tableDirs) {
-      // Skip the .log directory.  All others should be tables.  Inside a table,
-      // there are compaction.dir directories to skip.  Otherwise, all else
-      // should be regions.  Then in each region, should only be family
-      // directories.  Under each of these, should be one file only.
-      if (d.getName().equals(HConstants.HREGION_LOGDIR_NAME)) {
-        continue;
-      }
       int cfCount = 0;
       int cfFrag = 0;
       FileStatus[] regionDirs = fs.listStatus(d, df);

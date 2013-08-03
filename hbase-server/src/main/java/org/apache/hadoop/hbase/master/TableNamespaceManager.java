@@ -104,7 +104,7 @@ public class TableNamespaceManager {
   }
 
 
-  public NamespaceDescriptor get(String name) throws IOException {
+  public synchronized NamespaceDescriptor get(String name) throws IOException {
     Result res = table.get(new Get(Bytes.toBytes(name)));
     if (res.isEmpty()) {
       return null;
@@ -116,7 +116,7 @@ public class TableNamespaceManager {
                     HTableDescriptor.NAMESPACE_COL_DESC_BYTES).getValue()));
   }
 
-  public void create(NamespaceDescriptor ns) throws IOException {
+  public synchronized void create(NamespaceDescriptor ns) throws IOException {
     if (get(ns.getName()) != null) {
       throw new ConstraintException("Namespace "+ns.getName()+" already exists");
     }
@@ -126,7 +126,7 @@ public class TableNamespaceManager {
     upsert(ns);
   }
 
-  public void update(NamespaceDescriptor ns) throws IOException {
+  public synchronized void update(NamespaceDescriptor ns) throws IOException {
     if (get(ns.getName()) == null) {
       throw new ConstraintException("Namespace "+ns.getName()+" does not exist");
     }
@@ -148,7 +148,7 @@ public class TableNamespaceManager {
     }
   }
 
-  public void remove(String name) throws IOException {
+  public synchronized void remove(String name) throws IOException {
     if (NamespaceDescriptor.RESERVED_NAMESPACES.contains(name)) {
       throw new ConstraintException("Reserved namespace "+name+" cannot be removed.");
     }
@@ -176,7 +176,7 @@ public class TableNamespaceManager {
     }
   }
 
-  public NavigableSet<NamespaceDescriptor> list() throws IOException {
+  public synchronized NavigableSet<NamespaceDescriptor> list() throws IOException {
     NavigableSet<NamespaceDescriptor> ret =
         Sets.newTreeSet(NamespaceDescriptor.NAMESPACE_DESCRIPTOR_COMPARATOR);
     ResultScanner scanner = table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES);
@@ -204,7 +204,7 @@ public class TableNamespaceManager {
             newRegions,
             masterServices).prepare());
     //wait for region to be online
-    int tries = 100;
+    int tries = conf.getInt("hbase.master.namespace.init.timeout", 60000);
     while(masterServices.getAssignmentManager()
         .getRegionStates().getRegionServerOfRegion(newRegions[0]) == null &&
         tries > 0) {

@@ -39,7 +39,7 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
 
   /** default constructor */
   public TableSplit() {
-    this(null, HConstants.EMPTY_BYTE_ARRAY,
+    this((TableName)null, HConstants.EMPTY_BYTE_ARRAY,
       HConstants.EMPTY_BYTE_ARRAY, "");
   }
 
@@ -58,10 +58,20 @@ public class TableSplit implements InputSplit, Comparable<TableSplit> {
     this.m_regionLocation = location;
   }
 
+  public TableSplit(byte [] tableName, byte [] startRow, byte [] endRow,
+      final String location) {
+    this(TableName.valueOf(tableName), startRow, endRow, location);
+  }
+
   /** @return table name */
-  public TableName getTableName() {
+  public TableName getTable() {
     return this.m_tableName;
   }
+
+  /** @return table name */
+   public byte [] getTableName() {
+     return this.m_tableName.getName();
+   }
 
   /** @return starting row key */
   public byte [] getStartRow() {

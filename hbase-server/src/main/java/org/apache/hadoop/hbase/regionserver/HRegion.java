@@ -4072,12 +4072,10 @@ public class HRegion implements HeapSize { // , Writable{
       final RegionServerServices rsServices, final CancelableProgressable reporter)
       throws IOException {
     if (info == null) throw new NullPointerException("Passed region info is null");
-    LOG.info("Open " + info);
-    Path dir = FSUtils.getTableDir(rootDir, info.getTableName());
-    LOG.info("HRegion.openHRegion Region name ==" + info.getRegionNameAsString());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Opening region: " + info);
     }
+    Path dir = FSUtils.getTableDir(rootDir, info.getTableName());
     HRegion r = HRegion.newHRegion(dir, wal, fs, conf, info, htd, rsServices);
     return r.openHRegion(reporter);
   }

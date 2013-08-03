@@ -52,7 +52,6 @@ import org.apache.hadoop.hbase.Abortable;
 import org.apache.hadoop.hbase.Chore;
 import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.ClusterStatus;
-import org.apache.hadoop.hbase.NotAllMetaRegionsOnlineException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.HBaseIOException;
 import org.apache.hadoop.hbase.NamespaceDescriptor;
@@ -378,9 +377,6 @@ MasterServices, Server {
 
   /** The following is used in master recovery scenario to re-register listeners */
   private List<ZooKeeperListener> registeredZKListenersBeforeRecovery;
-
-  /** monitor lock exclusively used by monitor apis */
-  private Object nsLock = new Object();
 
   /**
    * Initializes the HMaster. The steps are as follows:
@@ -862,7 +858,11 @@ MasterServices, Server {
 
     status.setStatus("Assigning System tables");
     // Make sure system tables are assigned before proceeding.
-    if (!assignSystemTables(status)) return;
+    assignSystemTables(status);
+
+    //create namespace manager
+    tableNamespaceManager = new TableNamespaceManager(this);
+    tableNamespaceManager.start();
 
     enableServerShutdownHandler();
 
@@ -1007,7 +1007,7 @@ MasterServices, Server {
         this.catalogTracker.getMetaLocation());
     }
 
-    enableCatalogTables(TableName.META_TABLE_NAME);
+    enableMeta(TableName.META_TABLE_NAME);
     LOG.info(".META. assigned=" + assigned + ", rit=" + rit +
       ", location=" + catalogTracker.getMetaLocation());
     status.setStatus("META assigned.");
@@ -1029,14 +1029,13 @@ MasterServices, Server {
     if (this.distributedLogReplay) {
       this.fileSystemManager.prepareLogReplay(Sets.newHashSet(currentServer));
     } else {
-      // In recovered.edits mode: create recovered edits file for .META. server
+      // In recovered.edits mode: create recovered edits file for region server
       this.fileSystemManager.splitLog(currentServer);
     }
   }
 
-  boolean assignSystemTables(MonitoredTask status)
-      throws IOException, InterruptedException, KeeperException {
-    status.setStatus("Assigning system regions");
+  void assignSystemTables(MonitoredTask status)
+      throws InterruptedException, IOException, KeeperException {
     // Skip assignment for regions of tables in DISABLING state because during clean cluster startup
     // no RS is alive and regions map also doesn't have any information about the regions.
     // See HBASE-6281.
@@ -1053,70 +1052,51 @@ MasterServices, Server {
     }
 
     int assigned = 0;
+    boolean beingExpired = false;
+
+    status.setStatus("Assigning System Regions");
+
     for(Map.Entry<HRegionInfo, ServerName> entry: allRegions.entrySet()) {
       HRegionInfo regionInfo = entry.getKey();
       ServerName currServer = entry.getValue();
-      boolean rit =
-          assignmentManager.processRegionInTransitionAndBlockUntilAssigned(regionInfo);
-      boolean serverValid = false;
+
+      assignmentManager.getRegionStates().createRegionState(regionInfo);
+      boolean rit = this.assignmentManager
+          .processRegionInTransitionAndBlockUntilAssigned(regionInfo);
+      boolean regionLocation = false;
       if (currServer != null) {
-        serverValid = verifyRegionLocation(currServer, regionInfo);
+        regionLocation = verifyRegionLocation(currServer, regionInfo);
       }
-      if (!rit && !serverValid) {
-        boolean beingExpired = false;
-        if(currServer != null) {
-          beingExpired = expireIfOnline(currServer);
-        }
+      LOG.info("-->"+rit+","+regionLocation);
+      if (!rit && !regionLocation) {
+        beingExpired = expireIfOnline(currServer);
         if (beingExpired) {
           splitLogBeforeAssignment(currServer);
         }
         assignmentManager.assign(regionInfo, true);
-        enableSSHandWaitForRegion(regionInfo);
-        // Make sure a region location is set correctly
-        if (!waitVerifiedRegionLocation(regionInfo)) return false;
-        // This guarantees that the transition assigning .META. has completed
+        // Make sure a region location is set.
         this.assignmentManager.waitForAssignment(regionInfo);
         assigned++;
         if (beingExpired && this.distributedLogReplay) {
-          // In Replay WAL Mode, we need the new .META. server online
+          // In Replay WAL Mode, we need the new region server online
           this.fileSystemManager.splitLog(currServer);
         }
-      } else if (rit && !serverValid) {
-        // Make sure a region location is set correctly
-        if (!waitVerifiedRegionLocation(regionInfo)) return false;
-        // This guarantees that the transition assigning .META. has completed
-        this.assignmentManager.waitForAssignment(regionInfo);
+      } else if (rit && !regionLocation) {
+        if (!waitVerifiedRegionLocation(regionInfo)) return;
         assigned++;
       } else {
-        // Region already assigned. We didnt' assign it. Add to in-memory state.
-        assignmentManager.regionOnline(regionInfo, currServer);
+        // Region already assigned. We didn't assign it. Add to in-memory state.
+        this.assignmentManager.regionOnline(regionInfo, currServer);
       }
-      LOG.info(regionInfo.getRegionNameAsString()+" assigned=" + assigned + ", rit=" + rit + ", location="
-          + currServer);
-    }
-    //create namespace manager
-    tableNamespaceManager = new TableNamespaceManager(this);
-    tableNamespaceManager.start();
-    status.setStatus("Assigning system regions done");
-    return true;
-  }
 
-  private void enableSSHandWaitForRegion(HRegionInfo regionInfo) throws IOException,
-      InterruptedException {
-    enableServerShutdownHandler();
-    this.assignmentManager.waitForAssignment(regionInfo);
-    ServerName serverName =
-        assignmentManager.getRegionStates().getRegionServerOfRegion(regionInfo);
-    boolean serverValid =
-        ProtobufUtil.getRegionInfo(HConnectionManager.getConnection(conf)
-            .getAdmin(serverName),
-            regionInfo.getRegionName()) != null;
-    if (!serverValid) {
-      throw new IOException("Region "+regionInfo.getRegionNameAsString()+
-          " online validation failed on server "+serverName);
+      if (!this.assignmentManager.getZKTable().isEnabledTable(regionInfo.getTableName())) {
+        this.assignmentManager.setEnabledTable(regionInfo.getTableName());
+      }
+      LOG.info("System Regions assigned=" + assigned + ", rit=" + rit +
+        ", location=" + catalogTracker.getMetaLocation());
     }
+    status.setStatus("System Regions assigned.");
   }
-
 
   private void enableSSHandWaitForMeta() throws IOException, InterruptedException {
     enableServerShutdownHandler();
@@ -1124,24 +1104,6 @@ MasterServices, Server {
     // Above check waits for general meta availability but this does not
     // guarantee that the transition has completed
     this.assignmentManager.waitForAssignment(HRegionInfo.FIRST_META_REGIONINFO);
-  }
-
-  /**
-   * @return True if there a meta available
-   * @throws InterruptedException
-   */
-  private boolean isMetaLocation() throws InterruptedException {
-    // Cycle up here in master rather than down in catalogtracker so we can
-    // check the master stopped flag every so often.
-    while (!this.stopped) {
-      try {
-        if (this.catalogTracker.waitForMeta(100) != null) break;
-      } catch (NotAllMetaRegionsOnlineException e) {
-        // Ignore.  I know .META. is not online yet.
-      }
-    }
-    // We got here because we came of above loop.
-    return !this.stopped;
   }
 
   private boolean waitVerifiedRegionLocation(HRegionInfo regionInfo) throws IOException {
@@ -1166,9 +1128,9 @@ MasterServices, Server {
     return false;
   }
 
-  private void enableCatalogTables(TableName catalogTable) {
-    if (!this.assignmentManager.getZKTable().isEnabledTable(catalogTable)) {
-      this.assignmentManager.setEnabledTable(catalogTable);
+  private void enableMeta(TableName metaTableName) {
+    if (!this.assignmentManager.getZKTable().isEnabledTable(metaTableName)) {
+      this.assignmentManager.setEnabledTable(metaTableName);
     }
   }
 
@@ -3074,9 +3036,7 @@ MasterServices, Server {
         return;
       }
     }
-    synchronized (nsLock) {
-      tableNamespaceManager.create(descriptor);
-    }
+    tableNamespaceManager.create(descriptor);
     if (cpHost != null) {
       cpHost.postCreateNamespace(descriptor);
     }
@@ -3089,9 +3049,7 @@ MasterServices, Server {
         return;
       }
     }
-    synchronized (nsLock) {
-      tableNamespaceManager.update(descriptor);
-    }
+    tableNamespaceManager.update(descriptor);
     if (cpHost != null) {
       cpHost.postModifyNamespace(descriptor);
     }
@@ -3103,29 +3061,21 @@ MasterServices, Server {
         return;
       }
     }
-    synchronized (nsLock) {
-      tableNamespaceManager.remove(name);
-    }
+    tableNamespaceManager.remove(name);
     if (cpHost != null) {
       cpHost.postDeleteNamespace(name);
     }
   }
 
   public NamespaceDescriptor getNamespaceDescriptor(String name) throws IOException {
-    synchronized (nsLock) {
       return tableNamespaceManager.get(name);
-    }
   }
 
   public List<NamespaceDescriptor> listNamespaceDescriptors() throws IOException {
-    synchronized (nsLock) {
-      return Lists.newArrayList(tableNamespaceManager.list());
-    }
+    return Lists.newArrayList(tableNamespaceManager.list());
   }
 
   public List<HTableDescriptor> getTableDescriptorsByNamespace(String name) throws IOException {
-    synchronized (nsLock) {
-      return Lists.newArrayList(tableDescriptors.getByNamespace(name).values());
-    }
+    return Lists.newArrayList(tableDescriptors.getByNamespace(name).values());
   }
 }

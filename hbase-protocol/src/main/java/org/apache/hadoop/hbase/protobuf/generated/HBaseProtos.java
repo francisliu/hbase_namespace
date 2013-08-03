@@ -99,9 +99,9 @@ public final class HBaseProtos {
     boolean hasNamespace();
     com.google.protobuf.ByteString getNamespace();
     
-    // required bytes table_qualifier = 2;
-    boolean hasTableQualifier();
-    com.google.protobuf.ByteString getTableQualifier();
+    // required bytes qualifier = 2;
+    boolean hasQualifier();
+    com.google.protobuf.ByteString getQualifier();
   }
   public static final class TableName extends
       com.google.protobuf.GeneratedMessage
@@ -142,19 +142,19 @@ public final class HBaseProtos {
       return namespace_;
     }
     
-    // required bytes table_qualifier = 2;
-    public static final int TABLE_QUALIFIER_FIELD_NUMBER = 2;
-    private com.google.protobuf.ByteString tableQualifier_;
-    public boolean hasTableQualifier() {
+    // required bytes qualifier = 2;
+    public static final int QUALIFIER_FIELD_NUMBER = 2;
+    private com.google.protobuf.ByteString qualifier_;
+    public boolean hasQualifier() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
-    public com.google.protobuf.ByteString getTableQualifier() {
-      return tableQualifier_;
+    public com.google.protobuf.ByteString getQualifier() {
+      return qualifier_;
     }
     
     private void initFields() {
       namespace_ = com.google.protobuf.ByteString.EMPTY;
-      tableQualifier_ = com.google.protobuf.ByteString.EMPTY;
+      qualifier_ = com.google.protobuf.ByteString.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -165,7 +165,7 @@ public final class HBaseProtos {
         memoizedIsInitialized = 0;
         return false;
       }
-      if (!hasTableQualifier()) {
+      if (!hasQualifier()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -180,7 +180,7 @@ public final class HBaseProtos {
         output.writeBytes(1, namespace_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, tableQualifier_);
+        output.writeBytes(2, qualifier_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -197,7 +197,7 @@ public final class HBaseProtos {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, tableQualifier_);
+          .computeBytesSize(2, qualifier_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -227,10 +227,10 @@ public final class HBaseProtos {
         result = result && getNamespace()
             .equals(other.getNamespace());
       }
-      result = result && (hasTableQualifier() == other.hasTableQualifier());
-      if (hasTableQualifier()) {
-        result = result && getTableQualifier()
-            .equals(other.getTableQualifier());
+      result = result && (hasQualifier() == other.hasQualifier());
+      if (hasQualifier()) {
+        result = result && getQualifier()
+            .equals(other.getQualifier());
       }
       result = result &&
           getUnknownFields().equals(other.getUnknownFields());
@@ -245,9 +245,9 @@ public final class HBaseProtos {
         hash = (37 * hash) + NAMESPACE_FIELD_NUMBER;
         hash = (53 * hash) + getNamespace().hashCode();
       }
-      if (hasTableQualifier()) {
-        hash = (37 * hash) + TABLE_QUALIFIER_FIELD_NUMBER;
-        hash = (53 * hash) + getTableQualifier().hashCode();
+      if (hasQualifier()) {
+        hash = (37 * hash) + QUALIFIER_FIELD_NUMBER;
+        hash = (53 * hash) + getQualifier().hashCode();
       }
       hash = (29 * hash) + getUnknownFields().hashCode();
       return hash;
@@ -367,7 +367,7 @@ public final class HBaseProtos {
         super.clear();
         namespace_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000001);
-        tableQualifier_ = com.google.protobuf.ByteString.EMPTY;
+        qualifier_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
@@ -414,7 +414,7 @@ public final class HBaseProtos {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.tableQualifier_ = tableQualifier_;
+        result.qualifier_ = qualifier_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -434,8 +434,8 @@ public final class HBaseProtos {
         if (other.hasNamespace()) {
           setNamespace(other.getNamespace());
         }
-        if (other.hasTableQualifier()) {
-          setTableQualifier(other.getTableQualifier());
+        if (other.hasQualifier()) {
+          setQualifier(other.getQualifier());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -446,7 +446,7 @@ public final class HBaseProtos {
           
           return false;
         }
-        if (!hasTableQualifier()) {
+        if (!hasQualifier()) {
           
           return false;
         }
@@ -483,7 +483,7 @@ public final class HBaseProtos {
             }
             case 18: {
               bitField0_ |= 0x00000002;
-              tableQualifier_ = input.readBytes();
+              qualifier_ = input.readBytes();
               break;
             }
           }
@@ -516,26 +516,26 @@ public final class HBaseProtos {
         return this;
       }
       
-      // required bytes table_qualifier = 2;
-      private com.google.protobuf.ByteString tableQualifier_ = com.google.protobuf.ByteString.EMPTY;
-      public boolean hasTableQualifier() {
+      // required bytes qualifier = 2;
+      private com.google.protobuf.ByteString qualifier_ = com.google.protobuf.ByteString.EMPTY;
+      public boolean hasQualifier() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
-      public com.google.protobuf.ByteString getTableQualifier() {
-        return tableQualifier_;
+      public com.google.protobuf.ByteString getQualifier() {
+        return qualifier_;
       }
-      public Builder setTableQualifier(com.google.protobuf.ByteString value) {
+      public Builder setQualifier(com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000002;
-        tableQualifier_ = value;
+        qualifier_ = value;
         onChanged();
         return this;
       }
-      public Builder clearTableQualifier() {
+      public Builder clearQualifier() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        tableQualifier_ = getDefaultInstance().getTableQualifier();
+        qualifier_ = getDefaultInstance().getQualifier();
         onChanged();
         return this;
       }
@@ -11299,47 +11299,47 @@ public final class HBaseProtos {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\013hbase.proto\032\nCell.proto\"7\n\tTableName\022\021" +
-      "\n\tnamespace\030\001 \002(\014\022\027\n\017table_qualifier\030\002 \002" +
-      "(\014\"\250\001\n\013TableSchema\022\036\n\ntable_name\030\001 \001(\0132\n" +
-      ".TableName\022#\n\nattributes\030\002 \003(\0132\017.BytesBy" +
-      "tesPair\022,\n\017column_families\030\003 \003(\0132\023.Colum" +
-      "nFamilySchema\022&\n\rconfiguration\030\004 \003(\0132\017.N" +
-      "ameStringPair\"o\n\022ColumnFamilySchema\022\014\n\004n" +
-      "ame\030\001 \002(\014\022#\n\nattributes\030\002 \003(\0132\017.BytesByt" +
-      "esPair\022&\n\rconfiguration\030\003 \003(\0132\017.NameStri" +
-      "ngPair\"\227\001\n\nRegionInfo\022\021\n\tregion_id\030\001 \002(\004",
-      "\022\036\n\ntable_name\030\002 \002(\0132\n.TableName\022\021\n\tstar" +
-      "t_key\030\003 \001(\014\022\017\n\007end_key\030\004 \001(\014\022\017\n\007offline\030" +
-      "\005 \001(\010\022\r\n\005split\030\006 \001(\010\022\022\n\nrecovering\030\007 \001(\010" +
-      "\"1\n\014FavoredNodes\022!\n\014favored_node\030\001 \003(\0132\013" +
-      ".ServerName\"\225\001\n\017RegionSpecifier\0222\n\004type\030" +
-      "\001 \002(\0162$.RegionSpecifier.RegionSpecifierT" +
-      "ype\022\r\n\005value\030\002 \002(\014\"?\n\023RegionSpecifierTyp" +
-      "e\022\017\n\013REGION_NAME\020\001\022\027\n\023ENCODED_REGION_NAM" +
-      "E\020\002\"%\n\tTimeRange\022\014\n\004from\030\001 \001(\004\022\n\n\002to\030\002 \001" +
-      "(\004\"A\n\nServerName\022\021\n\thost_name\030\001 \002(\t\022\014\n\004p",
-      "ort\030\002 \001(\r\022\022\n\nstart_code\030\003 \001(\004\"\033\n\013Coproce" +
-      "ssor\022\014\n\004name\030\001 \002(\t\"-\n\016NameStringPair\022\014\n\004" +
-      "name\030\001 \002(\t\022\r\n\005value\030\002 \002(\t\",\n\rNameBytesPa" +
-      "ir\022\014\n\004name\030\001 \002(\t\022\r\n\005value\030\002 \001(\014\"/\n\016Bytes" +
-      "BytesPair\022\r\n\005first\030\001 \002(\014\022\016\n\006second\030\002 \002(\014" +
-      "\",\n\rNameInt64Pair\022\014\n\004name\030\001 \001(\t\022\r\n\005value" +
-      "\030\002 \001(\003\"\256\001\n\023SnapshotDescription\022\014\n\004name\030\001" +
-      " \002(\t\022\r\n\005table\030\002 \001(\t\022\030\n\rcreation_time\030\003 \001" +
-      "(\003:\0010\022.\n\004type\030\004 \001(\0162\031.SnapshotDescriptio" +
-      "n.Type:\005FLUSH\022\017\n\007version\030\005 \001(\005\"\037\n\004Type\022\014",
-      "\n\010DISABLED\020\000\022\t\n\005FLUSH\020\001\"\n\n\010EmptyMsg\"\033\n\007L" +
-      "ongMsg\022\020\n\010long_msg\030\001 \002(\003\"\'\n\rBigDecimalMs" +
-      "g\022\026\n\016bigdecimal_msg\030\001 \002(\014\"5\n\004UUID\022\026\n\016lea" +
-      "st_sig_bits\030\001 \002(\004\022\025\n\rmost_sig_bits\030\002 \002(\004" +
-      "\"K\n\023NamespaceDescriptor\022\014\n\004name\030\001 \002(\014\022&\n" +
-      "\rconfiguration\030\002 \003(\0132\017.NameStringPair*r\n" +
-      "\013CompareType\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020" +
-      "\001\022\t\n\005EQUAL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_O" +
-      "R_EQUAL\020\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B>\n*org" +
-      ".apache.hadoop.hbase.protobuf.generatedB",
-      "\013HBaseProtosH\001\240\001\001"
+      "\n\013hbase.proto\032\nCell.proto\"1\n\tTableName\022\021" +
+      "\n\tnamespace\030\001 \002(\014\022\021\n\tqualifier\030\002 \002(\014\"\250\001\n" +
+      "\013TableSchema\022\036\n\ntable_name\030\001 \001(\0132\n.Table" +
+      "Name\022#\n\nattributes\030\002 \003(\0132\017.BytesBytesPai" +
+      "r\022,\n\017column_families\030\003 \003(\0132\023.ColumnFamil" +
+      "ySchema\022&\n\rconfiguration\030\004 \003(\0132\017.NameStr" +
+      "ingPair\"o\n\022ColumnFamilySchema\022\014\n\004name\030\001 " +
+      "\002(\014\022#\n\nattributes\030\002 \003(\0132\017.BytesBytesPair" +
+      "\022&\n\rconfiguration\030\003 \003(\0132\017.NameStringPair" +
+      "\"\227\001\n\nRegionInfo\022\021\n\tregion_id\030\001 \002(\004\022\036\n\nta",
+      "ble_name\030\002 \002(\0132\n.TableName\022\021\n\tstart_key\030" +
+      "\003 \001(\014\022\017\n\007end_key\030\004 \001(\014\022\017\n\007offline\030\005 \001(\010\022" +
+      "\r\n\005split\030\006 \001(\010\022\022\n\nrecovering\030\007 \001(\010\"1\n\014Fa" +
+      "voredNodes\022!\n\014favored_node\030\001 \003(\0132\013.Serve" +
+      "rName\"\225\001\n\017RegionSpecifier\0222\n\004type\030\001 \002(\0162" +
+      "$.RegionSpecifier.RegionSpecifierType\022\r\n" +
+      "\005value\030\002 \002(\014\"?\n\023RegionSpecifierType\022\017\n\013R" +
+      "EGION_NAME\020\001\022\027\n\023ENCODED_REGION_NAME\020\002\"%\n" +
+      "\tTimeRange\022\014\n\004from\030\001 \001(\004\022\n\n\002to\030\002 \001(\004\"A\n\n" +
+      "ServerName\022\021\n\thost_name\030\001 \002(\t\022\014\n\004port\030\002 ",
+      "\001(\r\022\022\n\nstart_code\030\003 \001(\004\"\033\n\013Coprocessor\022\014" +
+      "\n\004name\030\001 \002(\t\"-\n\016NameStringPair\022\014\n\004name\030\001" +
+      " \002(\t\022\r\n\005value\030\002 \002(\t\",\n\rNameBytesPair\022\014\n\004" +
+      "name\030\001 \002(\t\022\r\n\005value\030\002 \001(\014\"/\n\016BytesBytesP" +
+      "air\022\r\n\005first\030\001 \002(\014\022\016\n\006second\030\002 \002(\014\",\n\rNa" +
+      "meInt64Pair\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001(\003" +
+      "\"\256\001\n\023SnapshotDescription\022\014\n\004name\030\001 \002(\t\022\r" +
+      "\n\005table\030\002 \001(\t\022\030\n\rcreation_time\030\003 \001(\003:\0010\022" +
+      ".\n\004type\030\004 \001(\0162\031.SnapshotDescription.Type" +
+      ":\005FLUSH\022\017\n\007version\030\005 \001(\005\"\037\n\004Type\022\014\n\010DISA",
+      "BLED\020\000\022\t\n\005FLUSH\020\001\"\n\n\010EmptyMsg\"\033\n\007LongMsg" +
+      "\022\020\n\010long_msg\030\001 \002(\003\"\'\n\rBigDecimalMsg\022\026\n\016b" +
+      "igdecimal_msg\030\001 \002(\014\"5\n\004UUID\022\026\n\016least_sig" +
+      "_bits\030\001 \002(\004\022\025\n\rmost_sig_bits\030\002 \002(\004\"K\n\023Na" +
+      "mespaceDescriptor\022\014\n\004name\030\001 \002(\014\022&\n\rconfi" +
+      "guration\030\002 \003(\0132\017.NameStringPair*r\n\013Compa" +
+      "reType\022\010\n\004LESS\020\000\022\021\n\rLESS_OR_EQUAL\020\001\022\t\n\005E" +
+      "QUAL\020\002\022\r\n\tNOT_EQUAL\020\003\022\024\n\020GREATER_OR_EQUA" +
+      "L\020\004\022\013\n\007GREATER\020\005\022\t\n\005NO_OP\020\006B>\n*org.apach" +
+      "e.hadoop.hbase.protobuf.generatedB\013HBase",
+      "ProtosH\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -11351,7 +11351,7 @@ public final class HBaseProtos {
           internal_static_TableName_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_TableName_descriptor,
-              new java.lang.String[] { "Namespace", "TableQualifier", },
+              new java.lang.String[] { "Namespace", "Qualifier", },
               org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.class,
               org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.TableName.Builder.class);
           internal_static_TableSchema_descriptor =
