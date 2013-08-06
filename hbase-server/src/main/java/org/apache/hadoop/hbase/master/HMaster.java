@@ -1014,16 +1014,17 @@ MasterServices, Server {
       // In log replay mode, we mark META region as recovering in ZK
       Set<HRegionInfo> regions = new HashSet<HRegionInfo>();
       regions.add(HRegionInfo.FIRST_META_REGIONINFO);
-      this.fileSystemManager.prepareMetaLogReplay(currentMetaServer, regions);
+      this.fileSystemManager.prepareLogReplay(currentMetaServer, regions);
     } else {
       // In recovered.edits mode: create recovered edits file for .META. server
       this.fileSystemManager.splitMetaLog(currentMetaServer);
     }
   }
 
-  private void splitLogBeforeAssignment(ServerName currentServer) throws IOException {
+  private void splitLogBeforeAssignment(ServerName currentServer,
+                                        Set<HRegionInfo> regions) throws IOException {
     if (this.distributedLogReplay) {
-      this.fileSystemManager.prepareLogReplay(Sets.newHashSet(currentServer));
+      this.fileSystemManager.prepareLogReplay(currentServer, regions);
     } else {
       // In recovered.edits mode: create recovered edits file for region server
       this.fileSystemManager.splitLog(currentServer);
@@ -1067,7 +1068,7 @@ MasterServices, Server {
       if (!rit && !regionLocation) {
         beingExpired = expireIfOnline(currServer);
         if (beingExpired) {
-          splitLogBeforeAssignment(currServer);
+          splitLogBeforeAssignment(currServer, Sets.newHashSet(regionInfo));
         }
         assignmentManager.assign(regionInfo, true);
         // Make sure a region location is set.

@@ -145,7 +145,7 @@ public class TestTableDescriptorModification {
     // Verify descriptor from HDFS
     MasterFileSystem mfs = TEST_UTIL.getMiniHBaseCluster().getMaster().getMasterFileSystem();
     Path tableDir = FSUtils.getTableDir(mfs.getRootDir(), tableName);
-    htd = FSTableDescriptors.getTableDescriptor(mfs.getFileSystem(), tableDir);
+    htd = FSTableDescriptors.getTableDescriptorFromFs(mfs.getFileSystem(), tableDir);
     verifyTableDescriptor(htd, tableName, families);
   }
 

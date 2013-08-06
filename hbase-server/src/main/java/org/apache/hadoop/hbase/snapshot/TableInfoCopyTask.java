@@ -62,12 +62,13 @@ public class TableInfoCopyTask extends SnapshotTask {
     LOG.debug("Attempting to copy table info for snapshot:"
         + ClientSnapshotDescriptionUtils.toString(this.snapshot));
     // get the HTable descriptor
-    HTableDescriptor orig = FSTableDescriptors.getTableDescriptor(fs, rootDir,
+    HTableDescriptor orig = FSTableDescriptors.getTableDescriptorFromFs(fs, rootDir,
         TableName.valueOf(this.snapshot.getTable()));
     this.rethrowException();
     // write a copy of descriptor to the snapshot directory
     Path snapshotDir = SnapshotDescriptionUtils.getWorkingSnapshotDir(snapshot, rootDir);
-    FSTableDescriptors.createTableDescriptorForTableDirectory(fs, snapshotDir, orig, false);
+    new FSTableDescriptors(fs, rootDir)
+      .createTableDescriptorForTableDirectory(snapshotDir, orig, false);
     LOG.debug("Finished copying tableinfo.");
     return null;
   }

@@ -337,41 +337,18 @@ public class MasterFileSystem {
 
   /**
    * Mark regions in recovering state when distributedLogReplay are set true
-   * @param serverNames Set of ServerNames to be replayed wals in order to recover changes contained
-   *          in them
+   * @param serverName Failed region server whose wals to be replayed
+   * @param regions Set of regions to be recovered
    * @throws IOException
    */
-  public void prepareLogReplay(Set<ServerName> serverNames) throws IOException {
+  public void prepareLogReplay(ServerName serverName, Set<HRegionInfo> regions) throws IOException {
     if (!this.distributedLogReplay) {
       return;
     }
     // mark regions in recovering state
-    for (ServerName serverName : serverNames) {
-      NavigableMap<HRegionInfo, Result> regions = this.getServerUserRegions(serverName);
-      if (regions == null) {
-        continue;
-      }
-      try {
-        this.splitLogManager.markRegionsRecoveringInZK(serverName, regions.keySet());
-      } catch (KeeperException e) {
-        throw new IOException(e);
-      }
-    }
-  }
-
-  /**
-   * Mark meta regions in recovering state when distributedLogReplay are set true. The function is used
-   * when {@link #getServerUserRegions(ServerName)} can't be used in case meta RS is down.
-   * @param serverName
-   * @param regions
-   * @throws IOException
-   */
-  public void prepareMetaLogReplay(ServerName serverName, Set<HRegionInfo> regions)
-      throws IOException {
-    if (!this.distributedLogReplay || (regions == null)) {
+    if (regions == null || regions.isEmpty()) {
       return;
     }
-    // mark regions in recovering state
     try {
       this.splitLogManager.markRegionsRecoveringInZK(serverName, regions);
     } catch (KeeperException e) {
@@ -476,10 +453,14 @@ public class MasterFileSystem {
     // Make sure the meta region directory exists!
     if (!FSUtils.metaRegionExists(fs, rd)) {
       bootstrap(rd, c);
+    } else {
+      // Migrate table descriptor files if necessary
+      org.apache.hadoop.hbase.util.FSTableDescriptorMigrationToSubdir
+        .migrateFSTableDescriptorsIfNecessary(fs, rd);
     }
-
+      
     // Create tableinfo-s for META if not already there.
-    FSTableDescriptors.createTableDescriptor(fs, rd, HTableDescriptor.META_TABLEDESC, false);
+    new FSTableDescriptors(fs, rd).createTableDescriptor(HTableDescriptor.META_TABLEDESC);
 
     return rd;
   }
@@ -515,7 +496,7 @@ public class MasterFileSystem {
     LOG.info("BOOTSTRAP: creating META region");
     try {
       // Bootstrapping, make sure blockcache is off.  Else, one will be
-      // created here in bootstap and it'll need to be cleaned up.  Better to
+      // created here in bootstrap and it'll need to be cleaned up.  Better to
       // not make it in first place.  Turn off block caching for bootstrap.
       // Enable after.
       HRegionInfo metaHRI = new HRegionInfo(HRegionInfo.FIRST_META_REGIONINFO);
@@ -602,16 +583,6 @@ public class MasterFileSystem {
     if (splitLogManager != null) {
       this.splitLogManager.stop();
     }
-  }
-
-  /**
-   * Create new HTableDescriptor in HDFS.
-   *
-   * @param htableDescriptor
-   */
-  public void createTableDescriptor(HTableDescriptor htableDescriptor)
-      throws IOException {
-    FSTableDescriptors.createTableDescriptor(htableDescriptor, conf);
   }
 
   /**

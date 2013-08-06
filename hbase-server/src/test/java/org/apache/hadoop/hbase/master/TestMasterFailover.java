@@ -194,8 +194,9 @@ public class TestMasterFailover {
 
     FileSystem filesystem = FileSystem.get(conf);
     Path rootdir = FSUtils.getRootDir(conf);
+    FSTableDescriptors fstd = new FSTableDescriptors(filesystem, rootdir);
     // Write the .tableinfo
-    FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdEnabled);
+    fstd.createTableDescriptor(htdEnabled);
 
     HRegionInfo hriEnabled = new HRegionInfo(htdEnabled.getTableName(), null, null);
     createRegion(hriEnabled, rootdir, conf, htdEnabled);
@@ -207,7 +208,7 @@ public class TestMasterFailover {
     HTableDescriptor htdDisabled = new HTableDescriptor(disabledTable);
     htdDisabled.addFamily(new HColumnDescriptor(FAMILY));
     // Write the .tableinfo
-    FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdDisabled);
+    fstd.createTableDescriptor(htdDisabled);
     HRegionInfo hriDisabled = new HRegionInfo(htdDisabled.getTableName(), null, null);
     createRegion(hriDisabled, rootdir, conf, htdDisabled);
     List<HRegionInfo> disabledRegions = TEST_UTIL.createMultiRegionsInMeta(
@@ -496,8 +497,9 @@ public class TestMasterFailover {
     htdEnabled.addFamily(new HColumnDescriptor(FAMILY));
     FileSystem filesystem = FileSystem.get(conf);
     Path rootdir = FSUtils.getRootDir(conf);
+    FSTableDescriptors fstd = new FSTableDescriptors(filesystem, rootdir);
     // Write the .tableinfo
-    FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdEnabled);
+    fstd.createTableDescriptor(htdEnabled);
     HRegionInfo hriEnabled = new HRegionInfo(htdEnabled.getTableName(),
         null, null);
     createRegion(hriEnabled, rootdir, conf, htdEnabled);
@@ -510,7 +512,7 @@ public class TestMasterFailover {
     HTableDescriptor htdDisabled = new HTableDescriptor(disabledTable);
     htdDisabled.addFamily(new HColumnDescriptor(FAMILY));
     // Write the .tableinfo
-    FSTableDescriptors.createTableDescriptor(filesystem, rootdir, htdDisabled);
+    fstd.createTableDescriptor(htdDisabled);
     HRegionInfo hriDisabled = new HRegionInfo(htdDisabled.getTableName(), null, null);
     createRegion(hriDisabled, rootdir, conf, htdDisabled);
 

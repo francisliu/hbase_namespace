@@ -150,7 +150,7 @@ class HMerge {
 
       this.rootDir = FSUtils.getRootDir(conf);
       Path tabledir = FSUtils.getTableDir(this.rootDir, tableName);
-      this.htd = FSTableDescriptors.getTableDescriptor(this.fs, tabledir);
+      this.htd = FSTableDescriptors.getTableDescriptorFromFs(this.fs, tabledir);
       String logname = "merge_" + System.currentTimeMillis() + HConstants.HREGION_LOGDIR_NAME;
 
       this.hlog = HLogFactory.createHLog(fs, tabledir, logname, conf);

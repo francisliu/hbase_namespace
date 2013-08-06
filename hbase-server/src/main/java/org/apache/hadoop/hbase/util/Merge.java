@@ -62,7 +62,6 @@ public class Merge extends Configured implements Tool {
   private TableName tableName;               // Name of table
   private volatile byte [] region1;        // Name of region 1
   private volatile byte [] region2;        // Name of region 2
-  private volatile boolean isMetaTable;
   private volatile HRegionInfo mergeInfo;
 
   /** default constructor */
@@ -154,7 +153,7 @@ public class Merge extends Configured implements Tool {
     if (info2 == null) {
       throw new NullPointerException("info2 is null using key " + meta);
     }
-    HTableDescriptor htd = FSTableDescriptors.getTableDescriptor(FileSystem.get(getConf()),
+    HTableDescriptor htd = FSTableDescriptors.getTableDescriptorFromFs(FileSystem.get(getConf()),
       this.rootdir, this.tableName);
     HRegion merged = merge(htd, meta, info1, info2);
 
@@ -246,8 +245,7 @@ public class Merge extends Configured implements Tool {
       usage();
       return -1;
     }
-    tableName = TableName.valueOf(Bytes.toBytes(remainingArgs[0]));
-    isMetaTable = tableName.compareTo(TableName.META_TABLE_NAME) == 0;
+    tableName = TableName.valueOf(remainingArgs[0]);
 
     region1 = Bytes.toBytesBinary(remainingArgs[1]);
     region2 = Bytes.toBytesBinary(remainingArgs[2]);

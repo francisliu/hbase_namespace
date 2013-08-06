@@ -19,7 +19,9 @@
 package org.apache.hadoop.hbase.master.handler;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -53,15 +55,9 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
     try {
       AssignmentManager am = this.services.getAssignmentManager();
       try {
-        if (this.shouldSplitHlog) {
+        if (this.shouldSplitHlog && !this.distributedLogReplay) {
           LOG.info("Splitting META logs for " + serverName);
-          if(this.distributedLogReplay) {
-            Set<HRegionInfo> regions = new HashSet<HRegionInfo>();
-            regions.add(HRegionInfo.FIRST_META_REGIONINFO);
-            this.services.getMasterFileSystem().prepareMetaLogReplay(serverName, regions);
-          } else {
-            this.services.getMasterFileSystem().splitMetaLog(serverName);
-          }
+          this.services.getMasterFileSystem().splitMetaLog(serverName);
         } 
       } catch (IOException ioe) {
         this.services.getExecutorService().submit(this);
@@ -89,7 +85,9 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
         if (this.shouldSplitHlog && this.distributedLogReplay) {
           if (!am.waitOnRegionToClearRegionsInTransition(HRegionInfo.FIRST_META_REGIONINFO,
             regionAssignmentWaitTimeout)) {
-            throw new IOException("Region " + HRegionInfo.FIRST_META_REGIONINFO.getEncodedName()
+            // Wait here is to avoid log replay hits current dead server and incur a RPC timeout
+            // when replay happens before region assignment completes.
+            LOG.warn("Region " + HRegionInfo.FIRST_META_REGIONINFO.getEncodedName()
                 + " didn't complete assignment in time");
           }
           this.services.getMasterFileSystem().splitMetaLog(serverName);
@@ -156,6 +154,21 @@ public class MetaServerShutdownHandler extends ServerShutdownHandler {
 
     long waitTime = this.server.getConfiguration().getLong(
         "hbase.catalog.verification.timeout", 1000);
+
+    if (this.shouldSplitHlog && this.distributedLogReplay) {
+      LOG.info("Splitting META logs for " + serverName
+          + ". Mark META region in recovery before assignment.");
+      Set<HRegionInfo> regions = new HashSet<HRegionInfo>();
+      regions.add(HRegionInfo.FIRST_META_REGIONINFO);
+      try {
+        this.services.getMasterFileSystem().prepareLogReplay(serverName, regions);
+      } catch (IOException ioe) {
+        this.services.getExecutorService().submit(this);
+        this.deadServers.add(serverName);
+        throw new IOException("failed to mark META region in recovery on " + serverName
+            + ", will retry", ioe);
+      }
+    }
 
     int iFlag = 0;
     while (true) {

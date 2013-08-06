@@ -311,6 +311,9 @@ public class HRegion implements HeapSize { // , Writable{
    */
   private boolean disallowWritesInRecovering = false;
 
+  // when a region is in recovering state, it can only accept writes not reads
+  private volatile boolean isRecovering = false;
+
   /**
    * @return The smallest mvcc readPoint across all the scanners in this
    * region. Writes older than this readPoint, are included  in every
@@ -818,14 +821,14 @@ public class HRegion implements HeapSize { // , Writable{
    * @param newState
    */
   public void setRecovering(boolean newState) {
-    this.getRegionInfo().setRecovering(newState);
+    this.isRecovering = newState;
   }
 
   /**
    * @return True if current region is in recovering
    */
   public boolean isRecovering() {
-    return this.getRegionInfo().isRecovering();
+    return this.isRecovering;
   }
 
   /** @return true if region is available (not closed and not closing) */
@@ -4671,6 +4674,7 @@ public class HRegion implements HeapSize { // , Writable{
             Store store = stores.get(family.getKey());
             List<KeyValue> kvs = new ArrayList<KeyValue>(family.getValue().size());
   
+            Collections.sort((List<KeyValue>)family.getValue(), store.getComparator());
             // Get previous values for all columns in this family
             Get get = new Get(row);
             for (Cell cell : family.getValue()) {
@@ -5190,6 +5194,12 @@ public class HRegion implements HeapSize { // , Writable{
       if (shouldForceSplit()) {
         LOG.warn("Cannot split meta region in HBase 0.20 and above");
       }
+      return null;
+    }
+
+    // Can't split region which is in recovering state
+    if (this.isRecovering()) {
+      LOG.info("Cannot split region " + this.getRegionInfo().getEncodedName() + " in recovery.");
       return null;
     }
 

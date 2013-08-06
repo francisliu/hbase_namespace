@@ -191,9 +191,6 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   // Current TableName
   private TableName tableName = null;
 
-  // when a region is in recovering state, it can only accept writes not reads
-  private volatile boolean recovering = false;
-
   /** HRegionInfo for root region */
   public static final HRegionInfo ROOT_REGIONINFO =
       new HRegionInfo(0L, TableName.ROOT_TABLE_NAME);
@@ -301,7 +298,7 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.endKey = endKey == null? HConstants.EMPTY_END_ROW: endKey.clone();
     this.startKey = startKey == null?
       HConstants.EMPTY_START_ROW: startKey.clone();
-    this.recovering = false;
+    this.tableName = tableName;
     setHashCode();
   }
 
@@ -322,7 +319,6 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     this.hashCode = other.hashCode();
     this.encodedName = other.getEncodedName();
     this.tableName = other.tableName;
-    this.recovering = other.isRecovering();
   }
 
 
@@ -596,20 +592,6 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
   }
 
   /**
-   * @return True if current region is in recovering
-   */
-  public boolean isRecovering() {
-    return this.recovering;
-  }
-
-  /**
-   * @param newState set recovering state
-   */
-  public void setRecovering(boolean newState) {
-    this.recovering = newState;
-  }
-
-  /**
    * @return True if this region is offline.
    */
   public boolean isOffline() {
@@ -845,7 +827,6 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
     }
     builder.setOffline(info.isOffline());
     builder.setSplit(info.isSplit());
-    builder.setRecovering(info.isRecovering());
     return builder.build();
   }
 
@@ -881,9 +862,6 @@ public class HRegionInfo implements Comparable<HRegionInfo> {
         endKey, split, regionId);
     if (proto.hasOffline()) {
       hri.setOffline(proto.getOffline());
-    }
-    if (proto.hasRecovering()) {
-      hri.setRecovering(proto.getRecovering());
     }
     return hri;
   }
