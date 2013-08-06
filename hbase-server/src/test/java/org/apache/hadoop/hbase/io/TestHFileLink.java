@@ -24,9 +24,15 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MediumTests;
+import org.apache.hadoop.hbase.SmallTests;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.hbase.util.HFileArchiveUtil;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.junit.Assert;
@@ -47,7 +53,7 @@ import static org.junit.Assert.assertTrue;
  * Test that FileLink switches between alternate locations
  * when the current location moves or gets deleted.
  */
-@Category(MediumTests.class)
+@Category(SmallTests.class)
 public class TestHFileLink {
 
   @Test
@@ -92,16 +98,52 @@ public class TestHFileLink {
 
   @Test
   public void testBackReference() {
-    assertEquals("region.foo", HFileLink.createBackReferenceName("foo", "region"));
-    assertEquals("region.ns=foo", HFileLink.createBackReferenceName("ns:foo", "region"));
+    Path rootDir = new Path("/root");
+    Path archiveDir = new Path(rootDir, ".archive");
+    String storeFileName = "121212";
+    String linkDir = FileLink.BACK_REFERENCES_DIRECTORY_PREFIX + storeFileName;
+    String encodedRegion = "FEFE";
+    String cf = "cf1";
 
-    Pair<TableName, String> parsedRef = HFileLink.parseBackReferenceName("region.foo");
-    assertEquals(parsedRef.getFirst(), TableName.valueOf("foo"));
-    assertEquals(parsedRef.getSecond(), "region");
+    TableName refTables[] = {TableName.valueOf("refTable"),
+        TableName.valueOf("ns", "refTable")};
 
-    parsedRef = HFileLink.parseBackReferenceName("region.ns=foo");
-    assertEquals(parsedRef.getFirst(), TableName.valueOf("ns", "foo"));
-    assertEquals(parsedRef.getSecond(), "region");
+    for(TableName refTable : refTables) {
+      Path refTableDir = FSUtils.getTableDir(archiveDir, refTable);
+      Path refRegionDir = HRegion.getRegionDir(refTableDir, encodedRegion);
+      Path refDir = new Path(refRegionDir, cf);
+      Path refLinkDir = new Path(refDir, linkDir);
+      String refStoreFileName = refTable.getNameAsString().replace(
+          TableName.NAMESPACE_DELIM, '=') + "=" + encodedRegion + "-" + storeFileName;
+
+      TableName tableNames[] = {TableName.valueOf("tableName1"),
+          TableName.valueOf("ns", "tableName2")};
+
+      for( TableName tableName : tableNames) {
+        Path tableDir = FSUtils.getTableDir(rootDir, tableName);
+        Path regionDir = HRegion.getRegionDir(tableDir, encodedRegion);
+        Path cfDir = new Path(regionDir, cf);
+
+        //Verify back reference creation
+        assertEquals(encodedRegion+"."+
+            tableName.getNameAsString().replace(TableName.NAMESPACE_DELIM, '='),
+            HFileLink.createBackReferenceName(tableName.getNameAsString(),
+                encodedRegion));
+
+        //verify parsing back reference
+        Pair<TableName, String> parsedRef =
+            HFileLink.parseBackReferenceName(encodedRegion+"."+
+                tableName.getNameAsString().replace(TableName.NAMESPACE_DELIM, '='));
+        assertEquals(parsedRef.getFirst(), tableName);
+        assertEquals(parsedRef.getSecond(), encodedRegion);
+
+        //verify resolving back reference
+        Path storeFileDir =  new Path(refLinkDir, encodedRegion+"."+
+            tableName.getNameAsString().replace(TableName.NAMESPACE_DELIM, '='));
+        Path linkPath = new Path(cfDir, refStoreFileName);
+        assertEquals(linkPath, HFileLink.getHFileFromBackReference(rootDir, storeFileDir));
+      }
+    }
   }
 
 

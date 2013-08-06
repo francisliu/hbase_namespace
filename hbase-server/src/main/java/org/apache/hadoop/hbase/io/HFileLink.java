@@ -365,7 +365,7 @@ public class HFileLink extends FileLink {
     Path regionPath = familyPath.getParent();
     Path tablePath = regionPath.getParent();
 
-    String linkName = createHFileLinkName(TableName.valueOf(tablePath.getName()),
+    String linkName = createHFileLinkName(FSUtils.getTableName(tablePath),
         regionPath.getName(), hfileName);
     Path linkTableDir = FSUtils.getTableDir(rootDir, linkTableName);
     Path regionDir = HRegion.getRegionDir(linkTableDir, linkRegionName);
