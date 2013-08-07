@@ -58,6 +58,7 @@ import org.apache.hadoop.hbase.TableNotEnabledException;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.catalog.CatalogTracker;
+import org.apache.hadoop.hbase.constraint.ConstraintException;
 import org.apache.hadoop.hbase.executor.EventHandler;
 import org.apache.hadoop.hbase.master.AssignmentManager;
 import org.apache.hadoop.hbase.master.HMaster;
@@ -1696,8 +1697,8 @@ public class TestAdmin {
   public void testDisableCatalogTable() throws Exception {
     try {
       this.admin.disableTable(TableName.META_TABLE_NAME);
-      fail("Expected to throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
+      fail("Expected to throw ConstraintException");
+    } catch (ConstraintException e) {
     }
     // Before the fix for HBASE-6146, the below table creation was failing as the META table
     // actually getting disabled by the disableTable() call.
