@@ -75,6 +75,9 @@ public final class TableName implements Comparable<TableName> {
   public static final TableName NAMESPACE_TABLE_NAME =
       valueOf(NamespaceDescriptor.SYSTEM_NAMESPACE_NAME_STR, "namespace");
 
+  private static final String OLD_META_STR = ".META.";
+  private static final String OLD_ROOT_STR = "-ROOT-";
+
   private byte[] name;
   private String nameAsString;
   private byte[] namespace;
@@ -255,6 +258,14 @@ public final class TableName implements Comparable<TableName> {
   }
 
   public static TableName valueOf(String name) {
+    if(name.equals(OLD_ROOT_STR)) {
+      throw new IllegalArgumentException(OLD_ROOT_STR + " has been deprecated.");
+    }
+    if(name.equals(OLD_META_STR)) {
+      throw new IllegalArgumentException(OLD_META_STR + " no longer exists. The table has been " +
+          "renamed to "+META_TABLE_NAME);
+    }
+
     isLegalFullyQualifiedTableName(Bytes.toBytes(name));
     int index = name.indexOf(NAMESPACE_DELIM);
     if (index != -1) {
