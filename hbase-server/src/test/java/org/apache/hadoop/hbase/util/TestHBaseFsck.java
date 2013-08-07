@@ -121,7 +121,7 @@ public class TestHBaseFsck {
     Bytes.toBytes("B"), Bytes.toBytes("C") };
   // one row per region.
   private final static byte[][] ROWKEYS= new byte[][] {
-    Bytes.toBytes("00"), Bytes.toBytes("50"), Bytes.toBytes("jA0"), Bytes.toBytes("A5"),
+    Bytes.toBytes("00"), Bytes.toBytes("50"), Bytes.toBytes("A0"), Bytes.toBytes("A5"),
     Bytes.toBytes("B0"), Bytes.toBytes("B5"), Bytes.toBytes("C0"), Bytes.toBytes("C5") };
 
   @BeforeClass

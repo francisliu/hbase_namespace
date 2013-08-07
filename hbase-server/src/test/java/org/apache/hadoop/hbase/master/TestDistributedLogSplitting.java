@@ -85,14 +85,18 @@ import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.MasterThread;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.apache.hadoop.hbase.util.Threads;
+import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.hadoop.hbase.zookeeper.ZKAssign;
 import org.apache.hadoop.hbase.zookeeper.ZKUtil;
 import org.apache.hadoop.hbase.zookeeper.ZooKeeperWatcher;
+import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.KeeperException;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -109,13 +113,28 @@ public class TestDistributedLogSplitting {
   }
 
   // Start a cluster with 2 masters and 6 regionservers
-  final int NUM_MASTERS = 2;
-  final int NUM_RS = 6;
+  static final int NUM_MASTERS = 2;
+  static final int NUM_RS = 6;
 
   MiniHBaseCluster cluster;
   HMaster master;
   Configuration conf;
-  HBaseTestingUtility TEST_UTIL;
+  static HBaseTestingUtility TEST_UTIL;
+  static MiniDFSCluster dfsCluster;
+  static MiniZooKeeperCluster zkCluster;
+
+  @BeforeClass
+  public static void setup() throws Exception {
+    TEST_UTIL = new HBaseTestingUtility(HBaseConfiguration.create());
+    dfsCluster = TEST_UTIL.startMiniDFSCluster(1);
+    zkCluster = TEST_UTIL.startMiniZKCluster();
+  }
+
+  @AfterClass
+  public static void tearDown() throws IOException {
+    TEST_UTIL.shutdownMiniZKCluster();
+    TEST_UTIL.shutdownMiniDFSCluster();
+  }
 
   private void startCluster(int num_rs) throws Exception{
     conf = HBaseConfiguration.create();
@@ -132,7 +151,9 @@ public class TestDistributedLogSplitting {
     conf.setInt(HConstants.REGIONSERVER_INFO_PORT, -1);
     conf.setFloat(HConstants.LOAD_BALANCER_SLOP_KEY, (float) 100.0); // no load balancing
     TEST_UTIL = new HBaseTestingUtility(conf);
-    TEST_UTIL.startMiniCluster(NUM_MASTERS, num_rs);
+    TEST_UTIL.setDFSCluster(dfsCluster);
+    TEST_UTIL.setZkCluster(zkCluster);
+    TEST_UTIL.startMiniHBaseCluster(NUM_MASTERS, num_rs);
     cluster = TEST_UTIL.getHBaseCluster();
     LOG.info("Waiting for active/ready master");
     cluster.waitForActiveAndReadyMaster();
@@ -148,7 +169,9 @@ public class TestDistributedLogSplitting {
       mt.getMaster().abort("closing...", new Exception("Trace info"));
     }
 
-    TEST_UTIL.shutdownMiniCluster();
+    TEST_UTIL.shutdownMiniHBaseCluster();
+    TEST_UTIL.getTestFileSystem().delete(FSUtils.getRootDir(TEST_UTIL.getConfiguration()), true);
+    ZKUtil.deleteNodeRecursively(TEST_UTIL.getZooKeeperWatcher(), "/hbase");
   }
 
   @Test (timeout=300000)

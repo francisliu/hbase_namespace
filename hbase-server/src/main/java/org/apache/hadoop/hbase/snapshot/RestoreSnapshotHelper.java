@@ -119,7 +119,6 @@ public class RestoreSnapshotHelper {
   private final Configuration conf;
   private final FileSystem fs;
 
-  //TODO remove tabledir in signature
   public RestoreSnapshotHelper(final Configuration conf,
       final FileSystem fs,
       final SnapshotDescription snapshotDescription,

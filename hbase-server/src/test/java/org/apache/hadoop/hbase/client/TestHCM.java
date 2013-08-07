@@ -321,6 +321,7 @@ public class TestHCM {
     put2.add(FAM_NAM, ROW, ROW);
     table.put(put2);
     assertNotNull(conn.getCachedLocation(TABLE_NAME, ROW));
+    assertNotNull(conn.getCachedLocation(TableName.valueOf(TABLE_NAME.getName()), ROW.clone()));
 
     TEST_UTIL.getHBaseAdmin().setBalancerRunning(false, false);
     HMaster master = TEST_UTIL.getMiniHBaseCluster().getMaster();

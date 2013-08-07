@@ -210,7 +210,7 @@ public class TableNamespaceManager {
             newRegions,
             masterServices).prepare());
     //wait for region to be online
-    int tries = conf.getInt("hbase.master.namespace.init.timeout", 60000);
+    int tries = conf.getInt("hbase.master.namespace.init.timeout", 600);
     while(masterServices.getAssignmentManager()
         .getRegionStates().getRegionServerOfRegion(newRegions[0]) == null &&
         tries > 0) {

@@ -381,10 +381,10 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Checks if this table is either <code> .META. </code>
+   * Checks if this table is <code> .META. </code>
    * region.
    *
-   * @return true if this is either a <code> .META. </code>
+   * @return true if this table is <code> .META. </code>
    * region
    */
   public boolean isMetaRegion() {
@@ -430,11 +430,11 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
   }
 
   /**
-   * Checks of the tableName being passed represents either
-   * <code> .META. </code>
+   * Checks of the tableName being passed is a system table
    *
-   * @return true if a tablesName is a member of the hbase
-   * namesapce
+   *
+   * @return true if a tableName is a member of the system
+   * namesapce (aka hbase)
    */
   public static boolean isSystemTable(final TableName tableName) {
     return tableName.getNamespaceAsString()
@@ -1369,7 +1369,7 @@ public class HTableDescriptor implements WritableComparable<HTableDescriptor> {
     }
   }
 
-  public final static String NAMESPACE_FAMILY_INFO = "i";
+  public final static String NAMESPACE_FAMILY_INFO = "info";
   public final static byte[] NAMESPACE_FAMILY_INFO_BYTES = Bytes.toBytes(NAMESPACE_FAMILY_INFO);
   public final static byte[] NAMESPACE_COL_DESC_BYTES = Bytes.toBytes("d");
 

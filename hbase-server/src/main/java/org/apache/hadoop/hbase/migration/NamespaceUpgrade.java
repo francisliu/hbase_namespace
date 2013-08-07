@@ -46,11 +46,6 @@ import java.util.List;
  * - creates system namespace directory and move .META. table there
  * renaming .META. table to hbase:meta,
  * this in turn would require to re-encode the region directory name
- * - creates default namespace directory, all tables without '.' in them will be moved here
- * - For each table that contains a '.', parse it as a fully-qualified table name
- * and automatically create the appropriate namespace and move the respective table
- * - During startup TableNamespaceManager, will populate the namespace table
- * with the appropriate namespace descriptors
  */
 public class NamespaceUpgrade implements Tool {
   private static final Log LOG = LogFactory.getLog(NamespaceUpgrade.class);

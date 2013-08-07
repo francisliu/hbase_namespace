@@ -168,7 +168,8 @@ public class TestCloneSnapshotFromClient {
   public void testCloneSnapshotCrossNamespace() throws IOException, InterruptedException {
     String nsName = "testCloneSnapshotCrossNamespace";
     admin.createNamespace(NamespaceDescriptor.create(nsName).build());
-    TableName clonedTableName = TableName.valueOf(nsName+".clonedtb-" + System.currentTimeMillis());
+    TableName clonedTableName =
+        TableName.valueOf(nsName, "clonedtb-" + System.currentTimeMillis());
     testCloneSnapshot(clonedTableName, snapshotName0, snapshot0Rows);
     testCloneSnapshot(clonedTableName, snapshotName1, snapshot1Rows);
     testCloneSnapshot(clonedTableName, emptySnapshot, 0);
